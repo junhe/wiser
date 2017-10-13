@@ -1,0 +1,21 @@
+# Compiled class file
+*.class
+
+# Log file
+*.log
+
+# Tmp file
+*.tmp
+*.swp
+
+# BlueJ files
+*.ctxt
+
+# Package Files #
+*.jar
+*.war
+*.ear
+*.zip
+*.tar.gz
+*.rar
+
