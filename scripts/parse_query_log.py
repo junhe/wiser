@@ -7,9 +7,9 @@ def do_parse(input_file, output_file):
     query_content = re.findall(r'\t.*\t',text)
     for each_query in query_content:
         # clean
-        each_query = each_query.replace('\t', '')
+        each_query = each_query.replace('\t', '\"')
         # extract all words from this query
-        each_query = each_query.replace('+', ' ')
+        each_query = each_query.replace('+', '\" AND \"')
         output_file.write(each_query+'\n')
 
 if __name__=='__main__':
