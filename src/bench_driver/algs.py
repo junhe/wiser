@@ -6,23 +6,28 @@ easier to manage this way than to put them in separate files.
 
 
 
-CREATE_LINE_DOC = """
+
+def CREATE_LINE_DOC(line_file_out, docs_file):
+    text = """
 content.source=org.apache.lucene.benchmark.byTask.feeds.EnwikiContentSource
-line.file.out=work/enwiki.out.txt
-docs.file=temp/enwiki-latest-pages-articles9.xml-p1791081p2336422
+line.file.out=%(out)s
+docs.file=%(docs)s
 keep.image.only.docs = false
 content.source.forever=false
 
 # -------------------------------------------------------------------------------------
 
 {WriteLineDoc()}: *
-"""
+""" % {'out':line_file_out, 'docs':docs_file}
+    print text
+    return text
 
 
 
 
 
-INDEX_LINE_DOC = """
+def INDEX_LINE_DOC(docs_file):
+    text = """
 writer.version=4.0
 merge.factor=mrg:10:100:10:100:10:100:10:100
 max.buffered=buf:10:10:100:100:10:10:100:100
@@ -41,7 +46,7 @@ log.step=2000
 #docs.dir=reuters-out
 #docs.dir=reuters-111
 
-docs.file=work/enwiki.out.txt
+docs.file=%(docs)s
 
 #content.source=org.apache.lucene.benchmark.byTask.feeds.SingleDocSource
 #content.source=org.apache.lucene.benchmark.byTask.feeds.ReutersContentSource
@@ -77,6 +82,7 @@ log.queries=true
 RepSumByNameRound
 RepSumByName
 RepSumByPrefRound MAddDocs
-"""
+""" % {'docs':docs_file}
+    return text
 
 

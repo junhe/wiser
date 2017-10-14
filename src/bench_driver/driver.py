@@ -6,6 +6,7 @@ from expbase import BenchRun, Experiment
 from pyreuse import helpers
 
 DOWNLOAD_DIR = "/mnt/sdc1/downloads"
+WORK_DIR = "/mnt/sdc1/work"
 
 class ExperimentWikiSmall(Experiment):
     def __init__(self):
@@ -16,19 +17,27 @@ class ExperimentWikiSmall(Experiment):
         return {}
 
     def before(self):
-        # download wiki dump
         helpers.prepare_dir(DOWNLOAD_DIR)
+        helpers.prepare_dir(WORK_DIR)
+
+        # download wiki dump
         with helpers.cd(DOWNLOAD_DIR):
             helpers.shcmd("wget -nc https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2")
             if not os.path.exists("enwiki-latest-pages-articles14.xml-p7697599p7744799"):
                 helpers.shcmd("bunzip2 enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2")
 
         # create line doc
-        benchrun = BenchRun(algs.CREATE_LINE_DOC)
+        print "++++++++++++++++++++++ Creating Line Doc +++++++++++++++++++++"
+        benchrun = BenchRun(algs.CREATE_LINE_DOC(
+            line_file_out = os.path.join(WORK_DIR, "enwiki.linedoc"),
+            docs_file = os.path.join(DOWNLOAD_DIR, "enwiki-latest-pages-articles14.xml-p7697599p7744799")
+            ))
         benchrun.run()
 
-        # index line doc
-        benchrun = BenchRun(algs.INDEX_LINE_DOC)
+        print "++++++++++++++++++++++ Indexing Line Doc +++++++++++++++++++++"
+        benchrun = BenchRun(algs.INDEX_LINE_DOC(
+            docs_file = os.path.join(WORK_DIR, "enwiki.linedoc")
+            ))
         benchrun.run()
 
     def treatment(self, conf):
@@ -41,6 +50,7 @@ class ExperimentWikiSmall(Experiment):
 def main():
     exp = ExperimentWikiSmall()
     exp.main()
+
 
 
 if __name__ == "__main__":
