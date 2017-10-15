@@ -12,11 +12,10 @@ class ExperimentWikiSmall(Experiment):
         self._exp_name = "wikismall-trial-001"
 
         self.DOWNLOAD_DIR = "/mnt/sdc1/downloads"
-        self.WORK_DIR = "/mnt/sdc1/work3"
+        # self.WORK_DIR = "/mnt/sdc1/work3"
+        self.WORK_DIR = "/mnt/ssd/"
 
         self.line_file_out = os.path.join(self.WORK_DIR, "enwiki.linedoc")
-        self.origin_doc_name = "enwiki-latest-pages-articles14.xml-p7697599p7744799"
-        self.origin_doc_path = os.path.join(self.DOWNLOAD_DIR, self.origin_doc_name)
 
     def conf(self, i):
         return {}
@@ -32,6 +31,10 @@ class ExperimentWikiSmall(Experiment):
     def download(self):
         with helpers.cd(self.DOWNLOAD_DIR):
             helpers.shcmd("wget -nc https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2")
+
+            self.origin_doc_name = "enwiki-latest-pages-articles14.xml-p7697599p7744799"
+            self.origin_doc_path = os.path.join(self.DOWNLOAD_DIR, self.origin_doc_name)
+
             if not os.path.exists(self.origin_doc_name):
                 helpers.shcmd("bunzip2 enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2")
 
