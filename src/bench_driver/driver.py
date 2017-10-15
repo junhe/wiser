@@ -6,7 +6,7 @@ from expbase import BenchRun, Experiment
 from pyreuse import helpers
 
 DOWNLOAD_DIR = "/mnt/sdc1/downloads"
-WORK_DIR = "/mnt/sdc1/work"
+WORK_DIR = "/mnt/sdc1/work2"
 
 class ExperimentWikiSmall(Experiment):
     def __init__(self):
@@ -36,7 +36,8 @@ class ExperimentWikiSmall(Experiment):
 
         print "++++++++++++++++++++++ Indexing Line Doc +++++++++++++++++++++"
         benchrun = BenchRun(algs.INDEX_LINE_DOC(
-            docs_file = os.path.join(WORK_DIR, "enwiki.linedoc")
+            docs_file = os.path.join(WORK_DIR, "enwiki.linedoc"),
+            work_dir = WORK_DIR
             ))
         benchrun.run()
 

@@ -26,7 +26,7 @@ content.source.forever=false
 
 
 
-def INDEX_LINE_DOC(docs_file):
+def INDEX_LINE_DOC(docs_file, work_dir):
     text = """
 writer.version=4.0
 merge.factor=mrg:10:100:10:100:10:100:10:100
@@ -47,6 +47,7 @@ log.step=2000
 #docs.dir=reuters-111
 
 docs.file=%(docs)s
+work.dir=%(work_dir)s
 
 #content.source=org.apache.lucene.benchmark.byTask.feeds.SingleDocSource
 #content.source=org.apache.lucene.benchmark.byTask.feeds.ReutersContentSource
@@ -83,7 +84,7 @@ log.queries=true
 RepSumByNameRound
 RepSumByName
 RepSumByPrefRound MAddDocs
-""" % {'docs':docs_file}
+""" % {'docs': docs_file, 'work_dir': work_dir}
     return text
 
 
