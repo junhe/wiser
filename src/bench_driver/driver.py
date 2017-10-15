@@ -41,9 +41,11 @@ class ExperimentWikiSmall(Experiment):
         benchrun.run()
 
     def treatment(self, conf):
-        # benchrun = BenchRun(algs.CREATE_LINE_DOC)
-        # benchrun.run()
-        pass
+        benchrun = BenchRun(algs.REUTER_SEARCH(
+            docs_file = "/tmp/",
+            work_dir = "work"
+            ))
+        benchrun.run()
 
 
 
