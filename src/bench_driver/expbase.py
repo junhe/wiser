@@ -5,6 +5,7 @@ import algs
 import config
 
 from pyreuse.helpers import *
+from pyreuse.sysutils.cgroup import Cgroup
 
 class Experiment(object):
     """
@@ -76,10 +77,11 @@ class BenchRun(object):
     """
     One run of the Lucene benchmark
     """
-    def __init__(self, algorithm_text):
+    def __init__(self, algorithm_text, mem_size = None):
         self.algorithm_text = algorithm_text
         self.bench_dir = os.path.join(config.LUCENEN_SRC, "benchmark")
         self.alg_path = "/tmp/flashsearch.benchrun.alg"
+        self.mem_size = mem_size
 
     def run(self):
         self._before()
@@ -92,9 +94,21 @@ class BenchRun(object):
 
     def _run(self):
         with cd(self.bench_dir):
-            shcmd("ant run-task -Dtask.alg={}".format(self.alg_path))
+            cmd = "ant run-task -Dtask.alg={}".format(self.alg_path)
+
+            if self.mem_size is None:
+                shcmd(cmd)
+            else:
+                cg = Cgroup(name='charlie', subs='memory')
+                cg.set_item('memory', 'memory.limit_in_bytes', self.mem_size)
+                p = cg.execute(shlex.split(cmd))
+                p.wait()
 
     def _after(self):
         shcmd("rm {}".format(self.alg_path))
+
+
+
+
 
 

@@ -4,6 +4,7 @@ import algs
 from expbase import BenchRun, Experiment
 
 from pyreuse import helpers
+from pyreuse.macros import *
 
 
 class ExperimentWikiSmall(Experiment):
@@ -20,6 +21,7 @@ class ExperimentWikiSmall(Experiment):
         # self.decompress_cmd = "bunzip2 enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2"
         # self.index_doc_count = 5000
         # self.search_count = 1000
+        # self.search_mem_size = 256*MB
 
         #there are 1520000 reconds
         self.work_dir = "/mnt/ssd/work-medium-wiki"
@@ -28,7 +30,8 @@ class ExperimentWikiSmall(Experiment):
         self.origin_doc_name = "enwiki-20171001-pages-articles9.xml-p1791081p2336422"
         self.decompress_cmd = "bunzip2 enwiki-20171001-pages-articles9.xml-p1791081p2336422.bz2"
         self.index_doc_count = 500000
-        self.search_count =  100000
+        self.search_count =  10000
+        self.search_mem_size = 64*MB
 
         # self.work_dir = "/mnt/ssd/work-large-wiki"
         # self.download_url = "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles.xml.bz2"
@@ -87,11 +90,14 @@ class ExperimentWikiSmall(Experiment):
         helpers.shcmd("dropcache")
 
     def treatment(self, conf):
-        benchrun = BenchRun(algs.REUTER_SEARCH(
-            docs_file = "/tmp/",
-            work_dir = self.work_dir,
-            search_count = self.search_count
-            ))
+        benchrun = BenchRun(
+            algorithm_text = algs.REUTER_SEARCH(
+                docs_file = "/tmp/",
+                work_dir = self.work_dir,
+                search_count = self.search_count
+                ),
+            mem_size = self.search_mem_size
+            )
         benchrun.run()
 
 
