@@ -23,10 +23,7 @@ content.source.forever=false
     return text
 
 
-
-
-
-def INDEX_LINE_DOC(docs_file, work_dir):
+def INDEX_LINE_DOC(docs_file, work_dir, index_doc_count):
     text = """
 writer.version=4.0
 merge.factor=mrg:10:100:10:100:10:100:10:100
@@ -68,9 +65,8 @@ log.queries=true
 
     { "Populate"
         CreateIndex
-        { "MAddDocs" AddDoc } : 2000
-        # { "MAddDocs" AddDoc } : 20000
-        ForceMerge(1)
+        { "MAddDocs" AddDoc } : %(index_doc_count)s
+        # ForceMerge(1)
         CloseIndex
     }
 
@@ -84,12 +80,12 @@ log.queries=true
 RepSumByNameRound
 RepSumByName
 RepSumByPrefRound MAddDocs
-""" % {'docs': docs_file, 'work_dir': work_dir}
+""" % {'docs': docs_file, 'work_dir': work_dir, 'index_doc_count': index_doc_count}
     return text
 
 
 
-def REUTER_SEARCH(docs_file, work_dir):
+def REUTER_SEARCH(docs_file, work_dir, search_count):
     text = """
 writer.version=4.0
 merge.factor=mrg:10:100:10:100:10:100:10:100
@@ -128,7 +124,7 @@ log.queries=true
 { "Rounds"
 
     OpenReader
-    { "SearchSameRdr" Search > : 10000
+    { "SearchSameRdr" Search > : %(search_count)s
     CloseReader
 
     RepSumByPref MAddDocs
@@ -138,7 +134,7 @@ log.queries=true
 RepSumByNameRound
 RepSumByName
 RepSumByPrefRound MAddDocs
-"""% {'docs': docs_file, 'work_dir': work_dir}
+"""% {'docs': docs_file, 'work_dir': work_dir, 'search_count': search_count}
 
     return text
 
