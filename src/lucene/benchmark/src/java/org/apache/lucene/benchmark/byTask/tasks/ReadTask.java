@@ -81,12 +81,14 @@ public abstract class ReadTask extends PerfTask {
       closeSearcher = true;
     } else {
       // use existing one; this passes +1 ref to us
+      // CALLED
       reader = searcher.getIndexReader();
       closeSearcher = false;
     }
 
     // optionally warm and add num docs traversed to count
     if (withWarm()) {
+      // NOT CALLED
       Document doc = null;
       Bits liveDocs = MultiFields.getLiveDocs(reader);
       for (int m = 0; m < reader.maxDoc(); m++) {
@@ -117,7 +119,7 @@ public abstract class ReadTask extends PerfTask {
             searcher.search(q, collector);
             hits = collector.topDocs();
           } else {
-            hits = searcher.search(q, numHits);
+            hits = searcher.search(q, numHits); // called in Jun's simple case
           }
         } else {
           Collector collector = createCollector();
@@ -138,6 +140,7 @@ public abstract class ReadTask extends PerfTask {
             }
           }
 
+          // withTopDocs() simulates retrieving the docs of the hits?
           res += withTopDocs(searcher, q, hits);
         }
       }
