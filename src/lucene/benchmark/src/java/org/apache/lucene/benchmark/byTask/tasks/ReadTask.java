@@ -67,6 +67,7 @@ public abstract class ReadTask extends PerfTask {
   public int doLogic() throws Exception {
     int res = 0;
 
+
     // open reader or use existing one
     IndexSearcher searcher = getRunData().getIndexSearcher(); // (will incRef the reader)
 
@@ -97,7 +98,7 @@ public abstract class ReadTask extends PerfTask {
           res += (doc == null ? 0 : 1);
         }
       }
-    }
+    } 
 
     if (withSearch()) {
       res++;

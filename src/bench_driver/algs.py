@@ -5,8 +5,6 @@ easier to manage this way than to put them in separate files.
 
 
 
-
-
 def CREATE_LINE_DOC(line_file_out, docs_file):
     text = """
 content.source=org.apache.lucene.benchmark.byTask.feeds.EnwikiContentSource

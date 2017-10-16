@@ -13,22 +13,22 @@ class ExperimentWikiSmall(Experiment):
 
         self.DOWNLOAD_DIR = "/mnt/ssd/downloads"
 
-        self.work_dir = "/mnt/ssd/work-small-wiki"
-        helpers.shcmd("rm -rf " + self.work_dir)
-        self.download_url = "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2"
-        self.origin_doc_name = "enwiki-latest-pages-articles14.xml-p7697599p7744799"
-        self.decompress_cmd = "bunzip2 enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2"
-        self.index_doc_count = 5000
-        self.search_count = 1000
+        # self.work_dir = "/mnt/ssd/work-small-wiki"
+        #helpers.shcmd("rm -rf " + self.work_dir)
+        # self.download_url = "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2"
+        # self.origin_doc_name = "enwiki-latest-pages-articles14.xml-p7697599p7744799"
+        # self.decompress_cmd = "bunzip2 enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2"
+        # self.index_doc_count = 5000
+        # self.search_count = 1000
 
         #there are 1520000 reconds
-        # self.work_dir = "/mnt/ssd/work-medium-wiki"
-        # self.download_url = "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles9.xml-p1791081p2336422.bz2"
-        # self.origin_doc_name = "enwiki-20171001-pages-articles9.xml-p1791081p2336422"
-        # self.decompress_cmd = "bunzip2 enwiki-20171001-pages-articles9.xml-p1791081p2336422.bz2"
-        # self.search_count =  100000
-        # self.index_doc_count = 10000
-
+        self.work_dir = "/mnt/ssd/work-medium-wiki"
+        # self.work_dir = "/mnt/fsonloop/work-medium-wiki"
+        self.download_url = "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles9.xml-p1791081p2336422.bz2"
+        self.origin_doc_name = "enwiki-20171001-pages-articles9.xml-p1791081p2336422"
+        self.decompress_cmd = "bunzip2 enwiki-20171001-pages-articles9.xml-p1791081p2336422.bz2"
+        self.index_doc_count = 500000
+        self.search_count =  100000
 
         # self.work_dir = "/mnt/ssd/work-large-wiki"
         # self.download_url = "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles.xml.bz2"
@@ -84,6 +84,8 @@ class ExperimentWikiSmall(Experiment):
     def before(self):
         self.prepare_index()
 
+        helpers.shcmd("dropcache")
+
     def treatment(self, conf):
         benchrun = BenchRun(algs.REUTER_SEARCH(
             docs_file = "/tmp/",
@@ -91,7 +93,6 @@ class ExperimentWikiSmall(Experiment):
             search_count = self.search_count
             ))
         benchrun.run()
-
 
 
 def main():
