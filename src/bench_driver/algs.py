@@ -48,8 +48,8 @@ work.dir=%(work_dir)s
 #content.source=org.apache.lucene.benchmark.byTask.feeds.ReutersContentSource
 content.source=org.apache.lucene.benchmark.byTask.feeds.LineDocSource
 
-#query.maker=org.apache.lucene.benchmark.byTask.feeds.SimpleQueryMaker
-query.maker=org.apache.lucene.benchmark.byTask.feeds.ReutersQueryMaker
+query.maker=org.apache.lucene.benchmark.byTask.feeds.SimpleQueryMaker
+# query.maker=org.apache.lucene.benchmark.byTask.feeds.ReutersQueryMaker
 
 # task at this depth or less would print when they start
 task.max.depth.log=2
@@ -105,12 +105,14 @@ log.step=2000
 work.dir=%(work_dir)s
 docs.file=%(docs)s
 
+# print.hits.field=true
+
 #content.source=org.apache.lucene.benchmark.byTask.feeds.SingleDocSource
 #content.source=org.apache.lucene.benchmark.byTask.feeds.ReutersContentSource
 content.source=org.apache.lucene.benchmark.byTask.feeds.LineDocSource
 
-#query.maker=org.apache.lucene.benchmark.byTask.feeds.SimpleQueryMaker
-query.maker=org.apache.lucene.benchmark.byTask.feeds.ReutersQueryMaker
+query.maker=org.apache.lucene.benchmark.byTask.feeds.SimpleQueryMaker
+# query.maker=org.apache.lucene.benchmark.byTask.feeds.ReutersQueryMaker
 
 # task at this depth or less would print when they start
 task.max.depth.log=2

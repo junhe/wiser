@@ -20,18 +20,19 @@ class ExperimentWikiSmall(Experiment):
         # self.origin_doc_name = "enwiki-latest-pages-articles14.xml-p7697599p7744799"
         # self.decompress_cmd = "bunzip2 enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2"
         # self.index_doc_count = 5000
-        # self.search_count = 1000
-        # self.search_mem_size = 256*MB
+        # self.search_count = 5
+        # self.search_mem_size = None
 
         #there are 1520000 reconds
         self.work_dir = "/mnt/ssd/work-medium-wiki"
-        # self.work_dir = "/mnt/fsonloop/work-medium-wiki"
+        # #self.work_dir = "/mnt/fsonloop/work-medium-wiki"
+        helpers.shcmd("rm -rf " + os.path.join(self.work_dir, "index"))
         self.download_url = "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles9.xml-p1791081p2336422.bz2"
         self.origin_doc_name = "enwiki-20171001-pages-articles9.xml-p1791081p2336422"
         self.decompress_cmd = "bunzip2 enwiki-20171001-pages-articles9.xml-p1791081p2336422.bz2"
-        self.index_doc_count = 500000
+        self.index_doc_count = 1000000
         self.search_count =  10000
-        self.search_mem_size = 64*MB
+        self.search_mem_size = None
 
         # self.work_dir = "/mnt/ssd/work-large-wiki"
         # self.download_url = "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles.xml.bz2"
