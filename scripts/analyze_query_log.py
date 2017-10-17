@@ -3,6 +3,7 @@ import os
 import sys 
 
 from subprocess import call
+n_terms = 0
 
 def counting_analyze(input_file, output_dir):
     text = input_file.readlines()
@@ -11,7 +12,7 @@ def counting_analyze(input_file, output_dir):
     f_popular_terms = open('popular_terms.txt', 'w')
     f_popular_queries.write('query\t#occurance\t#ratio')
     f_popular_terms.write('term\t#occurance\t#ratio')
-    MAX_OUTPUT = 100000  # output how many popular terms/queries
+    MAX_OUTPUT = 10000  # output how many popular terms/queries
 
     # term frequency                     done
     # query frequency                    done
@@ -26,7 +27,7 @@ def counting_analyze(input_file, output_dir):
     term_dic = {}
     term_stat_dic = {}
     n_queries = 0
-    n_terms = 0
+    global n_terms
     n_consecutive_dup = 0
     last_query = ''
     for each_query in text:
@@ -85,10 +86,67 @@ def counting_analyze(input_file, output_dir):
     f_popular_queries.close()
     f_popular_terms.close()
 
-def correlation_analyze(input_file, output_dir):
-    # term co-occurance
-    # query
+    return li_term[:100]
+
+def correlation_analyze(input_file, output_dir, li_term):
+    # term co-occurance    Done
+    # terms co-efficiency
     print ('get in correlation_analyze')
+    global n_terms
+    # 2-term
+    co_dic = {}
+    coefficient_dic = {}
+    count = 0 
+    for term1 in li_term:
+        count += 1
+        for term2 in li_term[count:]:
+            if (term1[0]!=term2[0]):
+                co_dic.setdefault(term1[0]+','+term2[0], 0)
+                coefficient_dic.setdefault(term1[0]+','+term2[0], 0)
+
+
+
+    
+#                O_12 = 0    #co_occurance
+    text = input_file.readlines()
+    # calculate co-currence and coefficient-corelation
+    for each_query in text:
+        # get all terms appear
+        each_query = each_query.replace('\n', '')
+        terms = each_query.split(b'AND')
+        term_dic = {}
+        for term in terms:
+            term_dic.setdefault(term, 0)
+        
+        # calculate co-occruance for each (term1, term2)
+        for each_pair in co_dic.iteritems():
+            pair = each_pair[0].split(',')
+            O_1 = 0
+            O_2 = 0
+            if pair[0] in term_dic:
+                O_1 += 1
+            if pair[1] in term_dic:
+                O_2 += 1
+            if O_1*O_2 > 0:
+                co_dic[each_pair[0]] += 1
+            
+            # calculate coefficient
+            # O_1 = O_1
+            # first part
+            #coefficient_dic[each_pair[0]] += (O_1-) * (O_2-?)
+            # variance
+            #var_dic[pair[0]] += (O_1-)
+            #var_dic[pair[1]] += ()
+    # TODO 3-term
+    
+    li = sorted(co_dic.iteritems(), key=lambda d:d[1], reverse = True)
+    f_popular2 = open('popular_2_terms.txt', 'w')
+    count = 0
+    for each_pair in li:
+        count += 1
+        f_popular2.write( '\n' + each_pair[0] + '\t' + str(each_pair[1]) )
+        if count > 1000 or each_pair[1]<2:
+            break
 
 if __name__=='__main__':
     # print help
@@ -97,6 +155,7 @@ if __name__=='__main__':
         exit(1)
     
     # do analysis
+    cur_dir = os.getcwd()
     input_file = open(sys.argv[1])
     output_dir = sys.argv[1] + '_analysis'
 
@@ -108,8 +167,12 @@ if __name__=='__main__':
     call(['pwd'])
 
     # first: counting job
-    counting_analyze(input_file, output_dir)
+    li_term = counting_analyze(input_file, output_dir)
+    input_file.close()
+    os.chdir(cur_dir)
+    input_file = open(sys.argv[1])
+    os.chdir(output_dir)
     # second: correlation analysis 
-    correlation_analyze(input_file, output_dir)
+    correlation_analyze(input_file, output_dir, li_term)
 
     input_file.close()
