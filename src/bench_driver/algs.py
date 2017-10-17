@@ -63,8 +63,7 @@ log.queries=true
 
     { "Populate"
         CreateIndex
-        { "MAddDocs" AddDoc } : %(index_doc_count)s
-        # ForceMerge(1)
+        { "MAddDocs" AddDoc > : %(index_doc_count)s
         CloseIndex
     }
 
