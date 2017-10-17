@@ -86,13 +86,38 @@ def counting_analyze(input_file, output_dir):
     f_popular_queries.close()
     f_popular_terms.close()
 
-    return li_term[:100]
+    return li_term[:50]
 
 def correlation_analyze(input_file, output_dir, li_term):
     # term co-occurance    Done
     # terms co-efficiency
     print ('get in correlation_analyze')
     global n_terms
+
+    text = input_file.readlines()
+    # calculate occurance(mean) and variance for each term
+    m_dic = {}
+    n_queries = 0
+    for each_query in text:
+        n_queries += 1
+        each_query = each_query.replace('\n', '')
+        terms = each_query.split(b'AND')
+        term_dic = {}
+        for term in terms:
+            term_dic.setdefault(term, 0)
+    
+        for term in term_dic.iteritems():
+            m_dic.setdefault(term[0], 0)
+            m_dic[term[0]] += 1
+    v_dic = {}
+    for term in m_dic.iteritems():
+        # mean occurance
+        m_dic[term[0]] = float(term[1]) / n_queries
+        # variance
+        v_dic[term[0]] = (term[1]*((1-m_dic[term[0]])**2) + (n_queries-term[1])*((m_dic[term[0]])**2))
+
+
+    # calculate co-currence and coefficient-corelation
     # 2-term
     co_dic = {}
     coefficient_dic = {}
@@ -103,13 +128,7 @@ def correlation_analyze(input_file, output_dir, li_term):
             if (term1[0]!=term2[0]):
                 co_dic.setdefault(term1[0]+','+term2[0], 0)
                 coefficient_dic.setdefault(term1[0]+','+term2[0], 0)
-
-
-
     
-#                O_12 = 0    #co_occurance
-    text = input_file.readlines()
-    # calculate co-currence and coefficient-corelation
     for each_query in text:
         # get all terms appear
         each_query = each_query.replace('\n', '')
@@ -129,16 +148,21 @@ def correlation_analyze(input_file, output_dir, li_term):
                 O_2 += 1
             if O_1*O_2 > 0:
                 co_dic[each_pair[0]] += 1
-            
-            # calculate coefficient
-            # O_1 = O_1
-            # first part
-            #coefficient_dic[each_pair[0]] += (O_1-) * (O_2-?)
-            # variance
-            #var_dic[pair[0]] += (O_1-)
-            #var_dic[pair[1]] += ()
-    # TODO 3-term
+            coefficient_dic[each_pair[0]] += (O_1-m_dic[pair[0]])*(O_2-m_dic[pair[1]]) 
+   
+    '''
+    li_pair = sorted(coefficient_dic.iteritems(), key=lambda d:d[1], reverse = True)
+    print '====================\n\n\n'
+    print li_pair
     
+    for each_pair in co_dic.iteritems():
+        pair = each_pair[0].split(',')
+        coefficient_dic[each_pair[0]] = coefficient_dic[each_pair[0]] / ((v_dic[pair[0]]*v_dic[pair[1]])**(0.5))
+   
+    li_pair = sorted(coefficient_dic.iteritems(), key=lambda d:d[1], reverse = True)
+    print '======================\n\n\n\n\n\n', li_pair
+    # TODO 3-term
+    '''
     li = sorted(co_dic.iteritems(), key=lambda d:d[1], reverse = True)
     f_popular2 = open('popular_2_terms.txt', 'w')
     count = 0
@@ -146,7 +170,7 @@ def correlation_analyze(input_file, output_dir, li_term):
         count += 1
         f_popular2.write( '\n' + each_pair[0] + '\t' + str(each_pair[1]) )
         if count > 1000 or each_pair[1]<2:
-            break
+           break
 
 if __name__=='__main__':
     # print help
