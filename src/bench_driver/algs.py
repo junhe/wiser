@@ -54,7 +54,8 @@ query.maker=org.apache.lucene.benchmark.byTask.feeds.SimpleQueryMaker
 # task at this depth or less would print when they start
 task.max.depth.log=2
 
-log.queries=true
+log.queries=false
+content.source.forever=false
 # -------------------------------------------------------------------------------------
 
 { "Rounds"
@@ -117,7 +118,7 @@ query.maker=org.apache.lucene.benchmark.byTask.feeds.SimpleQueryMaker
 # task at this depth or less would print when they start
 task.max.depth.log=2
 
-log.queries=true
+log.queries=false
 # -------------------------------------------------------------------------------------
 
 { "Rounds"
