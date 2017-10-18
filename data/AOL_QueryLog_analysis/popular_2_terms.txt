@@ -1,0 +1,734 @@
+
+ "of" , "the" 	163310
+ "to" ,"how" 	139333
+ "in" , "the" 	91198
+ "for" , "sale"	77892
+ "to" , "a" 	75769
+ "of" ,"pictures" 	75637
+ "in" , "for" 	71099
+ "a" ,"how" 	55956
+ "of" , "in" 	54655
+ "of" , "and" 	49839
+ "and" , "the" 	46760
+ "of" , "a" 	46045
+ "is" ,"what" 	45688
+ "the" , "to" 	41964
+ "the" , "on" 	40179
+ "of" ,"the" 	39609
+ "for" , "the" 	38802
+ "in" , "to" 	35759
+ "in" , "new" 	34287
+ "in" , "a" 	33887
+ "in" , "and" 	33602
+ "for" , "a" 	31190
+ "school" , "high" 	29513
+ "the" ,"what" 	25749
+ "the" , "is" 	25256
+ "in" , "florida"	24792
+ "for" , "to" 	24205
+ "of" , "to" 	24042
+ "and" , "for" 	23907
+ "of" , "for" 	23383
+ "a" , "is" 	20847
+ "a" ,"what" 	19424
+ "the" , "a" 	19210
+ "to" , "on" 	19144
+ "and" , "to" 	18817
+ "the" ,"the" 	18110
+ "of" , "on" 	17842
+ "a" , "on" 	17639
+ "to" , "from" 	16511
+ "in" ,"how" 	15882
+"free" , "games"	15458
+ "the" , "from" 	15162
+ "for" ,"free" 	14971
+ "of" , "new" 	14499
+ "to" ,"what" 	14405
+ "com","www" 	14388
+ "the" ,"how" 	14272
+ "to" , "you" 	14114
+ "the" , "at" 	13949
+ "the" , "by" 	13579
+ "of" ,"free" 	13362
+ "and" , "a" 	13360
+ "of" ,"what" 	13246
+ "a" , "with" 	13077
+ "in" ,"the" 	12938
+ "in" , "county" 	12878
+ "and" , "on" 	12618
+ "of" , "state" 	12135
+ "in" ,"what" 	12109
+ "in" , "on" 	12060
+ "of" , "county" 	11815
+ "of" , "is" 	11361
+ "in" , "with" 	11087
+ "the" , "with" 	10829
+ "in" , "is" 	10795
+ "to" , "with" 	10726
+ "to" , "my" 	10681
+"http" , ".com"	10527
+ "and" ,"the" 	10438
+ "a" , "you" 	10216
+ "to" , "by" 	10146
+"how" , "you" 	10103
+"free" , "pics"	10093
+ "for" , "on" 	9866
+ "and" , "with" 	9802
+ "to" , "is" 	9747
+ "of" , "school" 	9736
+ "on" ,"how" 	9638
+ "for" ,"how" 	9621
+ "of" ,"how" 	9502
+ "of" , "with" 	9166
+ "the" , "lyrics"	9147
+ "the" , "you" 	8948
+ "for" , "new" 	8885
+ "in" , "school" 	8769
+ "for" , "with" 	8565
+"new" , "state" 	8357
+ "the" ,"pictures" 	8216
+ "of" , "by" 	8116
+ "lyrics", "you" 	7989
+"how" , "is" 	7960
+ "games","yahoo" 	7729
+ "of" , "florida"	7659
+ "for" , "by" 	7548
+ "of" , "from" 	7246
+ "in" , "my" 	7243
+ "for" ,"what" 	7103
+ "and" ,"free" 	6784
+ "of" , "at" 	6713
+"new" , "city" 	6702
+ "in" , "city" 	6568
+ "for" , "is" 	6556
+"free" , "pictures"	6276
+ "in" , "you" 	6227
+ "to" ,"free" 	6148
+ "and" , "is" 	6110
+"how" , "my" 	5994
+ "of" ,"new" 	5953
+ "on" , "my" 	5891
+ "for" , "you" 	5826
+ "of" , "city" 	5729
+ "for" , "county" 	5591
+ "for" , "my" 	5553
+ "and" , "new" 	5537
+ "and" , "you" 	5487
+ "in" , "by" 	5466
+ "a" , "from" 	5397
+ "in" , "at" 	5008
+ "for" , "school" 	5003
+ "in" ,"free" 	4952
+"how" , "from" 	4861
+ "to" , "new" 	4843
+ "and" ,"how" 	4825
+ "in" , "high" 	4822
+ "in" ,"new" 	4790
+"how" , "with" 	4765
+ "the" , "new" 	4760
+"the" , "new" 	4748
+ "of" , "you" 	4746
+ "and" , "by" 	4704
+ "and" ,"what" 	4701
+ "of" , "my" 	4694
+ "for" , "florida"	4655
+ "and" , "lyrics"	4654
+ "county" , "school" 	4593
+"free" , "on" 	4495
+ "the" , "my" 	4424
+ "to" , "at" 	4385
+ "to" , "lyrics"	4345
+ "county" , "florida"	4325
+ "a" , "new" 	4288
+ "of" , "lyrics"	4266
+"the" , "by" 	4260
+ "a" , "by" 	4228
+ "on" ,"what" 	4214
+ "is" , "my" 	4094
+ "a" , "lyrics"	4045
+"what" , "you" 	4025
+ "in" ,"pictures" 	3982
+ "and" , "my" 	3968
+ "on" , "is" 	3862
+ "to" ,"the" 	3806
+ "on" , "you" 	3771
+ "a" , "at" 	3724
+ "for" ,"the" 	3719
+"the" , "lyrics"	3707
+ "and" , "from" 	3655
+ "and" ,"pictures" 	3622
+"the" , "at" 	3599
+ "a" , "my" 	3595
+ "on" , "with" 	3572
+ "in" , "from" 	3526
+ "of" ,"http" 	3464
+ "lyrics", "my" 	3453
+ "the" , "state" 	3378
+ "in" , "state" 	3366
+ "for" ,"new" 	3338
+ "and" , "county" 	3335
+ "with" , "you" 	3320
+ "for" , "at" 	3310
+ "of" , "high" 	3305
+"http" , "my" 	3304
+ "a" ,"the" 	3282
+"the" , "on" 	3230
+ "and" , "pictures"	3079
+ "in" , "lyrics"	3050
+ "and" ,"new" 	3009
+ "com","yahoo" 	2976
+ "new" , "city" 	2950
+ "and" , "school" 	2913
+ "the" ,"free" 	2899
+ "county" , "new" 	2872
+ "a" ,"http" 	2856
+ "by" , "you" 	2855
+ "and" , "at" 	2836
+ "is" , "you" 	2784
+ "for" , "high" 	2646
+ "the" ,"http" 	2626
+ ".com","my" 	2621
+"www" , ".com"	2613
+ "for" , "city" 	2518
+ "a" ,"pictures" 	2504
+ "of" ,"american" 	2491
+ "my" , "you" 	2489
+ "with" ,"what" 	2481
+ "of" , "&" 	2456
+ "on" , "by" 	2437
+ "the" , "city" 	2435
+ "and" , "state" 	2415
+ "for" , "state" 	2400
+ "the" , "school" 	2331
+"free" , "with" 	2307
+"the" , "is" 	2251
+ "for" , "from" 	2174
+ "with" , "my" 	2168
+ "on" , "lyrics"	2129
+ "and" , "high" 	2092
+ "and" ,"http" 	2081
+ "is" ,"my" 	2077
+ "on" , "from" 	2075
+ "and" , "city" 	2067
+ "in" , "&" 	2065
+"what" , "my" 	2015
+ "with" , "is" 	2005
+ "new" , "school" 	1959
+ "on" , "new" 	1938
+"http" , "com"	1901
+ "is" , "by" 	1870
+ "from" ,"pictures" 	1858
+ "and" , "florida"	1839
+ "for" , "lyrics"	1799
+ "lyrics", "by" 	1778
+ "on" ,"pictures" 	1732
+ "is" , "from" 	1728
+ "the" , "&" 	1686
+ "new" , "from" 	1647
+ "from" , "my" 	1639
+ "to" , "florida"	1600
+ "of" , "pictures"	1565
+ "the" , "pictures"	1549
+ "on" , "sale"	1545
+ "to" , "school" 	1533
+ "lyrics", "is" 	1531
+ "from" , "you" 	1515
+ "for" ,"http" 	1475
+ "with" ,"pictures" 	1444
+ "by" , "my" 	1405
+"how" , "at" 	1391
+ "on" , "at" 	1341
+ ".com","yahoo" 	1336
+ "and" , "sale"	1333
+"free" , "a" 	1329
+ "at" , "you" 	1322
+ "with" , "lyrics"	1320
+ "florida", "city" 	1311
+ "for" , "&" 	1282
+ "and" , "pics"	1273
+"the" , "from" 	1265
+ "new" ,"new" 	1259
+ "is" , "at" 	1249
+ "the" , "county" 	1226
+ "to" , "high" 	1218
+"how" , "new" 	1211
+"the" , "with" 	1210
+ "and" ,"american" 	1205
+ "county" , "high" 	1192
+"what" , "at" 	1188
+ "of" , ".com"	1175
+"what" , "from" 	1173
+ "to" , "state" 	1153
+ "lyrics", "at" 	1152
+ "in" ,"american" 	1152
+ "the" , "high" 	1143
+ "school" , "city" 	1138
+ "in" ,"http" 	1131
+ "a" , "school" 	1101
+ "new" , "state" 	1090
+"what" , "by" 	1088
+ "com","my" 	1086
+ "in" , "pictures"	1083
+ "to" , "city" 	1069
+"free" , "from" 	1057
+ "county" , "sale"	1053
+ "a" ,"my" 	1051
+ "school" , "state" 	1048
+ "with" , "pictures"	1045
+ "the" ,"new" 	1043
+ "the" , "florida"	1038
+"my" , "my" 	1028
+ "and" ,"my" 	1024
+"how" , "by" 	1015
+ "to" ,"http" 	1005
+ "the" , ".com"	994
+ "in" , "sale"	985
+ "new" , "with" 	985
+"the" , "city" 	975
+ "new" , "is" 	975
+ "of" , "sale"	967
+ "for" , "games"	957
+ "and" , "games"	956
+ "on" , "school" 	954
+"the" , "school" 	947
+ "at" , "my" 	932
+ "on" ,"new" 	928
+ "school" , "florida"	927
+ "new" , "at" 	927
+"new" , "school" 	922
+ "with" , "by" 	916
+ "for" ,"pictures" 	907
+ "lyrics","my" 	898
+"the" , "florida"	889
+"free" , "by" 	875
+"the" , "state" 	867
+ "with" , "from" 	866
+ "a" , "&" 	852
+ "the" ,"www" 	851
+"the" , "you" 	849
+ "to" ,"my" 	835
+ "new" , "high" 	828
+ "to" ,"pictures" 	817
+ "and" , ".com"	813
+"the" , "pictures"	805
+"free" , "my" 	803
+ "with" , "at" 	792
+"free" , ".com"	792
+ "lyrics","what" 	790
+ "a" , "state" 	771
+ "and" , "&" 	757
+ "of" , "com"	756
+ "on" , "high" 	747
+ "a" , "high" 	746
+ "to" , "&" 	739
+ "the" ,"my" 	735
+ "on" , "state" 	727
+ "to" , "county" 	719
+"the" , "&" 	715
+"http" , "county" 	706
+ "in" ,"my" 	705
+ "for" , ".com"	702
+ "by" , "from" 	702
+ "county" ,"new" 	686
+"the" , ".com"	682
+ "new" ,"what" 	681
+"free" , "school" 	680
+ "on" , "florida"	677
+ "school" , "at" 	665
+ "of" ,"www" 	663
+"new" , "high" 	663
+ "new" , "by" 	655
+ "in" , "pics"	652
+ "on" ,"http" 	645
+"free" , "lyrics"	643
+"http" , "new" 	639
+ ".com", "my" 	636
+"new" , "sale"	635
+"the" , "my" 	633
+ "new" , "&" 	629
+ "to" ,"new" 	626
+ "by" , "at" 	626
+"free" , "new" 	623
+ "the" , "pics"	609
+ "for" ,"american" 	594
+ "on" ,"my" 	589
+"free" , "you" 	588
+ "state" , "florida"	581
+ "the" , "com"	578
+ "on" , "city" 	573
+ "new" , "lyrics"	569
+ "at" , "high" 	562
+ "new" ,"pictures" 	561
+ "a" , ".com"	560
+ "on" , "county" 	559
+ "is" , "state" 	557
+ "with" , "high" 	557
+ "state" , "at" 	552
+"pictures" , "at" 	550
+ "a" , "florida"	544
+ "on" , "&" 	539
+ "in" , ".com"	537
+ "of" , "pics"	537
+ "on" , "games"	535
+ "to" , "pictures"	535
+"free" , "at" 	525
+ "city" , "high" 	523
+ "to" , "games"	516
+ "to" , ".com"	515
+ "state" , "high" 	515
+"what" , "state" 	511
+"new" , "florida"	507
+"new" , "&" 	503
+ "a" , "county" 	501
+ "of" , "games"	500
+ "and" , "com"	498
+ "pictures", "school" 	496
+"http" , "city" 	493
+ "pictures","my" 	490
+"http" , "state" 	487
+ "new" , "sale"	479
+ "of" ,"my" 	464
+ "florida", "at" 	459
+"http" , "at" 	456
+ "from" , "city" 	448
+"what" , "high" 	448
+"how" , "school" 	446
+"http" , "school" 	443
+ "new" , "you" 	441
+ "the" , "games"	430
+ "on" ,"american" 	426
+"free" , "county" 	418
+ "county" , "city" 	417
+"http" , "&" 	415
+ "on" , ".com"	414
+ "lyrics", "from" 	408
+ "a" , "city" 	407
+"the" , "county" 	402
+ "for" ,"my" 	401
+"http" , "high" 	401
+ "from" , "florida"	400
+ "at" , "city" 	398
+ "is" , "high" 	397
+"the" , "com"	397
+ "in" ,"www" 	396
+ "for" , "com"	387
+"how" , "high" 	381
+ "by" , "&" 	381
+ "from" , "at" 	379
+ "school" , ".com"	376
+ ".com","american" 	372
+ "with" , "school" 	371
+ "by" ,"my" 	368
+ "florida", "high" 	368
+ "by" , "city" 	363
+ "the" ,"american" 	358
+ "is" , "city" 	357
+"free" , "state" 	357
+ "school" , "from" 	350
+"http" , "is" 	349
+ "county" , "is" 	346
+ "from" , "high" 	344
+ "lyrics", "school" 	344
+ "for" , "pictures"	339
+"how" , "state" 	338
+"the" , "high" 	335
+ "on" , "pictures"	335
+ "county" , "&" 	334
+"how" , "lyrics"	332
+ "county" , "state" 	328
+"free" , "&" 	327
+ "to" , "sale"	322
+ "for" ,"www" 	321
+ "new" , "my" 	312
+ "with" ,"my" 	307
+ "with" , "&" 	307
+"free" , "com"	306
+ "state" , "from" 	303
+ "by" , "florida"	303
+"what" , "city" 	302
+ "county" , "from" 	302
+ "with" ,"new" 	297
+"free" , "high" 	295
+ "sale", "city" 	294
+ "is" , "school" 	290
+"www" , "my" 	289
+ "county" ,"what" 	289
+ "in" , "com"	288
+ "with" , "florida"	287
+"new" , "at" 	283
+ "county" , "with" 	282
+ "school" ,"what" 	277
+ "county" , "by" 	277
+ "a" , "sale"	275
+ "a" ,"www" 	267
+ "pictures","new" 	267
+ "county" , ".com"	267
+ "by" , "state" 	266
+ "with" , "state" 	265
+"http" , "by" 	265
+ "and" ,"www" 	264
+"pictures" , "florida"	260
+"http" , "you" 	258
+ "a" , "com"	257
+ "with" , "pics"	255
+ "at" , "&" 	255
+"the" , "games"	254
+ "by" ,"pictures" 	251
+"free" , "florida"	250
+"new" , "by" 	250
+ "with" , "city" 	250
+"new" , "games"	249
+ "pictures", "high" 	249
+ "school" ,"pictures" 	247
+"how" , "florida"	247
+ "pictures","american" 	243
+ "county" , "at" 	239
+ ".com", "city" 	237
+ "school" , "by" 	236
+ "new" ,"www" 	232
+ "new" ,"american" 	231
+ "on" , "pics"	231
+ "from" , "&" 	231
+ "a" , "pictures"	231
+ "to" , "com"	225
+ "is" , "florida"	223
+ "to" ,"www" 	222
+ "for" ,"yahoo" 	221
+ "the" , "sale"	220
+ "lyrics", "&" 	217
+ "by" , "high" 	215
+"http" , "with" 	211
+"http" , "from" 	208
+ "lyrics", "high" 	207
+ "a" ,"new" 	204
+ "and" ,"yahoo" 	203
+ "on" , "com"	202
+ "lyrics","new" 	201
+ "new" , "florida"	200
+"how" , "games"	198
+ "com", "my" 	198
+"http" , "games"	197
+ "state" , "city" 	195
+"www" , "is" 	194
+ "pictures", "by" 	193
+"my" , "at" 	193
+"my" , "florida"	193
+ "florida", "&" 	191
+ "with" , "sale"	188
+"what" , "florida"	186
+ "new" , "pictures"	184
+ "you" , "high" 	184
+ ".com", "at" 	183
+"how" , "pictures"	183
+"new" , "from" 	183
+ "com", "at" 	182
+"new" , "pics"	181
+ ".com", "you" 	181
+ "new" ,"my" 	180
+"pictures" , "city" 	178
+"my" , "you" 	176
+ "com","american" 	175
+ "you" , "&" 	174
+ "com", "school" 	169
+ "city" , "&" 	166
+ "pictures", "my" 	165
+ "to" ,"american" 	164
+ "by" , "games"	164
+ "state" , "my" 	163
+ "on" ,"www" 	163
+ "com","new" 	162
+ "state" , "&" 	162
+ "school" , "&" 	161
+ "county" ,"how" 	160
+"pictures" , "high" 	159
+ "lyrics", "city" 	158
+ "school" ,"american" 	157
+"my" , "from" 	153
+ "school" , "my" 	152
+ "is" , ".com"	148
+ "school" , "you" 	147
+"free" , "is" 	139
+ ".com", "state" 	139
+ "pictures", "from" 	138
+ "with" , ".com"	137
+"the" , "pics"	135
+ "pictures", "city" 	134
+"american" , "&" 	134
+ "com", "state" 	134
+ "state" ,"pictures" 	133
+"new" , ".com"	133
+ "pictures", "&" 	133
+ "a" , "pics"	132
+"how" , "&" 	132
+"the" , "sale"	131
+ "with" , "com"	127
+ "with" ,"american" 	127
+"how" , "sale"	126
+ "with" ,"yahoo" 	125
+ "my" , "pics"	124
+ "in" , "games"	124
+"american" , "at" 	123
+ "new" , ".com"	122
+ "is" , "&" 	122
+ "pictures", "at" 	120
+ "high" , "&" 	119
+ "school" , "games"	117
+ "sale", "&" 	117
+ "pictures","yahoo" 	116
+"my" , "pics"	113
+ "from" , "pics"	111
+"american" , "sale"	111
+ "my" , "high" 	110
+"free" , "city" 	109
+ "with" , "games"	109
+ "state" , "games"	108
+ "for" , "pics"	108
+ "state" , "sale"	106
+ "by" ,"american" 	105
+ "state" , "you" 	104
+"my" , "games"	102
+ "county" , "com"	101
+ ".com", "high" 	101
+ "a" , "games"	99
+ "county" , "pictures"	99
+"american" , "florida"	98
+ "lyrics","american" 	97
+ "school" , "pics"	97
+ "to" , "pics"	96
+ "pictures", "state" 	93
+ "city" , "you" 	93
+"free" , "sale"	93
+"www" , "school" 	91
+"http" , "florida"	89
+"how" , "city" 	89
+ "new" , "games"	86
+"what" , "&" 	84
+"pictures" , "my" 	84
+"www" , "state" 	84
+ "pics", "&" 	83
+ "my" , "&" 	82
+ "com", "city" 	80
+"http" , "pictures"	80
+"pictures" , "&" 	80
+ "new" , "com"	80
+ "high" , "pics"	74
+ "county" ,"www" 	74
+ "is" ,"pictures" 	73
+ "in" ,"yahoo" 	73
+ "pictures", "you" 	72
+"www" , "you" 	71
+ "com", "by" 	70
+"how" , ".com"	68
+ "com", "you" 	68
+"american" , "from" 	67
+"www" , "city" 	67
+ "at" , "pics"	66
+"new" , "is" 	66
+ "sale", "at" 	65
+ "com", "&" 	65
+ "pictures", "is" 	64
+ "new" , "pics"	64
+ "com", "high" 	64
+"www" , "high" 	63
+ "school" ,"my" 	62
+ ".com", "by" 	62
+ "com", "from" 	59
+ "florida", "you" 	58
+ "city" , "pics"	58
+ "a" ,"american" 	58
+ ".com", "&" 	58
+ "with" ,"www" 	57
+ "sale","yahoo" 	57
+ "games", "my" 	57
+ "county" ,"pictures" 	56
+ "school" , "sale"	56
+ "games", "&" 	55
+ "games", "you" 	52
+ "lyrics", "state" 	52
+ "com", "is" 	51
+"american" , "high" 	50
+ "is" , "sale"	50
+"http" , "pics"	49
+ ".com","what" 	49
+"my" , "high" 	47
+"www" , "games"	46
+ "on" ,"yahoo" 	45
+ "county" , "you" 	45
+"american" , "pics"	45
+ "sale","pictures" 	44
+ "of" ,"yahoo" 	44
+"american" , "games"	44
+ "my" , "city" 	43
+"new" , "you" 	42
+ "games", "at" 	42
+ ".com", "from" 	40
+"pictures" , "you" 	38
+ "pics","yahoo" 	38
+ "com","pictures" 	37
+"www" , "at" 	36
+ "to" ,"yahoo" 	36
+ "by" , "sale"	36
+ "sale", "from" 	36
+ "county" , "my" 	35
+"http" , "lyrics"	34
+"http" , "sale"	31
+ "the" ,"yahoo" 	30
+"new" , "my" 	29
+ "you" , "pics"	29
+ "florida", "my" 	29
+ "games","pictures" 	28
+"www" , "from" 	28
+ "state" , "pics"	28
+ "my" ,"yahoo" 	27
+ "county" ,"american" 	27
+ "by" , "pics"	26
+"how" , "pics"	25
+ "pictures","what" 	25
+ "is" ,"american" 	25
+ "sale", "you" 	25
+ "games", "high" 	25
+"my" , "&" 	24
+ "is" , "pics"	22
+"what" , "games"	22
+ "is" , "games"	21
+ "lyrics","pictures" 	21
+ "games", "from" 	20
+"american" , "state" 	20
+ "at" ,"yahoo" 	20
+ "new" ,"yahoo" 	19
+"www" , "by" 	19
+ "pictures","pictures" 	19
+ "county" , "lyrics"	18
+"american" , "city" 	18
+"yahoo" , "&" 	18
+ "sale", "high" 	18
+ "lyrics","yahoo" 	16
+ "county" , "pics"	15
+ "pictures","www" 	15
+ "sale", "my" 	14
+"www" , "florida"	14
+ "county" ,"my" 	14
+"www" , "&" 	13
+ "a" ,"yahoo" 	13
+"american" , "you" 	13
+ "high" ,"yahoo" 	13
+ "com","what" 	13
+ ".com","pictures" 	12
+"www" , "sale"	12
+"my" , "city" 	12
+"american" , "my" 	12
+"what" , "sale"	12
+"my" , "state" 	12
+"what" , "pics"	12
+ "by" ,"yahoo" 	10
+ "games", "city" 	10
+"how" , "com"	10
+ "city" ,"yahoo" 	9
+"my" , "sale"	6
+ "state" ,"yahoo" 	5
+ "county" , "games"	5
+ "lyrics","www" 	4
+ "county" ,"yahoo" 	3
+ "from" ,"yahoo" 	3
+ "you" ,"yahoo" 	2
+ "is" ,"yahoo" 	1
