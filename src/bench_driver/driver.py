@@ -7,7 +7,7 @@ from pyreuse import helpers
 from pyreuse.macros import *
 
 
-class ExperimentWikiSmall(Experiment):
+class ExperimentWiki(Experiment):
     def __init__(self):
         self._n_treatments = 1
         self._exp_name = "wikismall-trial-001"
@@ -36,6 +36,18 @@ class ExperimentWikiSmall(Experiment):
     def conf(self, i):
 
         conf = {
+            # Small wiki
+            # "work_dir": "/mnt/ssd/work-small-wiki",
+            # "download_url": "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2",
+            # "origin_doc_name": "enwiki-latest-pages-articles14.xml-p7697599p7744799",
+            # "decompress_cmd": "bunzip2 enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2",
+            # "index_doc_count": "*",
+            # "search_count": 5,
+            # "search_mem_size": None,
+            # "query_maker": "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker",
+            # "wiki_query_log_path": "/mnt/ssd/downloads/wiki_QueryLog",
+            # "wiki_query_count": 10000,
+
             # "work_dir": "/mnt/ssd/work-large-wiki",
             "work_dir": "/mnt/fsonloop/work-large-wiki",
             "download_url": "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles.xml.bz2",
@@ -43,7 +55,6 @@ class ExperimentWikiSmall(Experiment):
             "decompress_cmd": "bunzip2 enwiki-20171001-pages-articles.xml.bz2",
             "index_doc_count": "*",
             "search_count": 10000,
-            # "search_mem_size": 1024*MB * 2,
             "search_mem_size": None,
             "query_maker": "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker",
             "wiki_query_log_path": "/mnt/ssd/downloads/wiki_QueryLog",
@@ -129,7 +140,7 @@ class ExperimentWikiSmall(Experiment):
 
 
 def main():
-    exp = ExperimentWikiSmall()
+    exp = ExperimentWiki()
     exp.main()
 
 
