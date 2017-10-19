@@ -53,33 +53,21 @@ public class WikiQueryMaker extends AbstractQueryMaker implements QueryMaker {
     Analyzer anlzr= NewAnalyzerTask.createAnalyzer(config.get("analyzer",
         "org.apache.lucene.analysis.standard.StandardAnalyzer")); 
 
-    QueryParser qp = new QueryParser(DocMaker.BODY_FIELD,anlzr);
+    QueryParser qp = new QueryParser(DocMaker.BODY_FIELD, anlzr);
     ArrayList<Query> qq = new ArrayList<>();
-    Query q1 = new TermQuery(new Term(DocMaker.ID_FIELD,"doc2"));
-    //qq.add(q1);
-    Query q2 = new TermQuery(new Term(DocMaker.BODY_FIELD,"simple"));
-    //qq.add(q2);
-    BooleanQuery.Builder bq = new BooleanQuery.Builder();
-    //bq.add(q1,Occur.MUST);
-    //bq.add(q2,Occur.MUST);
-    //qq.add(bq.build());
-    //qq.add(qp.parse("\"open\" AND \"interest\""));
-    //qq.add(qp.parse("synthetic body"));
-    //qq.add(qp.parse("\"synthetic body\""));
-    //qq.add(qp.parse("synthetic text"));
-    //qq.add(qp.parse("\"synthetic text\""));
-    //qq.add(qp.parse("\"synthetic text\"~3"));
-    //qq.add(qp.parse("zoom*"));
-    //qq.add(qp.parse("synth*"));
 
     try {
-        //File file = new File("/mnt/ssd/text.txt");
-        File file = new File("/mnt/ssd/downloads/wiki_QueryLog");
+        String path = config.get("wiki.query.log.path", "");
+        System.out.println("Query Log: " + path);
+
+        int cnt = config.get("wiki.query.count", 10000);
+        System.out.println("Query Count: " + cnt);
+
+        File file = new File(path);
         FileReader fileReader = new FileReader(file);
         BufferedReader bufferedReader = new BufferedReader(fileReader);
         StringBuffer stringBuffer = new StringBuffer();
         String line;
-        int cnt = 100000;
         while ((line = bufferedReader.readLine()) != null && cnt != 0) {
             if (line.contains("&"))
                 continue;

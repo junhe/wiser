@@ -112,12 +112,15 @@ docs.file=%(docs)s
 #content.source=org.apache.lucene.benchmark.byTask.feeds.ReutersContentSource
 content.source=org.apache.lucene.benchmark.byTask.feeds.LineDocSource
 
-query.maker=org.apache.lucene.benchmark.byTask.feeds.SimpleQueryMaker
+# query.maker=org.apache.lucene.benchmark.byTask.feeds.SimpleQueryMaker
+query.maker=org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker
 # query.maker=org.apache.lucene.benchmark.byTask.feeds.ReutersQueryMaker
 
 # task at this depth or less would print when they start
 task.max.depth.log=2
 
+wiki.query.log.path=/mnt/ssd/downloads/wiki_QueryLog
+wiki.query.count=20000
 log.queries=false
 # -------------------------------------------------------------------------------------
 
