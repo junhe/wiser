@@ -54,7 +54,10 @@ class ExperimentWikiSmall(Experiment):
 
     def download(self):
         with helpers.cd(self.DOWNLOAD_DIR):
-            helpers.shcmd("wget -nc {}".format(self.download_url))
+            filename = self.download_url.split("/")[-1]
+            print "------------", filename
+            if not os.path.exists(filename):
+                helpers.shcmd("wget -nc {}".format(self.download_url))
 
             self.origin_doc_path = os.path.join(self.DOWNLOAD_DIR, self.origin_doc_name)
             if not os.path.exists(self.origin_doc_name):
