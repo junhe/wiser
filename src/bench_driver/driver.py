@@ -23,7 +23,6 @@ class ExperimentWikiSmall(Experiment):
         # self.search_count = 5
         # self.search_mem_size = None
 
-        # #there are 1520000 reconds
         # self.work_dir = "/mnt/ssd/work-medium-wiki"
         #self.work_dir = "/mnt/fsonloop/work-medium-wiki"
         # #helpers.shcmd("rm -rf " + os.path.join(self.work_dir, "index"))
@@ -34,15 +33,6 @@ class ExperimentWikiSmall(Experiment):
         # self.search_count =  100000
         # self.search_mem_size = None
 
-        # self.work_dir = "/mnt/ssd/work-large-wiki"
-        self.work_dir = "/mnt/fsonloop/work-large-wiki"
-        self.download_url = "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles.xml.bz2"
-        self.origin_doc_name = "enwiki-20171001-pages-articles.xml"
-        self.decompress_cmd = "bunzip2 enwiki-20171001-pages-articles.xml.bz2"
-        self.index_doc_count = "*"
-        self.search_count = 100
-        self.search_mem_size = 1024*MB * 2
-
     def conf(self, i):
 
         conf = {
@@ -52,8 +42,12 @@ class ExperimentWikiSmall(Experiment):
             "origin_doc_name": "enwiki-20171001-pages-articles.xml",
             "decompress_cmd": "bunzip2 enwiki-20171001-pages-articles.xml.bz2",
             "index_doc_count": "*",
-            "search_count": 100,
-            "search_mem_size": 1024*MB * 2,
+            "search_count": 10000,
+            # "search_mem_size": 1024*MB * 2,
+            "search_mem_size": None,
+            "query_maker": "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker",
+            "wiki_query_log_path": "/mnt/ssd/downloads/wiki_QueryLog",
+            "wiki_query_count": 10000,
         }
 
         return conf
@@ -115,7 +109,10 @@ class ExperimentWikiSmall(Experiment):
             algorithm_text = algs.REUTER_SEARCH(
                 docs_file = "/tmp/",
                 work_dir = conf['work_dir'],
-                search_count = conf['search_count']
+                search_count = conf['search_count'],
+                query_maker = conf['query_maker'],
+                wiki_query_log_path = conf['wiki_query_log_path'],
+                wiki_query_count = conf['wiki_query_count']
                 ),
             mem_size = conf['search_mem_size']
             )

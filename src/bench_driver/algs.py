@@ -83,7 +83,8 @@ RepSumByPrefRound MAddDocs
 
 
 
-def REUTER_SEARCH(docs_file, work_dir, search_count):
+def REUTER_SEARCH(docs_file, work_dir, search_count, query_maker,
+        wiki_query_log_path, wiki_query_count):
     text = """
 writer.version=4.0
 merge.factor=mrg:10:100:10:100:10:100:10:100
@@ -113,14 +114,16 @@ docs.file=%(docs)s
 content.source=org.apache.lucene.benchmark.byTask.feeds.LineDocSource
 
 # query.maker=org.apache.lucene.benchmark.byTask.feeds.SimpleQueryMaker
-query.maker=org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker
+# query.maker=org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker
+query.maker=%(query_maker)s
 # query.maker=org.apache.lucene.benchmark.byTask.feeds.ReutersQueryMaker
 
 # task at this depth or less would print when they start
 task.max.depth.log=2
 
-wiki.query.log.path=/mnt/ssd/downloads/wiki_QueryLog
-wiki.query.count=20000
+# wiki.query.log.path=/mnt/ssd/downloads/wiki_QueryLog
+wiki.query.log.path=%(wiki_query_log_path)s
+wiki.query.count=%(wiki_query_count)s
 log.queries=false
 # -------------------------------------------------------------------------------------
 
@@ -137,7 +140,9 @@ log.queries=false
 RepSumByNameRound
 RepSumByName
 RepSumByPrefRound MAddDocs
-"""% {'docs': docs_file, 'work_dir': work_dir, 'search_count': search_count}
+"""% {'docs': docs_file, 'work_dir': work_dir, 'search_count': search_count,
+        'query_maker': query_maker, 'wiki_query_log_path': wiki_query_log_path,
+        'wiki_query_count': wiki_query_count}
 
     return text
 
