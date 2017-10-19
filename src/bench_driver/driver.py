@@ -59,6 +59,15 @@ class ExperimentWikiSmall(Experiment):
         self.download(conf)
         self.create_line_doc(conf)
         self.create_index(conf)
+        self.prepare_wiki_query(conf)
+
+    def prepare_wiki_query(self, conf):
+        if conf['query_maker'].strip() == "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker" and \
+                os.path.exists(conf['wiki_query_log_path']) is False:
+            # we need to download wiki_log
+            dir_path = os.path.dirname(conf['wiki_query_log_path'])
+            with helpers.cd(dir_path):
+                helpers.shcmd("wget http://pages.cs.wisc.edu/~kanwu/querylog/wiki_QueryLog")
 
     def download(self, conf):
         with helpers.cd(self.DOWNLOAD_DIR):
