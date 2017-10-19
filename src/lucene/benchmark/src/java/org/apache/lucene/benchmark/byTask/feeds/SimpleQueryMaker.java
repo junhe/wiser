@@ -26,12 +26,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.benchmark.byTask.tasks.NewAnalyzerTask;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-
-
 import java.util.ArrayList;
 
 /**
@@ -52,43 +46,24 @@ public class SimpleQueryMaker extends AbstractQueryMaker implements QueryMaker {
     // analyzer (default is standard analyzer)
     Analyzer anlzr= NewAnalyzerTask.createAnalyzer(config.get("analyzer",
         "org.apache.lucene.analysis.standard.StandardAnalyzer")); 
-
+    
     QueryParser qp = new QueryParser(DocMaker.BODY_FIELD,anlzr);
     ArrayList<Query> qq = new ArrayList<>();
     Query q1 = new TermQuery(new Term(DocMaker.ID_FIELD,"doc2"));
-    //qq.add(q1);
+    qq.add(q1);
     Query q2 = new TermQuery(new Term(DocMaker.BODY_FIELD,"simple"));
-    //qq.add(q2);
+    qq.add(q2);
     BooleanQuery.Builder bq = new BooleanQuery.Builder();
-    //bq.add(q1,Occur.MUST);
-    //bq.add(q2,Occur.MUST);
-    //qq.add(bq.build());
-    //qq.add(qp.parse("\"open\" AND \"interest\""));
-    //qq.add(qp.parse("synthetic body"));
-    //qq.add(qp.parse("\"synthetic body\""));
-    //qq.add(qp.parse("synthetic text"));
-    //qq.add(qp.parse("\"synthetic text\""));
-    //qq.add(qp.parse("\"synthetic text\"~3"));
-    //qq.add(qp.parse("zoom*"));
-    //qq.add(qp.parse("synth*"));
-
-    try {
-        //File file = new File("/mnt/ssd/text.txt");
-        File file = new File("/mnt/ssd/downloads/wiki_QueryLog");
-        FileReader fileReader = new FileReader(file);
-        BufferedReader bufferedReader = new BufferedReader(fileReader);
-        StringBuffer stringBuffer = new StringBuffer();
-        String line;
-        int cnt = 10000;
-        while ((line = bufferedReader.readLine()) != null && cnt != 0) {
-            qq.add(qp.parse(line));
-            cnt--;
-        }
-        fileReader.close();
-    } catch (IOException e) {
-        e.printStackTrace();
-    }
-
+    bq.add(q1,Occur.MUST);
+    bq.add(q2,Occur.MUST);
+    qq.add(bq.build());
+    qq.add(qp.parse("synthetic body"));
+    qq.add(qp.parse("\"synthetic body\""));
+    qq.add(qp.parse("synthetic text"));
+    qq.add(qp.parse("\"synthetic text\""));
+    qq.add(qp.parse("\"synthetic text\"~3"));
+    qq.add(qp.parse("zoom*"));
+    qq.add(qp.parse("synth*"));
     return  qq.toArray(new Query[0]);
   }
 
