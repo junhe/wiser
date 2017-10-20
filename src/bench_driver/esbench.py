@@ -25,7 +25,8 @@ class QueryPool(object):
     def next_query(self):
         ret = self.queries[self.i]
         self.i = (self.i + 1) % self.n
-        return ret
+        # return ret
+        return ret.split()[0]
 
 
 class WikiClient(object):
@@ -35,6 +36,7 @@ class WikiClient(object):
     def search(self, query_string):
         body = {
             "_source": False,
+            "size": 0, # setting this to 0  will get 5x speedup
             "query": {
                 "query_string" : {
                     "fields" : ["text"],
@@ -57,7 +59,7 @@ class ExperimentEs(Experiment):
 
     def before(self):
         self.client = WikiClient()
-        self.query_pool =  QueryPool("/mnt/ssd/downloads/wiki_QueryLog", 1000)
+        self.query_pool =  QueryPool("/mnt/ssd/downloads/wiki_QueryLog", 10000)
 
     def beforeEach(self, conf):
         self.start_time = datetime.datetime.now()
