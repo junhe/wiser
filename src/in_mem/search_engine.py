@@ -3,23 +3,25 @@ import sys
 import re
 import readline
 
+
+class PostingList(object):
+    def __init__(self):
+        self.postinglist = {}
+
+    def addPosting(self, docID, frequency):
+        if docID in self.postinglist:
+            self.postinglist[docID] += frequency
+        else:
+            self.postinglist[docID] = frequency
+
+    def dump(self):
+        return self.postinglist
+
+
 class Index(object):
 
     # Main data structure: dic(item->PostingList)   (dictionary is used for one convenient hash table)
     #                      PostingList: list or directory of Posting(docID, frequency)
-    class PostingList(object):
-        def __init__(self):
-            self.postinglist = {}
-        
-        def addPosting(self, docID, frequency):
-            if docID in self.postinglist:
-                self.postinglist[docID] += frequency
-            else:
-                self.postinglist[docID] = frequency
-
-        def dump(self):
-            return self.postinglist
-    
 
     # Core function: build_index(), from all files in the input_dir
 
@@ -43,18 +45,16 @@ class Index(object):
             # store doc_id->doc_name
             self.doc[self.doc_num] = fname
             self.doc_num += 1
-            
+
             cur_file = open(input_dir+fname)
             text = str(cur_file.read())
             for item in text.split():
                 # update invertedindex
                 if item not in self.invertedindex:
-                    self.invertedindex[item] = self.PostingList()
+                    self.invertedindex[item] = PostingList()
                 self.invertedindex[item].addPosting(self.doc_num-1, 1)
             cur_file.close()
         print('========== finished indexing')
-
-
 
 
     # Tool functions: dump; postings(get a PostingList of an item); docID_2_docname(transform docID to docname)
@@ -95,13 +95,14 @@ class Searcher(object):
 
         return self.index.docID_2_docname(result)
 
+
 if __name__=='__main__':
     # print help
     if len(sys.argv)!=2:
         print('========== Usage: python search_engine.py [index_dir]')
         exit(1)
     input_dir = sys.argv[1]
-    
+
     # create index
     in_mem_index = Index(input_dir)
     # in_mem_index.dump()
