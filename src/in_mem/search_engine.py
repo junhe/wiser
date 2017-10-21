@@ -6,13 +6,31 @@ import readline
 
 class PostingList(object):
     def __init__(self):
+        """
+        postinglist
+        key: doc_id, value: { }
+        for example:
+        posting_list = {
+            88: {'frequency': 3, 'page_rank': 83},
+            ...
+        }
+        """
         self.postinglist = {}
 
-    def addPosting(self, docID, frequency):
-        if docID in self.postinglist:
-            self.postinglist[docID] += frequency
+    def update_posting(self, docID, payload_dict):
+        """
+        If docID does not exist, it will be added.
+        """
+        if self.postinglist.has_key(docID):
+            self.postinglist[docID].update(payload_dict)
         else:
-            self.postinglist[docID] = frequency
+            self.postinglist[docID] = payload_dict
+
+    def get_docID_set(self):
+        return self.postinglist.keys()
+
+    def get_payload_dict(self, docID):
+        return self.postinglist[docID]
 
     def dump(self):
         return self.postinglist
@@ -52,7 +70,7 @@ class Index(object):
                 # update invertedindex
                 if item not in self.invertedindex:
                     self.invertedindex[item] = PostingList()
-                self.invertedindex[item].addPosting(self.doc_num-1, 1)
+                self.invertedindex[item].add_posting(self.doc_num-1, 1)
             cur_file.close()
         print('========== finished indexing')
 
