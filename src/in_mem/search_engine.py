@@ -36,7 +36,37 @@ class PostingList(object):
         return self.postinglist
 
 
-class Index(object):
+class DocStore(object):
+    """
+    This is where the documents are stored. Documents are stored as dictionaries
+    """
+    def __init__(self):
+        self.docs = {}
+        self.next_doc_id = 0
+
+    def add_doc(self, doc_dict):
+        doc_id = self.next_doc_id
+        self.next_doc_id += 1
+
+        self.docs[doc_id] = doc_dict
+
+        return doc_id
+
+    def get_doc(self, doc_id):
+        return self.docs[doc_id]
+
+
+
+class MemIndex(object):
+    def __init__(self):
+        self.inverted_index = {}
+
+    def add_doc(self, docID):
+        pass
+
+
+
+class OldIndex(object):
 
     # Main data structure: dic(item->PostingList)   (dictionary is used for one convenient hash table)
     #                      PostingList: list or directory of Posting(docID, frequency)
