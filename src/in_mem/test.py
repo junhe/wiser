@@ -9,6 +9,7 @@ class TestPostingList(unittest.TestCase):
 
         payload = pl.get_payload_dict(8)
         self.assertEquals(payload['frequency'], 18)
+        self.assertEquals(pl.get_docID_set(), set([8]))
 
 
 class TestDocStore(unittest.TestCase):
@@ -19,6 +20,15 @@ class TestDocStore(unittest.TestCase):
 
         doc1 = store.get_doc(doc_id)
         self.assertDictEqual(doc0, doc1)
+
+class TestIndex(unittest.TestCase):
+    def test(self):
+        index = Index()
+        index.add_doc(7, ['hello', 'world', 'good', 'bad'])
+        postinglist = index.get_postinglist('hello')
+
+        self.assertDictEqual(postinglist.get_payload_dict(7), {})
+        self.assertEqual(index.get_doc_id_set('hello'), set([7]))
 
 
 if __name__ == '__main__':

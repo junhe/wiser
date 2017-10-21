@@ -27,7 +27,7 @@ class PostingList(object):
             self.postinglist[docID] = payload_dict
 
     def get_docID_set(self):
-        return self.postinglist.keys()
+        return set(self.postinglist.keys())
 
     def get_payload_dict(self, docID):
         return self.postinglist[docID]
@@ -56,14 +56,30 @@ class DocStore(object):
         return self.docs[doc_id]
 
 
-
-class MemIndex(object):
+class Index(object):
     def __init__(self):
+        """
+        The key in inverted_index is the term, the value is class PostingList.
+        """
         self.inverted_index = {}
 
-    def add_doc(self, docID):
-        pass
+    def add_doc(self, docID, terms):
+        """
+        terms is a list of terms, for example, ['hello', 'world', 'good', 'bad']
+        """
+        for term in terms:
+            if self.inverted_index.has_key(term):
+                postinglist = self.inverted_index[term]
+            else:
+                postinglist = PostingList()
+                self.inverted_index[term] = postinglist
+            postinglist.update_posting(docID, {})
 
+    def get_postinglist(self, term):
+        return self.inverted_index.get(term, None)
+
+    def get_doc_id_set(self, term):
+        return self.inverted_index[term].get_docID_set()
 
 
 class OldIndex(object):
