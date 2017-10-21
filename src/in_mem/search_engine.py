@@ -17,20 +17,20 @@ class PostingList(object):
         """
         self.postinglist = {}
 
-    def update_posting(self, docID, payload_dict):
+    def update_posting(self, doc_id, payload_dict):
         """
-        If docID does not exist, it will be added.
+        If doc_id does not exist, it will be added.
         """
-        if self.postinglist.has_key(docID):
-            self.postinglist[docID].update(payload_dict)
+        if self.postinglist.has_key(doc_id):
+            self.postinglist[doc_id].update(payload_dict)
         else:
-            self.postinglist[docID] = payload_dict
+            self.postinglist[doc_id] = payload_dict
 
-    def get_docID_set(self):
+    def get_doc_id_set(self):
         return set(self.postinglist.keys())
 
-    def get_payload_dict(self, docID):
-        return self.postinglist[docID]
+    def get_payload_dict(self, doc_id):
+        return self.postinglist[doc_id]
 
     def dump(self):
         return self.postinglist
@@ -63,7 +63,7 @@ class Index(object):
         """
         self.inverted_index = {}
 
-    def add_doc(self, docID, terms):
+    def add_doc(self, doc_id, terms):
         """
         terms is a list of terms, for example, ['hello', 'world', 'good', 'bad']
         """
@@ -73,19 +73,19 @@ class Index(object):
             else:
                 postinglist = PostingList()
                 self.inverted_index[term] = postinglist
-            postinglist.update_posting(docID, {})
+            postinglist.update_posting(doc_id, {})
 
     def get_postinglist(self, term):
         return self.inverted_index.get(term, None)
 
     def get_doc_id_set(self, term):
-        return self.inverted_index[term].get_docID_set()
+        return self.inverted_index[term].get_doc_id_set()
 
 
 class OldIndex(object):
 
     # Main data structure: dic(item->PostingList)   (dictionary is used for one convenient hash table)
-    #                      PostingList: list or directory of Posting(docID, frequency)
+    #                      PostingList: list or directory of Posting(doc_id, frequency)
 
     # Core function: build_index(), from all files in the input_dir
 
@@ -121,7 +121,7 @@ class OldIndex(object):
         print('========== finished indexing')
 
 
-    # Tool functions: dump; postings(get a PostingList of an item); docID_2_docname(transform docID to docname)
+    # Tool functions: dump; postings(get a PostingList of an item); doc_id_2_docname(transform doc_id to docname)
     def dump(self):
         print('========== dumping inverted index:')
         print('overall files: ' + str(self.doc_num))
@@ -132,10 +132,10 @@ class OldIndex(object):
 
     def postings(self, item):
         if item in self.invertedindex:
-            return self.invertedindex[item].dump().keys()  # only return docID
+            return self.invertedindex[item].dump().keys()  # only return doc_id
         return {}
 
-    def docID_2_docname(self, doc_set):
+    def doc_id_2_docname(self, doc_set):
         return map(lambda x:self.doc[x], doc_set)
 
 class Searcher(object):
@@ -157,7 +157,7 @@ class Searcher(object):
                 flag = False
             result = result & set(self.index.postings(item))
 
-        return self.index.docID_2_docname(result)
+        return self.index.doc_id_2_docname(result)
 
 
 if __name__=='__main__':

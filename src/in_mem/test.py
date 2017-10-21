@@ -9,7 +9,7 @@ class TestPostingList(unittest.TestCase):
 
         payload = pl.get_payload_dict(8)
         self.assertEquals(payload['frequency'], 18)
-        self.assertEquals(pl.get_docID_set(), set([8]))
+        self.assertEquals(pl.get_doc_id_set(), set([8]))
 
 
 class TestDocStore(unittest.TestCase):
