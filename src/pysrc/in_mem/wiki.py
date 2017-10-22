@@ -2,6 +2,7 @@
 Indexing and searching wikipedia
 """
 
+import datetime
 from utils.expbase import Experiment
 from .search_engine import *
 
@@ -69,10 +70,10 @@ class ExperimentWiki(Experiment):
 
             self.engine.index_writer.add_doc(doc_dict)
 
-        # self.engine.index.display()
+        self.engine.index.display()
 
     def beforeEach(self, conf):
-        pass
+        self.starttime = datetime.datetime.now()
 
     def treatment(self, conf):
         for i in range(self.query_count):
@@ -80,6 +81,10 @@ class ExperimentWiki(Experiment):
             doc_ids = self.engine.searcher.search([query], "AND")
             print doc_ids
 
+    def afterEach(self, conf):
+        self.endtime = datetime.datetime.now()
+        duration = (self.endtime - self.starttime).total_seconds()
+        print "Duration:", duration
 
 def main():
     exp = ExperimentWiki()

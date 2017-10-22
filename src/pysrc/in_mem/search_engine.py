@@ -4,6 +4,8 @@ import re
 import readline
 import nltk
 
+import pattern.en as en
+
 
 class PostingList(object):
     def __init__(self):
@@ -133,7 +135,6 @@ class IndexWriter(object):
 
         for k, v in doc_dict.items():
             terms = self.tokenizer.tokenize(str(v))
-            terms = [term.lower() for term in terms]
             terms = list(set(terms))
             self.index.add_doc(doc_id, terms)
 
@@ -149,18 +150,23 @@ class Tokenizer(object):
         return text.lower().split()
 
 
+def lemma(words):
+    return [en.lemma(word) for word in words]
+
+
 class NltkTokenizer(object):
     def __init__(self):
         pass
 
     def tokenize(self, text):
         text = self.remove_non_alpha(text)
-        return nltk.word_tokenize(text)
+        text = text.lower()
+        terms = nltk.word_tokenize(text)
+        return lemma(terms)
 
     def remove_non_alpha(self, text):
         text = re.sub("[^\w]", " ",  text)
         return text
-
 
 
 class Searcher(object):
