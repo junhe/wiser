@@ -7,6 +7,7 @@ import pickle
 
 from utils.expbase import Experiment
 from .search_engine import *
+from pyreuse import helpers
 
 class QueryPool(object):
     def __init__(self, query_path, n):
@@ -72,6 +73,7 @@ class ExperimentWiki(Experiment):
         self.doc_count = 100
         self.query_count = 100
         self.engine_path = "/mnt/ssd/search-engine-cache"
+        helpers.shcmd("rm -f " + self.engine_path)
         self.read_engine_cache = True
         self.update_engine_cache = True
 
@@ -89,6 +91,7 @@ class ExperimentWiki(Experiment):
         self.engine.index.display()
 
     def build_engine(self):
+        # doc_pool = LineDocPool("./in_mem/testdata/linedoc-sample")
         doc_pool = LineDocPool("/mnt/ssd/work-large-wiki/linedoc")
         engine = Engine()
 
@@ -97,6 +100,8 @@ class ExperimentWiki(Experiment):
                 break
 
             engine.index_writer.add_doc(doc_dict)
+            if i % 10 == 0:
+                print "Progress: {}/{}".format(i, self.doc_count), datetime.datetime.now()
 
         return engine
 
@@ -111,12 +116,12 @@ class ExperimentWiki(Experiment):
         for i in range(self.query_count):
             query = self.query_pool.next_query()
             doc_ids = self.engine.searcher.search([query], "AND")
-            print doc_ids
 
     def afterEach(self, conf):
         self.endtime = datetime.datetime.now()
         duration = (self.endtime - self.starttime).total_seconds()
         print "Duration:", duration
+        print "Query per second:", self.query_count / duration
 
 
 def main():
