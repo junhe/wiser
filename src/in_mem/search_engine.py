@@ -113,6 +113,54 @@ class Index(object):
         return list(intersected_docs)
 
 
+
+class IndexWriter(object):
+    def __init__(self, index, doc_store, tokenizer):
+        self.index = index
+        self.doc_store = doc_store
+        self.tokenizer = tokenizer
+
+    def add_doc(self, doc_dict):
+        """
+        Index all the fields of the doc_dict
+        """
+        doc_id = self.doc_store.add_doc(doc_dict)
+
+        for k, v in doc_dict.items():
+            terms = self.tokenizer.tokenize(str(v))
+            self.index.add_doc(doc_id, terms)
+
+
+class Tokenizer(object):
+    """
+    Use this naive tokenizer for now. Third-party tokenizers are available.
+    """
+    def __init__(self):
+        pass
+
+    def tokenize(self, text):
+        return text.lower().split()
+
+
+class Searcher(object):
+    def __init__(self, index, doc_store):
+        self.index = index
+        self.doc_store = doc_store
+
+    def search(self, terms, operator):
+        terms = [term.lower() for term in terms]
+        doc_ids = self.index.search(terms, operator)
+
+        return doc_ids
+
+    def retrieve_docs(self, doc_ids):
+        docs = []
+        for doc_id in doc_ids:
+            doc = self.doc_store.get_doc(doc_id)
+            docs.append(doc)
+
+        return docs
+
 class OldIndex(object):
 
     # Main data structure: dic(item->PostingList)   (dictionary is used for one convenient hash table)
@@ -169,29 +217,9 @@ class OldIndex(object):
         return map(lambda x:self.doc[x], doc_set)
 
 
-class IndexWriter(object):
-    def __init__(self, index, doc_store, tokenizer):
-        self.index = index
-        self.doc_store = doc_store
-        self.tokenizer = tokenizer
-
-    def add_doc(self, doc_dict):
-        pass
 
 
-class Tokenizer(object):
-    """
-    Use this naive tokenizer for now. Third-party tokenizers are available.
-    """
-    def __init__(self):
-        pass
-
-    def tokenize(self, text):
-        text = text.replace(".,!", "")
-        return text.split()
-
-
-class Searcher(object):
+class OldSearcher(object):
 
     # Init: bind searcher to an in-mem index
     def __init__(self, index):

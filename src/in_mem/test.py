@@ -41,11 +41,36 @@ class TestIndex(unittest.TestCase):
         self.assertSetEqual(set(index.search(["hello", "world"], 'AND')), set([7]))
         self.assertListEqual(index.search(["iisjxjk"], 'AND'), [])
 
+
 class TestTokenizer(unittest.TestCase):
     def test(self):
         tokenizer = Tokenizer()
         self.assertEqual(tokenizer.tokenize("hello world!"), ['hello', 'world!'])
 
 
+class TestIndexWriter(unittest.TestCase):
+    def test(self):
+        index = Index()
+        doc_store = DocStore()
+        tokenizer = Tokenizer()
+
+        index_writer = IndexWriter(index, doc_store, tokenizer)
+        index_writer.add_doc({
+            "title": "This is my title",
+            "text": "This is my body"})
+
+        self.assertEqual(len(index.inverted_index), 5)
+        self.assertEqual(len(doc_store.docs), 1)
+
+        searcher = Searcher(index, doc_store)
+
+        doc_ids = searcher.search(['This', 'is'], "AND")
+        self.assertEqual(len(doc_ids), 1)
+
+        doc_ids = searcher.search(['This', 'is', 'xxx'], "AND")
+        self.assertEqual(len(doc_ids), 0)
+
+
 if __name__ == '__main__':
     unittest.main()
+
