@@ -161,84 +161,19 @@ class Searcher(object):
 
         return docs
 
-class OldIndex(object):
 
-    # Main data structure: dic(item->PostingList)   (dictionary is used for one convenient hash table)
-    #                      PostingList: list or directory of Posting(doc_id, frequency)
+def build_index_of_directory(index_writer, input_dir):
+    for fname in os.listdir(input_dir):
+        cur_file = open(os.path.join(input_dir, fname))
+        text = str(cur_file.read())
+        doc_dict = {
+                "filename": fname,
+                "text": text
+                }
 
-    # Core function: build_index(), from all files in the input_dir
+        index_writer.add_doc(doc_dict)
 
-    def __init__(self, input_dir):
-        self.input_dir = input_dir
-        self.init_index()
-        self.build_index()
-
-    def init_index(self):
-        # create a hash table (term->PostingList(list[posting]))
-        self.invertedindex = {}
-        # create a hash table (doc_id -> doc_name)
-        self.doc = {}
-        # doc counts
-        self.doc_num = 0
-
-    def build_index(self):
-        print('========== building index from' + self.input_dir)
-        # for each term in each doc, update the hash table
-        for fname in os.listdir(input_dir):
-            # store doc_id->doc_name
-            self.doc[self.doc_num] = fname
-            self.doc_num += 1
-
-            cur_file = open(input_dir+fname)
-            text = str(cur_file.read())
-            for item in text.split():
-                # update invertedindex
-                if item not in self.invertedindex:
-                    self.invertedindex[item] = PostingList()
-                self.invertedindex[item].add_posting(self.doc_num-1, 1)
-            cur_file.close()
-        print('========== finished indexing')
-
-    # Tool functions: dump; postings(get a PostingList of an item); doc_id_2_docname(transform doc_id to docname)
-    def dump(self):
-        print('========== dumping inverted index:')
-        print('overall files: ' + str(self.doc_num))
-        print('overall items: ' + str(len(self.invertedindex)))
-        for postinglist in self.invertedindex.iteritems():
-            print (postinglist[0] + ': ')
-            print ('\t' + str(postinglist[1].dump()))
-
-    def postings(self, item):
-        if item in self.invertedindex:
-            return self.invertedindex[item].dump().keys()  # only return doc_id
-        return {}
-
-    def doc_id_2_docname(self, doc_set):
-        return map(lambda x:self.doc[x], doc_set)
-
-
-
-
-class OldSearcher(object):
-
-    # Init: bind searcher to an in-mem index
-    def __init__(self, index):
-        self.index = index
-
-
-    # Main function: query AND logic  -> return list of docname
-    def searchAND(self, phrase):
-        items = list(set(phrase.split()))     #simple analysis
-        print('querying '+ str(items))
-
-        flag = True
-        for item in items:
-            if flag:
-                result = set(self.index.postings(item))
-                flag = False
-            result = result & set(self.index.postings(item))
-
-        return self.index.doc_id_2_docname(result)
+        cur_file.close()
 
 
 if __name__=='__main__':
@@ -248,14 +183,14 @@ if __name__=='__main__':
         exit(1)
     input_dir = sys.argv[1]
 
-    # create index
-    in_mem_index = Index(input_dir)
-    # in_mem_index.dump()
+    index = Index()
+    doc_store = DocStore()
+    tokenizer = Tokenizer()
 
+    index_writer = IndexWriter(index, doc_store, tokenizer)
+    searcher = Searcher(index, doc_store)
 
-    # create searcher
-    in_mem_searcher = Searcher(in_mem_index)
-
+    build_index_of_directory(index_writer, input_dir)
 
     # interactive query
     while(True):
@@ -263,5 +198,7 @@ if __name__=='__main__':
         query = raw_input('Prompt ("stop" to quit): ')
         if query == 'stop' or query == 'quit':
             exit(0)
-        print('in_files: ' + str(in_mem_searcher.searchAND(query)))
+        doc_ids = searcher.search([query], "AND")
+        docs = searcher.retrieve_docs(doc_ids)
+        print docs
 
