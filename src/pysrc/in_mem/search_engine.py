@@ -190,7 +190,7 @@ class Engine(object):
     def __init__(self):
         self.index = Index()
         self.doc_store = DocStore()
-        self.tokenizer = Tokenizer()
+        self.tokenizer = NltkTokenizer()
 
         self.index_writer = IndexWriter(self.index, self.doc_store, self.tokenizer)
         self.searcher = Searcher(self.index, self.doc_store)
