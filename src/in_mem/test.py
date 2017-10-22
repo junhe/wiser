@@ -41,6 +41,11 @@ class TestIndex(unittest.TestCase):
         self.assertSetEqual(set(index.search(["hello", "world"], 'AND')), set([7]))
         self.assertListEqual(index.search(["iisjxjk"], 'AND'), [])
 
+class TestTokenizer(unittest.TestCase):
+    def test(self):
+        tokenizer = Tokenizer()
+        self.assertEqual(tokenizer.tokenize("hello world!"), ['hello', 'world!'])
+
 
 if __name__ == '__main__':
     unittest.main()

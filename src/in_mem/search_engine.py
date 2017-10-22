@@ -151,7 +151,6 @@ class OldIndex(object):
             cur_file.close()
         print('========== finished indexing')
 
-
     # Tool functions: dump; postings(get a PostingList of an item); doc_id_2_docname(transform doc_id to docname)
     def dump(self):
         print('========== dumping inverted index:')
@@ -168,6 +167,28 @@ class OldIndex(object):
 
     def doc_id_2_docname(self, doc_set):
         return map(lambda x:self.doc[x], doc_set)
+
+
+class IndexWriter(object):
+    def __init__(self, index, doc_store, tokenizer):
+        self.index = index
+        self.doc_store = doc_store
+        self.tokenizer = tokenizer
+
+    def add_doc(self, doc_dict):
+        pass
+
+
+class Tokenizer(object):
+    """
+    Use this naive tokenizer for now. Third-party tokenizers are available.
+    """
+    def __init__(self):
+        pass
+
+    def tokenize(self, text):
+        text = text.replace(".,!", "")
+        return text.split()
 
 
 class Searcher(object):
