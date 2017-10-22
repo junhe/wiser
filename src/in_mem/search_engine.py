@@ -65,7 +65,8 @@ class Index(object):
 
     def add_doc(self, doc_id, terms):
         """
-        terms is a list of terms, for example, ['hello', 'world', 'good', 'bad']
+        terms is a list of terms that are in a document,
+        for example, ['hello', 'world', 'good', 'bad']
         """
         for term in terms:
             if self.inverted_index.has_key(term):
@@ -79,7 +80,37 @@ class Index(object):
         return self.inverted_index.get(term, None)
 
     def get_doc_id_set(self, term):
-        return self.inverted_index[term].get_doc_id_set()
+        # Use try block to reduce dictionary search
+        if self.inverted_index.has_key(term):
+            return self.inverted_index[term].get_doc_id_set()
+        else:
+            return set([])
+
+    def search(self, terms, operator):
+        """
+        example:
+            terms = ["hello", "world"]
+            operator = 'AND'
+
+        it returns a list of document IDs that matches the search query
+        """
+        if operator != "AND":
+            raise NotImplementedError("We only support AND operator at this moment")
+
+        if operator == "AND":
+            return self.search_and(terms)
+
+    def search_and(self, terms):
+        doc_id_sets = []
+        for term in terms:
+            doc_id_set = self.get_doc_id_set(term)
+            doc_id_sets.append(doc_id_set)
+
+        if len(doc_id_sets) == 0:
+            return []
+
+        intersected_docs = reduce(lambda x, y: x & y, doc_id_sets)
+        return list(intersected_docs)
 
 
 class OldIndex(object):
@@ -137,6 +168,7 @@ class OldIndex(object):
 
     def doc_id_2_docname(self, doc_set):
         return map(lambda x:self.doc[x], doc_set)
+
 
 class Searcher(object):
 

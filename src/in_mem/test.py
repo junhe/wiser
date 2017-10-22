@@ -29,6 +29,17 @@ class TestIndex(unittest.TestCase):
 
         self.assertDictEqual(postinglist.get_payload_dict(7), {})
         self.assertEqual(index.get_doc_id_set('hello'), set([7]))
+        self.assertEqual(index.get_doc_id_set('helloxxx'), set())
+
+    def test_search(self):
+        index = Index()
+        index.add_doc(7, ['hello', 'world', 'good', 'bad'])
+        index.add_doc(8, ['good', 'bad', 'ok', 'now'])
+
+        self.assertListEqual(index.search(["ok"], 'AND'), [8])
+        self.assertSetEqual(set(index.search(["good"], 'AND')), set([7, 8]))
+        self.assertSetEqual(set(index.search(["hello", "world"], 'AND')), set([7]))
+        self.assertListEqual(index.search(["iisjxjk"], 'AND'), [])
 
 
 if __name__ == '__main__':
