@@ -133,6 +133,8 @@ class IndexWriter(object):
 
         for k, v in doc_dict.items():
             terms = self.tokenizer.tokenize(str(v))
+            terms = [term.lower() for term in terms]
+            terms = list(set(terms))
             self.index.add_doc(doc_id, terms)
 
 
