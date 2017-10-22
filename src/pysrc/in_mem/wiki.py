@@ -3,6 +3,8 @@ Indexing and searching wikipedia
 """
 
 import datetime
+import pickle
+
 from utils.expbase import Experiment
 from .search_engine import *
 
@@ -51,26 +53,56 @@ class LineDocPool(object):
         return {k:v for k,v in zip(self.col_names, items)}
 
 
+def save_engine(engine, path):
+    fd = open(path, "w")
+    pickle.dump(engine, fd)
+    fd.close()
+
+
+def load_engine(path):
+    fd = open(path)
+    return pickle.load(fd)
+
+
 class ExperimentWiki(Experiment):
     def __init__(self):
         self._n_treatments = 1
         self._exp_name = "default-exp-name"
 
-        self.doc_count = 10
+        self.doc_count = 100
         self.query_count = 100
+        self.engine_path = "/mnt/ssd/search-engine-cache"
+        self.read_engine_cache = True
+        self.update_engine_cache = True
 
-    def before(self):
-        self.query_pool = QueryPool("/mnt/ssd/downloads/wiki_QueryLog", self.query_count)
-        self.doc_pool = LineDocPool("/mnt/ssd/work-large-wiki/linedoc")
-        self.engine = Engine()
+    def setup_engine(self):
+        if os.path.exists(self.engine_path):
+            print "Loading engine from cache"
+            self.engine = load_engine(self.engine_path)
+        else:
+            print "Building new engine..."
+            self.engine = self.build_engine()
+            if self.update_engine_cache:
+                print "Updating engine cache"
+                save_engine(self.engine, self.engine_path)
 
-        for i, doc_dict in enumerate(self.doc_pool.doc_iterator()):
+        self.engine.index.display()
+
+    def build_engine(self):
+        doc_pool = LineDocPool("/mnt/ssd/work-large-wiki/linedoc")
+        engine = Engine()
+
+        for i, doc_dict in enumerate(doc_pool.doc_iterator()):
             if i == self.doc_count:
                 break
 
-            self.engine.index_writer.add_doc(doc_dict)
+            engine.index_writer.add_doc(doc_dict)
 
-        self.engine.index.display()
+        return engine
+
+    def before(self):
+        self.query_pool = QueryPool("/mnt/ssd/downloads/wiki_QueryLog", self.query_count)
+        self.setup_engine()
 
     def beforeEach(self, conf):
         self.starttime = datetime.datetime.now()
@@ -85,6 +117,7 @@ class ExperimentWiki(Experiment):
         self.endtime = datetime.datetime.now()
         duration = (self.endtime - self.starttime).total_seconds()
         print "Duration:", duration
+
 
 def main():
     exp = ExperimentWiki()

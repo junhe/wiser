@@ -1,4 +1,5 @@
 import unittest
+import pickle
 
 from search_engine import *
 
@@ -20,6 +21,7 @@ class TestDocStore(unittest.TestCase):
 
         doc1 = store.get_doc(doc_id)
         self.assertDictEqual(doc0, doc1)
+
 
 class TestIndex(unittest.TestCase):
     def test(self):
@@ -76,6 +78,17 @@ class TestIndexWriter(unittest.TestCase):
 
         doc_ids = searcher.search(['This', 'is', 'xxx'], "AND")
         self.assertEqual(len(doc_ids), 0)
+
+
+class TestPickling(unittest.TestCase):
+    def test_pickling(self):
+        terms = ['hello', 'world', 'good', 'bad']
+        index = Index()
+        index.add_doc(7, terms)
+        stream = pickle.dumps(index)
+
+        index2 = pickle.loads(stream)
+        self.assertSetEqual(set(index2.inverted_index.keys()), set(terms))
 
 
 if __name__ == '__main__':
