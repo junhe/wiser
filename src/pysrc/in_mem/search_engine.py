@@ -2,6 +2,7 @@ import os
 import sys
 import re
 import readline
+import nltk
 
 
 class PostingList(object):
@@ -144,6 +145,20 @@ class Tokenizer(object):
 
     def tokenize(self, text):
         return text.lower().split()
+
+
+class NltkTokenizer(object):
+    def __init__(self):
+        pass
+
+    def tokenize(self, text):
+        text = self.remove_non_alpha(text)
+        return nltk.word_tokenize(text)
+
+    def remove_non_alpha(self, text):
+        text = re.sub("[^\w]", " ",  text)
+        return text
+
 
 
 class Searcher(object):

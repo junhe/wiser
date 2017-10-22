@@ -48,6 +48,13 @@ class TestTokenizer(unittest.TestCase):
         self.assertEqual(tokenizer.tokenize("hello world!"), ['hello', 'world!'])
 
 
+class TestNltkTokenizer(unittest.TestCase):
+    def test(self):
+        tokenizer = NltkTokenizer()
+        self.assertEqual(tokenizer.tokenize("hello world!"), ['hello', 'world'])
+        self.assertEqual(tokenizer.tokenize("{{hello{}\n world!][..//"), ['hello', 'world'])
+
+
 class TestIndexWriter(unittest.TestCase):
     def test(self):
         index = Index()
