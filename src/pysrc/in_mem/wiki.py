@@ -2,6 +2,9 @@
 Indexing and searching wikipedia
 """
 
+from utils.expbase import Experiment
+from .search_engine import *
+
 class QueryPool(object):
     def __init__(self, query_path, n):
         self.fd = open(query_path, 'r')
@@ -45,5 +48,45 @@ class LineDocPool(object):
     def line_to_dict(self, line):
         items = line.split("\t")
         return {k:v for k,v in zip(self.col_names, items)}
+
+
+class ExperimentWiki(Experiment):
+    def __init__(self):
+        self._n_treatments = 1
+        self._exp_name = "default-exp-name"
+
+        self.doc_count = 10
+        self.query_count = 100
+
+    def before(self):
+        self.query_pool = QueryPool("/mnt/ssd/downloads/wiki_QueryLog", self.query_count)
+        self.doc_pool = LineDocPool("/mnt/ssd/work-large-wiki/linedoc")
+        self.engine = Engine()
+
+        for i, doc_dict in enumerate(self.doc_pool.doc_iterator()):
+            if i == self.doc_count:
+                break
+
+            self.engine.index_writer.add_doc(doc_dict)
+
+        # self.engine.index.display()
+
+    def beforeEach(self, conf):
+        pass
+
+    def treatment(self, conf):
+        for i in range(self.query_count):
+            query = self.query_pool.next_query()
+            doc_ids = self.engine.searcher.search([query], "AND")
+            print doc_ids
+
+
+def main():
+    exp = ExperimentWiki()
+    exp.main()
+
+
+if __name__ == '__main__':
+    main()
 
 

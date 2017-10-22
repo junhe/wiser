@@ -112,6 +112,10 @@ class Index(object):
         intersected_docs = reduce(lambda x, y: x & y, doc_id_sets)
         return list(intersected_docs)
 
+    def display(self):
+        for term, postinglist in self.inverted_index.items():
+            print term, '------>', postinglist.dump()
+
 
 
 class IndexWriter(object):
@@ -160,5 +164,18 @@ class Searcher(object):
             docs.append(doc)
 
         return docs
+
+
+class Engine(object):
+    """
+    It initialize all related objects for convenience.
+    """
+    def __init__(self):
+        self.index = Index()
+        self.doc_store = DocStore()
+        self.tokenizer = Tokenizer()
+
+        self.index_writer = IndexWriter(self.index, self.doc_store, self.tokenizer)
+        self.searcher = Searcher(self.index, self.doc_store)
 
 
