@@ -65,50 +65,67 @@ def load_engine(path):
     return pickle.load(fd)
 
 
+def build_engine(doc_count, line_doc_path):
+    """
+    This function supports two types of line docs:
+        1. line doc produced by Lucene benchmark
+        2. line doc with the "terms" column
+    """
+    doc_pool = LineDocPool(line_doc_path)
+    engine = Engine()
+
+    if 'terms' in doc_pool.col_names:
+        with_terms = True
+    else:
+        with_terms = False
+
+    start = datetime.datetime.now()
+    for i, doc_dict in enumerate(doc_pool.doc_iterator()):
+        if i == doc_count:
+            break
+
+        if with_terms is True:
+            terms = doc_dict['terms'].split(",")
+            del doc_dict['terms']
+            engine.index_writer.add_doc_with_terms(doc_dict, terms)
+        else:
+            engine.index_writer.add_doc(doc_dict)
+
+        if i % 100 == 0:
+            duration  = (datetime.datetime.now() - start).total_seconds()
+            print "Progress: {}/{}".format(i, doc_count), \
+                    'Duration:', duration, \
+                    'Speed:', round(i / duration), \
+                    datetime.datetime.now()
+
+    return engine
+
+
 class ExperimentWiki(Experiment):
     def __init__(self):
         self._n_treatments = 1
         self._exp_name = "default-exp-name"
 
-        self.doc_count = 10000000
-        self.query_count = 1000
-        self.engine_path = "/mnt/ssd/search-engine-cache"
-        helpers.shcmd("rm -f " + self.engine_path)
-        self.read_engine_cache = True
-        self.update_engine_cache = True
+        self.doc_count = 300000
+        self.query_count = 10000
+        self.engine_cache_path = "/mnt/ssd/search-engine-cache"
+        # helpers.shcmd("rm -f " + self.engine_cache_path)
+        self.read_engine_cache = False
+        self.update_engine_cache = False
 
     def setup_engine(self):
-        if os.path.exists(self.engine_path):
+        if self.read_engine_cache is True and os.path.exists(self.engine_cache_path):
             print "Loading engine from cache"
-            self.engine = load_engine(self.engine_path)
+            self.engine = load_engine(self.engine_cache_path)
         else:
             print "Building new engine..."
-            self.engine = self.build_engine()
+            self.engine = build_engine(self.doc_count, "/mnt/ssd/work-large-wiki/linedoc-with-tokens")
             if self.update_engine_cache:
                 print "Updating engine cache"
-                save_engine(self.engine, self.engine_path)
+                save_engine(self.engine, self.engine_cache_path)
+        print "Got the engine :)"
 
         # self.engine.index.display()
-
-    def build_engine(self):
-        # doc_pool = LineDocPool("./in_mem/testdata/linedoc-sample")
-        doc_pool = LineDocPool("/mnt/ssd/work-large-wiki/linedoc")
-        engine = Engine()
-
-        start = datetime.datetime.now()
-        for i, doc_dict in enumerate(doc_pool.doc_iterator()):
-            if i == self.doc_count:
-                break
-
-            engine.index_writer.add_doc(doc_dict)
-            if i % 10 == 0:
-                duration  = (datetime.datetime.now() - start).total_seconds()
-                print "Progress: {}/{}".format(i, self.doc_count), \
-                        'Duration:', duration, \
-                        'Speed:', round(i / duration), \
-                        datetime.datetime.now()
-
-        return engine
 
     def before(self):
         self.query_pool = QueryPool("/mnt/ssd/downloads/wiki_QueryLog", self.query_count)

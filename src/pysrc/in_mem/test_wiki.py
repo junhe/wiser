@@ -3,8 +3,6 @@ import os, sys
 
 from wiki import *
 
-def get_script_path():
-    return os.path.dirname(os.path.realpath(sys.argv[0]))
 
 class TestLineDocPool(unittest.TestCase):
     def setUp(self):
@@ -39,6 +37,16 @@ class TestLineDocPool(unittest.TestCase):
 
         for doc in docs:
             self.assertSetEqual(set(doc.keys()), set(["doctitle", "docdate", "body"]))
+
+
+class TestBuildingEngine(unittest.TestCase):
+    def test(self):
+        engine = build_engine(1, "./in_mem/testdata/linedoc-with-tokens-sample")
+        # engine.index.display()
+        doc_ids = engine.searcher.search(['anarchism'], "AND")
+        self.assertEqual(len(doc_ids), 1)
+
+
 
 
 if __name__ == '__main__':
