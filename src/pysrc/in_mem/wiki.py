@@ -104,38 +104,42 @@ def build_engine(doc_count, line_doc_path):
 class ExperimentWiki(Experiment):
     def __init__(self):
         self._n_treatments = 1
-        self._exp_name = "default-exp-name"
+        self._exp_name = "iter-doc-count"
 
-        self.doc_count = 300000
-        self.query_count = 10000
         self.engine_cache_path = "/mnt/ssd/search-engine-cache"
         # helpers.shcmd("rm -f " + self.engine_cache_path)
         self.read_engine_cache = False
         self.update_engine_cache = False
 
-    def setup_engine(self):
+    def setup_engine(self, conf):
         if self.read_engine_cache is True and os.path.exists(self.engine_cache_path):
             print "Loading engine from cache"
             self.engine = load_engine(self.engine_cache_path)
         else:
             print "Building new engine..."
-            self.engine = build_engine(self.doc_count, "/mnt/ssd/work-large-wiki/linedoc-with-tokens")
+            self.engine = build_engine(conf['doc_count'], "/mnt/ssd/work-large-wiki/linedoc-with-tokens")
             if self.update_engine_cache:
                 print "Updating engine cache"
                 save_engine(self.engine, self.engine_cache_path)
         print "Got the engine :)"
 
-        # self.engine.index.display()
+    def conf(self, i):
+        # return {'doc_count': 10**(i+3),
+        return {'doc_count': 10**(i+1),
+                'query_count': 10000
+                }
 
     def before(self):
-        self.query_pool = QueryPool("/mnt/ssd/downloads/wiki_QueryLog", self.query_count)
-        self.setup_engine()
+        self.result_table = []
 
     def beforeEach(self, conf):
+        self.query_pool = QueryPool("/mnt/ssd/downloads/wiki_QueryLog", conf['query_count'])
+        self.setup_engine(conf)
+
         self.starttime = datetime.datetime.now()
 
     def treatment(self, conf):
-        for i in range(self.query_count):
+        for i in range(conf['query_count']):
             query = self.query_pool.next_query()
             doc_ids = self.engine.searcher.search([query], "AND")
 
@@ -143,7 +147,20 @@ class ExperimentWiki(Experiment):
         self.endtime = datetime.datetime.now()
         duration = (self.endtime - self.starttime).total_seconds()
         print "Duration:", duration
-        print "Query per second:", self.query_count / duration
+        query_per_sec = conf['query_count'] / duration
+        print "Query per second:", query_per_sec
+        d = {
+            "duration": duration,
+            "query_per_sec": query_per_sec,
+            }
+        d.update(conf)
+
+        self.result_table.append(d)
+
+    def after(self):
+        print self.result_table
+        perf_path = os.path.join(self._subexpdir, "perf.txt")
+        helpers.table_to_file(self.result_table, perf_path, width=0)
 
 
 def preprocess():
