@@ -70,8 +70,8 @@ class ExperimentWiki(Experiment):
         self._n_treatments = 1
         self._exp_name = "default-exp-name"
 
-        self.doc_count = 100
-        self.query_count = 100
+        self.doc_count = 10000000
+        self.query_count = 1000
         self.engine_path = "/mnt/ssd/search-engine-cache"
         helpers.shcmd("rm -f " + self.engine_path)
         self.read_engine_cache = True
@@ -88,20 +88,25 @@ class ExperimentWiki(Experiment):
                 print "Updating engine cache"
                 save_engine(self.engine, self.engine_path)
 
-        self.engine.index.display()
+        # self.engine.index.display()
 
     def build_engine(self):
         # doc_pool = LineDocPool("./in_mem/testdata/linedoc-sample")
         doc_pool = LineDocPool("/mnt/ssd/work-large-wiki/linedoc")
         engine = Engine()
 
+        start = datetime.datetime.now()
         for i, doc_dict in enumerate(doc_pool.doc_iterator()):
             if i == self.doc_count:
                 break
 
             engine.index_writer.add_doc(doc_dict)
             if i % 10 == 0:
-                print "Progress: {}/{}".format(i, self.doc_count), datetime.datetime.now()
+                duration  = (datetime.datetime.now() - start).total_seconds()
+                print "Progress: {}/{}".format(i, self.doc_count), \
+                        'Duration:', duration, \
+                        'Speed:', round(i / duration), \
+                        datetime.datetime.now()
 
         return engine
 
@@ -124,9 +129,50 @@ class ExperimentWiki(Experiment):
         print "Query per second:", self.query_count / duration
 
 
+def preprocess():
+    pool = LineDocPool("/mnt/ssd/work-large-wiki/linedoc")
+    tokenizer = NltkTokenizer()
+
+    out_f = open("/mnt/ssd/work-large-wiki/linedoc-with-tokens", "w")
+    out_f.write("FIELDS_HEADER_INDICATOR###      doctitle        docdate body terms\n")
+
+    cnt = 0
+    for doc_dict in pool.doc_iterator():
+        doc_terms = []
+        for k, v in doc_dict.items():
+            terms = tokenizer.tokenize(str(v))
+            doc_terms.extend(terms)
+        doc_terms = list(set(doc_terms))
+        doc_terms = ",".join(doc_terms)
+        # line_items = [doc_dict["doctitle"], doc_dict["docdate"], doc_dict["body"], doc_terms]
+        # line = doc_dict["doctitle"] + "\t" + doc_dict["docdate"] + "\t" + \
+                # doc_dict["body"] + "\t" + doc_terms
+        out_f.write(doc_dict["doctitle"])
+        out_f.write("\t")
+        out_f.write(doc_dict["docdate"])
+        out_f.write("\t")
+        out_f.write(doc_dict["body"].strip())
+        out_f.write("\t")
+        out_f.write(doc_terms)
+        out_f.write("\n")
+        cnt += 1
+
+        if cnt % 100 == 0:
+            print cnt
+
+    out_f.close()
+
+
 def main():
-    exp = ExperimentWiki()
-    exp.main()
+    if len(sys.argv) == 1:
+        exp = ExperimentWiki()
+        exp.main()
+    else:
+        task = sys.argv[1]
+        if task == "preprocess":
+            preprocess()
+        else:
+            print 'task {} not supported'.format(task)
 
 
 if __name__ == '__main__':
