@@ -138,6 +138,13 @@ class IndexWriter(object):
             terms = list(set(terms))
             self.index.add_doc(doc_id, terms)
 
+    def add_doc_with_terms(self, doc_dict, terms):
+        """
+        terms are the precomputed terms of doc_dict
+        """
+        doc_id = self.doc_store.add_doc(doc_dict)
+        self.index.add_doc(doc_id, terms)
+
 
 class Tokenizer(object):
     """

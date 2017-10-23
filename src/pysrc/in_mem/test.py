@@ -79,6 +79,31 @@ class TestIndexWriter(unittest.TestCase):
         doc_ids = searcher.search(['This', 'is', 'xxx'], "AND")
         self.assertEqual(len(doc_ids), 0)
 
+    def test_add_doc_with_terms(self):
+        index = Index()
+        doc_store = DocStore()
+        tokenizer = Tokenizer()
+
+        index_writer = IndexWriter(index, doc_store, tokenizer)
+        index_writer.add_doc_with_terms(
+                doc_dict ={
+                    "title": "This is my title",
+                    "text": "This is my body",
+                },
+                terms = ['this', 'is', 'my', 'title', 'body']
+            )
+
+        self.assertEqual(len(index.inverted_index), 5)
+        self.assertEqual(len(doc_store.docs), 1)
+
+        searcher = Searcher(index, doc_store)
+
+        doc_ids = searcher.search(['this', 'is'], "AND")
+        self.assertEqual(len(doc_ids), 1)
+
+        doc_ids = searcher.search(['this', 'is', 'xxx'], "AND")
+        self.assertEqual(len(doc_ids), 0)
+
 
 class TestPickling(unittest.TestCase):
     def test_pickling(self):
