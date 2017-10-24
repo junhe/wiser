@@ -9,7 +9,7 @@ class QueryPool(object):
             query = line.strip()
 
             query = query.replace("&language=en", " ")
-            query = re.sub("[^\w]", " ",  query)
+            # query = re.sub("[^\w]", " ",  query)
             # query = query.replace("AND", " ")
             # format: "hello world"
             yield query.strip()
@@ -20,7 +20,7 @@ def main():
     pool = QueryPool("/mnt/ssd/downloads/wiki_QueryLog")
     out = open("/mnt/ssd/downloads/wiki_QueryLog.clean", "w")
 
-    for query in pool.query_iter():
+    for i, query in enumerate(pool.query_iter()):
         out.write(query + "\n")
 
     out.close()
