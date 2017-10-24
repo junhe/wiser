@@ -7,6 +7,9 @@ test:
 preprocess:
 	python -m in_mem.wiki preprocess
 
+cleanup_query:
+	python -m tools.cleanup_query_log
+
 update_requirements_txt:
 	pip install pipreqs
 	pipreqs ./
