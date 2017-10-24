@@ -1,6 +1,9 @@
 wiki:
 	python -m in_mem.wiki
 
+lucene_driver:
+	python -m bench_driver.driver
+
 test:
 	python -m unittest discover -s ./ -v -p '*test*.py' 
 

@@ -8,7 +8,9 @@ class QueryPool(object):
         for line in self.fd:
             query = line.strip()
 
-            query = query.replace("&language=en", " ")
+            # It seems a \" is missing before &language=en
+            query = query.replace("&language=en", "\"")
+
             # query = re.sub("[^\w]", " ",  query)
             # query = query.replace("AND", " ")
             # format: "hello world"

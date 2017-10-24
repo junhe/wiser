@@ -9,8 +9,8 @@ from pyreuse.macros import *
 
 class ExperimentWiki(Experiment):
     def __init__(self):
-        self._n_treatments = 1
-        self._exp_name = "wikismall-trial-001"
+        self._n_treatments = 3
+        self._exp_name = "wikipedia-lucene-001"
 
         self.DOWNLOAD_DIR = "/mnt/ssd/downloads"
 
@@ -41,24 +41,26 @@ class ExperimentWiki(Experiment):
             # "download_url": "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2",
             # "origin_doc_name": "enwiki-latest-pages-articles14.xml-p7697599p7744799",
             # "decompress_cmd": "bunzip2 enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2",
-            # "index_doc_count": "*",
-            # "search_count": 5,
+            # "index_doc_count": "1000",
+            # "search_count": 100000,
             # "search_mem_size": None,
             # "query_maker": "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker",
-            # "wiki_query_log_path": "/mnt/ssd/downloads/wiki_QueryLog",
+            # "wiki_query_log_path": "/mnt/ssd/downloads/wiki_QueryLog.clean",
             # "wiki_query_count": 10000,
 
-            # "work_dir": "/mnt/ssd/work-large-wiki",
-            "work_dir": "/mnt/fsonloop/work-large-wiki",
+            "work_dir": "/mnt/ssd/work-large-wiki-tmp",
+            # "work_dir": "/mnt/fsonloop/work-large-wiki",
+            "force_indexing": True,
             "download_url": "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles.xml.bz2",
             "origin_doc_name": "enwiki-20171001-pages-articles.xml",
             "decompress_cmd": "bunzip2 enwiki-20171001-pages-articles.xml.bz2",
-            "index_doc_count": "*",
-            "search_count": 10000,
+            "index_doc_count": 10**(i+3),
+            "line_doc_path": "/mnt/ssd/work-large-wiki/linedoc",
+            "search_count": 100000,
             "search_mem_size": None,
             "query_maker": "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker",
-            "wiki_query_log_path": "/mnt/ssd/downloads/wiki_QueryLog",
-            "wiki_query_count": 10000,
+            "wiki_query_log_path": "/mnt/ssd/downloads/wiki_QueryLog.clean",
+            "wiki_query_count": 100000,
         }
 
         return conf
@@ -84,7 +86,7 @@ class ExperimentWiki(Experiment):
         with helpers.cd(self.DOWNLOAD_DIR):
             filename = conf['download_url'].split("/")[-1]
             print "------------", filename
-            if not os.path.exists(filename):
+            if not os.path.exists(filename) or not os.path.exists(conf['origin_doc_name']):
                 helpers.shcmd("wget -nc {}".format(conf['download_url']))
 
             self.origin_doc_path = os.path.join(self.DOWNLOAD_DIR, conf['origin_doc_name'])
@@ -92,25 +94,28 @@ class ExperimentWiki(Experiment):
                 helpers.shcmd(conf['decompress_cmd'])
 
     def create_line_doc(self, conf):
-        self.line_file_out = os.path.join(conf['work_dir'], "linedoc")
-
         # skip if exists
-        if os.path.exists(self.line_file_out):
+        if os.path.exists(conf['line_doc_path']):
             return
 
         benchrun = BenchRun(algs.CREATE_LINE_DOC(
             docs_file = self.origin_doc_path,
-            line_file_out = self.line_file_out
+            line_file_out = conf['line_doc_path']
             ))
         benchrun.run()
 
     def create_index(self, conf):
         # skip if exists
-        if os.path.exists(os.path.join(conf['work_dir'], 'index')):
+        index_path = os.path.join(conf['work_dir'], 'index')
+
+        if conf['force_indexing'] is True:
+            helpers.shcmd("rm -rf {}".format(index_path))
+
+        if os.path.exists(index_path):
             return
 
         benchrun = BenchRun(algs.INDEX_LINE_DOC(
-            docs_file = self.line_file_out,
+            docs_file = conf['line_doc_path'],
             work_dir = conf['work_dir'],
             index_doc_count = conf['index_doc_count']
             ))
