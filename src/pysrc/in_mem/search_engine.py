@@ -107,6 +107,9 @@ class Index(object):
         doc_id_sets = []
         for term in terms:
             doc_id_set = self.get_doc_id_set(term)
+            if len(doc_id_set) == 0:
+                return []
+
             doc_id_sets.append(doc_id_set)
 
         if len(doc_id_sets) == 0:

@@ -28,10 +28,14 @@ class QueryPool(object):
         self.i = 0
 
     def next_query(self):
-        ret = self.queries[self.i]
+        query = self.queries[self.i]
         self.i = (self.i + 1) % self.n
-        # return ret
-        return ret.split()[0]
+
+        query = query.replace("&language=en", " ")
+        query = re.sub("[^\w]", " ",  query)
+        query = query.replace("AND", " ")
+        # format: "hello world"
+        return query
 
 
 class LineDocPool(object):
@@ -103,8 +107,8 @@ def build_engine(doc_count, line_doc_path):
 
 class ExperimentWiki(Experiment):
     def __init__(self):
-        self._n_treatments = 1
-        self._exp_name = "iter-doc-count"
+        self._n_treatments = 3
+        self._exp_name = "iter-doc-count-008"
 
         self.engine_cache_path = "/mnt/ssd/search-engine-cache"
         # helpers.shcmd("rm -f " + self.engine_cache_path)
@@ -124,24 +128,27 @@ class ExperimentWiki(Experiment):
         print "Got the engine :)"
 
     def conf(self, i):
-        # return {'doc_count': 10**(i+3),
-        return {'doc_count': 10**(i+1),
-                'query_count': 10000
+        return {'doc_count': 10**(i+3),
+                'query_count': 100000
                 }
 
     def before(self):
-        self.result_table = []
+        pass
 
     def beforeEach(self, conf):
         self.query_pool = QueryPool("/mnt/ssd/downloads/wiki_QueryLog", conf['query_count'])
         self.setup_engine(conf)
+        # self.engine.index.display()
 
         self.starttime = datetime.datetime.now()
 
     def treatment(self, conf):
         for i in range(conf['query_count']):
             query = self.query_pool.next_query()
-            doc_ids = self.engine.searcher.search([query], "AND")
+            doc_ids = self.engine.searcher.search(query.split(), "AND")
+            # print i, len(doc_ids), "-"
+            # if len(doc_ids) > 0:
+                # print doc_ids
 
     def afterEach(self, conf):
         self.endtime = datetime.datetime.now()
@@ -155,12 +162,12 @@ class ExperimentWiki(Experiment):
             }
         d.update(conf)
 
-        self.result_table.append(d)
-
-    def after(self):
-        print self.result_table
         perf_path = os.path.join(self._subexpdir, "perf.txt")
-        helpers.table_to_file(self.result_table, perf_path, width=0)
+        print 'writing to', perf_path
+        helpers.table_to_file([d], perf_path, width=0)
+
+        config_path = os.path.join(self._subexpdir, "config.json")
+        helpers.shcmd("touch " + config_path)
 
 
 def preprocess():
