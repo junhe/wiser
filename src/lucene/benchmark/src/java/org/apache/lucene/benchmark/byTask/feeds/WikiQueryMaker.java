@@ -69,8 +69,6 @@ public class WikiQueryMaker extends AbstractQueryMaker implements QueryMaker {
         StringBuffer stringBuffer = new StringBuffer();
         String line;
         while ((line = bufferedReader.readLine()) != null && cnt != 0) {
-            if (line.contains("&"))
-                continue;
             qq.add(qp.parse(line));
             cnt--;
         }
