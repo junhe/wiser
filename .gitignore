@@ -19,3 +19,7 @@
 *.tar.gz
 *.rar
 
+*.pyc
+
+# c-tag files for VIM
+tags
