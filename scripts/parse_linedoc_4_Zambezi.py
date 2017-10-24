@@ -10,7 +10,9 @@ def do_parse(linedoc, output):
     for line in linedoc:
         items = line.split("\t")
         count += 1
-        output.write(str(count) + '\t' + str(zip(col_names, items)[2]) + '\n')
+        terms = zip(col_names, items)[3][1]
+        terms = terms.replace(',', ' ')
+        output.write(str(count) + '\t' + terms + '\n')
  
 
 

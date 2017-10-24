@@ -11,9 +11,12 @@ def do_parse(linedoc, output):
         output.write('<DOC>\n')
         items = line.split("\t")
         count += 1
+        terms = zip(col_names, items)[3][1]
+        terms = terms.replace(',', ' ')
+
         output.write('<DOCNO> ' + str(count) + ' </DOCNO>\n')
         output.write('<TEXT>\n')
-        output.write(str(zip(col_names, items)[2]) + '\n')
+        output.write(terms + '\n')
         output.write('</TEXT>\n')
         output.write('</DOC>\n')
 
