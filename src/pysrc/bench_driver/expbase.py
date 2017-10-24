@@ -94,7 +94,7 @@ class BenchRun(object):
 
     def _run(self):
         with cd(self.bench_dir):
-            cmd = "ant run-task -Dtask.alg={}".format(self.alg_path)
+            cmd = "ant run-task -Dtask.alg={} -Dtask.mem=64G".format(self.alg_path)
 
             if self.mem_size is None:
                 shcmd(cmd)
