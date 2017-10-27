@@ -7,6 +7,9 @@ lucene_driver:
 test:
 	python -m unittest discover -s ./ -v -p '*test*.py' 
 
+redisearch:
+	python -m bench_driver.redisearch_bench
+
 preprocess:
 	python -m in_mem.wiki preprocess
 
