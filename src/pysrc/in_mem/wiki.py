@@ -8,36 +8,7 @@ import pickle
 from utils.expbase import Experiment
 from .search_engine import *
 from pyreuse import helpers
-from utils.utils import LineDocPool
-
-
-class QueryPool(object):
-    def __init__(self, query_path, n):
-        self.fd = open(query_path, 'r')
-        self.n = n
-        # self.queries = self.fd.readlines(n)
-        self.queries = []
-
-        while True:
-            line = self.fd.readline()
-            if line == "":
-                break
-
-            self.queries.append(line)
-            n -= 1
-            if n == 0:
-                break
-        self.i = 0
-
-    def next_query(self):
-        query = self.queries[self.i]
-        self.i = (self.i + 1) % self.n
-
-        query = query.replace("&language=en", " ")
-        query = re.sub("[^\w]", " ",  query)
-        query = query.replace("AND", " ")
-        # format: "hello world"
-        return query
+from utils.utils import LineDocPool, QueryPool
 
 
 
