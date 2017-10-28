@@ -10,6 +10,9 @@ test:
 test_esbench:
 	python -m bench_driver.test_esbench
 
+esbench:
+	python -m bench_driver.esbench
+
 redisearch:
 	python -m bench_driver.redisearch_bench
 
