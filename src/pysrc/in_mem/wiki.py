@@ -62,7 +62,7 @@ def build_engine(doc_count, line_doc_path):
 class ExperimentWiki(Experiment):
     def __init__(self):
         self._n_treatments = 3
-        self._exp_name = "iter-doc-count-008"
+        self._exp_name = "pyQQ-001"
 
         self.engine_cache_path = "/mnt/ssd/search-engine-cache"
         # helpers.shcmd("rm -f " + self.engine_cache_path)
@@ -75,7 +75,8 @@ class ExperimentWiki(Experiment):
             self.engine = load_engine(self.engine_cache_path)
         else:
             print "Building new engine..."
-            self.engine = build_engine(conf['doc_count'], "/mnt/ssd/work-large-wiki/linedoc-with-tokens")
+            # self.engine = build_engine(conf['doc_count'], "/mnt/ssd/work-large-wiki/linedoc-with-tokens")
+            self.engine = build_engine(conf['doc_count'], "/mnt/ssd/downloads/linedoc_tokenized")
             if self.update_engine_cache:
                 print "Updating engine cache"
                 save_engine(self.engine, self.engine_cache_path)

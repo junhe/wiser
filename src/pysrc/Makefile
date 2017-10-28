@@ -7,6 +7,9 @@ lucene_driver:
 test:
 	python -m unittest discover -s ./ -v -p '*test*.py' 
 
+test_esbench:
+	python -m bench_driver.test_esbench
+
 redisearch:
 	python -m bench_driver.redisearch_bench
 

@@ -2,9 +2,11 @@ import pprint
 import datetime
 
 from elasticsearch import Elasticsearch
-from expbase import Experiment
 
-class QueryPool(object):
+from expbase import Experiment
+from utils.utils import LineDocPool, QueryPool
+
+class QueryPoolOLD(object):
     def __init__(self, query_path, n):
         self.fd = open(query_path, 'r')
         self.n = n
@@ -32,28 +34,51 @@ class QueryPool(object):
 class WikiClient(object):
     def __init__(self):
         self.es_client = Elasticsearch()
+        self.index_name = "wiki2"
 
     def search(self, query_string):
         body = {
             "_source": False,
-            "size": 0, # setting this to 0  will get 5x speedup
+            # "size": 0, # setting this to 0  will get 5x speedup
             "query": {
                 "query_string" : {
-                    "fields" : ["text"],
+                    "fields" : ["body"],
                     "query" : query_string
                 }
             }
         }
 
         response = self.es_client.search(
-            index="wiki",
+            index=self.index_name,
             body=body
         )
 
         return response
 
+    def build_index(self, line_doc_path, n_docs):
+        line_pool = LineDocPool(line_doc_path)
+
+        for i, d in enumerate(line_pool.doc_iterator()):
+            del d['docdate']
+
+            if i == n_docs:
+                break
+
+            res = self.es_client.index(index=self.index_name, doc_type='articles', id=i, body=d)
+            print res
+
+            if i % 100 == 0:
+                print i,
+        print
+
 
 class ExperimentEs(Experiment):
+    def __init__(self):
+        self._n_treatments = 1
+        self._exp_name = "es-experiment"
+
+        exit(1)
+
     def conf(self, i):
         return {'n_query': 1000}
 
