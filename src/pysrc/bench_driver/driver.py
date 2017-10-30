@@ -10,28 +10,9 @@ from pyreuse.macros import *
 class ExperimentWiki(Experiment):
     def __init__(self):
         self._n_treatments = 3
-        self._exp_name = "wikipedia-lucene-001"
+        self._exp_name = "lucene-fsdir-001"
 
         self.DOWNLOAD_DIR = "/mnt/ssd/downloads"
-
-        # self.work_dir = "/mnt/ssd/work-small-wiki"
-        # helpers.shcmd("rm -rf " + self.work_dir)
-        # self.download_url = "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2"
-        # self.origin_doc_name = "enwiki-latest-pages-articles14.xml-p7697599p7744799"
-        # self.decompress_cmd = "bunzip2 enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2"
-        # self.index_doc_count = "*"
-        # self.search_count = 5
-        # self.search_mem_size = None
-
-        # self.work_dir = "/mnt/ssd/work-medium-wiki"
-        #self.work_dir = "/mnt/fsonloop/work-medium-wiki"
-        # #helpers.shcmd("rm -rf " + os.path.join(self.work_dir, "index"))
-        # self.download_url = "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles9.xml-p1791081p2336422.bz2"
-        # self.origin_doc_name = "enwiki-20171001-pages-articles9.xml-p1791081p2336422"
-        # self.decompress_cmd = "bunzip2 enwiki-20171001-pages-articles9.xml-p1791081p2336422.bz2"
-        # self.index_doc_count = "*"
-        # self.search_count =  100000
-        # self.search_mem_size = None
 
     def conf(self, i):
 
@@ -62,14 +43,14 @@ class ExperimentWiki(Experiment):
             # "wiki_query_log_path": "/mnt/ssd/downloads/wiki_QueryLog.clean",
             # "wiki_query_count": 100000,
 
-            "exp_mode": "ram-dir",
+            "exp_mode": "fs-dir",
             "work_dir": "/mnt/ssd/work-large-wiki-tmp",
             "force_indexing": True,
             "download_url": "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles.xml.bz2",
             "origin_doc_name": "enwiki-20171001-pages-articles.xml",
             "decompress_cmd": "bunzip2 enwiki-20171001-pages-articles.xml.bz2",
             "index_doc_count": 10**(i+3),
-            "line_doc_path": "/mnt/ssd/work-large-wiki/linedoc",
+            "line_doc_path": "/mnt/ssd/downloads/linedoc_tokenized",
             "search_count": 100000,
             "search_mem_size": None,
             "query_maker": "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker",
