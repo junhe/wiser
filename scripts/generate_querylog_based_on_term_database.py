@@ -27,8 +27,12 @@ def generate_querylog(term_config, database, output):
 
 
     # intersect lists to generate queries
+    count = 0
     for element in itertools.product(*listoftermlists):
-       output.write(str(element) + '\n') 
+       count += 1
+       if count > 100000:
+           break
+       output.write(str(element).encode('utf8') + '\n') 
 
 if __name__=='__main__':
     # print help
