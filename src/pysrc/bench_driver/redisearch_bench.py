@@ -1,5 +1,6 @@
 import datetime
 import os
+from multiprocessing import Pool
 
 from redisearch import Client, TextField, NumericField, Query
 from pyreuse import helpers
@@ -9,27 +10,24 @@ from utils.expbase import Experiment
 
 
 class RedisIndex(object):
-    def __init__(self, line_doc_path, n_docs):
-        # self.line_pool = LineDocPool("/mnt/ssd/downloads/linedoc_tokenized")
-        self.line_pool = LineDocPool(line_doc_path)
-        self.n_docs = n_docs
+    def __init__(self, index_name):
+        self.client = Client(index_name)
 
-    def create_index(self):
-        client = Client('wiki')
-        client.drop_index()
-        client.create_index([TextField('title', weight=5.0), TextField('body')])
+    def create_index(self, line_doc_path, n_docs):
+        line_pool = LineDocPool(line_doc_path)
 
-        for i, d in enumerate(self.line_pool.doc_iterator()):
-            client.add_document(i, title = d['doctitle'], body = d['body'])
+        self.client.drop_index()
+        self.client.create_index([TextField('title', weight=5.0), TextField('body')])
 
-            if i + 1 == self.n_docs:
+        for i, d in enumerate(line_pool.doc_iterator()):
+            self.client.add_document(i, title = d['doctitle'], body = d['body'])
+
+            if i + 1 == n_docs:
                 break
 
             if i % 100 == 0:
-                print i,
-        print
+                print "{}/{}".format(i, n_docs)
 
-        self.client = client
 
     def search(self, query):
         res = self.client.search(query)
@@ -37,20 +35,32 @@ class RedisIndex(object):
         return res
 
 
+def worker_wrapper(args):
+    worker(*args)
+
+def worker(query_pool, query_count):
+    index = RedisIndex("wiki")
+
+    for i in range(query_count):
+        query = query_pool.next_query()
+        doc_ids = index.search(query)
+        if i % 1000 == 0:
+            print os.getpid(), "{}/{}".format(i, query_count)
 
 class ExperimentRedis(Experiment):
     def __init__(self):
         self._n_treatments = 3
-        self._exp_name = "redis-exp-003"
+        self._exp_name = "redis-multi-client"
 
     def conf(self, i):
         return {'doc_count': 10**(i+3),
-                'query_count': 100000
+                'query_count': 100000,
+                'n_workers': 4
                 }
 
     def setup_engine(self, conf):
-        self.index = RedisIndex("/mnt/ssd/downloads/linedoc_tokenized", conf['doc_count'])
-        self.index.create_index()
+        self.index = RedisIndex("wiki")
+        self.index.create_index("/mnt/ssd/downloads/linedoc_tokenized", conf['doc_count'])
 
     def beforeEach(self, conf):
         self.query_pool = QueryPool("/mnt/ssd/downloads/wiki_QueryLog", conf['query_count'])
@@ -60,15 +70,25 @@ class ExperimentRedis(Experiment):
         self.starttime = datetime.datetime.now()
 
     def treatment(self, conf):
-        for i in range(conf['query_count']):
-            query = self.query_pool.next_query()
-            doc_ids = self.index.search(query)
+        # for i in range(conf['query_count']):
+            # query = self.query_pool.next_query()
+            # doc_ids = self.index.search(query)
+        # worker(self.index, self.query_pool, conf['query_count'])
+
+        p = Pool(conf['n_workers'])
+        p.map(worker_wrapper, [
+            (self.query_pool, conf['query_count']) for _ in range(conf['n_workers'])
+            ])
+        # p.map(worker_wrapper, [
+            # (self.query_pool, 2, 3),
+            # (4, 5, 6),
+            # ])
 
     def afterEach(self, conf):
         self.endtime = datetime.datetime.now()
         duration = (self.endtime - self.starttime).total_seconds()
         print "Duration:", duration
-        query_per_sec = conf['query_count'] / duration
+        query_per_sec = conf['query_count'] * conf['n_workers'] / duration
         print "Query per second:", query_per_sec
         d = {
             "duration": duration,
