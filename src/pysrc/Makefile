@@ -10,6 +10,12 @@ test:
 test_esbench:
 	python -m bench_driver.test_esbench
 
+start_redisearch_servers:
+	python -m bench_driver.start_redis_server 5
+
+go_rsbench:
+	python -m bench_driver.go_rsbench
+
 esbench:
 	python -m bench_driver.esbench
 

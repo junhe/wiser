@@ -18,7 +18,7 @@ def main():
     n = int(sys.argv[1])
     procs = []
     for i in range(n):
-        procs.append(start_redis(3679 + i))
+        procs.append(start_redis(6379 + i))
 
     for p in procs:
         p.wait()

@@ -16,7 +16,11 @@ class RedisIndex(object):
     def create_index(self, line_doc_path, n_docs):
         line_pool = LineDocPool(line_doc_path)
 
-        self.client.drop_index()
+        try:
+            self.client.drop_index()
+        except:
+            pass
+
         self.client.create_index([TextField('title', weight=5.0), TextField('body')])
 
         for i, d in enumerate(line_pool.doc_iterator()):
@@ -43,6 +47,7 @@ def worker(query_pool, query_count):
 
     for i in range(query_count):
         query = query_pool.next_query()
+        query = "barack obama"
         doc_ids = index.search(query)
         if i % 1000 == 0:
             print os.getpid(), "{}/{}".format(i, query_count)
@@ -50,12 +55,12 @@ def worker(query_pool, query_count):
 class ExperimentRedis(Experiment):
     def __init__(self):
         self._n_treatments = 3
-        self._exp_name = "redis-multi-client"
+        self._exp_name = "redis-obama-001"
 
     def conf(self, i):
         return {'doc_count': 10**(i+3),
                 'query_count': 100000,
-                'n_workers': 4
+                'n_workers': 1
                 }
 
     def setup_engine(self, conf):
