@@ -35,7 +35,8 @@ class RedisIndex(object):
 
 
     def search(self, query):
-        res = self.client.search(query)
+        q = Query(query).paging(0, 5).verbatim()
+        res = self.client.search(q)
         # print res.total # "1"
         return res
 
