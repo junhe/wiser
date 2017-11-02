@@ -1,5 +1,7 @@
 from pyreuse.fsutils import utils as fsutils
 from pyreuse.helpers import *
+from bs4 import BeautifulSoup
+
 
 
 
@@ -68,6 +70,18 @@ class QueryPool(object):
         return query
 
 
+class WikiAbstract(object):
+    """
+    This class allows you to iterate entries in wikipedia abstract
+    """
+    def __init__(self, path):
+        with open(path) as f:
+            self.soup = BeautifulSoup(f, "html5lib")
+
+    def entries(self):
+        docs = self.soup.feed.find_all("doc")
+        for doc in docs:
+            yield {"title": doc.title.string, "abstract": doc.abstract.string}
 
 
 

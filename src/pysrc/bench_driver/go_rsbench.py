@@ -23,7 +23,7 @@ def hosts_string(n):
 
 class ExperimentRsbenchGo(Experiment):
     def __init__(self):
-        self._n_treatments = 5
+        self._n_treatments = 1
         self._exp_name = "rsbench-go-5-shards-hello-01"
 
         self.n_shards = 5
@@ -41,7 +41,7 @@ class ExperimentRsbenchGo(Experiment):
                 'expname': self._exp_name,
                 'n_shards': self.n_shards,
                 'n_hosts': self.n_hosts,
-                'query': 'hello'
+                'query': 'hello world'
                 }
 
     def before(self):
