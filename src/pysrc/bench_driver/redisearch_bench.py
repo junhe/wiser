@@ -1,4 +1,5 @@
 import datetime
+import pprint
 import os
 from multiprocessing import Pool
 
@@ -29,7 +30,7 @@ class RedisIndex(object):
             if i + 1 == n_docs:
                 break
 
-            if i % 100 == 0:
+            if i % 1000 == 0:
                 print "{}/{}".format(i, n_docs)
 
 
@@ -47,29 +48,41 @@ def worker(query_pool, query_count):
 
     for i in range(query_count):
         query = query_pool.next_query()
-        query = "barack obama"
         doc_ids = index.search(query)
-        if i % 1000 == 0:
+        if i % 5000 == 0:
             print os.getpid(), "{}/{}".format(i, query_count)
+
 
 class ExperimentRedis(Experiment):
     def __init__(self):
-        self._n_treatments = 3
-        self._exp_name = "redis-obama-001"
+        self._n_treatments = 10
+        self._exp_name = "redis-hello-abstract-full4"
 
     def conf(self, i):
-        return {'doc_count': 10**(i+3),
-                'query_count': 100000,
-                'n_workers': 1
+
+        para_dict = {
+            'n_workers': [1, 16, 32, 64, 128],
+            'query_source': ['hello', 'barack obama'],
+                }
+        paras = helpers.parameter_combinations(para_dict)
+
+        return {'doc_count': 10**(i+9),
+                'query_count': int(50000 / paras[i]['n_workers']),
+                'n_workers': paras[i]['n_workers'],
+                # 'line_doc_path': "/mnt/ssd/downloads/linedoc_tokenized",
+                'line_doc_path': "/mnt/ssd/downloads/enwiki-abstract.linedoc",
+                # 'query_source': "/mnt/ssd/downloads/wiki_QueryLog"
+                'query_source': [paras[i]['query_source']],
+                'expname': self._exp_name
                 }
 
     def setup_engine(self, conf):
-        self.index = RedisIndex("wiki")
-        self.index.create_index("/mnt/ssd/downloads/linedoc_tokenized", conf['doc_count'])
+        index = RedisIndex("wiki")
+        index.create_index(conf['line_doc_path'], conf['doc_count'])
 
     def beforeEach(self, conf):
-        self.query_pool = QueryPool("/mnt/ssd/downloads/wiki_QueryLog", conf['query_count'])
-        self.setup_engine(conf)
+        self.query_pool = QueryPool(conf['query_source'], conf['query_count'])
+        # self.setup_engine(conf)
         # self.engine.index.display()
 
         self.starttime = datetime.datetime.now()
