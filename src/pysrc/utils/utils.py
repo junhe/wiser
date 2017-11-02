@@ -1,6 +1,7 @@
 from pyreuse.fsutils import utils as fsutils
 from pyreuse.helpers import *
 from bs4 import BeautifulSoup
+from lxml import etree
 
 
 
@@ -76,12 +77,25 @@ class WikiAbstract(object):
     """
     def __init__(self, path):
         with open(path) as f:
-            self.soup = BeautifulSoup(f, "html5lib")
+            self.soup = BeautifulSoup(f, "lxml")
 
     def entries(self):
         docs = self.soup.feed.find_all("doc")
         for doc in docs:
             yield {"title": doc.title.string, "abstract": doc.abstract.string}
 
+
+class WikiAbstract2(object):
+    """
+    This class allows you to iterate entries in wikipedia abstract
+    """
+    def __init__(self, path):
+        self.path = path
+
+    def entries(self):
+        for event, element in etree.iterparse(self.path, tag="doc"):
+            yield {'title': element.findtext('title'),
+                   'abstract': element.findtext('abstract')}
+            element.clear()
 
 
