@@ -25,7 +25,7 @@ class RedisIndex(object):
         self.client.create_index([TextField('title', weight=5.0), TextField('body')])
 
         for i, d in enumerate(line_pool.doc_iterator()):
-            self.client.add_document(i, title = d['doctitle'], body = d['body'])
+            self.client.add_document(i, nosave = True, title = d['doctitle'], body = d['body'])
 
             if i + 1 == n_docs:
                 break
