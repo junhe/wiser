@@ -44,6 +44,7 @@ class RedisIndex(object):
 def worker_wrapper(args):
     worker(*args)
 
+
 def worker(query_pool, query_count):
     index = RedisIndex("wiki")
 
@@ -57,10 +58,9 @@ def worker(query_pool, query_count):
 class ExperimentRedis(Experiment):
     def __init__(self):
         self._n_treatments = 10
-        self._exp_name = "redis-hello-abstract-full4"
+        self._exp_name = "redis-abstract-full5"
 
     def conf(self, i):
-
         para_dict = {
             'n_workers': [1, 16, 32, 64, 128],
             'query_source': ['hello', 'barack obama'],
@@ -84,7 +84,6 @@ class ExperimentRedis(Experiment):
     def beforeEach(self, conf):
         self.query_pool = QueryPool(conf['query_source'], conf['query_count'])
         # self.setup_engine(conf)
-        # self.engine.index.display()
 
         self.starttime = datetime.datetime.now()
 

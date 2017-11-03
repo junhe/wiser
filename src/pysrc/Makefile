@@ -13,6 +13,9 @@ test_esbench:
 test_utils:
 	python -m utils.test_utils
 
+test_redisbench:
+	python -m bench_driver.test_redisbench
+
 start_redisearch_servers:
 	python -m bench_driver.start_redis_server 5
 
@@ -34,5 +37,15 @@ cleanup_query:
 update_requirements_txt:
 	pip install pipreqs
 	pipreqs ./
+
+
+
+es_health:
+	curl -XGET 'localhost:9200/_cat/health?v&pretty'
+
+es_indices:
+	curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+
+
 
 
