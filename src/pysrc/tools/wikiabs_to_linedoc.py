@@ -15,7 +15,7 @@ def main():
     # wiki = WikiAbstract("utils/testdata/enwiki-abstract-sample.xml")
     wiki = WikiAbstract2(wikipath)
 
-    f = open(outpath, "wb")
+    f = open(outpath, "w")
     f.write("FIELDS_HEADER_INDICATOR###      doctitle        body\n")
 
     for i, entry in enumerate(wiki.entries()):

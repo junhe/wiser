@@ -23,7 +23,7 @@ class LineDocPool(object):
 
     def line_to_dict(self, line):
         items = line.split("\t")
-        return {k:v for k,v in zip(self.col_names, items)}
+        return {k.strip():v.strip() for k,v in zip(self.col_names, items)}
 
 
 def setup_dev(devpath, mntpoint):

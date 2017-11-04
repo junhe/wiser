@@ -17,9 +17,12 @@ def main():
         if i % 10000 == 0:
             print i
 
+        # if i == 100:
+            # break
+
     # now we have all the dates
     f = open("/mnt/ssd/downloads/enwiki-abstract.linedoc.withdate", "w")
-    f.write("FIELDS_HEADER_INDICATOR###      doctitle   docdate     body\n")
+    f.write("FIELDS_HEADER_INDICATOR###doctitle\tdocdate\tbody\n")
 
     n = len(dates)
     abstract_pool = LineDocPool("/mnt/ssd/downloads/enwiki-abstract.linedoc")
@@ -27,13 +30,16 @@ def main():
         docdate = dates[i % n]
         f.write(doc_dict["doctitle"])
         f.write("\t")
-        f.write(docdate)
+        f.write(docdate.strip())
         f.write("\t")
         f.write(doc_dict["body"])
-        # f.write("\n")
+        f.write("\n")
 
         if i % 10000 == 0:
             print i
+
+        # if i == 100:
+            # break
 
     f.close()
 
