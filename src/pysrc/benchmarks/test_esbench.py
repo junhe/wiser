@@ -4,6 +4,7 @@ import time
 from .esbench import *
 
 
+@unittest.skip("Require ElasticSearch server running")
 class TestWikiClient(unittest.TestCase):
     def test_indexing(self):
         client = WikiClient()
@@ -14,7 +15,6 @@ class TestWikiClient(unittest.TestCase):
 
         resp = client.search("anarchist")
         self.assertEqual(resp['hits']['total'], 1)
-
 
 
 if __name__ == '__main__':
