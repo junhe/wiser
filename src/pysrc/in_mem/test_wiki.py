@@ -1,13 +1,16 @@
 import unittest
+import os, sys
 
 from wiki import *
 
+
 class TestLineDocPool(unittest.TestCase):
     def setUp(self):
-        self.pool = LineDocPool("./testdata/linedoc-sample")
+        self.pool = LineDocPool("./in_mem/testdata/linedoc-sample")
 
     def test_column_names(self):
         self.assertListEqual(self.pool.col_names, ["doctitle", "docdate", "body"])
+
 
     def test_line_to_dict(self):
         # sample_line = open("./testdata/linedoc-sample").readlines()[1]
@@ -16,7 +19,7 @@ class TestLineDocPool(unittest.TestCase):
         self.assertDictEqual(doc_dicts, {'doctitle': 'col1', 'docdate': 'col2', 'body': 'col3'})
 
     def test_line_to_dict_real_data(self):
-        sample_line = open("./testdata/linedoc-sample").readlines()[1]
+        sample_line = open("./in_mem/testdata/linedoc-sample").readlines()[1]
 
         # check the method used in line_to_dict()
         items = sample_line.split("\t")
@@ -34,6 +37,16 @@ class TestLineDocPool(unittest.TestCase):
 
         for doc in docs:
             self.assertSetEqual(set(doc.keys()), set(["doctitle", "docdate", "body"]))
+
+
+class TestBuildingEngine(unittest.TestCase):
+    def test(self):
+        engine = build_engine(1, "./in_mem/testdata/linedoc-with-tokens-sample")
+        # engine.index.display()
+        doc_ids = engine.searcher.search(['anarchism'], "AND")
+        self.assertEqual(len(doc_ids), 1)
+
+
 
 
 if __name__ == '__main__':
