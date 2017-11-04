@@ -50,20 +50,21 @@ public class SimpleQueryMaker extends AbstractQueryMaker implements QueryMaker {
     QueryParser qp = new QueryParser(DocMaker.BODY_FIELD,anlzr);
     ArrayList<Query> qq = new ArrayList<>();
     Query q1 = new TermQuery(new Term(DocMaker.ID_FIELD,"doc2"));
-    qq.add(q1);
+    //qq.add(q1);
     Query q2 = new TermQuery(new Term(DocMaker.BODY_FIELD,"simple"));
-    qq.add(q2);
+    //qq.add(q2);
     BooleanQuery.Builder bq = new BooleanQuery.Builder();
-    bq.add(q1,Occur.MUST);
-    bq.add(q2,Occur.MUST);
-    qq.add(bq.build());
-    qq.add(qp.parse("synthetic body"));
-    qq.add(qp.parse("\"synthetic body\""));
-    qq.add(qp.parse("synthetic text"));
-    qq.add(qp.parse("\"synthetic text\""));
-    qq.add(qp.parse("\"synthetic text\"~3"));
-    qq.add(qp.parse("zoom*"));
-    qq.add(qp.parse("synth*"));
+    //bq.add(q1,Occur.MUST);
+    //bq.add(q2,Occur.MUST);
+    //qq.add(bq.build());
+    qq.add(qp.parse("barack obama"));
+    //qq.add(qp.parse("\"hello\""));
+    //qq.add(qp.parse("\"synthetic body\""));
+    //qq.add(qp.parse("synthetic text"));
+    //qq.add(qp.parse("\"synthetic text\""));
+    //qq.add(qp.parse("\"synthetic text\"~3"));
+    //qq.add(qp.parse("zoom*"));
+    //qq.add(qp.parse("synth*"));
     return  qq.toArray(new Query[0]);
   }
 
