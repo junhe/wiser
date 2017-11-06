@@ -107,3 +107,20 @@ class WikiAbstract2(object):
             element.clear()
 
 
+def index_wikiabs_on_elasticsearch(wiki_abstract_path):
+    """
+    You must have RediSearchBenchmark in PATH
+    shards does not matter because RediSearchBenchmark does not use it.
+    """
+    bench_exe = "RediSearchBenchmark"
+    shcmd("{bench_exe} -engine elastic -shards 1 " \
+            "-hosts \"{hosts}\" -file {filepath}".format(
+                bench_exe=bench_exe,
+                hosts="http://localhost:9200",
+                filepath=wiki_abstract_path))
+
+
+
+
+
+

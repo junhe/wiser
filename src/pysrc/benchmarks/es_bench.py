@@ -7,7 +7,7 @@ from multiprocessing import Pool
 from elasticsearch import Elasticsearch
 
 from expbase import Experiment
-from utils.utils import LineDocPool, QueryPool
+from utils.utils import LineDocPool, QueryPool, index_wikiabs_on_elasticsearch
 from pyreuse import helpers
 
 
@@ -82,7 +82,8 @@ def worker(query_pool, query_count):
 
 class ExperimentEs(Experiment):
     def __init__(self):
-        self._exp_name = "es-pybench-1shard-002"
+        self._exp_name = "es-pybench-5shards-003"
+        self.wiki_abstract_path = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml"
 
         self.paras = helpers.parameter_combinations({
                     'worker_count': [1, 16, 32, 64, 128],
@@ -114,6 +115,7 @@ class ExperimentEs(Experiment):
         return d
 
     def before(self):
+        # index_wikiabs_on_elasticsearch(self.wiki_abstract_path)
         pass
 
     def beforeEach(self, conf):
