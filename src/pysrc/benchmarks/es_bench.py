@@ -42,6 +42,13 @@ class WikiClient(object):
     def clear_cache(self):
         ret = self.es_client.indices.clear_cache(index=self.index_name)
 
+    def get(self):
+        return self.es_client.indices.get(self.index_name)
+
+    def get_number_of_shards(self):
+        d = self.get()
+        return d[self.index_name]['settings']['index']['number_of_shards']
+
     def build_index(self, line_doc_path, n_docs):
         line_pool = LineDocPool(line_doc_path)
 
@@ -69,29 +76,42 @@ def worker(query_pool, query_count):
     for i in range(query_count):
         query = query_pool.next_query()
         ret = client.search(query)
-        print ret
         if i % 5000 == 0:
             print os.getpid(), "{}/{}".format(i, query_count)
 
 
-
-
 class ExperimentEs(Experiment):
     def __init__(self):
-        self._n_treatments = 1
-        self._exp_name = "es-multi-client-hello-sourceFalse"
+        self._exp_name = "es-pybench-1shard-002"
+
+        self.paras = helpers.parameter_combinations({
+                    'worker_count': [1, 16, 32, 64, 128],
+                    'query': ['hello', 'barack obama', 'wiki-query-log'],
+                    'engine': ['elastic']
+                    })
+        self._n_treatments = len(self.paras)
+
+        self.client = WikiClient("wik")
 
     def conf(self, i):
-        worker_count = [1, 16, 32, 64, 128]
-        return {
+        para = self.paras[i]
+
+        d = {
                 'doc_count': 10**(i+3),
-                'query_count': int(50000 / worker_count[i]),
-                # 'query_source':  "/mnt/ssd/downloads/wiki_QueryLog",
-                'query_source': ["hello"],
-                'note': 'py-esbenchsourceFalse',
-                'engine': 'py-esbench',
-                'n_workers': worker_count[i]
+                'query_count': int(50000 / para['worker_count']),
+                'query': para['query'],
+                'engine': para['engine'],
+                'n_shards': self.client.get_number_of_shards(),
+                "benchmark": "PyBench",
+                'n_clients': para['worker_count']
                 }
+
+        if para['query'] == 'wiki-query-log':
+            d['query_source'] = "/mnt/ssd/downloads/wiki_QueryLog"
+        else:
+            d['query_source'] = [para['query']]
+
+        return d
 
     def before(self):
         pass
@@ -103,31 +123,22 @@ class ExperimentEs(Experiment):
         # self.client.clear_cache()
         # time.sleep(5)
 
+        print "Query Source", conf['query_source']
         self.query_pool =  QueryPool(conf['query_source'], conf['query_count'])
 
         self.starttime = datetime.datetime.now()
 
     def treatment(self, conf):
-        # for i in range(conf['query_count']):
-            # query = self.query_pool.next_query()
-            # response = self.client.search(query)
-            # print query
-            # print response['hits']['total']
-            # for hit in response['hits']['hits']:
-                # print hit['_source']['title']
-                # print
-                # break
-
-        p = Pool(conf['n_workers'])
+        p = Pool(conf['n_clients'])
         p.map(worker_wrapper, [
-            (self.query_pool, conf['query_count']) for _ in range(conf['n_workers'])
+            (self.query_pool, conf['query_count']) for _ in range(conf['n_clients'])
             ])
 
     def afterEach(self, conf):
         self.endtime = datetime.datetime.now()
         duration = (self.endtime - self.starttime).total_seconds()
         print "Duration:", duration
-        query_per_sec = conf['n_workers'] * conf['query_count'] / duration
+        query_per_sec = conf['n_clients'] * conf['query_count'] / duration
         print "Query per second:", query_per_sec
         d = {
             "duration": duration,

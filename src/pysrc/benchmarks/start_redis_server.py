@@ -1,4 +1,4 @@
-from .go_rsbench import SERVER_PATH, REDISEARCH_SO
+from .rs_bench_go import SERVER_PATH, REDISEARCH_SO
 import subprocess
 import sys
 

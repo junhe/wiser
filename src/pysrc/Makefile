@@ -19,11 +19,11 @@ test_redisbench:
 start_redisearch_servers:
 	python -m benchmarks.start_redis_server 5
 
-go_rsbench:
-	python -m benchmarks.go_rsbench
+rs_bench_go:
+	python -m benchmarks.rs_bench_go
 
-esbench:
-	python -m benchmarks.esbench
+es_bench:
+	python -m benchmarks.es_bench
 
 redisearch:
 	python -m benchmarks.redisearch_bench
@@ -48,6 +48,9 @@ es_health:
 
 es_indices:
 	curl -XGET 'localhost:9200/_cat/indices?v&pretty'
+
+es_settings:
+	curl -XGET 'localhost:9200/wik/_settings?pretty'
 
 
 

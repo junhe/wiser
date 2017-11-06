@@ -26,13 +26,14 @@ def hosts_string(host, n, start_port):
 class ExperimentRsbenchGo(Experiment):
     def __init__(self):
         self._n_treatments = 5
-        self._exp_name = "rsbench-go-ES-hello-simpler-query-03"
+        self._exp_name = "es-gobench-1shard-obama-001"
 
-        self.n_shards = 5
+        self.n_shards = 1
         self.n_hosts = 1
         self.host = "http://localhost"
 
         self.engine = "elastic"
+        # self.engine = "redis"
 
         if self.engine == "elastic":
             self.start_port = 9200
@@ -53,9 +54,9 @@ class ExperimentRsbenchGo(Experiment):
                 'expname': self._exp_name,
                 'n_shards': self.n_shards,
                 'n_hosts': self.n_hosts,
-                'query': 'hello',
+                'query': 'barack obama',
                 'engine': self.engine,
-                'note': 'simpler-es'
+                'benchmark': 'GoBench',
                 }
 
     def before(self):
