@@ -7,7 +7,7 @@ from pyreuse import helpers
 
 from utils.utils import LineDocPool, QueryPool
 from utils.expbase import Experiment
-from .es_bench import WikiClient
+from .es_bench import ElasticSearchClient
 
 
 
@@ -75,7 +75,7 @@ class ExperimentRsbenchGo(Experiment):
                 }
 
         if para['engine'] == "elastic":
-            es_client = WikiClient("wik")
+            es_client = ElasticSearchClient("wik")
             conf['n_shards'] = es_client.get_number_of_shards()
 
         if conf['engine'] == "elastic":

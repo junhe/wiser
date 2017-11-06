@@ -103,7 +103,9 @@ class WikiAbstract2(object):
     def entries(self):
         for event, element in etree.iterparse(self.path, tag="doc"):
             yield {'title': element.findtext('title'),
-                   'abstract': element.findtext('abstract')}
+                   'abstract': element.findtext('abstract'),
+                   'url': element.findtext('url')
+                   }
             element.clear()
 
 

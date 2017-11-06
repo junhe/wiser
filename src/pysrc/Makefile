@@ -22,8 +22,8 @@ start_redisearch_servers:
 rs_bench_go:
 	python -m benchmarks.rs_bench_go
 
-es_bench:
-	python -m benchmarks.es_bench
+pybench:
+	python -m benchmarks.pybench
 
 redisearch:
 	python -m benchmarks.redisearch_bench
