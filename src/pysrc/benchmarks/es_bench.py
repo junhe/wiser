@@ -11,7 +11,7 @@ from utils.utils import LineDocPool, QueryPool, index_wikiabs_on_elasticsearch
 from pyreuse import helpers
 
 
-class WikiClient(object):
+class ElasticSearchClient(object):
     def __init__(self, index_name):
         self.es_client = Elasticsearch()
         self.index_name = index_name
@@ -71,7 +71,7 @@ def worker_wrapper(args):
 
 
 def worker(query_pool, query_count):
-    client = WikiClient("wik")
+    client = ElasticSearchClient("wik")
 
     for i in range(query_count):
         query = query_pool.next_query()
@@ -92,7 +92,7 @@ class ExperimentEs(Experiment):
                     })
         self._n_treatments = len(self.paras)
 
-        self.client = WikiClient("wik")
+        self.client = ElasticSearchClient("wik")
 
     def conf(self, i):
         para = self.paras[i]
@@ -119,7 +119,7 @@ class ExperimentEs(Experiment):
         pass
 
     def beforeEach(self, conf):
-        # self.client = WikiClient("wik")
+        # self.client = ElasticSearchClient("wik")
         # self.client.delete_index()
         # self.client.build_index("/mnt/ssd/downloads/linedoc_tokenized", conf['doc_count'])
         # self.client.clear_cache()

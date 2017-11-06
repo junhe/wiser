@@ -1,6 +1,5 @@
 from .rs_bench_go import start_redis
 import sys
-import subprocess
 
 def main():
     if len(sys.argv) != 2:
