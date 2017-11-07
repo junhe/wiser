@@ -37,6 +37,14 @@ def start_redis(port):
     p = subprocess.Popen(cmd, shell = True)
     return p
 
+def update_address(conf):
+    if conf['engine'] == "elastic":
+        conf['start_port'] = 9200
+        conf['host'] = "http://localhost"
+    elif conf['engine'] == "redis":
+        conf['start_port'] = 6379
+        conf['host'] = "localhost"
+
 
 class ExperimentRsbenchGo(Experiment):
     """
@@ -78,13 +86,7 @@ class ExperimentRsbenchGo(Experiment):
             es_client = ElasticSearchClient("wik")
             conf['n_shards'] = es_client.get_number_of_shards()
 
-        if conf['engine'] == "elastic":
-            conf['start_port'] = 9200
-            conf['host'] = "http://localhost"
-        elif conf['engine'] == "redis":
-            conf['start_port'] = 6379
-            conf['host'] = "localhost"
-
+        update_address(conf)
         return conf
 
     def beforeEach(self, conf):

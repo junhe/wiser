@@ -68,14 +68,16 @@ class QueryPool(object):
             if n == 0:
                 break
 
-    def next_query(self):
+    def next_query(self, protocol="elastic"):
         query = self.queries[self.i]
         self.i = (self.i + 1) % self.n
 
-        query = query.replace("&language=en", " ")
-        query = re.sub("[^\w]", " ",  query)
-        query = query.replace("AND", " ")
-        # format: "hello world"
+        if protocol in ("elastic", "redisearch"):
+            query = query.replace("&language=en", " ")
+            query = re.sub("[^\w]", " ",  query)
+            query = query.replace("AND", " ")
+            # format: "hello world"
+            query = " ".join(query.split())
         return query
 
 

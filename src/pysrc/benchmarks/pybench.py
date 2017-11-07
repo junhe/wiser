@@ -1,4 +1,5 @@
 import pprint
+import redis
 import os
 import datetime
 import time
@@ -10,11 +11,16 @@ from redisearch import Client, TextField, NumericField, Query
 from expbase import Experiment
 from utils.utils import LineDocPool, QueryPool, index_wikiabs_on_elasticsearch
 from pyreuse import helpers
+from . import rs_bench_go
 
 
-class RedisClient(object):
+INDEX_NAME = "wik{0}"
+
+
+class RediSearchClient(object):
     def __init__(self, index_name):
         self.client = Client(index_name)
+        self.index_name = index_name
 
     def build_index(self, line_doc_path, n_docs):
         line_pool = LineDocPool(line_doc_path)
@@ -41,6 +47,17 @@ class RedisClient(object):
         res = self.client.search(q)
         # print res.total # "1"
         return res
+
+
+class RedisClient(object):
+    def __init__(self, index_name):
+        self.index_name = index_name
+        self.client = redis.StrictRedis(host='localhost', port=6379, db=0)
+
+    def search(self, query):
+        ret = self.client.execute_command("FT.SEARCH", self.index_name, query,
+                "LIMIT", 0, 5, "WITHSCORES", "VERBATIM")
+        return ret
 
 
 class ElasticSearchClient(object):
@@ -97,7 +114,6 @@ class ElasticSearchClient(object):
         print
 
 
-
 def worker_wrapper(args):
     worker(*args)
 
@@ -114,23 +130,27 @@ def worker(query_pool, query_count, engine):
 
 def create_client(engine):
     if engine == "elastic":
-        return ElasticSearchClient("wik")
+        return ElasticSearchClient(INDEX_NAME)
     elif engine == "redis":
-        return RedisClient("wik")
+        # return RediSearchClient(INDEX_NAME)
+        return RedisClient(INDEX_NAME)
 
 
 class ExperimentEsRs(Experiment):
     def __init__(self):
-        self._exp_name = "redis-pybench-1shard-010"
+        self._exp_name = "redis-pybench-1shard-014"
         self.wiki_abstract_path = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml"
 
         parameters = {
                     'worker_count': [1, 16, 32, 64, 128],
                     'query': ['hello', 'barack obama', 'wiki-query-log'],
+                    # 'query': ['wiki-query-log'],
                     'engine': ['redis'],
                     'line_doc_path': ["/mnt/ssd/downloads/enwiki-abstract.linedoc.withurl"],
                     'n_shards': [1],
-                    'rebuild_index': [True]
+                    'n_hosts': [1],
+                    'rebuild_index': [False],
+                    'index_builder': ['RediSearchBenchmark'] # or PyBench
                     }
         self.paras = helpers.parameter_combinations(parameters)
         self._n_treatments = len(self.paras)
@@ -148,7 +168,9 @@ class ExperimentEsRs(Experiment):
                 "benchmark": "PyBench",
                 "line_doc_path": para['line_doc_path'],
                 'n_clients': para['worker_count'],
-                'rebuild_index': para['rebuild_index']
+                'rebuild_index': para['rebuild_index'],
+                'index_builder': para['index_builder'],
+                'n_hosts': para['n_hosts']
                 }
 
         if para['query'] == 'wiki-query-log':
@@ -172,8 +194,18 @@ class ExperimentEsRs(Experiment):
 
         # build index
         if conf['rebuild_index'] is True:
-            client = create_client(conf['engine'])
-            client.build_index(conf['line_doc_path'], conf['doc_count'])
+            if conf['index_builder'] == "PyBench":
+                client = create_client(conf['engine'])
+                client.build_index(conf['line_doc_path'], conf['doc_count'])
+            elif conf['index_builder'] == "RediSearchBenchmark":
+                rs_bench_go.update_address(conf)
+                rs_bench_go.build_index(n_shards=conf['n_shards'],
+                        n_hosts=conf['n_hosts'],
+                        engine=conf['engine'],
+                        start_port=conf['start_port'],
+                        host=conf['host'])
+            else:
+                raise NotImplementedError
 
     def beforeEach(self, conf):
         print "Query Source", conf['query_source']
