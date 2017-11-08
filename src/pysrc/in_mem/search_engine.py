@@ -2,6 +2,9 @@ import os
 import sys
 import re
 import readline
+import nltk
+
+import pattern.en as en
 
 
 class PostingList(object):
@@ -104,6 +107,9 @@ class Index(object):
         doc_id_sets = []
         for term in terms:
             doc_id_set = self.get_doc_id_set(term)
+            if len(doc_id_set) == 0:
+                return []
+
             doc_id_sets.append(doc_id_set)
 
         if len(doc_id_sets) == 0:
@@ -111,6 +117,10 @@ class Index(object):
 
         intersected_docs = reduce(lambda x, y: x & y, doc_id_sets)
         return list(intersected_docs)
+
+    def display(self):
+        for term, postinglist in self.inverted_index.items():
+            print term, '------>', postinglist.dump()
 
 
 
@@ -128,7 +138,15 @@ class IndexWriter(object):
 
         for k, v in doc_dict.items():
             terms = self.tokenizer.tokenize(str(v))
+            terms = list(set(terms))
             self.index.add_doc(doc_id, terms)
+
+    def add_doc_with_terms(self, doc_dict, terms):
+        """
+        terms are the precomputed terms of doc_dict
+        """
+        doc_id = self.doc_store.add_doc(doc_dict)
+        self.index.add_doc(doc_id, terms)
 
 
 class Tokenizer(object):
@@ -140,6 +158,25 @@ class Tokenizer(object):
 
     def tokenize(self, text):
         return text.lower().split()
+
+
+def lemma(words):
+    return [en.lemma(word) for word in words]
+
+
+class NltkTokenizer(object):
+    def __init__(self):
+        pass
+
+    def tokenize(self, text):
+        text = self.remove_non_alpha(text)
+        text = text.lower()
+        terms = nltk.word_tokenize(text)
+        return lemma(terms)
+
+    def remove_non_alpha(self, text):
+        text = re.sub("[^\w]", " ",  text)
+        return text
 
 
 class Searcher(object):
@@ -160,5 +197,18 @@ class Searcher(object):
             docs.append(doc)
 
         return docs
+
+
+class Engine(object):
+    """
+    It initialize all related objects for convenience.
+    """
+    def __init__(self):
+        self.index = Index()
+        self.doc_store = DocStore()
+        self.tokenizer = NltkTokenizer()
+
+        self.index_writer = IndexWriter(self.index, self.doc_store, self.tokenizer)
+        self.searcher = Searcher(self.index, self.doc_store)
 
 

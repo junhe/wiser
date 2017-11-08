@@ -1,4 +1,5 @@
 import unittest
+import pickle
 
 from search_engine import *
 
@@ -20,6 +21,7 @@ class TestDocStore(unittest.TestCase):
 
         doc1 = store.get_doc(doc_id)
         self.assertDictEqual(doc0, doc1)
+
 
 class TestIndex(unittest.TestCase):
     def test(self):
@@ -48,6 +50,13 @@ class TestTokenizer(unittest.TestCase):
         self.assertEqual(tokenizer.tokenize("hello world!"), ['hello', 'world!'])
 
 
+class TestNltkTokenizer(unittest.TestCase):
+    def test(self):
+        tokenizer = NltkTokenizer()
+        self.assertEqual(tokenizer.tokenize("hello world!"), ['hello', 'world'])
+        self.assertEqual(tokenizer.tokenize("{{hello{}\n world!][..//"), ['hello', 'world'])
+
+
 class TestIndexWriter(unittest.TestCase):
     def test(self):
         index = Index()
@@ -69,6 +78,42 @@ class TestIndexWriter(unittest.TestCase):
 
         doc_ids = searcher.search(['This', 'is', 'xxx'], "AND")
         self.assertEqual(len(doc_ids), 0)
+
+    def test_add_doc_with_terms(self):
+        index = Index()
+        doc_store = DocStore()
+        tokenizer = Tokenizer()
+
+        index_writer = IndexWriter(index, doc_store, tokenizer)
+        index_writer.add_doc_with_terms(
+                doc_dict ={
+                    "title": "This is my title",
+                    "text": "This is my body",
+                },
+                terms = ['this', 'is', 'my', 'title', 'body']
+            )
+
+        self.assertEqual(len(index.inverted_index), 5)
+        self.assertEqual(len(doc_store.docs), 1)
+
+        searcher = Searcher(index, doc_store)
+
+        doc_ids = searcher.search(['this', 'is'], "AND")
+        self.assertEqual(len(doc_ids), 1)
+
+        doc_ids = searcher.search(['this', 'is', 'xxx'], "AND")
+        self.assertEqual(len(doc_ids), 0)
+
+
+class TestPickling(unittest.TestCase):
+    def test_pickling(self):
+        terms = ['hello', 'world', 'good', 'bad']
+        index = Index()
+        index.add_doc(7, terms)
+        stream = pickle.dumps(index)
+
+        index2 = pickle.loads(stream)
+        self.assertSetEqual(set(index2.inverted_index.keys()), set(terms))
 
 
 if __name__ == '__main__':
