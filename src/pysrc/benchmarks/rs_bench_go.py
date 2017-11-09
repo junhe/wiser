@@ -55,7 +55,7 @@ class ExperimentRsbenchGo(Experiment):
     make rs_bench_go
     """
     def __init__(self):
-        self._exp_name = "redis-gobench-1shards-002"
+        self._exp_name = "elastic-gobench-1shards-011"
 
         self.paras = helpers.parameter_combinations({
                     'worker_count': [1, 16, 32, 64, 128],
@@ -63,9 +63,9 @@ class ExperimentRsbenchGo(Experiment):
                     'engine': ['redis'],
                     'n_shards': [1],
                     'n_hosts': [1],
-                    'rebuild_index': [True]
+                    'rebuild_index': [False]
                     })
-        self._n_treatments = len(self.paras)
+        self._n_treatments = 1#len(self.paras)
 
     def conf(self, i):
         para = self.paras[i]

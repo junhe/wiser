@@ -17,7 +17,7 @@ test_redisbench:
 	python -m benchmarks.test_redisbench
 
 start_redisearch_servers:
-	python -m benchmarks.start_redis_server 1
+	python -m benchmarks.start_redis_server 5
 
 rs_bench_go:
 	python -m benchmarks.rs_bench_go
