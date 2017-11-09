@@ -41,6 +41,8 @@ update_requirements_txt:
 	pip install pipreqs
 	pipreqs ./
 
+perf_redis:
+	python -m tools.perf_redis
 
 
 es_health:
