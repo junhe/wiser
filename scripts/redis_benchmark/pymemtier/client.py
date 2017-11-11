@@ -10,16 +10,17 @@ class redis_client:
                port= port)
 
     def populate(self, keyspace, value_size):
-        value = ''.join(random.choice(string.lowercase) for x in range(value_size))
-        print value
+        value = ''.join(random.choice(string.ascii_lowercase) for x in range(value_size))
+        print(value)
         for i in range(keyspace):
             self.r.set('pymemtier_'+str(i), value)
    
     def query(self, num_requests, keyspace):
-        for i in range(keyspace):
-            value = self.r.get('pymemtier_'+str(i))
+        for i in range(num_requests):
+            key = int(num_requests%keyspace)
+            value = self.r.get('pymemtier_'+str(key))
             if value == None:
-                print value
+                print(value)
 
     def set(self, key, value):
         ## Start Setting or Getting
