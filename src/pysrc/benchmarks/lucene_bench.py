@@ -9,7 +9,7 @@ from pyreuse.macros import *
 
 class ExperimentWiki(Experiment):
     def __init__(self):
-        self._n_treatments = 3
+        self._n_treatments = 1
         self._exp_name = "lucene-fsdir-001"
 
         self.DOWNLOAD_DIR = "/mnt/ssd/downloads"
@@ -17,45 +17,23 @@ class ExperimentWiki(Experiment):
     def conf(self, i):
 
         conf = {
-            # Small wiki
-            # "work_dir": "/mnt/ssd/work-small-wiki",
-            # "download_url": "https://dumps.wikimedia.org/enwiki/latest/enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2",
-            # "origin_doc_name": "enwiki-latest-pages-articles14.xml-p7697599p7744799",
-            # "decompress_cmd": "bunzip2 enwiki-latest-pages-articles14.xml-p7697599p7744799.bz2",
-            # "index_doc_count": "1000",
-            # "search_count": 100000,
-            # "search_mem_size": None,
-            # "query_maker": "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker",
-            # "wiki_query_log_path": "/mnt/ssd/downloads/wiki_QueryLog.clean",
-            # "wiki_query_count": 10000,
-
-            # "work_dir": "/mnt/ssd/work-large-wiki-tmp",
-            # "work_dir": "/mnt/fsonloop/work-large-wiki",
-            # "force_indexing": True,
-            # "download_url": "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles.xml.bz2",
-            # "origin_doc_name": "enwiki-20171001-pages-articles.xml",
-            # "decompress_cmd": "bunzip2 enwiki-20171001-pages-articles.xml.bz2",
-            # "index_doc_count": 10**(i+3),
-            # "line_doc_path": "/mnt/ssd/work-large-wiki/linedoc",
-            # "search_count": 100000,
-            # "search_mem_size": None,
-            # "query_maker": "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker",
-            # "wiki_query_log_path": "/mnt/ssd/downloads/wiki_QueryLog.clean",
-            # "wiki_query_count": 100000,
-
             "exp_mode": "fs-dir",
             "work_dir": "/mnt/ssd/work-large-wiki-tmp",
-            "force_indexing": True,
+            "force_indexing": False,
             "download_url": "https://dumps.wikimedia.org/enwiki/20171001/enwiki-20171001-pages-articles.xml.bz2",
             "origin_doc_name": "enwiki-20171001-pages-articles.xml",
             "decompress_cmd": "bunzip2 enwiki-20171001-pages-articles.xml.bz2",
-            "index_doc_count": 10**(i+3),
-            "line_doc_path": "/mnt/ssd/downloads/linedoc_tokenized",
+            "index_doc_count": "*",
+            # "line_doc_path": "/mnt/ssd/downloads/linedoc_tokenized",
+            "line_doc_path": "/mnt/ssd/downloads/enwiki-abstract.linedoc.withdate",
+            # "line_doc_path": "/mnt/ssd/downloads/large.linedoc.sample",
+            # "line_doc_path": "/mnt/ssd/downloads/abstract.linedoc.sample",
             "search_count": 100000,
             "search_mem_size": None,
-            "query_maker": "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker",
+            # "query_maker": "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker",
+            "query_maker": "org.apache.lucene.benchmark.byTask.feeds.SimpleQueryMaker",
             "wiki_query_log_path": "/mnt/ssd/downloads/wiki_QueryLog.clean",
-            "wiki_query_count": 100000,
+            "wiki_query_count": 1000,
         }
 
         return conf
@@ -160,26 +138,6 @@ class ExperimentWiki(Experiment):
 def main():
     exp = ExperimentWiki()
     exp.main()
-
-    # benchrun = BenchRun(
-        # algorithm_text = algs.INDEX_AND_SEARCH(
-            # docs_file = "/mnt/ssd/work-large-wiki/linedoc",
-            # work_dir = "/mnt/ssd/work-dir-tmp",
-            # search_count = 1000,
-            # query_maker = "org.apache.lucene.benchmark.byTask.feeds.WikiQueryMaker",
-            # wiki_query_log_path = "/mnt/ssd/downloads/wiki_QueryLog.clean",
-            # wiki_query_count = 1000,
-            # index_doc_count = 4000
-            # ),
-        # mem_size = None
-        # )
-    # benchrun.run()
-
-
-
-
-
-
 
 
 if __name__ == "__main__":

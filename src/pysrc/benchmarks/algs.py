@@ -183,6 +183,7 @@ task.max.depth.log=2
 wiki.query.log.path=%(wiki_query_log_path)s
 wiki.query.count=%(wiki_query_count)s
 log.queries=false
+content.source.forever=false
 # -------------------------------------------------------------------------------------
 
 { "Rounds"

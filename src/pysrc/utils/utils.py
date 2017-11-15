@@ -23,7 +23,7 @@ class LineDocPool(object):
 
     def line_to_dict(self, line):
         items = line.split("\t")
-        return {k:v for k,v in zip(self.col_names, items)}
+        return {k.strip():v.strip() for k,v in zip(self.col_names, items)}
 
 
 def setup_dev(devpath, mntpoint):
@@ -68,14 +68,16 @@ class QueryPool(object):
             if n == 0:
                 break
 
-    def next_query(self):
+    def next_query(self, protocol="elastic"):
         query = self.queries[self.i]
         self.i = (self.i + 1) % self.n
 
-        query = query.replace("&language=en", " ")
-        query = re.sub("[^\w]", " ",  query)
-        query = query.replace("AND", " ")
-        # format: "hello world"
+        if protocol in ("elastic", "redisearch"):
+            query = query.replace("&language=en", " ")
+            query = re.sub("[^\w]", " ",  query)
+            query = query.replace("AND", " ")
+            # format: "hello world"
+            query = " ".join(query.split())
         return query
 
 
@@ -103,7 +105,26 @@ class WikiAbstract2(object):
     def entries(self):
         for event, element in etree.iterparse(self.path, tag="doc"):
             yield {'title': element.findtext('title'),
-                   'abstract': element.findtext('abstract')}
+                   'abstract': element.findtext('abstract'),
+                   'url': element.findtext('url')
+                   }
             element.clear()
+
+
+def index_wikiabs_on_elasticsearch(wiki_abstract_path):
+    """
+    You must have RediSearchBenchmark in PATH
+    shards does not matter because RediSearchBenchmark does not use it.
+    """
+    bench_exe = "RediSearchBenchmark"
+    shcmd("{bench_exe} -engine elastic -shards 1 " \
+            "-hosts \"{hosts}\" -file {filepath}".format(
+                bench_exe=bench_exe,
+                hosts="http://localhost:9200",
+                filepath=wiki_abstract_path))
+
+
+
+
 
 

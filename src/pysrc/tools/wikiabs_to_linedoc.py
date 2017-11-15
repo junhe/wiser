@@ -15,12 +15,14 @@ def main():
     # wiki = WikiAbstract("utils/testdata/enwiki-abstract-sample.xml")
     wiki = WikiAbstract2(wikipath)
 
-    f = open(outpath, "wb")
-    f.write("FIELDS_HEADER_INDICATOR###      doctitle        body\n")
+    f = open(outpath, "w")
+    f.write("FIELDS_HEADER_INDICATOR###doctitle\turl\tbody\n")
 
     for i, entry in enumerate(wiki.entries()):
         # print entry
         f.write(entry['title'].encode("utf-8"))
+        f.write('\t')
+        f.write(entry['url'].encode("utf-8"))
         f.write('\t')
         f.write(entry['abstract'].encode("utf-8"))
         f.write('\n')

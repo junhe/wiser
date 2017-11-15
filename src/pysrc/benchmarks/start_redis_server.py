@@ -1,14 +1,5 @@
-from .go_rsbench import SERVER_PATH, REDISEARCH_SO
-import subprocess
+from .rs_bench_go import start_redis
 import sys
-
-
-def start_redis(port):
-    cmd = "{server} --port {port} --loadmodule {mod}".format(
-            server=SERVER_PATH, mod=REDISEARCH_SO, port=port)
-    p = subprocess.Popen(cmd, shell = True)
-    return p
-
 
 def main():
     if len(sys.argv) != 2:
