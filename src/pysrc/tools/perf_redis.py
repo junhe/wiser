@@ -28,7 +28,7 @@ def make_default():
 
 
 def main_no_perf():
-    # make_default()
+    make_default()
     # make_for_perf()
 
     redis_server_cmd = "/users/jhe/workdir/redis/src/redis-server --dir /mnt/ssd/ "\
@@ -38,7 +38,7 @@ def main_no_perf():
     time.sleep(40)
     cmd = "/users/jhe/workdir/go/bin/RediSearchBenchmark "\
             "-engine redis -shards 1 -hosts \"localhost:6379\" "\
-            "-duration 60 "\
+            "-duration 5 "\
             "-benchmark search -queries \"hello\" -c 32 -o /tmp/out.csv"
     print cmd
     subprocess.call(shlex.split(cmd))
@@ -56,7 +56,7 @@ def main_debug():
     print redis_server_cmd
     redis_server_subp = subprocess.Popen(shlex.split(redis_server_cmd))
 
-    time.sleep(100)
+    time.sleep(1)
 
     cli_cmd = "{exe} FT.SEARCH wik{{0}} hello LIMIT 0 5  WITHSCORES VERBATIM".format(exe = REDIS_CLI)
     print cli_cmd
@@ -95,7 +95,8 @@ def main_perf():
     fgraph = FlameGraph("/tmp/FlameGraph", "./perf_workdir")
 
     redis_server_cmd = "/users/jhe/workdir/redis/src/redis-server --dir /mnt/ssd/ "\
-        "--dbfilename redis-wiki-abs.db --loadmodule {mod} SAFEMODE".format(mod=REDISEARCH_SO)
+        "--dbfilename redis-wiki-abs.db --loadmodule {mod} ".format(mod=REDISEARCH_SO)
+        # "--dbfilename redis-wiki-abs.db --loadmodule {mod} SAFEMODE".format(mod=REDISEARCH_SO)
     redis_server_subp = subprocess.Popen(shlex.split(redis_server_cmd))
 
     time.sleep(1)
@@ -122,7 +123,7 @@ def main_perf():
 
 if __name__ == "__main__":
     # main_debug()
-    main_no_perf()
+    # main_no_perf()
     # main_gdb()
-    # main_perf()
+    main_perf()
 
