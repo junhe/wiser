@@ -1,8 +1,4 @@
-# README
+QQ-Mem is an in-memory search engine written in C++, named after
+the Chinese restaraunt near CS department of UW-Madison...
+Alternatively, QQ stands for Quick Query.
 
-This is a search engine written in C and C++.
-
-
-## Targets:
-* Settle down the ranking algorithm  (right now no)
-* Add each methods provided by previous papers to see performance
