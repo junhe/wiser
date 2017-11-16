@@ -42,9 +42,9 @@
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
-using helloworld::HelloRequest;
-using helloworld::HelloReply;
-using helloworld::Greeter;
+using qq::HelloRequest;
+using qq::HelloReply;
+using qq::Greeter;
 
 class GreeterClient {
  public:
