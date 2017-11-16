@@ -11,12 +11,12 @@ using grpc::ClientContext;
 using grpc::Status;
 using qq::HelloRequest;
 using qq::HelloReply;
-using qq::Greeter;
+using qq::QQEngine;
 
-class GreeterClient {
+class QQEngineClient {
  public:
-  GreeterClient(std::shared_ptr<Channel> channel)
-      : stub_(Greeter::NewStub(channel)) {}
+  QQEngineClient(std::shared_ptr<Channel> channel)
+      : stub_(QQEngine::NewStub(channel)) {}
 
   // Assembles the client's payload, sends it and presents the response back
   // from the server.
@@ -46,7 +46,7 @@ class GreeterClient {
   }
 
  private:
-  std::unique_ptr<Greeter::Stub> stub_;
+  std::unique_ptr<QQEngine::Stub> stub_;
 };
 
 int main(int argc, char** argv) {
@@ -54,11 +54,11 @@ int main(int argc, char** argv) {
   // are created. This channel models a connection to an endpoint (in this case,
   // localhost at port 50051). We indicate that the channel isn't authenticated
   // (use of InsecureChannelCredentials()).
-  GreeterClient greeter(grpc::CreateChannel(
+  QQEngineClient greeter(grpc::CreateChannel(
       "localhost:50051", grpc::InsecureChannelCredentials()));
   std::string user("world");
   std::string reply = greeter.SayHello(user);
-  std::cout << "Greeter received: " << reply << std::endl;
+  std::cout << "QQEngine received: " << reply << std::endl;
 
   return 0;
 }

@@ -37,7 +37,7 @@ option objc_class_prefix = "HLW";
 package qq;
 
 // The greeting service definition.
-service Greeter {
+service QQEngine {
   // Sends a greeting
   rpc SayHello (HelloRequest) returns (HelloReply) {}
 }

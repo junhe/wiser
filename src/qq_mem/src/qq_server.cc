@@ -12,10 +12,10 @@ using grpc::ServerContext;
 using grpc::Status;
 using qq::HelloRequest;
 using qq::HelloReply;
-using qq::Greeter;
+using qq::QQEngine;
 
 // Logic and data behind the server's behavior.
-class GreeterServiceImpl final : public Greeter::Service {
+class QQEngineServiceImpl final : public QQEngine::Service {
   Status SayHello(ServerContext* context, const HelloRequest* request,
                   HelloReply* reply) override {
     std::string prefix("Hello ");
@@ -26,7 +26,7 @@ class GreeterServiceImpl final : public Greeter::Service {
 
 void RunServer() {
   std::string server_address("0.0.0.0:50051");
-  GreeterServiceImpl service;
+  QQEngineServiceImpl service;
 
   ServerBuilder builder;
   // Listen on the given address without any authentication mechanism.
