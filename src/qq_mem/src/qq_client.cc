@@ -54,10 +54,10 @@ int main(int argc, char** argv) {
   // are created. This channel models a connection to an endpoint (in this case,
   // localhost at port 50051). We indicate that the channel isn't authenticated
   // (use of InsecureChannelCredentials()).
-  QQEngineClient greeter(grpc::CreateChannel(
+  QQEngineClient qqengine(grpc::CreateChannel(
       "localhost:50051", grpc::InsecureChannelCredentials()));
   std::string user("world");
-  std::string reply = greeter.SayHello(user);
+  std::string reply = qqengine.SayHello(user);
   std::cout << "QQEngine received: " << reply << std::endl;
 
   return 0;
