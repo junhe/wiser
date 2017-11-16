@@ -13,7 +13,7 @@ find_package(Protobuf REQUIRED)
 find_package(GRPC REQUIRED)
 
 set(PROTOS
-    ${CMAKE_CURRENT_SOURCE_DIR}/protos/helloworld.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/protos/qq.proto
 )
 
 set(PROTO_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto-src)

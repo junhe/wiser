@@ -37,11 +37,7 @@
 
 #include <grpc++/grpc++.h>
 
-#ifdef BAZEL_BUILD
-#include "examples/protos/helloworld.grpc.pb.h"
-#else
-#include "helloworld.grpc.pb.h"
-#endif
+#include "qq.grpc.pb.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
