@@ -24,23 +24,23 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 
 # Building server
-add_executable(greeter_server
-    ${CMAKE_CURRENT_SOURCE_DIR}/greeter_server.cc
+add_executable(qq_server
+    ${CMAKE_CURRENT_SOURCE_DIR}/qq_server.cc
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
-target_link_libraries(greeter_server
+target_link_libraries(qq_server
     gRPC::grpc++_reflection
     protobuf::libprotobuf
 )
 
 # Building client
-add_executable(greeter_client
-    ${CMAKE_CURRENT_SOURCE_DIR}/greeter_client.cc
+add_executable(qq_client
+    ${CMAKE_CURRENT_SOURCE_DIR}/qq_client.cc
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
-target_link_libraries(greeter_client
+target_link_libraries(qq_client
     gRPC::grpc++_reflection
     protobuf::libprotobuf
 )
