@@ -45,6 +45,25 @@ class QQEngineClient {
     }
   }
 
+  std::string SayHelloAgain(const std::string& user) {
+    // Follows the same pattern as SayHello.
+    HelloRequest request;
+    request.set_name(user);
+    HelloReply reply;
+    ClientContext context;
+
+    // Here we can the stub's newly available method we just added.
+    Status status = stub_->SayHelloAgain(&context, request, &reply);
+    if (status.ok()) {
+      return reply.message();
+    } else {
+      std::cout << status.error_code() << ": " << status.error_message()
+                << std::endl;
+      return "RPC failed";
+    }
+  }
+
+
  private:
   std::unique_ptr<QQEngine::Stub> stub_;
 };
@@ -59,6 +78,9 @@ int main(int argc, char** argv) {
   std::string user("world");
   std::string reply = qqengine.SayHello(user);
   std::cout << "QQEngine received: " << reply << std::endl;
+
+  reply = qqengine.SayHelloAgain(user);
+  std::cout << "Greeter received: " << reply << std::endl;
 
   return 0;
 }
