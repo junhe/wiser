@@ -23,7 +23,7 @@ class QQEngineServiceImpl final : public QQEngine::Service {
     return Status::OK;
   }
 
-  Status SayHelloAgain(ServerContext* context, const HelloRequest* request,
+  Status AddDocument(ServerContext* context, const HelloRequest* request,
                        HelloReply* reply) override {
     std::string prefix("Hello again ");
     reply->set_message(prefix + request->name());

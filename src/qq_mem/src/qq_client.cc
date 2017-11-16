@@ -45,7 +45,7 @@ class QQEngineClient {
     }
   }
 
-  std::string SayHelloAgain(const std::string& user) {
+  std::string AddDocument(const std::string& user) {
     // Follows the same pattern as SayHello.
     HelloRequest request;
     request.set_name(user);
@@ -53,7 +53,7 @@ class QQEngineClient {
     ClientContext context;
 
     // Here we can the stub's newly available method we just added.
-    Status status = stub_->SayHelloAgain(&context, request, &reply);
+    Status status = stub_->AddDocument(&context, request, &reply);
     if (status.ok()) {
       return reply.message();
     } else {
@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
   std::string reply = qqengine.SayHello(user);
   std::cout << "QQEngine received: " << reply << std::endl;
 
-  reply = qqengine.SayHelloAgain(user);
+  reply = qqengine.AddDocument(user);
   std::cout << "Greeter received: " << reply << std::endl;
 
   return 0;
