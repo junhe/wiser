@@ -24,3 +24,12 @@ This command will put compiled files to `./build/`.
 
 The initial grpc files are from https://github.com/IvanSafonov/grpc-cmake-example
 
+
+## Test
+
+Simply run:
+
+```
+./runtest.sh
+```
+
