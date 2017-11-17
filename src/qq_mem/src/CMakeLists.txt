@@ -44,3 +44,12 @@ target_link_libraries(qq_client
     gRPC::grpc++_reflection
     protobuf::libprotobuf
 )
+
+
+add_library( CatchMain OBJECT catch_main.cc catch.hpp )
+add_executable( testmain tests.cc $<TARGET_OBJECTS:CatchMain> catch.hpp )
+
+
+
+
+
