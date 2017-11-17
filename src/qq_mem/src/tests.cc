@@ -1,5 +1,6 @@
 // #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
+#include "native_doc_store.hh"
 
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
@@ -11,4 +12,12 @@ TEST_CASE( "Factorials are computed", "[factorial]" ) {
     REQUIRE( Factorial(3) == 6 );
     REQUIRE( Factorial(10) == 3628800 );
 }
+
+TEST_CASE( "NativeDocStore", "[docstore]" ) {
+    NativeDocStore store;
+    store.AddDocument(88, "it is a doc");
+}
+
+
+
 
