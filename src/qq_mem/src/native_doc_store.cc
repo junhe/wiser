@@ -5,21 +5,28 @@
 
 using namespace std;
 
-void NativeDocStore::AddDocument(int id, std::string document) {
-    std::cout << "Hello" << std::endl;
+void NativeDocStore::Add(int id, std::string document) {
+    store_[id] = document;
 }
 
-void NativeDocStore::RemoveDocument(int id) {
-    std::cout << "Hello" << std::endl;
+void NativeDocStore::Remove(int id) {
+    store_.erase(id);
 }
 
-bool NativeDocStore::HasDocument(int id) {
-    std::cout << "Hello" << std::endl;
+bool NativeDocStore::Has(int id) {
+    return store_.count(id) == 1;
+}
+
+std::string NativeDocStore::Get(int id) {
+    return store_[id];
 }
 
 void NativeDocStore::Clear() {
-    std::cout << "Hello" << std::endl;
+    store_.clear();
 }
 
+int NativeDocStore::Size() {
+    return store_.size();
+}
 
 
