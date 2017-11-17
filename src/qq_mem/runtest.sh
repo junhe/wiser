@@ -1,3 +1,3 @@
-rm ./build/testmain
+rm -f ./build/testmain
 ./build.sh
 ./build/testmain
