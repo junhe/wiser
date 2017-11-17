@@ -12,6 +12,11 @@ using grpc::ServerContext;
 using grpc::Status;
 using qq::HelloRequest;
 using qq::HelloReply;
+
+// for AddDocument
+using qq::AddDocumentRequest;
+using qq::StatusReply;
+
 using qq::QQEngine;
 
 // Logic and data behind the server's behavior.
@@ -23,10 +28,15 @@ class QQEngineServiceImpl final : public QQEngine::Service {
     return Status::OK;
   }
 
-  Status AddDocument(ServerContext* context, const HelloRequest* request,
-                       HelloReply* reply) override {
-    std::string prefix("Hello again ");
-    reply->set_message(prefix + request->name());
+  Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
+                    StatusReply* reply) override {
+    std::cout << "title" << request->document().title() << std::endl;
+    std::cout << "url" << request->document().url() << std::endl;
+    std::cout << "body" << request->document().body() << std::endl;
+
+    std::string msg("I am from AddDocument() server.");
+    reply->set_message(msg);
+    reply->set_ok(true);
     return Status::OK;
   }
 };

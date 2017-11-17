@@ -13,6 +13,10 @@ using qq::HelloRequest;
 using qq::HelloReply;
 using qq::QQEngine;
 
+// for AddDocument
+using qq::AddDocumentRequest;
+using qq::StatusReply;
+
 class QQEngineClient {
  public:
   QQEngineClient(std::shared_ptr<Channel> channel)
@@ -45,15 +49,20 @@ class QQEngineClient {
     }
   }
 
-  std::string AddDocument(const std::string& user) {
-    // Follows the same pattern as SayHello.
-    HelloRequest request;
-    request.set_name(user);
-    HelloReply reply;
+  std::string AddDocument() {
+    AddDocumentRequest request;
+    request.mutable_document()->set_title("My first document");
+    request.mutable_document()->set_url("http://wikipedia.org");
+    request.mutable_document()->set_body("BIG body");
+
+    request.mutable_options()->set_save(true);
+
+    StatusReply reply;
+
     ClientContext context;
 
     // Here we can the stub's newly available method we just added.
-    Status status = stub_->AddDocument(&context, request, &reply);
+    Status status = stub_->AddDocument(&context, request,  &reply);
     if (status.ok()) {
       return reply.message();
     } else {
@@ -79,7 +88,7 @@ int main(int argc, char** argv) {
   std::string reply = qqengine.SayHello(user);
   std::cout << "QQEngine received: " << reply << std::endl;
 
-  reply = qqengine.AddDocument(user);
+  reply = qqengine.AddDocument();
   std::cout << "Greeter received: " << reply << std::endl;
 
   return 0;
