@@ -12,7 +12,8 @@ int terms[5][5] = {{1,2,3,4,5},
                    {1,2,3,5,8}
                    };
 
-std::map<int, Posting_List *> dictionary;    // termID -> posting list
+std::map<int, Posting_List *> dictionary;            // termID -> posting list
+std::map<std::string, std::string> inverted_index;   // term -> posting lists(serialized)
 
 
 int main(int argc, char* arg[]) {
@@ -26,7 +27,7 @@ int main(int argc, char* arg[]) {
         // get terms from that document (set to be a two dimensional matrix)
         // update posting list for each terms
         for (int j = 0; j < 5; j++) {
-            int term_frequency = (i+1)*(j+1);
+            int term_frequency = 5;
             int position[5] = {1, 10, 20, 31, 44};
             if (dictionary.find(terms[i][j]) == dictionary.end()) {
                 //dictionary[terms[i][j]] = Posting_List(std::to_string("hello") + std::to_string(terms[i][j]));
@@ -34,10 +35,8 @@ int main(int argc, char* arg[]) {
                 dictionary[terms[i][j]] = new Posting_List(term);
             }
             // addoc
-            dictionary[terms[i][j]]->add_doc(i, term_frequency, 5, position); 
+            dictionary[terms[i][j]]->add_doc(i, term_frequency, position); 
         }
-
-
     }
     
 
@@ -45,15 +44,29 @@ int main(int argc, char* arg[]) {
     std::map<int, Posting_List*>::iterator it;
     for (it = dictionary.begin(); it != dictionary.end(); it++) {
         // serialize the posting list to a string 
+        std::string serialized_result = it->second->serialize();
+        inverted_index["term_"+std::to_string(it->first)] = serialized_result;
+        // hint
         std::cout << "Posting list of term_" << it->first 
-                   << ", after serialized: " <<  it->second->serialize() << std::endl;
-        // clean the objects
+                   << ", after serialized: " <<  serialized_result << std::endl;
+        // delete object
+        delete it->second;
     }
 
-// query (just set to all terms)
-    for (int i = 0; i < 5; i++) {
-        // create a posting list for reading
-         
+// query (all terms)
+    std::map<std::string, std::string>::iterator it_query;
+    for (it_query = inverted_index.begin(); it_query != inverted_index.end(); it_query++) {
+        // hint
+        
+        std::cout << "\n"<<it_query->first << " : " << it_query->second <<std::endl;
+        // build iterator on postings of this term's posting list
+        Posting_List * pl = new Posting_List(it_query->first, it_query->second);
+        Posting * p = pl->next();
+        while (p!=NULL) {
+            std::cout<< "\nDump the posting: " << p->dump();
+            p = pl->next();
+        }
+        std::cout<< "\nalready get to the end\n";
     }
 
     return 0;
