@@ -1,4 +1,9 @@
+#ifndef ENGINE_SERVICES_HH
+#define ENGINE_SERVICES_HH
+
+
 #include <string>
+#include <vector>
 
 class DocumentStoreService {
     public:
@@ -10,4 +15,15 @@ class DocumentStoreService {
         virtual int Size() = 0;
 };
 
+typedef std::vector<std::string> TermList;
+enum class SearchOperator {AND, OR};
+
+class InvertedIndexService {
+    public:
+        virtual void AddDocument(int doc_id, TermList termlist) = 0;
+        virtual void GetPostingList(int doc_id) = 0;
+        virtual void Search(TermList terms, SearchOperator op) = 0;
+};
+
+#endif
 
