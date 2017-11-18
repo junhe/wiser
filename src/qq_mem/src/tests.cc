@@ -2,6 +2,7 @@
 #include "catch.hpp"
 #include "native_doc_store.hh"
 #include "inverted_index.hh"
+#include "posting_list.hh"
 
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
@@ -36,10 +37,12 @@ TEST_CASE( "Document store implemented by C++ map", "[docstore]" ) {
     REQUIRE(store.Has(doc_id) == false);
 }
 
-TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]") {
+TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
     InvertedIndex index;     
 }
 
-
+TEST_CASE( "Posting List essential operations are OK", "[posting_list]" ) {
+    Posting_List pl("term001");
+}
 
 
