@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package qq;
+
+// The greeting service definition.
+service QQEngine {
+  // Sends a greeting
+  rpc SayHello (HelloRequest) returns (HelloReply) {}
+  rpc AddDocument (AddDocumentRequest) returns (StatusReply) {}
+}
+
+
+message AddDocumentRequest {
+    message Document {
+      string title = 1;
+      string url = 2;
+      string body = 3;
+    }
+
+    message Options {
+        bool save = 1; // whether to save the document to document store
+    }
+
+    Document document = 1;
+    Options options = 2;
+}
+
+message StatusReply {
+    bool ok = 1;
+    string message = 2;
+}
+
+// The request message containing the user's name.
+message HelloRequest {
+  string name = 1;
+}
+
+// The response message containing the greetings
+message HelloReply {
+  string message = 1;
+}
