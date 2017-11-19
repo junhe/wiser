@@ -1,7 +1,7 @@
 #ifndef INVERTED_INDEX_HH
 #define INVERTED_INDEX_HH
 
-#include "engine_services.hh"
+#include "engine_services.h"
 
 class InvertedIndex: public InvertedIndexService {
     public:

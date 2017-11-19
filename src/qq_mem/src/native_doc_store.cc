@@ -1,4 +1,4 @@
-#include "native_doc_store.hh"
+#include "native_doc_store.h"
 
 #include <string>
 #include <iostream>

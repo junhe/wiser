@@ -1,5 +1,5 @@
 
-#include "inverted_index.hh"
+#include "inverted_index.h"
 
 void InvertedIndex::AddDocument(int doc_id, TermList termlist) {
 
