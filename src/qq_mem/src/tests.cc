@@ -41,8 +41,24 @@ TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
     InvertedIndex index;     
 }
 
+TEST_CASE( "Posting", "[posting_list]" ) {
+    Posting posting(100, 200, Positions {1, 2});
+    REQUIRE(posting.docID_ == 100);
+    REQUIRE(posting.term_frequency_ == 200);
+    REQUIRE(posting.positions_[0] == 1);
+    REQUIRE(posting.positions_[1] == 2);
+}
+
 TEST_CASE( "Posting List essential operations are OK", "[posting_list]" ) {
-    Posting_List pl("term001");
+    PostingList pl("term001");
+    REQUIRE(pl.Size() == 0);
+
+    pl.AddPosting(111, 1,  Positions {19});
+    REQUIRE(pl.Size() == 1);
+
+    REQUIRE(pl.GetPosting(111).docID_ == 111);
+    REQUIRE(pl.GetPosting(111).term_frequency_ == 1);
+    REQUIRE(pl.GetPosting(111).positions_.size() == 1);
 }
 
 
