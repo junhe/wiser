@@ -22,9 +22,9 @@ enum class SearchOperator {AND, OR};
 
 class InvertedIndexService {
     public:
-        virtual void AddDocument(int doc_id, TermList termlist) = 0;
-        virtual void GetPostingList(int doc_id) = 0;
-        virtual void Search(TermList terms, SearchOperator op) = 0;
+        virtual void AddDocument(const int &doc_id, const TermList &termlist) = 0;
+        virtual void GetPostingList(const int &doc_id) = 0;
+        virtual void Search(const TermList &terms, const SearchOperator &op) = 0;
 };
 
 class PostingListService {

@@ -6,13 +6,13 @@
 #include <unordered_map>
 
 class InvertedIndex: public InvertedIndexService {
-    protected:
-        std::unordered_map<Term, PostingListService> index_;
+    // protected:
+        // std::unordered_map<Term, PostingListService> index_;
 
     public:
-        void AddDocument(int doc_id, TermList termlist);
-        void GetPostingList(int doc_id);
-        void Search(TermList terms, SearchOperator op);
+        void AddDocument(const int &doc_id, const TermList &termlist);
+        void GetPostingList(const int &doc_id);
+        void Search(const TermList &terms, const SearchOperator &op);
 };
 
 
