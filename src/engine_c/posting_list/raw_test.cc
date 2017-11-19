@@ -3,7 +3,7 @@
 #include <map>
 #include <string>
 #include <iostream>
-#include "Posting_List.h"
+#include "Posting_List_Raw.h"
 
 int terms[5][5] = {{1,2,3,4,5},
                    {6,7,8,9,10},
@@ -34,7 +34,15 @@ int main(int argc, char* arg[]) {
                 std::string term = "term_" + std::to_string(terms[i][j]);
                 dictionary[terms[i][j]] = new Posting_List(term);
             }
-            // addoc
+            // add_doc
+            // create doc message
+            /*posting_message::doc_info this_doc; 
+            {
+                this_doc->set_id(i);
+                this_doc->set_term_frequency(term_frequency);
+                posting_message::
+            }*/
+            // add doc
             dictionary[terms[i][j]]->add_doc(i, term_frequency, position); 
         }
     }
