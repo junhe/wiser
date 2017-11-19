@@ -1,5 +1,7 @@
 #include "posting_list.h"
+
 #include <iostream>
+#include <string>
 
 Posting::Posting(int docID, int term_frequency, const Positions positions)
     :docID_(docID), term_frequency_(term_frequency), positions_(positions)
@@ -37,7 +39,7 @@ std::size_t PostingList::Size() {
 }
 
 
-std::string PostingList::serialize() {
+std::string PostingList::Serialize() {
     return "";
 }
 

@@ -30,7 +30,7 @@ class PostingList {
         void AddPosting(int docID, int term_frequency, const Positions positions);
         Posting GetPosting(const int &docID);
         std::size_t Size();
-        std::string serialize();
+        std::string Serialize();
 };
 
 
