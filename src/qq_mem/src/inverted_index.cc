@@ -13,12 +13,14 @@ void InvertedIndex::AddDocument(const int &doc_id, const TermList &termlist) {
         } else {
             it = index_.find(term);
         }
-        
-        it->second.AddPosting(doc_id, 0, Positions{});
+
+        PostingList &postinglist = it->second;        
+        postinglist.AddPosting(doc_id, 0, Positions{});
     }
 }
 
 void InvertedIndex::GetPostingList(const int &doc_id) {
+
 }
 
 void InvertedIndex::Search(const TermList &terms, const SearchOperator &op) {
