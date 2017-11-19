@@ -15,7 +15,8 @@ class DocumentStoreService {
         virtual int Size() = 0;
 };
 
-typedef std::vector<std::string> TermList;
+typedef std::string Term;
+typedef std::vector<Term> TermList;
 enum class SearchOperator {AND, OR};
 
 class InvertedIndexService {
@@ -23,6 +24,9 @@ class InvertedIndexService {
         virtual void AddDocument(int doc_id, TermList termlist) = 0;
         virtual void GetPostingList(int doc_id) = 0;
         virtual void Search(TermList terms, SearchOperator op) = 0;
+};
+
+class PostingListService {
 };
 
 #endif
