@@ -39,6 +39,7 @@ TEST_CASE( "Document store implemented by C++ map", "[docstore]" ) {
 
 TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
     InvertedIndex index;     
+    index.AddDocument(100, TermList{"hello", "world"});
 }
 
 TEST_CASE( "Posting", "[posting_list]" ) {
