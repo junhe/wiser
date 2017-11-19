@@ -30,30 +30,6 @@
 #include <google/protobuf/extension_set.h>  // IWYU pragma: export
 #include <google/protobuf/unknown_field_set.h>
 // @@protoc_insertion_point(includes)
-
-namespace protobuf_posting_5fmessage_2eproto {
-// Internal implementation detail -- do not use these members.
-struct TableStruct {
-  static const ::google::protobuf::internal::ParseTableField entries[];
-  static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
-  static const ::google::protobuf::internal::ParseTable schema[3];
-  static const ::google::protobuf::internal::FieldMetadata field_metadata[];
-  static const ::google::protobuf::internal::SerializationTable serialization_table[];
-  static const ::google::protobuf::uint32 offsets[];
-};
-void AddDescriptors();
-void InitDefaultsdoc_infoImpl();
-void InitDefaultsdoc_info();
-void InitDefaultsPostingImpl();
-void InitDefaultsPosting();
-void InitDefaultsPostingListImpl();
-void InitDefaultsPostingList();
-inline void InitDefaults() {
-  InitDefaultsdoc_info();
-  InitDefaultsPosting();
-  InitDefaultsPostingList();
-}
-}  // namespace protobuf_posting_5fmessage_2eproto
 namespace posting_message {
 class Posting;
 class PostingDefaultTypeInternal;
@@ -65,7 +41,23 @@ class doc_info;
 class doc_infoDefaultTypeInternal;
 extern doc_infoDefaultTypeInternal _doc_info_default_instance_;
 }  // namespace posting_message
+
 namespace posting_message {
+
+namespace protobuf_posting_5fmessage_2eproto {
+// Internal implementation detail -- do not call these.
+struct TableStruct {
+  static const ::google::protobuf::internal::ParseTableField entries[];
+  static const ::google::protobuf::internal::AuxillaryParseTableField aux[];
+  static const ::google::protobuf::internal::ParseTable schema[];
+  static const ::google::protobuf::uint32 offsets[];
+  static const ::google::protobuf::internal::FieldMetadata field_metadata[];
+  static const ::google::protobuf::internal::SerializationTable serialization_table[];
+  static void InitDefaultsImpl();
+};
+void AddDescriptors();
+void InitDefaults();
+}  // namespace protobuf_posting_5fmessage_2eproto
 
 // ===================================================================
 
@@ -98,7 +90,6 @@ class doc_info : public ::google::protobuf::Message /* @@protoc_insertion_point(
   static const ::google::protobuf::Descriptor* descriptor();
   static const doc_info& default_instance();
 
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
   static inline const doc_info* internal_default_instance() {
     return reinterpret_cast<const doc_info*>(
                &_doc_info_default_instance_);
@@ -184,8 +175,7 @@ class doc_info : public ::google::protobuf::Message /* @@protoc_insertion_point(
   ::google::protobuf::int32 id_;
   ::google::protobuf::int32 term_frequency_;
   mutable int _cached_size_;
-  friend struct ::protobuf_posting_5fmessage_2eproto::TableStruct;
-  friend void ::protobuf_posting_5fmessage_2eproto::InitDefaultsdoc_infoImpl();
+  friend struct protobuf_posting_5fmessage_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
@@ -218,7 +208,6 @@ class Posting : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   static const ::google::protobuf::Descriptor* descriptor();
   static const Posting& default_instance();
 
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
   static inline const Posting* internal_default_instance() {
     return reinterpret_cast<const Posting*>(
                &_Posting_default_instance_);
@@ -304,8 +293,7 @@ class Posting : public ::google::protobuf::Message /* @@protoc_insertion_point(c
   ::google::protobuf::int32 docid_;
   ::google::protobuf::int32 term_frequency_;
   mutable int _cached_size_;
-  friend struct ::protobuf_posting_5fmessage_2eproto::TableStruct;
-  friend void ::protobuf_posting_5fmessage_2eproto::InitDefaultsPostingImpl();
+  friend struct protobuf_posting_5fmessage_2eproto::TableStruct;
 };
 // -------------------------------------------------------------------
 
@@ -338,7 +326,6 @@ class PostingList : public ::google::protobuf::Message /* @@protoc_insertion_poi
   static const ::google::protobuf::Descriptor* descriptor();
   static const PostingList& default_instance();
 
-  static void InitAsDefaultInstance();  // FOR INTERNAL USE ONLY
   static inline const PostingList* internal_default_instance() {
     return reinterpret_cast<const PostingList*>(
                &_PostingList_default_instance_);
@@ -416,14 +403,14 @@ class PostingList : public ::google::protobuf::Message /* @@protoc_insertion_poi
   ::google::protobuf::RepeatedPtrField< ::posting_message::Posting > postings_;
   ::google::protobuf::int32 num_postings_;
   mutable int _cached_size_;
-  friend struct ::protobuf_posting_5fmessage_2eproto::TableStruct;
-  friend void ::protobuf_posting_5fmessage_2eproto::InitDefaultsPostingListImpl();
+  friend struct protobuf_posting_5fmessage_2eproto::TableStruct;
 };
 // ===================================================================
 
 
 // ===================================================================
 
+#if !PROTOBUF_INLINE_NOT_IN_HEADERS
 #ifdef __GNUC__
   #pragma GCC diagnostic push
   #pragma GCC diagnostic ignored "-Wstrict-aliasing"
@@ -601,12 +588,14 @@ PostingList::postings() const {
 #ifdef __GNUC__
   #pragma GCC diagnostic pop
 #endif  // __GNUC__
+#endif  // !PROTOBUF_INLINE_NOT_IN_HEADERS
 // -------------------------------------------------------------------
 
 // -------------------------------------------------------------------
 
 
 // @@protoc_insertion_point(namespace_scope)
+
 
 }  // namespace posting_message
 

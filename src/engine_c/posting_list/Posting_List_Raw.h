@@ -15,6 +15,11 @@ class Posting {
         memcpy(position, position_in, sizeof(int)*term_frequency); 
         next = NULL;
     }
+
+    ~Posting() {
+        free(position);
+    }
+
     std::string dump() {
         std::string result="-";
         result = result + std::to_string(docID)+ "_" + std::to_string(term_frequency);
@@ -31,7 +36,6 @@ class Posting_List {
     std::string term;        // term this posting list belongs to
     int num_postings;        // number of postings in this list
     Posting * p_list;        // posting list when creating index
-    // TODO memory leak
     std::string serialized;  // serialized string reference, when query processing
     int cur_index;           // last position in the serialized string we have parsed
     int cur_docID;           // last docID we have returned
@@ -42,11 +46,26 @@ class Posting_List {
         term = term_in;
         num_postings = 0;
         p_list = NULL;
+        serialized = "";
+        cur_index = 0;
+        cur_docID = -1;
     }
+
+    ~Posting_List() {
+        // delete all Postings
+        Posting * last_posting;
+        while (p_list != NULL) {
+            last_posting = p_list;
+            p_list = p_list->next;
+            delete last_posting;
+        } 
+    }
+
 // Init with a term string, and posting list string reference, when query processing
     Posting_List(std::string term_in, std::string & serialized_in) {  // configuration
         term = term_in;
         serialized = serialized_in;
+        p_list = NULL;
         cur_index = 0;
         cur_docID = -1;
         // read posting list head(num_postings)
@@ -132,12 +151,14 @@ class Posting_List {
 
         // change cur_index
         cur_index = tmp_index-2;
-        return new Posting(cur_docID, tmp_frequency, tmp_positions);
+        Posting * result = new Posting(cur_docID, tmp_frequency, tmp_positions);
+        free(tmp_positions);
+        return result;
     }
 
 // Add a doc for creating index
     void add_doc(int docID, int term_frequency, int position[]) { // TODO what info? who should provide?
-        std::cout << "Add document " << docID << " for " << term << std::endl;
+        //std::cout << "Add document " << docID << " for " << term << std::endl;
         // add one posting to the p_list
         num_postings += 1;
         if (p_list == NULL) {
@@ -173,9 +194,9 @@ class Posting_List {
         std::string result = std::to_string(num_postings);
         // traverse all postings
         Posting * cur_posting = p_list;
-        while (p_list != NULL) {
-            result += p_list->dump();
-            p_list = p_list->next;
+        while (cur_posting != NULL) {
+            result += cur_posting->dump();
+            cur_posting = cur_posting->next;
         }
         return result;
     }

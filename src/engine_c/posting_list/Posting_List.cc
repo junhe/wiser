@@ -8,6 +8,10 @@
         memcpy(position, position_in, sizeof(int)*term_frequency); 
         next = NULL;
     }
+    
+    Posting::~Posting() {
+        free(position);
+    }
 
     std::string Posting::dump() {
         std::string result="-";
@@ -26,11 +30,15 @@
         term = term_in;
         num_postings = 0;
         p_list = NULL;
+        serialized = "";
+        cur_index = 0;
+        cur_docID = -1;
     }
 // Init with a term string, and posting list string reference, when query processing
     Posting_List::Posting_List(std::string term_in, std::string & serialized_in) {  // configuration
         term = term_in;
         serialized = serialized_in;
+        p_list = NULL;
         cur_index = -1;
         cur_docID = -1;
         // parse string and read posting list head(num_postings)
@@ -38,6 +46,16 @@
         num_postings = plist_message.num_postings();
         // hint
         //std::cout<< "num of postings: " << num_postings << std::endl;
+    }
+// Destructor    
+    Posting_List::~Posting_List() {
+        // delete all Postings
+        Posting * last_posting;
+        while (p_list != NULL) {
+            last_posting = p_list;
+            p_list = p_list->next;
+            delete last_posting;
+        } 
     }
 
 // Get next posting
@@ -75,7 +93,9 @@
         int * tmp_positions = (int *) malloc(tmp_frequency * sizeof(int));
         for (int i = 0; i < tmp_frequency; i++)
            tmp_positions[i] = cur_posting.positions(i);
-        return new Posting(cur_posting.docid(), tmp_frequency, tmp_positions);
+        Posting * result = new Posting(cur_posting.docid(), tmp_frequency, tmp_positions);
+        free(tmp_positions);
+        return result;
     }
 
 // Add a doc for creating index
@@ -136,13 +156,13 @@
             pl_message.set_num_postings(num_postings);
             // postings:
             Posting * cur_posting = p_list;
-            while (p_list != NULL) {
+            while (cur_posting != NULL) {
                 posting_message::Posting * new_posting = pl_message.add_postings();
-                new_posting->set_docid(p_list->docID);
-                new_posting->set_term_frequency(p_list->term_frequency);
-                for (int k = 0; k < p_list->term_frequency; k++) 
-                    new_posting->add_positions(p_list->position[k]);
-                p_list = p_list->next;
+                new_posting->set_docid(cur_posting->docID);
+                new_posting->set_term_frequency(cur_posting->term_frequency);
+                for (int k = 0; k < cur_posting->term_frequency; k++) 
+                    new_posting->add_positions(cur_posting->position[k]);
+                cur_posting = cur_posting->next;
             }
         }
         std::string pl_string;

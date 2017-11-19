@@ -77,11 +77,15 @@ int main(int argc, char* arg[]) {
         // build iterator on postings of this term's posting list
         Posting_List * pl = new Posting_List(it_query->first, it_query->second);
         Posting * p = pl->next();
+        Posting * last_p;
         while (p!=NULL) {
             std::cout<< "\nDump the posting: " << p->dump();
+            last_p = p;
             p = pl->next();
+            delete last_p;
         }
         std::cout<< "\nalready get to the end\n";
+        delete pl;
     }
 
     return 0;

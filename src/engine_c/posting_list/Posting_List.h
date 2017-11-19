@@ -11,6 +11,7 @@ class Posting {
     Posting * next;
 
     Posting(int docID_in, int term_frequency_in, int position_in[]); 
+    ~Posting();
     std::string dump();
 };
 
@@ -30,6 +31,9 @@ class Posting_List {
 
 // Init with a term string, and posting list string reference, when query processing
     Posting_List(std::string term_in, std::string & serialized_in);    // configuration
+
+// Destructor
+    ~Posting_List();
 
 // Get next posting for query processing
     Posting * next();    // exactly next
