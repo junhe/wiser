@@ -1,8 +1,8 @@
 // #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include "catch.hpp"
-#include "native_doc_store.hh"
-#include "inverted_index.hh"
-#include "posting_list.hh"
+#include "native_doc_store.h"
+#include "inverted_index.h"
+#include "posting_list.h"
 
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;

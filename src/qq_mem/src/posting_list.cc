@@ -1,4 +1,4 @@
-#include "posting_list.hh"
+#include "posting_list.h"
 #include <iostream>
 
 Posting::Posting(int docID_in, int term_frequency, int num_pos, int position[]) {

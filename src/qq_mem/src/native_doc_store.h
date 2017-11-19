@@ -1,7 +1,7 @@
 #ifndef NATIVE_DOC_STORE_HH
 #define NATIVE_DOC_STORE_HH
 
-#include "engine_services.hh"
+#include "engine_services.h"
 
 #include <map>
 
