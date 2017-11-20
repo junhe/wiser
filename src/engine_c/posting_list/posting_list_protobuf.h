@@ -1,22 +1,14 @@
+#ifndef POSTING_LIST_PROTOBUF_H
+#define POSTING_LIST_PROTOBUF_H
+
 #include <string>
 #include <string.h>
+#include "engine_services.h"
+#include "posting_basic.h"
 #include "posting_message.pb.h"
 
-class Posting {
-    public:
-    int docID;
-    int term_frequency;
-    int * position;
-
-    Posting * next;
-
-    Posting(int docID_in, int term_frequency_in, int position_in[]); 
-    ~Posting();
-    std::string dump();
-};
-
 // Posting_List Class
-class Posting_List {
+class Posting_List_Protobuf :  public PostingListStructure {
     std::string term;                    // term this posting list belongs to
     int num_postings;                    // number of postings in this list
     std::string serialized;              // serialized string reference, when query processing
@@ -27,13 +19,13 @@ class Posting_List {
 
     public:
 // Init with a term string, when creating index
-    Posting_List(std::string term_in);    // do we need term?
+    Posting_List_Protobuf(std::string term_in);    // do we need term?
 
 // Init with a term string, and posting list string reference, when query processing
-    Posting_List(std::string term_in, std::string & serialized_in);    // configuration
+    Posting_List_Protobuf(std::string term_in, std::string & serialized_in);    // configuration
 
 // Destructor
-    ~Posting_List();
+    ~Posting_List_Protobuf();
 
 // Get next posting for query processing
     Posting * next();    // exactly next
@@ -50,3 +42,5 @@ class Posting_List {
 // Serialize the posting list to store 
     std::string serialize();    // serialize the posting list, return a string
 };
+
+#endif

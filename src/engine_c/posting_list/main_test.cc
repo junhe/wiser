@@ -3,7 +3,10 @@
 #include <map>
 #include <string>
 #include <iostream>
-#include "Posting_List.h"
+#include "posting_list_protobuf.h"
+#include "posting_list_raw.h"
+//TODO 
+//#define
 
 int terms[5][5] = {{1,2,3,4,5},
                    {6,7,8,9,10},
@@ -12,13 +15,11 @@ int terms[5][5] = {{1,2,3,4,5},
                    {1,2,3,5,8}
                    };
 
-std::map<int, Posting_List *> dictionary;            // termID -> posting list
+std::map<int, Posting_List_Protobuf *> dictionary;            // termID -> posting list
 std::map<std::string, std::string> inverted_index;   // term -> posting lists(serialized)
 
 
 int main(int argc, char* arg[]) {
-    GOOGLE_PROTOBUF_VERIFY_VERSION;
-
     printf("==== Get into test of posting list \n");
 
     int doc_amount = 5;
@@ -34,7 +35,7 @@ int main(int argc, char* arg[]) {
             if (dictionary.find(terms[i][j]) == dictionary.end()) {
                 //dictionary[terms[i][j]] = Posting_List(std::to_string("hello") + std::to_string(terms[i][j]));
                 std::string term = "term_" + std::to_string(terms[i][j]);
-                dictionary[terms[i][j]] = new Posting_List(term);
+                dictionary[terms[i][j]] = new Posting_List_Protobuf(term);
             }
             // add_doc
             // create doc message using protobuf
@@ -57,7 +58,7 @@ int main(int argc, char* arg[]) {
     
 
 // store the inverted index(serialize)
-    std::map<int, Posting_List*>::iterator it;
+    std::map<int, Posting_List_Protobuf*>::iterator it;
     for (it = dictionary.begin(); it != dictionary.end(); it++) {
         // serialize the posting list to a string 
         std::string serialized_result = it->second->serialize();
@@ -75,7 +76,7 @@ int main(int argc, char* arg[]) {
         // hint
         std::cout << "\n"<<it_query->first << " : " << std::endl;; //<< it_query->second <<std::endl;
         // build iterator on postings of this term's posting list
-        Posting_List * pl = new Posting_List(it_query->first, it_query->second);
+        Posting_List_Protobuf * pl = new Posting_List_Protobuf(it_query->first, it_query->second);
         Posting * p = pl->next();
         Posting * last_p;
         while (p!=NULL) {

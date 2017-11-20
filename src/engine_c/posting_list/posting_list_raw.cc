@@ -1,48 +1,9 @@
-#include <string>
-#include <string.h>
-class Posting {
-    public:
-    int docID;
-    int term_frequency;
-    int * position;
+#include "posting_list_raw.h"
 
-    Posting * next;
 
-    Posting(int docID_in, int term_frequency_in, int position_in[]) {
-        docID = docID_in;
-        term_frequency = term_frequency_in;
-        position = (int *) malloc(sizeof(int)*term_frequency);
-        memcpy(position, position_in, sizeof(int)*term_frequency); 
-        next = NULL;
-    }
-
-    ~Posting() {
-        free(position);
-    }
-
-    std::string dump() {
-        std::string result="-";
-        result = result + std::to_string(docID)+ "_" + std::to_string(term_frequency);
-        for (int i = 0; i < term_frequency; i++) {
-            result += "_" + std::to_string(position[i]);
-        }
-        return result;
-    }
-
-};
-
-// Posting_List Class
-class Posting_List {
-    std::string term;        // term this posting list belongs to
-    int num_postings;        // number of postings in this list
-    Posting * p_list;        // posting list when creating index
-    std::string serialized;  // serialized string reference, when query processing
-    int cur_index;           // last position in the serialized string we have parsed
-    int cur_docID;           // last docID we have returned
-
-    public:
+// Posting_List_Raw Class
 // Init with a term string, when creating index
-    Posting_List(std::string term_in) {  // do we need term?
+    Posting_List_Raw::Posting_List_Raw(std::string term_in) {  // do we need term?
         term = term_in;
         num_postings = 0;
         p_list = NULL;
@@ -51,7 +12,7 @@ class Posting_List {
         cur_docID = -1;
     }
 
-    ~Posting_List() {
+    Posting_List_Raw::~Posting_List_Raw() {
         // delete all Postings
         Posting * last_posting;
         while (p_list != NULL) {
@@ -62,7 +23,7 @@ class Posting_List {
     }
 
 // Init with a term string, and posting list string reference, when query processing
-    Posting_List(std::string term_in, std::string & serialized_in) {  // configuration
+    Posting_List_Raw::Posting_List_Raw(std::string term_in, std::string & serialized_in) {  // configuration
         term = term_in;
         serialized = serialized_in;
         p_list = NULL;
@@ -81,11 +42,11 @@ class Posting_List {
     }
 
 // Get next posting
-    Posting * next() {  // exactly next
+    Posting * Posting_List_Raw::next() {  // exactly next
         return next(cur_docID+1);
     } 
 
-    Posting * next(int next_doc_ID) { // next Posting whose docID>next_doc_ID
+    Posting * Posting_List_Raw::next(int next_doc_ID) { // next Posting whose docID>next_doc_ID
         //printf("\nbefore next, now cur_index: %d", cur_index);
         // get the string for next Posting
         while (cur_docID < next_doc_ID) {
@@ -97,7 +58,7 @@ class Posting_List {
         return get_next_Posting();
     }
 
-    void get_next_index() {  // get to next index which is the starting point of a Posting
+    void Posting_List_Raw::get_next_index() {  // get to next index which is the starting point of a Posting
         if (cur_index == -1)
             return;
         cur_index++;
@@ -109,7 +70,7 @@ class Posting_List {
         }
     }
 
-    void get_cur_DocID() {  // get the DocID of current Posting which starts from cur_index
+    void Posting_List_Raw::get_cur_DocID() {  // get the DocID of current Posting which starts from cur_index
         std::string tmp = "";
         int tmp_index = cur_index+1;
         while (serialized[tmp_index]!='_') {
@@ -119,7 +80,7 @@ class Posting_List {
         cur_docID = stoi(tmp);
     }
 
-    Posting * get_next_Posting() {  // read and parse the Posting which starts from cur_index, after this: cur_index is the end of this posting
+    Posting * Posting_List_Raw::get_next_Posting() {  // read and parse the Posting which starts from cur_index, after this: cur_index is the end of this posting
         //printf("\nget here before next_posting: cur index:%d cur_DocID: %d", cur_index, cur_docID);
         // parse docID, here just skip those characters
         int tmp_index = cur_index;
@@ -157,7 +118,7 @@ class Posting_List {
     }
 
 // Add a doc for creating index
-    void add_doc(int docID, int term_frequency, int position[]) { // TODO what info? who should provide?
+    void Posting_List_Raw::add_doc(int docID, int term_frequency, int position[]) { // TODO what info? who should provide?
         //std::cout << "Add document " << docID << " for " << term << std::endl;
         // add one posting to the p_list
         num_postings += 1;
@@ -185,7 +146,7 @@ class Posting_List {
     }
 
 // Serialize the posting list
-    std::string serialize() {
+    std::string Posting_List_Raw::serialize() {
         /* format:
         num_postings*[-docID_termfrequency_*[_position]]
         Eg. 3-0_5_1_10_20_31_44-2_5_1_10_20_31_44-4_5_1_10_20_31_44
@@ -200,6 +161,5 @@ class Posting_List {
         }
         return result;
     }
-};
 
 

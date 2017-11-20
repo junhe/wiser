@@ -1,32 +1,8 @@
-#include "Posting_List.h"
-
-// Posting:
-    Posting::Posting(int docID_in, int term_frequency_in, int position_in[]) {
-        docID = docID_in;
-        term_frequency = term_frequency_in;
-        position = (int *) malloc(sizeof(int)*term_frequency);
-        memcpy(position, position_in, sizeof(int)*term_frequency); 
-        next = NULL;
-    }
-    
-    Posting::~Posting() {
-        free(position);
-    }
-
-    std::string Posting::dump() {
-        std::string result="-";
-        result = result + std::to_string(docID)+ "_" + std::to_string(term_frequency);
-        for (int i = 0; i < term_frequency; i++) {
-            result += "_" + std::to_string(position[i]);
-        }
-        return result;
-    }
-
-
+#include "posting_list_protobuf.h"
 
 // Posting_List:
 // Init with a term string, when creating index
-    Posting_List::Posting_List(std::string term_in) {  // do we need term?
+    Posting_List_Protobuf::Posting_List_Protobuf(std::string term_in) {  // do we need term?
         term = term_in;
         num_postings = 0;
         p_list = NULL;
@@ -35,7 +11,7 @@
         cur_docID = -1;
     }
 // Init with a term string, and posting list string reference, when query processing
-    Posting_List::Posting_List(std::string term_in, std::string & serialized_in) {  // configuration
+    Posting_List_Protobuf::Posting_List_Protobuf(std::string term_in, std::string & serialized_in) {  // configuration
         term = term_in;
         serialized = serialized_in;
         p_list = NULL;
@@ -48,7 +24,7 @@
         //std::cout<< "num of postings: " << num_postings << std::endl;
     }
 // Destructor    
-    Posting_List::~Posting_List() {
+    Posting_List_Protobuf::~Posting_List_Protobuf() {
         // delete all Postings
         Posting * last_posting;
         while (p_list != NULL) {
@@ -59,11 +35,11 @@
     }
 
 // Get next posting
-    Posting * Posting_List::next() {  // exactly next
+    Posting * Posting_List_Protobuf::next() {  // exactly next
         return next(cur_docID+1);
     }
 
-    Posting * Posting_List::next(int next_doc_ID) { // next Posting whose docID>next_doc_ID
+    Posting * Posting_List_Protobuf::next(int next_doc_ID) { // next Posting whose docID>next_doc_ID
         // get the string for next Posting
         while (cur_docID < next_doc_ID) {
             get_next_index();
@@ -74,17 +50,17 @@
         return get_next_Posting();
     }
 
-    void Posting_List::get_next_index() {  // get to next index which is the starting point of a Posting
+    void Posting_List_Protobuf::get_next_index() {  // get to next index which is the starting point of a Posting
         if (cur_index == num_postings)
             return;
         cur_index++;
     }
 
-    void Posting_List::get_cur_DocID() {  // get the DocID of current Posting which starts from cur_index
+    void Posting_List_Protobuf::get_cur_DocID() {  // get the DocID of current Posting which starts from cur_index
         cur_docID = plist_message.postings(cur_index).docid();
     }
 
-    Posting * Posting_List:: get_next_Posting() {  // read and parse the Posting which starts from cur_index, after this: cur_index is the end of this posting
+    Posting * Posting_List_Protobuf:: get_next_Posting() {  // read and parse the Posting which starts from cur_index, after this: cur_index is the end of this posting
         //printf("\nget here before next_posting: cur index:%d cur_DocID: %d", cur_index, cur_docID);
         // parse positions
         
@@ -99,7 +75,7 @@
     }
 
 // Add a doc for creating index
-    void Posting_List::add_doc_new(std::string & doc_string) {  // use protobuf
+    void Posting_List_Protobuf::add_doc_new(std::string & doc_string) {  // use protobuf
         printf("add new doc\n");
 
         // parse string
@@ -119,7 +95,7 @@
 
     }
 
-    void Posting_List::add_doc(int docID, int term_frequency, int position[]) { // TODO what info? who should provide?
+    void Posting_List_Protobuf::add_doc(int docID, int term_frequency, int position[]) { // TODO what info? who should provide?
         std::cout << "Add document " << docID << " for " << term << std::endl;
         // add one posting to the p_list
         num_postings += 1;
@@ -147,7 +123,7 @@
     }
 
 // Serialize the posting list
-    std::string Posting_List::serialize() {
+    std::string Posting_List_Protobuf::serialize() {
         /* format: protobuf message in posting_message.proto
         */
         posting_message::PostingList pl_message;
