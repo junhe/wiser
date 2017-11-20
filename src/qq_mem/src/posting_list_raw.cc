@@ -1,4 +1,5 @@
 #include "posting_list_raw.h"
+#include <iostream>
 
 // Posting_List_Raw Class
 // Init with a term string, when creating index
@@ -7,7 +8,7 @@ PostingList_Raw::PostingList_Raw(std::string term_in) {  // do we need term?
     num_postings = 0;
     p_list = {};
     serialized = "";
-    cur_index = -1; // 0 TODO
+    cur_index = 0; // 0 TODO
     cur_docID = -1;
 }
 
@@ -80,18 +81,20 @@ Posting PostingList_Raw::get_next_Posting() {  // read and parse the Posting whi
     while (serialized[tmp_index]!='_') {
         tmp_index++;
     }
-    tmp_index++; 
+
+    tmp_index++;
     // parse term frequency
     std::string tmp = "";
     while (serialized[tmp_index]!='_') {
         tmp += serialized[tmp_index];
         tmp_index++;
     }
+
     int tmp_frequency = stoi(tmp);
     tmp_index++;
 
     // parse positions
-    Positions tmp_positions;
+    Positions tmp_positions = {};
     int tmp_length = serialized.length();
     for (int i = 0; i < tmp_frequency; i++) {
         std::string tmp = "";
@@ -111,7 +114,7 @@ Posting PostingList_Raw::get_next_Posting() {  // read and parse the Posting whi
 
 // Add a doc for creating index
 void PostingList_Raw::AddPosting(int docID, int term_frequency, const Positions positions) {
-    //std::cout << "Add document " << docID << " for " << term << std::endl;
+    //std::cout << "Add document " << docID << " for " << term_ << ": " << std::to_string(positions[0]) << std::endl;
     // add one posting to the p_list
     num_postings += 1;
     Posting new_posting(docID, term_frequency, positions);

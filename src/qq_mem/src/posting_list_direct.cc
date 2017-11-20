@@ -33,7 +33,7 @@ Posting PostingList_Direct::GetPosting(const int &next_doc_ID) {   // next Posti
 
 // Add a doc for creating index
 void PostingList_Direct::AddPosting(int docID, int term_frequency, const Positions positions) {
-    std::cout << "Add document " << docID << " for " << term_ << std::endl;
+    //std::cout << "Add document " << docID << " for " << term_ << std::endl;
     // add one posting to the p_list
     num_postings += 1;
     Posting new_posting(docID, term_frequency, positions);

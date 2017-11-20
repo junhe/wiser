@@ -1,4 +1,5 @@
 // #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
+#include <iostream>
 #include "catch.hpp"
 #include "native_doc_store.h"
 #include "inverted_index.h"
@@ -79,16 +80,17 @@ TEST_CASE( "Raw String based Posting List essential operations are OK", "[postin
 
     REQUIRE(pl.Size() == 2);
 
-    Posting p1 = pl.GetPosting();
+    std::string serialized = pl.serialize();
+    PostingList_Raw pl1("term001", serialized);
+    Posting p1 = pl1.GetPosting();
     REQUIRE(p1.docID_ == 111);
     REQUIRE(p1.term_frequency_ == 1);
     REQUIRE(p1.positions_.size() == 1);
-/*
-    Posting p2 = pl.GetPosting();
+    
+    Posting p2 = pl1.GetPosting();
     REQUIRE(p2.docID_ == 232);
     REQUIRE(p2.term_frequency_ == 2);
     REQUIRE(p2.positions_.size() == 2);
-*/
 }
 
 
