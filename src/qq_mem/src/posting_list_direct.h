@@ -8,27 +8,27 @@
 #include "posting_basic.h"
 
 // Posting_List Class
-class Posting_List_Direct :  public PostingListService {
-    std::string term;                    // term this posting list belongs to
+class PostingList_Direct :  public PostingListService {
+    Term term_;                          // term this posting list belongs to
+    std::vector<Posting> p_list;         // posting list when creating index    //TODO
+    
     int num_postings;                    // number of postings in this list
     int cur_index;                       // last posting we have returned
     int cur_docID;                       // last docID we have returned
 
     public:
-    std::vector<Posting *> p_list;         // posting list when creating index
+
 // Init with a term string, when creating index
-    Posting_List_Direct(std::string term_in);    // do we need term?
-
-// Destructor
-    ~Posting_List_Direct();
-
+        PostingList_Direct(std::string term_in);    // do we need term?
+// Return size
+        std::size_t Size();
 // Get next posting for query processing
-    Posting * next();    // exactly next
-    Posting * next(int next_doc_ID);    // next Posting whose docID>next_doc_ID
-
+        Posting GetPosting();    // exactly next
+        Posting GetPosting(const int &next_doc_ID);    // next Posting whose docID>next_doc_ID
 // Add a doc for creating index
-    void add_doc(int docID, int term_frequency, int position[]);  // TODO what info? who should provide?
-    std::string serialize() {}
+        void AddPosting(int docID, int term_frequency, const Positions positions);
+// Serialize
+        std::string serialize();
 };
 
 

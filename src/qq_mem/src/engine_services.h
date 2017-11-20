@@ -32,16 +32,20 @@ class PostingService {
         virtual std::string dump() = 0;
 };
 
+
 // Posting_List Class
 class PostingListService {
     public:
+// Get size
+        virtual std::size_t Size() = 0;
 // Get next posting for query processing
-        virtual PostingService * next() = 0;                   // exactly next
-        virtual PostingService * next(int next_doc_ID) = 0;    // next Posting whose docID>next_doc_ID
+        // virtual PostingService GetPosting() = 0;                          // exactly next
+        // virtual PostingService GetPosting(const int &next_doc_ID) = 0;    // next Posting whose docID>next_doc_ID
 // Add a doc for creating index
-        virtual void add_doc(int docID, int term_frequency, int position[]) = 0;  // TODO what info? who should provide?
+        // virtual void AddPosting(int docID, int term_frequency, const Positions positions) = 0;
 // Serialize the posting list to store 
         virtual std::string serialize() = 0;    // serialize the posting list, return a string
+
 };
 
 

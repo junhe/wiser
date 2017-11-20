@@ -2,7 +2,7 @@
 #include "catch.hpp"
 #include "native_doc_store.h"
 #include "inverted_index.h"
-#include "posting_list.h"
+#include "posting_list_direct.h"
 
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
@@ -41,7 +41,7 @@ TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
     InvertedIndex index;     
 }
 
-TEST_CASE( "Posting", "[posting_list]" ) {
+TEST_CASE( "Basic Posting", "[posting_list]" ) {
     Posting posting(100, 200, Positions {1, 2});
     REQUIRE(posting.docID_ == 100);
     REQUIRE(posting.term_frequency_ == 200);
@@ -49,16 +49,24 @@ TEST_CASE( "Posting", "[posting_list]" ) {
     REQUIRE(posting.positions_[1] == 2);
 }
 
-TEST_CASE( "Posting List essential operations are OK", "[posting_list]" ) {
-    PostingList pl("term001");
+TEST_CASE( "Direct Posting List essential operations are OK", "[posting_list]" ) {
+    PostingList_Direct pl("term001");
     REQUIRE(pl.Size() == 0);
 
     pl.AddPosting(111, 1,  Positions {19});
-    REQUIRE(pl.Size() == 1);
+    pl.AddPosting(232, 2,  Positions {10, 19});
 
-    REQUIRE(pl.GetPosting(111).docID_ == 111);
-    REQUIRE(pl.GetPosting(111).term_frequency_ == 1);
-    REQUIRE(pl.GetPosting(111).positions_.size() == 1);
+    REQUIRE(pl.Size() == 2);
+
+    Posting p1 = pl.GetPosting();
+    REQUIRE(p1.docID_ == 111);
+    REQUIRE(p1.term_frequency_ == 1);
+    REQUIRE(p1.positions_.size() == 1);
+
+    Posting p2 = pl.GetPosting();
+    REQUIRE(p2.docID_ == 232);
+    REQUIRE(p2.term_frequency_ == 2);
+    REQUIRE(p2.positions_.size() == 2);
 }
 
 
