@@ -1,0 +1,6 @@
+/users/kanwu/flashsearch/src/qq_mem/build/CMakeFiles/rebuild_cache.dir
+/users/kanwu/flashsearch/src/qq_mem/build/CMakeFiles/edit_cache.dir
+/users/kanwu/flashsearch/src/qq_mem/build/CMakeFiles/qq_server.dir
+/users/kanwu/flashsearch/src/qq_mem/build/CMakeFiles/qq_client.dir
+/users/kanwu/flashsearch/src/qq_mem/build/CMakeFiles/CatchMain.dir
+/users/kanwu/flashsearch/src/qq_mem/build/CMakeFiles/testmain.dir

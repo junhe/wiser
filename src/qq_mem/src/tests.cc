@@ -3,6 +3,7 @@
 #include "native_doc_store.h"
 #include "inverted_index.h"
 #include "posting_list_direct.h"
+#include "posting_list_raw.h"
 
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
@@ -49,7 +50,7 @@ TEST_CASE( "Basic Posting", "[posting_list]" ) {
     REQUIRE(posting.positions_[1] == 2);
 }
 
-TEST_CASE( "Direct Posting List essential operations are OK", "[posting_list]" ) {
+TEST_CASE( "Direct Posting List essential operations are OK", "[posting_list_direct]" ) {
     PostingList_Direct pl("term001");
     REQUIRE(pl.Size() == 0);
 
@@ -67,6 +68,27 @@ TEST_CASE( "Direct Posting List essential operations are OK", "[posting_list]" )
     REQUIRE(p2.docID_ == 232);
     REQUIRE(p2.term_frequency_ == 2);
     REQUIRE(p2.positions_.size() == 2);
+}
+
+TEST_CASE( "Raw String based Posting List essential operations are OK", "[posting_list_raw]" ) {
+    PostingList_Raw pl("term001");
+    REQUIRE(pl.Size() == 0);
+
+    pl.AddPosting(111, 1,  Positions {19});
+    pl.AddPosting(232, 2,  Positions {10, 19});
+
+    REQUIRE(pl.Size() == 2);
+
+    Posting p1 = pl.GetPosting();
+    REQUIRE(p1.docID_ == 111);
+    REQUIRE(p1.term_frequency_ == 1);
+    REQUIRE(p1.positions_.size() == 1);
+/*
+    Posting p2 = pl.GetPosting();
+    REQUIRE(p2.docID_ == 232);
+    REQUIRE(p2.term_frequency_ == 2);
+    REQUIRE(p2.positions_.size() == 2);
+*/
 }
 
 

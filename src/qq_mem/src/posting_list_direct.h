@@ -10,7 +10,7 @@
 // Posting_List Class
 class PostingList_Direct :  public PostingListService {
     Term term_;                          // term this posting list belongs to
-    std::vector<Posting> p_list;         // posting list when creating index    //TODO
+    std::vector<Posting> p_list;         // posting list when creating index
     
     int num_postings;                    // number of postings in this list
     int cur_index;                       // last posting we have returned
