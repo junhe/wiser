@@ -19,7 +19,7 @@ std::map<int, Posting_List_Protobuf *> dictionary;            // termID -> posti
 std::map<std::string, std::string> inverted_index;   // term -> posting lists(serialized)
 
 
-int main(int argc, char* arg[]) {
+int main(int argc, char* argv[]) {
     printf("==== Get into test of posting list \n");
 
     int doc_amount = 5;

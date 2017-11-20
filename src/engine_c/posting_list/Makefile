@@ -10,5 +10,8 @@ protobuf: main_test.cc posting_list_protobuf.cc posting_basic.cc protoc_middlema
 raw: raw_test.cc posting_list_raw.cc posting_basic.cc
 	c++ --std=c++11 raw_test.cc posting_list_raw.cc posting_basic.cc -o raw_test
 
+direct: direct_test.cc posting_list_direct.cc posting_basic.cc
+	c++ --std=c++11 direct_test.cc posting_list_direct.cc posting_basic.cc -o direct_test
+
 clean: 
 	rm main_test posting_message.pb.cc posting_message.pb.h
