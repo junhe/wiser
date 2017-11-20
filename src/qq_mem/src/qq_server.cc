@@ -5,6 +5,8 @@
 #include <grpc++/grpc++.h>
 
 #include "qq.grpc.pb.h"
+#include "inverted_index.h"
+#include "native_doc_store.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -39,6 +41,10 @@ class QQEngineServiceImpl final : public QQEngine::Service {
         reply->set_ok(true);
         return Status::OK;
     }
+
+    public:
+        NativeDocStore doc_store_;
+        InvertedIndex inverted_index_;
 };
 
 void RunServer() {
