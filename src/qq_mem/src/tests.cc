@@ -112,6 +112,9 @@ TEST_CASE( "QQEngine", "[engine]" ) {
     REQUIRE(engine.NextDocId() == 0);
 
     engine.AddDocument("my title", "my url", "my body");
+
+    std::vector<int> doc_ids = engine.Search(TermList{"my"}, SearchOperator::AND);
+    REQUIRE(doc_ids.size() == 1);
 }
 
 TEST_CASE( "Utilities", "[utils]" ) {

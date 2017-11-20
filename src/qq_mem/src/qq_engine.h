@@ -22,6 +22,7 @@ class QQEngine {
         void AddDocument(const std::string &title, const std::string &url, 
                 const std::string &body);
         int NextDocId();
+        std::vector<int> Search(const TermList &terms, const SearchOperator &op);
 };
 
 #endif
