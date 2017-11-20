@@ -106,8 +106,8 @@ TEST_CASE( "Posting List essential operations are OK", "[posting_list]" ) {
     REQUIRE(pl.GetPosting(111).positions_.size() == 1);
 }
 
-TEST_CASE( "QQEngine", "[engine]" ) {
-    QQEngine engine;
+TEST_CASE( "QQSearchEngine", "[engine]" ) {
+    QQSearchEngine engine;
 
     REQUIRE(engine.NextDocId() == 0);
 

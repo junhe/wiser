@@ -11,7 +11,7 @@
 // This class is used by server side QQEngineServiceImpl.
 // I could have put the functionality here in QQEngineServiceImpl, but
 // I want to minimize entanglements with gRPC.
-class QQEngine {
+class QQSearchEngine {
     private:
         int next_doc_id_ = 0;
 
