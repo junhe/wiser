@@ -9,8 +9,6 @@
 using grpc::Channel;
 using grpc::ClientContext;
 using grpc::Status;
-using qq::HelloRequest;
-using qq::HelloReply;
 using qq::QQEngine;
 
 // for AddDocument
@@ -26,33 +24,6 @@ class QQEngineClient {
     public:
         QQEngineClient(std::shared_ptr<Channel> channel)
             : stub_(QQEngine::NewStub(channel)) {}
-
-        // Assembles the client's payload, sends it and presents the response back
-        // from the server.
-        std::string SayHello(const std::string& user) {
-            // Data we are sending to the server.
-            HelloRequest request;
-            request.set_name(user);
-
-            // Container for the data we expect from the server.
-            HelloReply reply;
-
-            // Context for the client. It could be used to convey extra information to
-            // the server and/or tweak certain RPC behaviors.
-            ClientContext context;
-
-            // The actual RPC.
-            Status status = stub_->SayHello(&context, request, &reply);
-
-            // Act upon its status.
-            if (status.ok()) {
-                return reply.message();
-            } else {
-                std::cout << status.error_code() << ": " << status.error_message()
-                    << std::endl;
-                return "RPC failed";
-            }
-        }
 
         std::string AddDocument() {
             AddDocumentRequest request;
@@ -112,11 +83,8 @@ int main(int argc, char** argv) {
     // (use of InsecureChannelCredentials()).
     QQEngineClient qqengine(grpc::CreateChannel(
                 "localhost:50051", grpc::InsecureChannelCredentials()));
-    std::string user("world");
-    std::string reply = qqengine.SayHello(user);
-    std::cout << "QQEngine received: " << reply << std::endl;
 
-    reply = qqengine.AddDocument();
+    std::string reply = qqengine.AddDocument();
     std::cout << "Greeter received: " << reply << std::endl;
 
     reply = qqengine.Search();

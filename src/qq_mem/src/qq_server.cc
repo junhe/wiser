@@ -13,8 +13,6 @@ using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
-using qq::HelloRequest;
-using qq::HelloReply;
 
 // for AddDocument
 using qq::AddDocumentRequest;
@@ -30,13 +28,6 @@ using qq::QQEngine;
 
 // Logic and data behind the server's behavior.
 class QQEngineServiceImpl final : public QQEngine::Service {
-    Status SayHello(ServerContext* context, const HelloRequest* request,
-            HelloReply* reply) override {
-        std::string prefix("Hello ");
-        reply->set_message(prefix + request->name());
-        return Status::OK;
-    }
-
     Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
             StatusReply* reply) override {
         std::cout << "title" << request->document().title() << std::endl;
@@ -50,7 +41,6 @@ class QQEngineServiceImpl final : public QQEngine::Service {
         reply->set_ok(true);
         return Status::OK;
     }
-
 
     Status Search(ServerContext* context, const SearchRequest* request,
             SearchReply* reply) override {
