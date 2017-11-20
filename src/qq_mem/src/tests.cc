@@ -59,13 +59,28 @@ TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
         REQUIRE(s1 == std::set<int>{100, 101});
     }
 
-    // make query
+    // Search "hello"
     {
         auto doc_ids = index.Search(TermList{"hello"}, SearchOperator::AND);
         REQUIRE(doc_ids.size() == 2);
 
         std::set<int> s(doc_ids.begin(), doc_ids.end());
         REQUIRE(s == std::set<int>{100, 101});
+    }
+
+    // Search "world"
+    {
+        auto doc_ids = index.Search(TermList{"earth"}, SearchOperator::AND);
+        REQUIRE(doc_ids.size() == 1);
+
+        std::set<int> s(doc_ids.begin(), doc_ids.end());
+        REQUIRE(s == std::set<int>{101});
+    }
+
+    // Search non-existing
+    {
+        auto doc_ids = index.Search(TermList{"nonexist"}, SearchOperator::AND);
+        REQUIRE(doc_ids.size() == 0);
     }
 }
 

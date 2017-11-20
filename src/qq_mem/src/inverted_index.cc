@@ -42,6 +42,11 @@ std::vector<int> InvertedIndex::GetDocumentIds(const Term &term) {
 
 // Return the document IDs
 std::vector<int> InvertedIndex::Search(const TermList &terms, const SearchOperator &op) {
+    if (op != SearchOperator::AND) {
+        // TODO: define an exception class
+        throw "NotImplementedError";
+    }
+
     std::vector<int> doc_ids;
     for (auto &term : terms) {
         auto tmp_doc_ids = GetDocumentIds(term);
