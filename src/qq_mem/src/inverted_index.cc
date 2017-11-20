@@ -19,8 +19,23 @@ void InvertedIndex::AddDocument(const int &doc_id, const TermList &termlist) {
     }
 }
 
-void InvertedIndex::GetPostingList(const int &doc_id) {
+std::vector<int> InvertedIndex::GetDocumentIds(const Term &term) {
+    auto it = index_.find(term);
 
+    if (it == index_.cend()) {
+        // term does not exist
+        return std::vector<int>{};
+    }
+
+    // Have the term
+    PostingList &pl = it->second;
+    std::vector<int> doc_ids;
+
+    for (const auto posting_pair : pl.GetPostings()) {
+        doc_ids.push_back(posting_pair.second.GetDocId());
+    }
+  
+    return doc_ids;
 }
 
 void InvertedIndex::Search(const TermList &terms, const SearchOperator &op) {

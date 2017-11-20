@@ -4,6 +4,8 @@
 #include "inverted_index.h"
 #include "posting_list.h"
 
+#include <set>
+
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
 }
@@ -40,6 +42,20 @@ TEST_CASE( "Document store implemented by C++ map", "[docstore]" ) {
 TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
     InvertedIndex index;     
     index.AddDocument(100, TermList{"hello", "world"});
+    index.AddDocument(101, TermList{"hello", "earth"});
+
+    {
+        std::vector<int> ids = index.GetDocumentIds("notexist");
+        REQUIRE(ids.size() == 0);
+    }
+
+    {
+        std::vector<int> ids = index.GetDocumentIds("hello");
+        REQUIRE(ids.size() == 2);
+        
+        std::set<int> s1(ids.begin(), ids.end());
+        REQUIRE(s1 == std::set<int>{100, 101});
+    }
 }
 
 TEST_CASE( "Posting", "[posting_list]" ) {

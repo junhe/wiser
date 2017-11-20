@@ -18,6 +18,7 @@ class Posting {
 
         Posting();
         Posting(int docID, int term_frequency, Positions positions);
+        const int GetDocId() const {return docID_;}
         std::string dump();
 };
 
@@ -26,6 +27,9 @@ class PostingList {
     std::map<int, Posting> postings_;
     
     public:
+        const std::map<int, Posting> & GetPostings() {
+            return postings_;
+        }
         PostingList(std::string term_in);
         void AddPosting(int docID, int term_frequency, const Positions positions);
         Posting GetPosting(const int &docID);

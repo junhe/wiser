@@ -14,7 +14,7 @@ class InvertedIndex: public InvertedIndexService {
 
     public:
         void AddDocument(const int &doc_id, const TermList &termlist);
-        void GetPostingList(const int &doc_id);
+        std::vector<int> GetDocumentIds(const Term &term);
         void Search(const TermList &terms, const SearchOperator &op);
 };
 
