@@ -4,6 +4,7 @@
 
 #include <string>
 #include <vector>
+#include <map>
 
 class DocumentStoreService {
     public:
@@ -15,7 +16,8 @@ class DocumentStoreService {
         virtual int Size() = 0;
 };
 
-typedef std::vector<std::string> TermList;
+typedef std::string Term;
+typedef std::vector<Term> TermList;
 enum class SearchOperator {AND, OR};
 
 class InvertedIndexService {
@@ -25,13 +27,13 @@ class InvertedIndexService {
         virtual void Search(TermList terms, SearchOperator op) = 0;
 };
 
-class PostingStructure {
+class PostingService {
     public:
         virtual std::string dump() = 0;
 };
 
 // Posting_List Class
-class PostingListStructure {
+class PostingListService {
     public:
 // Get next posting for query processing
         virtual PostingStructure * next() = 0;                   // exactly next
@@ -44,4 +46,3 @@ class PostingListStructure {
 
 
 #endif
-
