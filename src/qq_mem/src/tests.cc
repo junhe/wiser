@@ -115,6 +115,9 @@ TEST_CASE( "QQSearchEngine", "[engine]" ) {
 
     std::vector<int> doc_ids = engine.Search(TermList{"my"}, SearchOperator::AND);
     REQUIRE(doc_ids.size() == 1);
+
+    std::string doc = engine.GetDocument(doc_ids[0]);
+    REQUIRE(doc == "my body");
 }
 
 TEST_CASE( "Utilities", "[utils]" ) {
