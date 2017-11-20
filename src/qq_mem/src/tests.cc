@@ -4,6 +4,7 @@
 #include "inverted_index.h"
 #include "posting_list.h"
 #include "qq_engine.h"
+#include "utils.h"
 
 #include <set>
 
@@ -107,8 +108,33 @@ TEST_CASE( "Posting List essential operations are OK", "[posting_list]" ) {
 
 TEST_CASE( "QQEngine", "[engine]" ) {
     QQEngine engine;
+
+    REQUIRE(engine.NextDocId() == 0);
+
     engine.AddDocument("my title", "my url", "my body");
 }
+
+TEST_CASE( "Utilities", "[utils]" ) {
+    SECTION("Leading space and Two spaces") {
+        std::vector<std::string> vec = util::explode(" hello  world", ' ');
+        REQUIRE(vec.size() == 2);
+        REQUIRE(vec[0] == "hello");
+        REQUIRE(vec[1] == "world");
+    }
+
+    SECTION("Empty string") {
+        std::vector<std::string> vec = util::explode("", ' ');
+        REQUIRE(vec.size() == 0);
+    }
+
+    SECTION("All spaces") {
+        std::vector<std::string> vec = util::explode("   ", ' ');
+        REQUIRE(vec.size() == 0);
+    }
+}
+
+
+
 
 
 
