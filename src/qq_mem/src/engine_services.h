@@ -36,8 +36,8 @@ class PostingService {
 class PostingListService {
     public:
 // Get next posting for query processing
-        virtual PostingStructure * next() = 0;                   // exactly next
-        virtual PostingStructure * next(int next_doc_ID) = 0;    // next Posting whose docID>next_doc_ID
+        virtual PostingService * next() = 0;                   // exactly next
+        virtual PostingService * next(int next_doc_ID) = 0;    // next Posting whose docID>next_doc_ID
 // Add a doc for creating index
         virtual void add_doc(int docID, int term_frequency, int position[]) = 0;  // TODO what info? who should provide?
 // Serialize the posting list to store 

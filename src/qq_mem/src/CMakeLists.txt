@@ -50,6 +50,7 @@ add_library( CatchMain OBJECT catch_main.cc catch.hpp )
 add_executable( testmain tests.cc 
     native_doc_store.cc 
     inverted_index.cc
+    posting_basic.cc
     posting_list.cc
     $<TARGET_OBJECTS:CatchMain> catch.hpp )
 
