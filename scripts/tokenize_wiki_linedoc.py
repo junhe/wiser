@@ -62,17 +62,22 @@ def tokenize(line_doc, output):
     doc["analyzer"] = "my_english_analyzer"
     
     header = line_doc.readline()
-    output.write(header)
+    output.write(header.strip('\n') + "\t" + "tokenized\n")
     for line in line_doc:
         items = line.split("\t")
-        doc_content = items[2]
+        doc_content = items[1]
         doc["text"] = doc_content
         doc_result = json.dumps(doc)
         r = requests.post(url, doc_result, headers=headers)
         #print(r.text)
-        output.write(items[0]+'\t' + items[1]+'\t')
+        output.write(items[0]+'\t' + items[1].strip('\n')+'\t')
         
+        # unique 
+        dic = {} 
         for token in r.json()["tokens"]:
+            if token["token"].encode('utf8') in dic:
+                continue
+            dic[token["token"].encode('utf8')] = 0
             output.write(token["token"].encode('utf8') + ' ')
         
         output.write('\n')
