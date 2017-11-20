@@ -28,6 +28,7 @@ set(ENGINE_SRCS
     native_doc_store.cc
     inverted_index.cc
     posting_list.cc
+    qq_engine.cc
     )
 
 # Building server
@@ -57,9 +58,7 @@ target_link_libraries(qq_client
 
 add_library( CatchMain OBJECT catch_main.cc catch.hpp )
 add_executable( testmain tests.cc 
-    native_doc_store.cc 
-    inverted_index.cc
-    posting_list.cc
+    ${ENGINE_SRCS}
     $<TARGET_OBJECTS:CatchMain> catch.hpp )
 
 

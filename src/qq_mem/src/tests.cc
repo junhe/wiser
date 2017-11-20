@@ -3,6 +3,7 @@
 #include "native_doc_store.h"
 #include "inverted_index.h"
 #include "posting_list.h"
+#include "qq_engine.h"
 
 #include <set>
 
@@ -103,5 +104,11 @@ TEST_CASE( "Posting List essential operations are OK", "[posting_list]" ) {
     REQUIRE(pl.GetPosting(111).term_frequency_ == 1);
     REQUIRE(pl.GetPosting(111).positions_.size() == 1);
 }
+
+TEST_CASE( "QQEngine", "[engine]" ) {
+    QQEngine engine;
+    engine.AddDocument("my title", "my url", "my body");
+}
+
 
 

@@ -21,6 +21,8 @@ using qq::StatusReply;
 
 using qq::QQEngine;
 
+
+
 // Logic and data behind the server's behavior.
 class QQEngineServiceImpl final : public QQEngine::Service {
     Status SayHello(ServerContext* context, const HelloRequest* request,
@@ -36,15 +38,13 @@ class QQEngineServiceImpl final : public QQEngine::Service {
         std::cout << "url" << request->document().url() << std::endl;
         std::cout << "body" << request->document().body() << std::endl;
 
+
         std::string msg("I am from AddDocument() server.");
         reply->set_message(msg);
         reply->set_ok(true);
         return Status::OK;
     }
 
-    public:
-        NativeDocStore doc_store_;
-        InvertedIndex inverted_index_;
 };
 
 void RunServer() {
