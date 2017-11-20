@@ -29,6 +29,7 @@ set(ENGINE_SRCS
     inverted_index.cc
     posting_list.cc
     qq_engine.cc
+    utils.cc
     )
 
 # Building server
