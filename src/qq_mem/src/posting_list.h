@@ -1,5 +1,5 @@
-#ifndef POSTING_LIST_HH
-#define POSTING_LIST_HH
+#ifndef POSTING_LIST_H
+#define POSTING_LIST_H
 
 #include <string>
 

@@ -1,5 +1,5 @@
-#ifndef ENGINE_SERVICES_HH
-#define ENGINE_SERVICES_HH
+#ifndef ENGINE_SERVICES_H
+#define ENGINE_SERVICES_H
 
 
 #include <string>
@@ -24,6 +24,24 @@ class InvertedIndexService {
         virtual void GetPostingList(int doc_id) = 0;
         virtual void Search(TermList terms, SearchOperator op) = 0;
 };
+
+class PostingStructure {
+    public:
+        virtual std::string dump() = 0;
+};
+
+// Posting_List Class
+class PostingListStructure {
+    public:
+// Get next posting for query processing
+        virtual PostingStructure * next() = 0;                   // exactly next
+        virtual PostingStructure * next(int next_doc_ID) = 0;    // next Posting whose docID>next_doc_ID
+// Add a doc for creating index
+        virtual void add_doc(int docID, int term_frequency, int position[]) = 0;  // TODO what info? who should provide?
+// Serialize the posting list to store 
+        virtual std::string serialize() = 0;    // serialize the posting list, return a string
+};
+
 
 #endif
 
