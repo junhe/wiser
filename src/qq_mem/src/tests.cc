@@ -116,19 +116,19 @@ TEST_CASE( "QQEngine", "[engine]" ) {
 
 TEST_CASE( "Utilities", "[utils]" ) {
     SECTION("Leading space and Two spaces") {
-        std::vector<std::string> vec = util::explode(" hello  world", ' ');
+        std::vector<std::string> vec = utils::explode(" hello  world", ' ');
         REQUIRE(vec.size() == 2);
         REQUIRE(vec[0] == "hello");
         REQUIRE(vec[1] == "world");
     }
 
     SECTION("Empty string") {
-        std::vector<std::string> vec = util::explode("", ' ');
+        std::vector<std::string> vec = utils::explode("", ' ');
         REQUIRE(vec.size() == 0);
     }
 
     SECTION("All spaces") {
-        std::vector<std::string> vec = util::explode("   ", ' ');
+        std::vector<std::string> vec = utils::explode("   ", ' ');
         REQUIRE(vec.size() == 0);
     }
 }

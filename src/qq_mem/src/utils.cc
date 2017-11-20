@@ -1,6 +1,6 @@
 #include "utils.h"
 
-namespace util {
+namespace utils {
 
 // To split a string to vector
 // Not sure how good it is for unicode...

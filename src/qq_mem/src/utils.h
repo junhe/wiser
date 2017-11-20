@@ -5,7 +5,7 @@
 #include <vector>
 
 
-namespace util {
+namespace utils {
 
 const std::vector<std::string> explode(const std::string& s, const char& c);
 
