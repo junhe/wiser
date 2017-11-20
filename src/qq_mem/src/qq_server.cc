@@ -5,6 +5,7 @@
 #include <grpc++/grpc++.h>
 
 #include "qq.grpc.pb.h"
+#include "qq_engine.h"
 #include "inverted_index.h"
 #include "native_doc_store.h"
 
@@ -38,6 +39,8 @@ class QQEngineServiceImpl final : public QQEngine::Service {
         std::cout << "url" << request->document().url() << std::endl;
         std::cout << "body" << request->document().body() << std::endl;
 
+        search_engine_.AddDocument(request->document().title(),
+                request->document().url(), request->document().body());
 
         std::string msg("I am from AddDocument() server.");
         reply->set_message(msg);
@@ -45,6 +48,8 @@ class QQEngineServiceImpl final : public QQEngine::Service {
         return Status::OK;
     }
 
+    public:
+        QQSearchEngine search_engine_;
 };
 
 void RunServer() {
