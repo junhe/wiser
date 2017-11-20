@@ -20,6 +20,10 @@ using qq::HelloReply;
 using qq::AddDocumentRequest;
 using qq::StatusReply;
 
+// for Search
+using qq::SearchRequest;
+using qq::SearchReply;
+
 using qq::QQEngine;
 
 
@@ -42,11 +46,29 @@ class QQEngineServiceImpl final : public QQEngine::Service {
         search_engine_.AddDocument(request->document().title(),
                 request->document().url(), request->document().body());
 
-        std::string msg("I am from AddDocument() server.");
-        reply->set_message(msg);
+        reply->set_message("Doc added");
         reply->set_ok(true);
         return Status::OK;
     }
+
+
+    Status Search(ServerContext* context, const SearchRequest* request,
+            SearchReply* reply) override {
+        Term term = request->term();
+
+        std::cout << "search term: " << term << std::endl;
+
+        auto doc_ids = search_engine_.Search(TermList{term}, SearchOperator::AND);
+        
+        for (auto id : doc_ids) {
+            reply->add_doc_ids(id);
+
+            std::string doc = search_engine_.GetDocument(id);
+            std::cout << "Document found: " << doc << std::endl;
+        }
+        return Status::OK;
+    }
+
 
     public:
         QQSearchEngine search_engine_;

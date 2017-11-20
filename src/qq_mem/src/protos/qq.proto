@@ -7,6 +7,7 @@ service QQEngine {
   // Sends a greeting
   rpc SayHello (HelloRequest) returns (HelloReply) {}
   rpc AddDocument (AddDocumentRequest) returns (StatusReply) {}
+  rpc Search (SearchRequest) returns (SearchReply) {}
 }
 
 
@@ -29,6 +30,17 @@ message StatusReply {
     bool ok = 1;
     string message = 2;
 }
+
+
+// Just do the simpliest thing first..
+message SearchRequest {
+    string term = 1;
+}
+
+message SearchReply {
+    repeated int32 doc_ids = 1;
+}
+
 
 // The request message containing the user's name.
 message HelloRequest {
