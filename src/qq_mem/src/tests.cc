@@ -44,17 +44,28 @@ TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
     index.AddDocument(100, TermList{"hello", "world"});
     index.AddDocument(101, TermList{"hello", "earth"});
 
+    // Get non-exist
     {
         std::vector<int> ids = index.GetDocumentIds("notexist");
         REQUIRE(ids.size() == 0);
     }
 
+    // Get existing
     {
         std::vector<int> ids = index.GetDocumentIds("hello");
         REQUIRE(ids.size() == 2);
         
         std::set<int> s1(ids.begin(), ids.end());
         REQUIRE(s1 == std::set<int>{100, 101});
+    }
+
+    // make query
+    {
+        auto doc_ids = index.Search(TermList{"hello"}, SearchOperator::AND);
+        REQUIRE(doc_ids.size() == 2);
+
+        std::set<int> s(doc_ids.begin(), doc_ids.end());
+        REQUIRE(s == std::set<int>{100, 101});
     }
 }
 

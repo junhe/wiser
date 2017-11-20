@@ -1,5 +1,7 @@
 #include "inverted_index.h"
 
+#include <set>
+
 void InvertedIndex::AddDocument(const int &doc_id, const TermList &termlist) {
     for (const auto &term : termlist) {
         auto search = index_.find(term);
@@ -38,6 +40,15 @@ std::vector<int> InvertedIndex::GetDocumentIds(const Term &term) {
     return doc_ids;
 }
 
-void InvertedIndex::Search(const TermList &terms, const SearchOperator &op) {
+// Return the document IDs
+std::vector<int> InvertedIndex::Search(const TermList &terms, const SearchOperator &op) {
+    std::vector<int> doc_ids;
+    for (auto &term : terms) {
+        auto tmp_doc_ids = GetDocumentIds(term);
+        doc_ids.insert(doc_ids.end(), tmp_doc_ids.begin(), tmp_doc_ids.end()); 
+    }
+
+    std::set<int> id_set(doc_ids.begin(), doc_ids.end());
+    return std::vector<int> (id_set.begin(), id_set.end());
 }
 
