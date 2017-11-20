@@ -24,7 +24,7 @@ protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 
 
-set(SEARCH_SRCS 
+set(ENGINE_SRCS 
     native_doc_store.cc
     inverted_index.cc
     posting_list.cc
@@ -32,7 +32,7 @@ set(SEARCH_SRCS
 
 # Building server
 add_executable(qq_server
-    ${SEARCH_SRCS}
+    ${ENGINE_SRCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/qq_server.cc
     ${PROTO_SRCS}
     ${GRPC_SRCS}
@@ -44,7 +44,7 @@ target_link_libraries(qq_server
 
 # Building client
 add_executable(qq_client
-    ${SEARCH_SRCS}
+    ${ENGINE_SRCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/qq_client.cc
     ${PROTO_SRCS}
     ${GRPC_SRCS}
