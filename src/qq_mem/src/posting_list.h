@@ -2,27 +2,34 @@
 #define POSTING_LIST_HH
 
 #include <string>
+#include <vector>
+
+#include "engine_services.h"
+
+
+typedef int Position;
+typedef std::vector<Position> Positions;
 
 class Posting {
     public:
-        int docID;
-        int term_frequency;
-        int * position;
+        int docID_;
+        int term_frequency_;
+        Positions positions_;
 
-        Posting * next;
-
-        Posting(int docID_in, int term_frequency, int num_pos, int position[]);
+        Posting();
+        Posting(int docID, int term_frequency, Positions positions);
         std::string dump();
 };
 
-
-class Posting_List {
-    std::string term;
-    Posting * p_list;
+class PostingList {
+    Term term_;
+    std::map<int, Posting> postings_;
     
     public:
-        Posting_List(std::string term_in);
-        void add_doc(int docID, int term_frequency, int num_pos, int position[]);
+        PostingList(std::string term_in);
+        void AddPosting(int docID, int term_frequency, const Positions positions);
+        Posting GetPosting(const int &docID);
+        std::size_t Size();
         std::string serialize();
 };
 
