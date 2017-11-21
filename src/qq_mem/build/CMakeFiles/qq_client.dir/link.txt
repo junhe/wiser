@@ -1,1 +1,0 @@
-/usr/bin/c++    -rdynamic CMakeFiles/qq_client.dir/qq_client.cc.o CMakeFiles/qq_client.dir/proto-src/qq.pb.cc.o CMakeFiles/qq_client.dir/proto-src/qq.grpc.pb.cc.o  -o qq_client -Wl,-rpath,/usr/local/lib /usr/local/lib/libgrpc++_reflection.so /usr/local/lib/libprotobuf.so /usr/local/lib/libgrpc++.so /usr/local/lib/libgrpc.so -lpthread -ldl -lpthread 

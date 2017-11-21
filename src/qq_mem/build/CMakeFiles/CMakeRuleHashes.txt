@@ -1,3 +1,0 @@
-# Hashes of file build rules.
-d5a48bceacfd3b0e9fccab767c885ebc proto-src/qq.grpc.pb.cc
-5722d951aa670333091087fba8ae94a9 proto-src/qq.pb.cc
