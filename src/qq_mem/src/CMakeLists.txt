@@ -14,6 +14,7 @@ find_package(GRPC REQUIRED)
 
 set(PROTOS
     ${CMAKE_CURRENT_SOURCE_DIR}/protos/qq.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/protos/posting_message.proto
 )
 
 set(PROTO_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto-src)
@@ -49,12 +50,17 @@ target_link_libraries(qq_client
 add_library( CatchMain OBJECT catch_main.cc catch.hpp )
 add_executable( testmain tests.cc 
     posting_list_direct.cc
+    posting_list_protobuf.cc
     posting_list_raw.cc
     native_doc_store.cc 
     inverted_index.cc
     posting_basic.cc
-    $<TARGET_OBJECTS:CatchMain> catch.hpp )
-
+    ${PROTO_SRCS}
+    $<TARGET_OBJECTS:CatchMain> catch.hpp 
+)
+target_link_libraries(testmain
+    protobuf::libprotobuf
+)
 
 
 

@@ -39,3 +39,27 @@ message HelloRequest {
 message HelloReply {
   string message = 1;
 }
+
+/*
+// Message for add Doc
+message doc_info {
+  int32 id = 1;
+  int32 term_frequency = 2;
+  repeated int32 positions = 3;  // vector of positions
+} 
+
+// Posting
+message Posting {
+  int32 docID = 1;
+  int32 term_frequency = 2;
+  repeated int32 positions = 3;  // vector of positions
+}
+
+// Posting List
+
+// Our address book file is just one of these.
+message PostingList {
+  int32 num_postings = 1;        // number of postings in this list
+  repeated Posting postings = 2;        // posting list when creating index
+}
+*/

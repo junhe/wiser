@@ -5,6 +5,7 @@
 #include "inverted_index.h"
 #include "posting_list_direct.h"
 #include "posting_list_raw.h"
+#include "posting_list_protobuf.h"
 
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
@@ -82,6 +83,29 @@ TEST_CASE( "Raw String based Posting List essential operations are OK", "[postin
 
     std::string serialized = pl.serialize();
     PostingList_Raw pl1("term001", serialized);
+    Posting p1 = pl1.GetPosting();
+    REQUIRE(p1.docID_ == 111);
+    REQUIRE(p1.term_frequency_ == 1);
+    REQUIRE(p1.positions_.size() == 1);
+    
+    Posting p2 = pl1.GetPosting();
+    REQUIRE(p2.docID_ == 232);
+    REQUIRE(p2.term_frequency_ == 2);
+    REQUIRE(p2.positions_.size() == 2);
+}
+
+
+TEST_CASE( "Protobuf based Posting List essential operations are OK", "[posting_list_protobuf]" ) {
+    PostingList_Protobuf pl("term001");
+    REQUIRE(pl.Size() == 0);
+
+    pl.AddPosting(111, 1,  Positions {19});
+    pl.AddPosting(232, 2,  Positions {10, 19});
+
+    REQUIRE(pl.Size() == 2);
+
+    std::string serialized = pl.serialize();
+    PostingList_Protobuf pl1("term001", serialized);
     Posting p1 = pl1.GetPosting();
     REQUIRE(p1.docID_ == 111);
     REQUIRE(p1.term_frequency_ == 1);
