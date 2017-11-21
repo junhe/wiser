@@ -10,13 +10,13 @@ void InvertedIndex::AddDocument(const int &doc_id, const TermList &termlist) {
         if (search == index_.cend()) {
             // term does not exist
             std::pair<IndexStore::iterator, bool> ret;
-            ret = index_.insert( std::make_pair(term, PostingList(term)) );
+            ret = index_.insert( std::make_pair(term, PostingList_Direct(term)) );
             it = ret.first;
         } else {
             it = index_.find(term);
         }
 
-        PostingList &postinglist = it->second;        
+        PostingList_Direct &postinglist = it->second;        
         postinglist.AddPosting(doc_id, 0, Positions{});
     }
 }
@@ -30,11 +30,11 @@ std::vector<int> InvertedIndex::GetDocumentIds(const Term &term) {
     }
 
     // Have the term
-    PostingList &pl = it->second;
+    PostingList_Direct &pl = it->second;
     std::vector<int> doc_ids;
 
-    for (const auto posting_pair : pl.GetPostings()) {
-        doc_ids.push_back(posting_pair.second.GetDocId());
+    for (const auto posting_pair : pl) {
+        doc_ids.push_back(posting_pair.second.docID_);
     }
   
     return doc_ids;

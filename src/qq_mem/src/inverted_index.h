@@ -2,11 +2,11 @@
 #define INVERTED_INDEX_H
 
 #include "engine_services.h"
-#include "posting_list.h"
+#include "posting_list_direct.h"
 
 #include <unordered_map>
 
-typedef std::unordered_map<Term, PostingList> IndexStore;
+typedef std::unordered_map<Term, PostingList_Direct> IndexStore;
 
 class InvertedIndex: public InvertedIndexService {
     protected:

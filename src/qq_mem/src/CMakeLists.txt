@@ -27,8 +27,11 @@ grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 
 set(ENGINE_SRCS 
     native_doc_store.cc
+    posting_basic.cc
+    posting_list_direct.cc
+    posting_list_protobuf.cc
+    posting_list_raw.cc
     inverted_index.cc
-    posting_list.cc
     qq_engine.cc
     utils.cc
     )
@@ -61,11 +64,10 @@ target_link_libraries(qq_client
 add_library( CatchMain OBJECT catch_main.cc catch.hpp )
 add_executable( testmain tests.cc 
     ${ENGINE_SRCS}
+    ${PROTO_SRCS}
     $<TARGET_OBJECTS:CatchMain> catch.hpp )
 target_link_libraries(testmain
     protobuf::libprotobuf
 )
-
-
 
 

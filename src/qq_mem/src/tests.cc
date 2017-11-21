@@ -3,17 +3,13 @@
 #include "catch.hpp"
 #include "native_doc_store.h"
 #include "inverted_index.h"
-<<<<<<< HEAD
-#include "posting_list.h"
 #include "qq_engine.h"
 #include "utils.h"
 
 #include <set>
-=======
 #include "posting_list_direct.h"
 #include "posting_list_raw.h"
 #include "posting_list_protobuf.h"
->>>>>>> master
 
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
@@ -110,15 +106,21 @@ TEST_CASE( "Direct Posting List essential operations are OK", "[posting_list_dir
 
     REQUIRE(pl.Size() == 2);
 
-    Posting p1 = pl.GetPosting();
-    REQUIRE(p1.docID_ == 111);
-    REQUIRE(p1.term_frequency_ == 1);
-    REQUIRE(p1.positions_.size() == 1);
-
-    Posting p2 = pl.GetPosting();
-    REQUIRE(p2.docID_ == 232);
-    REQUIRE(p2.term_frequency_ == 2);
-    REQUIRE(p2.positions_.size() == 2);
+    for (auto pair : pl) {
+        auto p = pair.second; 
+        REQUIRE((p.docID_ == 111 || p.docID_ == 232));
+        if (p.docID_ == 111) {
+            REQUIRE(p.term_frequency_ == 1);
+            REQUIRE(p.positions_.size() == 1);
+            REQUIRE(p.positions_[0] == 19);
+        } else {
+            // p.docID_ == 232
+            REQUIRE(p.term_frequency_ == 2);
+            REQUIRE(p.positions_.size() == 2);
+            REQUIRE(p.positions_[0] == 10);
+            REQUIRE(p.positions_[1] == 19);
+        }
+    }
 }
 
 TEST_CASE( "Raw String based Posting List essential operations are OK", "[posting_list_raw]" ) {
@@ -130,7 +132,7 @@ TEST_CASE( "Raw String based Posting List essential operations are OK", "[postin
 
     REQUIRE(pl.Size() == 2);
 
-    std::string serialized = pl.serialize();
+    std::string serialized = pl.Serialize();
     PostingList_Raw pl1("term001", serialized);
     Posting p1 = pl1.GetPosting();
     REQUIRE(p1.docID_ == 111);
@@ -153,7 +155,7 @@ TEST_CASE( "Protobuf based Posting List essential operations are OK", "[posting_
 
     REQUIRE(pl.Size() == 2);
 
-    std::string serialized = pl.serialize();
+    std::string serialized = pl.Serialize();
     PostingList_Protobuf pl1("term001", serialized);
     Posting p1 = pl1.GetPosting();
     REQUIRE(p1.docID_ == 111);
@@ -198,9 +200,5 @@ TEST_CASE( "Utilities", "[utils]" ) {
         REQUIRE(vec.size() == 0);
     }
 }
-
-
-
-
 
 

@@ -32,7 +32,7 @@ class PostingList_Raw :  public PostingListService {
 // Add a doc for creating index
         void AddPosting(int docID, int term_frequency, const Positions positions);
 // Serialize
-        std::string serialize();
+        std::string Serialize();
 
 // helper function
     private:
