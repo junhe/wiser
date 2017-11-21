@@ -106,8 +106,8 @@ TEST_CASE( "Direct Posting List essential operations are OK", "[posting_list_dir
 
     REQUIRE(pl.Size() == 2);
 
-    for (auto pair : pl) {
-        auto p = pair.second; 
+    for (auto it = pl.cbegin(); it != pl.cend(); it++) {
+        auto p = pl.ExtractPosting(it); 
         REQUIRE((p.docID_ == 111 || p.docID_ == 232));
         if (p.docID_ == 111) {
             REQUIRE(p.term_frequency_ == 1);

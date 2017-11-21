@@ -33,8 +33,9 @@ std::vector<int> InvertedIndex::GetDocumentIds(const Term &term) {
     PostingList_Direct &pl = it->second;
     std::vector<int> doc_ids;
 
-    for (const auto posting_pair : pl) {
-        doc_ids.push_back(posting_pair.second.docID_);
+    for (auto it = pl.begin(); it != pl.end(); it++) {
+        auto posting = pl.ExtractPosting(it);
+        doc_ids.push_back(posting.docID_);
     }
   
     return doc_ids;

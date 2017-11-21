@@ -18,6 +18,12 @@ void PostingList_Direct::AddPosting(int docID, int term_frequency, const Positio
     return;
 }
 
+// Customized iterators are hard to implement, so we just 
+// Use this function to extract posting from the iterator
+Posting PostingList_Direct::ExtractPosting(const_iterator it) {
+    return it->second;
+}
+
 std::string PostingList_Direct::Serialize() {
     return "";
 }

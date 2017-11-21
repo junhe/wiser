@@ -19,7 +19,9 @@ class PostingList_Direct :  public PostingListService {
     
     public:
 
-        // Implement iterators
+        // Implement iterators, so multiple threads can iterate differently
+        // Iterators should not be used directly. They should be passed to 
+        // ExtractPosting() to get the posting.
         typedef PostingStore::iterator iterator;
         typedef PostingStore::const_iterator const_iterator;
         iterator begin() {return posting_store_.begin();}
@@ -32,6 +34,7 @@ class PostingList_Direct :  public PostingListService {
 
         // Add a doc for creating index
         void AddPosting(int docID, int term_frequency, const Positions positions);
+        Posting ExtractPosting(const_iterator it);
         // Serialize
         std::string Serialize();
 };
