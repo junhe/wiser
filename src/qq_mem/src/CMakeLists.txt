@@ -14,6 +14,7 @@ find_package(GRPC REQUIRED)
 
 set(PROTOS
     ${CMAKE_CURRENT_SOURCE_DIR}/protos/qq.proto
+    ${CMAKE_CURRENT_SOURCE_DIR}/protos/posting_message.proto
 )
 
 set(PROTO_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto-src)
@@ -61,7 +62,9 @@ add_library( CatchMain OBJECT catch_main.cc catch.hpp )
 add_executable( testmain tests.cc 
     ${ENGINE_SRCS}
     $<TARGET_OBJECTS:CatchMain> catch.hpp )
-
+target_link_libraries(testmain
+    protobuf::libprotobuf
+)
 
 
 

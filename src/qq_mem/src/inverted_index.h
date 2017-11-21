@@ -1,5 +1,5 @@
-#ifndef INVERTED_INDEX_HH
-#define INVERTED_INDEX_HH
+#ifndef INVERTED_INDEX_H
+#define INVERTED_INDEX_H
 
 #include "engine_services.h"
 #include "posting_list.h"
@@ -17,6 +17,5 @@ class InvertedIndex: public InvertedIndexService {
         std::vector<int> GetDocumentIds(const Term &term);
         std::vector<int> Search(const TermList &terms, const SearchOperator &op);
 };
-
 
 #endif
