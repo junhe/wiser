@@ -3,7 +3,6 @@
 #include <string>
 #include <iostream>
 
-using namespace std;
 
 void NativeDocStore::Add(int id, std::string document) {
     store_[id] = document;

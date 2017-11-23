@@ -1,12 +1,13 @@
 // #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include <iostream>
+#include <set>
+
 #include "catch.hpp"
 #include "native_doc_store.h"
 #include "inverted_index.h"
 #include "qq_engine.h"
 #include "utils.h"
 
-#include <set>
 #include "posting_list_direct.h"
 #include "posting_list_raw.h"
 #include "posting_list_protobuf.h"

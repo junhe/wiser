@@ -1,4 +1,5 @@
 #include "qq_engine.h"
+
 #include "utils.h"
 
 // The parameters here will certainly change. Do not rely too much on this.
