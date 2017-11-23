@@ -34,7 +34,4 @@ class QQEngineClient {
         std::unique_ptr<QQEngine::Stub> stub_;
 };
 
-
-
-
 #endif
