@@ -214,29 +214,65 @@ TEST_CASE( "Utilities", "[utils]" ) {
     }
 }
 
+TEST_CASE("Strict spliting", "[utils]") {
+    SECTION("Regular case") {
+        std::vector<std::string> vec = utils::explode_strict("a\tb", '\t');
+        REQUIRE(vec.size() == 2);
+        REQUIRE(vec[0] == "a");
+        REQUIRE(vec[1] == "b");
+    }
+
+    SECTION("Separator at beginning and end of line") {
+        std::vector<std::string> vec = utils::explode_strict("\ta\tb\t", '\t');
+
+        REQUIRE(vec.size() == 4);
+        REQUIRE(vec[0] == "");
+        REQUIRE(vec[1] == "a");
+        REQUIRE(vec[2] == "b");
+        REQUIRE(vec[3] == "");
+    }
+}
+
 
 TEST_CASE( "LineDoc", "[line_doc]" ) {
-    utils::LineDoc linedoc("src/testdata/tokenized_wiki_abstract_line_doc");
-    std::vector<std::string> items;
+    SECTION("Small size") {
+        utils::LineDoc linedoc("src/testdata/tokenized_wiki_abstract_line_doc");
+        std::vector<std::string> items;
 
-    auto ret = linedoc.GetRow(items); 
-    REQUIRE(ret == true);
-    REQUIRE(items[0] == "col1");
-    REQUIRE(items[1] == "col2");
-    REQUIRE(items[2] == "col3");
-    // for (auto s : items) {
-        // std::cout << "-------------------" << std::endl;
-        // std::cout << s << std::endl;
-    // }
-    
-    ret = linedoc.GetRow(items);
-    REQUIRE(ret == true);
-    REQUIRE(items[0] == "Wikipedia: Anarchism");
-    REQUIRE(items[1] == "Anarchism is a political philosophy that advocates self-governed societies based on voluntary institutions. These are often described as stateless societies,\"ANARCHISM, a social philosophy that rejects authoritarian government and maintains that voluntary institutions are best suited to express man's natural social tendencies.");
-    REQUIRE(items[2] == "anarch polit philosophi advoc self govern societi base voluntari institut often describ stateless social reject authoritarian maintain best suit express man natur tendenc ");
+        auto ret = linedoc.GetRow(items); 
+        REQUIRE(ret == true);
+        REQUIRE(items[0] == "col1");
+        REQUIRE(items[1] == "col2");
+        REQUIRE(items[2] == "col3");
+        // for (auto s : items) {
+            // std::cout << "-------------------" << std::endl;
+            // std::cout << s << std::endl;
+        // }
+        
+        ret = linedoc.GetRow(items);
+        REQUIRE(ret == true);
+        REQUIRE(items[0] == "Wikipedia: Anarchism");
+        REQUIRE(items[1] == "Anarchism is a political philosophy that advocates self-governed societies based on voluntary institutions. These are often described as stateless societies,\"ANARCHISM, a social philosophy that rejects authoritarian government and maintains that voluntary institutions are best suited to express man's natural social tendencies.");
+        REQUIRE(items[2] == "anarch polit philosophi advoc self govern societi base voluntari institut often describ stateless social reject authoritarian maintain best suit express man natur tendenc ");
 
-    ret = linedoc.GetRow(items);
-    REQUIRE(ret == false);
+        ret = linedoc.GetRow(items);
+        REQUIRE(ret == false);
+    }
+
+    SECTION("Large size") {
+        utils::LineDoc linedoc("src/testdata/test_doc_tokenized");
+        std::vector<std::string> items;
+
+        while (true) {
+            std::vector<std::string> items;
+            bool has_it = linedoc.GetRow(items);
+            if (has_it) {
+                REQUIRE(items.size() == 3);    
+            } else {
+                break;
+            }
+        }
+    }
 }
 
 TEST_CASE( "boost library is usable", "[boost]" ) {

@@ -23,10 +23,14 @@ int main(int argc, char** argv) {
     reply = qqengine.Search("body");
     std::cout << "Search: " << reply << std::endl;
 
-    std::cout << "Latttttttttttttttttttttttttttttttttttttttttttttt" << std::endl;
-    IndexCreator index_creator("src/testdata/tokenized_wiki_abstract_line_doc", qqengine);
+    // IndexCreator index_creator("src/testdata/tokenized_wiki_abstract_line_doc", qqengine);
+    IndexCreator index_creator("/mnt/ssd/downloads/test_doc_tokenized", qqengine);
     index_creator.DoIndex();
-    std::cout << "Lat2222222222222222222222222" << std::endl;
 
+
+    reply = qqengine.Search("hello");
+    std::cout << "Search: " << reply << std::endl;
+
+    std::cout << "-------------------end" << std::endl;
     return 0;
 }

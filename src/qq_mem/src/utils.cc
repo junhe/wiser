@@ -32,6 +32,24 @@ const std::vector<std::string> explode_by_non_letter(const std::string &text) {
     return results;
 } 
 
+const std::vector<std::string> explode_strict(const std::string &line, const char& sep) {
+    std::string buff{""};
+    std::vector<std::string> vec;
+    
+    for(auto ch:line)
+    {
+        if(ch != sep) {
+            buff += ch; 
+        } else { 
+            vec.push_back(buff); 
+            buff = "";
+        }
+    }
+    vec.push_back(buff);
+    
+    return vec;
+}
+
 
 ///////////////////////////////////////////////
 // LineDoc
@@ -56,9 +74,9 @@ LineDoc::LineDoc(std::string path) {
 bool LineDoc::GetRow(std::vector<std::string> &items) {
     std::string line;
     auto &ret = std::getline(infile_, line);
-    
+
     if (ret) {
-        items = explode(line, '\t');
+        items = explode_strict(line, '\t');
         return true;
     } else {
         return false;

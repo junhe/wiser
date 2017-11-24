@@ -10,6 +10,7 @@ namespace utils {
 
 const std::vector<std::string> explode(const std::string& s, const char& c);
 const std::vector<std::string> explode_by_non_letter(const std::string& text);
+const std::vector<std::string> explode_strict(const std::string& s, const char& c);
 
 class LineDoc {
     private:
