@@ -9,10 +9,13 @@ int main(int argc, char** argv) {
     QQEngineClient qqengine(grpc::CreateChannel(
                 "localhost:50051", grpc::InsecureChannelCredentials()));
 
-    std::string reply = qqengine.AddDocument();
+    std::string reply = qqengine.AddDocument(
+            "my title",
+            "my url",
+            "my body");
     std::cout << "Greeter received: " << reply << std::endl;
 
-    reply = qqengine.Search();
+    reply = qqengine.Search("body");
     std::cout << "Search: " << reply << std::endl;
 
     return 0;

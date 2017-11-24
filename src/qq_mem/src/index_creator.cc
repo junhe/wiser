@@ -1,4 +1,5 @@
 #include "index_creator.h"
+#include "utils.h"
 
 
 IndexCreator::IndexCreator(const std::string &line_doc_path, QQEngineClient &client) 
@@ -9,8 +10,5 @@ IndexCreator::IndexCreator(const std::string &line_doc_path, QQEngineClient &cli
 void IndexCreator::DoIndex() {
     utils::LineDoc linedoc(line_doc_path_);
     std::vector<std::string> items;
-
-    for (auto s : items) {
-    }
 }
 

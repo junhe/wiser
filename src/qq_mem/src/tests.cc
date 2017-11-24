@@ -214,7 +214,6 @@ TEST_CASE( "Utilities", "[utils]" ) {
 
 TEST_CASE( "LineDoc", "[line_doc]" ) {
     utils::LineDoc linedoc("src/testdata/tokenized_wiki_abstract_line_doc");
-    std::string line;
     std::vector<std::string> items;
 
     auto ret = linedoc.GetRow(items); 

@@ -1,12 +1,12 @@
 #include "qq_client.h"
 
 
-std::string QQEngineClient::AddDocument() {
+std::string QQEngineClient::AddDocument(const std::string &title, 
+        const std::string &url, const std::string &body) {
     AddDocumentRequest request;
-    request.mutable_document()->set_title("My first document");
-    request.mutable_document()->set_url("http://wikipedia.org");
-    request.mutable_document()->set_body("BIG body");
-
+    request.mutable_document()->set_title(title);
+    request.mutable_document()->set_url(url);
+    request.mutable_document()->set_body(body);
 
     request.mutable_options()->set_save(true);
 
@@ -26,12 +26,12 @@ std::string QQEngineClient::AddDocument() {
 }
 
 
-std::string QQEngineClient::Search() {
+std::string QQEngineClient::Search(const std::string &term) {
     SearchRequest request;
     SearchReply reply;
     ClientContext context;
 
-    request.set_term("body");
+    request.set_term(term);
 
     // Here we can the stub's newly available method we just added.
     Status status = stub_->Search(&context, request,  &reply);

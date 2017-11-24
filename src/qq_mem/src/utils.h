@@ -22,11 +22,6 @@ class LineDoc {
 };
 
 
-
-
-
-
-
 } // namespace util
 #endif
 

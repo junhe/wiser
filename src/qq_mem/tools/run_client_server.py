@@ -3,7 +3,7 @@ import os
 import time
 
 build_dir = "../build/"
-client = os.path.join(build_dir, "qq_client")
+client = os.path.join(build_dir, "client")
 server = os.path.join(build_dir, "qq_server")
 
 
