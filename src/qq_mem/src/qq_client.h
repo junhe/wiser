@@ -35,6 +35,7 @@ class QQEngineClient {
 
         std::string AddDocument();
         std::string Search();
+
     private:
         std::unique_ptr<QQEngine::Stub> stub_;
 };

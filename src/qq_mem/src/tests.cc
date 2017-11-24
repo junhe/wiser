@@ -6,6 +6,7 @@
 #include "native_doc_store.h"
 #include "inverted_index.h"
 #include "qq_engine.h"
+#include "index_creator.h"
 #include "utils.h"
 
 #include "posting_list_direct.h"
@@ -200,6 +201,44 @@ TEST_CASE( "Utilities", "[utils]" ) {
         std::vector<std::string> vec = utils::explode("   ", ' ');
         REQUIRE(vec.size() == 0);
     }
+
+    SECTION("Explode by some commone spaces") {
+        std::vector<std::string> vec = utils::explode_by_non_letter(" hello\t world yeah");
+        REQUIRE(vec.size() == 3);
+        REQUIRE(vec[0] == "hello");
+        REQUIRE(vec[1] == "world");
+        REQUIRE(vec[2] == "yeah");
+    }
 }
+
+
+TEST_CASE( "LineDoc", "[line_doc]" ) {
+    utils::LineDoc linedoc("src/testdata/tokenized_wiki_abstract_line_doc");
+    std::string line;
+    std::vector<std::string> items;
+
+    auto ret = linedoc.GetRow(items); 
+    REQUIRE(ret == true);
+    REQUIRE(items[0] == "col1");
+    REQUIRE(items[1] == "col2");
+    REQUIRE(items[2] == "col3");
+    // for (auto s : items) {
+        // std::cout << "-------------------" << std::endl;
+        // std::cout << s << std::endl;
+    // }
+    
+    ret = linedoc.GetRow(items);
+    REQUIRE(ret == true);
+    REQUIRE(items[0] == "Wikipedia: Anarchism");
+    REQUIRE(items[1] == "Anarchism is a political philosophy that advocates self-governed societies based on voluntary institutions. These are often described as stateless societies,\"ANARCHISM, a social philosophy that rejects authoritarian government and maintains that voluntary institutions are best suited to express man's natural social tendencies.");
+    REQUIRE(items[2] == "anarch polit philosophi advoc self govern societi base voluntari institut often describ stateless social reject authoritarian maintain best suit express man natur tendenc ");
+
+    ret = linedoc.GetRow(items);
+    REQUIRE(ret == false);
+}
+
+
+
+
 
 
