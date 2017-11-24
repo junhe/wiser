@@ -2,7 +2,10 @@
 #include <iostream>
 #include <set>
 
+#include <boost/filesystem.hpp>
+#include <boost/lambda/lambda.hpp>    
 #include "catch.hpp"
+
 #include "native_doc_store.h"
 #include "inverted_index.h"
 #include "qq_engine.h"
@@ -236,7 +239,21 @@ TEST_CASE( "LineDoc", "[line_doc]" ) {
     REQUIRE(ret == false);
 }
 
+TEST_CASE( "boost library is usable", "[boost]" ) {
+    using namespace boost::filesystem;
 
+    path p{"./somefile-not-exist"};
+    try
+    {
+        file_status s = status(p);
+        REQUIRE(is_directory(s) == false);
+        REQUIRE(exists(s) == false);
+    }
+    catch (filesystem_error &e)
+    {
+        std::cerr << e.what() << '\n';
+    }
+}
 
 
 
