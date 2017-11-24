@@ -40,6 +40,7 @@ set(ENGINE_SRCS
 # Building server
 add_executable(qq_server
     ${ENGINE_SRCS}
+    qq_client.cc
     ${CMAKE_CURRENT_SOURCE_DIR}/qq_server.cc
     ${PROTO_SRCS}
     ${GRPC_SRCS}
@@ -51,8 +52,8 @@ target_link_libraries(qq_server
 
 # Building client
 add_executable(client
-    ${ENGINE_SRCS}
     qq_client.cc
+    ${ENGINE_SRCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/client.cc
     ${PROTO_SRCS}
     ${GRPC_SRCS}
@@ -65,10 +66,13 @@ target_link_libraries(client
 
 add_library( CatchMain OBJECT catch_main.cc catch.hpp )
 add_executable( testmain tests.cc 
+    qq_client.cc
     ${ENGINE_SRCS}
     ${PROTO_SRCS}
+    ${GRPC_SRCS}
     $<TARGET_OBJECTS:CatchMain> catch.hpp )
 target_link_libraries(testmain
+    gRPC::grpc++_reflection
     protobuf::libprotobuf
 )
 

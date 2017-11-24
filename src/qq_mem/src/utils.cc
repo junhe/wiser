@@ -3,6 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <iterator>
+#include <cassert>
 
 namespace utils {
 
@@ -37,10 +38,13 @@ const std::vector<std::string> explode_by_non_letter(const std::string &text) {
 
 LineDoc::LineDoc(std::string path): infile_(path) {
     // The first line must be header
+    assert(infile_.good()); 
     std::string line; 
     std::getline(infile_, line);
     std::vector<std::string> items = explode(line, '#');
-    items = explode_by_non_letter(items.back());
+    
+    // TODO: bad! this may halt the program when nothing is in line
+    items = explode_by_non_letter(items.back()); 
     col_names_ = items;
 }
 
