@@ -36,12 +36,10 @@ std::string QQEngineClient::Search(const std::string &term) {
     // Here we can the stub's newly available method we just added.
     Status status = stub_->Search(&context, request,  &reply);
     if (status.ok()) {
-        std::cout << "Search result: ";
-        for (auto id : reply.doc_ids()) {
-            std::cout << id << " ";
-        }
-        std::cout << std::endl;
-        std::cout << "----------" << std::endl;
+        // std::cout << "Search result: ";
+        // for (auto id : reply.doc_ids()) {
+            // std::cout << id << " ";
+        // }
         return "OK";
     } else {
         std::cout << status.error_code() << ": " << status.error_message()

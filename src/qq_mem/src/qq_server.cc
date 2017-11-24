@@ -46,7 +46,7 @@ class QQEngineServiceImpl final : public QQEngine::Service {
             SearchReply* reply) override {
         Term term = request->term();
 
-        std::cout << "search term: " << term << std::endl;
+        // std::cout << "search term: " << term << std::endl;
 
         auto doc_ids = search_engine_.Search(TermList{term}, SearchOperator::AND);
         
@@ -54,7 +54,7 @@ class QQEngineServiceImpl final : public QQEngine::Service {
             reply->add_doc_ids(id);
 
             std::string doc = search_engine_.GetDocument(id);
-            std::cout << "Document found: " << doc << std::endl;
+            // std::cout << "Document found: " << doc << std::endl;
         }
         return Status::OK;
     }

@@ -1,5 +1,29 @@
+#include <chrono>
+
 #include "qq_client.h"
 #include "index_creator.h"
+
+
+
+void make_queries(QQEngineClient &qqengine) {
+    std::string reply;
+    int n_queries = 10000;
+
+    auto start = std::chrono::system_clock::now();
+
+    for (int i = 0; i < n_queries; i++) {
+        reply = qqengine.Search("hello");
+    }
+
+    auto end = std::chrono::system_clock::now();
+
+    std::chrono::duration<double> diff = end - start;
+    std::cout << "Duration: " << diff.count() << " s\n";
+    std::cout << "Query per sec: " << n_queries / diff.count() << "\n";
+
+    std::cout << "Search: " << reply << std::endl;
+}
+
 
 
 int main(int argc, char** argv) {
@@ -11,26 +35,11 @@ int main(int argc, char** argv) {
                 "localhost:50051", grpc::InsecureChannelCredentials()));
 
 
-    std::string reply = qqengine.AddDocument(
-            "my title",
-            "my url",
-            "my body");
-    std::cout << "Greeter received: " << reply << std::endl;
-
-    reply = qqengine.Search("body");
-    std::cout << "Search: " << reply << std::endl;
-
-    reply = qqengine.Search("body");
-    std::cout << "Search: " << reply << std::endl;
-
     // IndexCreator index_creator("src/testdata/tokenized_wiki_abstract_line_doc", qqengine);
     IndexCreator index_creator("/mnt/ssd/downloads/test_doc_tokenized", qqengine);
     index_creator.DoIndex();
 
+    make_queries(qqengine);
 
-    reply = qqengine.Search("hello");
-    std::cout << "Search: " << reply << std::endl;
-
-    std::cout << "-------------------end" << std::endl;
     return 0;
 }
