@@ -1,5 +1,7 @@
 #include "utils.h"
 
+#include "boost/filesystem.hpp"
+
 #include <iostream>
 #include <sstream>
 #include <iterator>
@@ -36,9 +38,15 @@ const std::vector<std::string> explode_by_non_letter(const std::string &text) {
 // LineDoc
 ///////////////////////////////////////////////
 
-LineDoc::LineDoc(std::string path): infile_(path) {
+LineDoc::LineDoc(std::string path) {
     // The first line must be header
-    assert(infile_.good()); 
+    boost::filesystem::path  boost_path{path};
+    if (boost::filesystem::exists(boost_path) == false) {
+        throw std::runtime_error("File does not exist");
+    }
+
+    infile_.open(path);
+
     std::string line; 
     std::getline(infile_, line);
     std::vector<std::string> items = explode(line, '#');
