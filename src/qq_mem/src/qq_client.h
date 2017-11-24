@@ -22,6 +22,11 @@ using qq::StatusReply;
 using qq::SearchRequest;
 using qq::SearchReply;
 
+// This is a wrapper around the gRPC stub to provide more convenient
+// Interface to interact with gRPC server. For example, you can use
+// C++ native containers intead of protobuf objects when invoking
+// AddDocument().
+
 
 class QQEngineClient {
     public:
