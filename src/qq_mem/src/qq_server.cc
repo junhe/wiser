@@ -30,9 +30,9 @@ using qq::QQEngine;
 class QQEngineServiceImpl final : public QQEngine::Service {
     Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
             StatusReply* reply) override {
-        std::cout << "title" << request->document().title() << std::endl;
-        std::cout << "url" << request->document().url() << std::endl;
-        std::cout << "body" << request->document().body() << std::endl;
+        // std::cout << "title" << request->document().title() << std::endl;
+        // std::cout << "url" << request->document().url() << std::endl;
+        // std::cout << "body" << request->document().body() << std::endl;
 
         search_engine_.AddDocument(request->document().title(),
                 request->document().url(), request->document().body());

@@ -25,6 +25,7 @@ const std::vector<std::string> explode(const std::string& s, const char& c)
     return v;
 }
 
+// TODO: Replace this boost tokenizer
 const std::vector<std::string> explode_by_non_letter(const std::string &text) {
     std::istringstream iss(text);
     std::vector<std::string> results((std::istream_iterator<std::string>(iss)),

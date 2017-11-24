@@ -17,7 +17,7 @@ void IndexCreator::DoIndex() {
     while (true) {
         has_it = linedoc.GetRow(items);
         if (has_it) {
-            std::cout << "****************" << items.size() <<"****************" << std::endl;
+            // std::cout << "****************" << items.size() <<"****************" << std::endl;
             client_.AddDocument(items[0], "http://wiki", items[2]);
         } else {
             break;
