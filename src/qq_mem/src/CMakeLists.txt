@@ -73,6 +73,7 @@ target_link_libraries(client
     gRPC::grpc++_reflection
     protobuf::libprotobuf
     ${BOOST_LIBS}
+    pthread
 )
 
 add_library( CatchMain OBJECT catch_main.cc catch.hpp )
