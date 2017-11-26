@@ -22,6 +22,9 @@ using qq::StatusReply;
 using qq::SearchRequest;
 using qq::SearchReply;
 
+// for Echo
+using qq::EchoData;
+
 // This is a wrapper around the gRPC stub to provide more convenient
 // Interface to interact with gRPC server. For example, you can use
 // C++ native containers intead of protobuf objects when invoking
@@ -36,6 +39,7 @@ class QQEngineClient {
         std::string AddDocument(const std::string &title, 
                 const std::string &url, const std::string &body);
         std::string Search(const std::string &term);
+        std::string Echo(const std::string &msg);
 
     private:
         std::unique_ptr<QQEngine::Stub> stub_;

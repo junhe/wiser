@@ -8,6 +8,7 @@ service QQEngine {
   rpc SayHello (HelloRequest) returns (HelloReply) {}
   rpc AddDocument (AddDocumentRequest) returns (StatusReply) {}
   rpc Search (SearchRequest) returns (SearchReply) {}
+  rpc Echo (EchoData) returns (EchoData) {}
 }
 
 
@@ -39,6 +40,10 @@ message SearchRequest {
 
 message SearchReply {
     repeated int32 doc_ids = 1;
+}
+
+message EchoData {
+    string message = 1;
 }
 
 

@@ -47,3 +47,22 @@ std::string QQEngineClient::Search(const std::string &term) {
         return "RPC failed";
     }
 }
+
+std::string QQEngineClient::Echo(const std::string &msg) {
+    EchoData request;
+    EchoData reply;
+    ClientContext context;
+
+    request.set_message(msg);
+
+    Status status = stub_->Echo(&context, request,  &reply);
+    if (status.ok()) {
+        return "OK";
+    } else {
+        std::cout << status.error_code() 
+            << ": " << status.error_message()
+            << std::endl;
+        return "RPC failed";
+    }
+}
+
