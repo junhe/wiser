@@ -12,4 +12,8 @@ run_qq_mem:
 	./build.sh
 	python ./tools/run_client_server.py ./build/client ./build/qq_server
 
+test:
+	rm -f ./build/testmain
+	./build.sh
+	./build/testmain
 
