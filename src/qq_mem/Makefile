@@ -6,5 +6,10 @@ hash_benchmark:
 
 grpc_benchmark:
 	./build.sh
-	./build/grpc_benchmark
+	python ./tools/run_client_server.py ./build/grpc_benchmark ./build/qq_server
+
+run_qq_mem:
+	./build.sh
+	python ./tools/run_client_server.py ./build/client ./build/qq_server
+
 

@@ -19,7 +19,6 @@ void make_queries(int n_queries) {
 }
 
 
-
 int main(int argc, char** argv) {
     QQEngineClient qqengine(grpc::CreateChannel(
                 "localhost:50051", grpc::InsecureChannelCredentials()));
