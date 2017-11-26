@@ -11,6 +11,7 @@
 #include "qq_engine.h"
 #include "index_creator.h"
 #include "utils.h"
+#include "hash_benchmark.h"
 
 #include "posting_list_direct.h"
 #include "posting_list_raw.h"
@@ -289,6 +290,22 @@ TEST_CASE( "boost library is usable", "[boost]" ) {
     {
         std::cerr << e.what() << '\n';
     }
+}
+
+TEST_CASE( "Hash benchmark", "[benchmark]" ) {
+    STLHash stl_hash;
+
+    for (std::size_t i = 0; i < 100; i++) {
+        stl_hash.Put(std::to_string(i), std::to_string(i * 100));
+    }
+
+    for (std::size_t i = 0; i < 100; i++) {
+        std::string v = stl_hash.Get(std::to_string(i));
+        REQUIRE(v == std::to_string(i * 100)); 
+    }
+
+    REQUIRE(stl_hash.Size() == 100);
+
 }
 
 

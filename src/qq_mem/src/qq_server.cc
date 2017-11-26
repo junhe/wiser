@@ -63,8 +63,9 @@ class QQEngineServiceImpl final : public QQEngine::Service {
         for (auto id : doc_ids) {
             reply->add_doc_ids(id);
 
-            std::string doc = search_engine_.GetDocument(id);
+            // std::string doc = search_engine_.GetDocument(id);
             // std::cout << "Document found: " << doc << std::endl;
+            break;
         }
         return Status::OK;
     }

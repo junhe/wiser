@@ -90,3 +90,21 @@ target_link_libraries(testmain
 )
 
 
+# For benchmarks
+
+add_executable(hash_benchmark
+    hash_benchmark.cc
+)
+#target_link_libraries(qq_server
+    #gRPC::grpc++_reflection
+    #protobuf::libprotobuf
+    #${BOOST_LIBS}
+#)
+
+
+
+
+
+
+
+
