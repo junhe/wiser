@@ -28,6 +28,10 @@ using qq::QQEngine;
 
 // Logic and data behind the server's behavior.
 class QQEngineServiceImpl final : public QQEngine::Service {
+
+    public:
+    int count = 0;
+
     Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
             StatusReply* reply) override {
         // std::cout << "title" << request->document().title() << std::endl;
@@ -36,6 +40,12 @@ class QQEngineServiceImpl final : public QQEngine::Service {
 
         search_engine_.AddDocument(request->document().title(),
                 request->document().url(), request->document().body());
+
+        count++;
+
+        if (count % 10000 == 0) {
+            std::cout << count << std::endl;
+        }
 
         reply->set_message("Doc added");
         reply->set_ok(true);
