@@ -22,6 +22,9 @@ using qq::StatusReply;
 using qq::SearchRequest;
 using qq::SearchReply;
 
+// for Echo
+using qq::EchoData;
+
 using qq::QQEngine;
 
 
@@ -29,7 +32,7 @@ using qq::QQEngine;
 // Logic and data behind the server's behavior.
 class QQEngineServiceImpl final : public QQEngine::Service {
 
-    public:
+  public:
     int count = 0;
 
     Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
@@ -70,6 +73,14 @@ class QQEngineServiceImpl final : public QQEngine::Service {
         return Status::OK;
     }
 
+    Status Echo(ServerContext* context, const EchoData* request,
+            EchoData* reply) override {
+
+        std::string msg = request->message();
+        reply->set_message(msg);
+        
+        return Status::OK;
+    }
 
     public:
         QQSearchEngine search_engine_;
