@@ -11,7 +11,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 find_package(Protobuf REQUIRED)
 find_package(GRPC REQUIRED)
-FIND_PACKAGE( Boost 1.5.4 COMPONENTS program_options REQUIRED )
+find_package( Boost 1.5.4 COMPONENTS program_options REQUIRED )
 
 set(PROTOS
     ${CMAKE_CURRENT_SOURCE_DIR}/protos/qq.proto
@@ -21,7 +21,7 @@ set(PROTOS
 set(PROTO_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto-src)
 file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
 include_directories(${PROTO_SRC_DIR})
-INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
+include_directories(${Boost_INCLUDE_DIR})
 
 
 
@@ -102,6 +102,20 @@ add_executable(hash_benchmark
     #${BOOST_LIBS}
 #)
 
+
+add_executable(grpc_benchmark
+    qq_client.cc
+    ${ENGINE_SRCS}
+    grpc_bench.cc
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(grpc_benchmark
+    gRPC::grpc++_reflection
+    protobuf::libprotobuf
+    ${BOOST_LIBS}
+    pthread
+)
 
 
 
