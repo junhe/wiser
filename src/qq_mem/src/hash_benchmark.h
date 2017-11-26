@@ -4,6 +4,7 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <cassert>
 
 class HashService {
   public:
@@ -37,17 +38,29 @@ std::string encode(std::size_t i) {
     return std::to_string(i);
 }
 
-void build_hash(HashService &hash, std::size_t n) {
-    std::string value = "0123456789";
-    for (std::size_t i; i < n; i++) {
+std::string compose_value(int value_size) {
+    return std::string(value_size, 'v');
+}
+
+void build_hash(HashService &hash, std::size_t n, int value_size) {
+    std::string value = compose_value(value_size);
+    std::cout << "build hash " << n << "\n";
+    for (std::size_t i = 0; i < n; i++) {
         hash.Put(encode(i), value);
+        // std::cout << i;
     }
 }
 
-void query_hash(HashService &hash, std::size_t n) {
+void query_hash(HashService &hash, std::size_t n, int value_size) {
     std::string value;
-    for (std::size_t i; i < n; i++) {
+    std::string good_value = compose_value(value_size);
+    for (std::size_t i = 0; i < n; i++) {
         value = hash.Get(encode(i));
+
+        if (i % 10000 == 0) {
+            std::cout << i << "/" << n << std::endl;
+        }
+        assert(value == good_value);
     }
 }
 

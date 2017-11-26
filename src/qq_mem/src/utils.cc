@@ -51,6 +51,26 @@ const std::vector<std::string> explode_strict(const std::string &line, const cha
     return vec;
 }
 
+const std::chrono::time_point<std::chrono::system_clock> now() {
+    return std::chrono::system_clock::now();
+}
+
+const double duration(std::chrono::time_point<std::chrono::system_clock> t1, 
+        std::chrono::time_point<std::chrono::system_clock> t2) {
+    std::chrono::duration<double> diff = t2 - t1;
+    return diff.count();
+}
+
+// Note that width is the final length of the string, not
+// the number of zeros.
+const std::string fill_zeros(const std::string &s, std::size_t width) {
+    int n_zeros = width - s.size();
+    if (n_zeros > 0) {
+        return std::string(n_zeros, '0') + s; 
+    } else {
+        return s;
+    }
+}
 
 ///////////////////////////////////////////////
 // LineDoc

@@ -234,6 +234,13 @@ TEST_CASE("Strict spliting", "[utils]") {
     }
 }
 
+TEST_CASE("Filling zeros", "[utils]") {
+    REQUIRE(utils::fill_zeros("abc", 5) == "00abc");
+    REQUIRE(utils::fill_zeros("abc", 0) == "abc");
+    REQUIRE(utils::fill_zeros("abc", 3) == "abc");
+    REQUIRE(utils::fill_zeros("", 3) == "000");
+    REQUIRE(utils::fill_zeros("", 0) == "");
+}
 
 TEST_CASE( "LineDoc", "[line_doc]" ) {
     SECTION("Small size") {

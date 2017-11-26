@@ -94,6 +94,7 @@ target_link_libraries(testmain
 
 add_executable(hash_benchmark
     hash_benchmark.cc
+    utils.cc
 )
 #target_link_libraries(qq_server
     #gRPC::grpc++_reflection
