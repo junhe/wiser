@@ -6,6 +6,8 @@
 #include <unordered_map>
 #include <cassert>
 
+#include "utils.h"
+
 class HashService {
   public:
     virtual std::string Get(const std::string &key) = 0;
@@ -34,30 +36,29 @@ class STLHash: public HashService {
     }
 };
 
-std::string encode(std::size_t i) {
-    return std::to_string(i);
+std::string encode(std::size_t i, int width) {
+    return utils::fill_zeros(std::to_string(i), width);
 }
 
 std::string compose_value(int value_size) {
     return std::string(value_size, 'v');
 }
 
-void build_hash(HashService &hash, std::size_t n, int value_size) {
+void build_hash(HashService &hash, std::size_t n, int key_size, int value_size) {
     std::string value = compose_value(value_size);
     std::cout << "build hash " << n << "\n";
     for (std::size_t i = 0; i < n; i++) {
-        hash.Put(encode(i), value);
-        // std::cout << i;
+        hash.Put(encode(i, key_size), value);
     }
 }
 
-void query_hash(HashService &hash, std::size_t n, int value_size) {
+void query_hash(HashService &hash, std::size_t n, int key_size, int value_size) {
     std::string value;
     std::string good_value = compose_value(value_size);
     for (std::size_t i = 0; i < n; i++) {
-        value = hash.Get(encode(i));
+        value = hash.Get(encode(i, key_size));
 
-        if (i % 10000 == 0) {
+        if (i % 100000 == 0) {
             std::cout << i << "/" << n << std::endl;
         }
         assert(value == good_value);
