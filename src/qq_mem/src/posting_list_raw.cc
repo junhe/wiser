@@ -123,7 +123,7 @@ void PostingList_Raw::AddPosting(int docID, int term_frequency, const Positions 
 }
 
 // Serialize the posting list
-std::string PostingList_Raw::serialize() {
+std::string PostingList_Raw::Serialize() {
     /* format:
     num_postings*[-docID_termfrequency_*[_position]]
     Eg. 3-0_5_1_10_20_31_44-2_5_1_10_20_31_44-4_5_1_10_20_31_44

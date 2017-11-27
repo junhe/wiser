@@ -34,7 +34,7 @@ class PostingList_Protobuf :  public PostingListService {
 // Add a doc for creating index
         void AddPosting(int docID, int term_frequency, const Positions positions);
 // Serialize the posting list to store 
-        std::string serialize();    // serialize the posting list, return a string
+        std::string Serialize();    // serialize the posting list, return a string
 
 // helper 
     private:

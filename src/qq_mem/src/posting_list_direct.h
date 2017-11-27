@@ -4,31 +4,40 @@
 #include <string>
 #include <string.h>
 #include <vector>
+#include <unordered_map>
+
 #include "engine_services.h"
 #include "posting_basic.h"
 
-// Posting_List Class
-class PostingList_Direct :  public PostingListService {
-    Term term_;                          // term this posting list belongs to
-    std::vector<Posting> p_list;         // posting list when creating index
-    
-    int num_postings;                    // number of postings in this list
-    int cur_index;                       // last posting we have returned
-    int cur_docID;                       // last docID we have returned
 
+
+class PostingList_Direct :  public PostingListService {
+    private:
+        typedef std::unordered_map<int, Posting> PostingStore;
+
+        Term term_;                          // term this posting list belongs to
+        PostingStore posting_store_;         
+    
     public:
 
-// Init with a term string, when creating index
+        // Implement iterators, so multiple threads can iterate differently
+        // Iterators should not be used directly. They should be passed to 
+        // ExtractPosting() to get the posting.
+        typedef PostingStore::iterator iterator;
+        typedef PostingStore::const_iterator const_iterator;
+        iterator begin() {return posting_store_.begin();}
+        iterator end() {return posting_store_.end();}
+        const_iterator cbegin() {return posting_store_.cbegin();}
+        const_iterator cend() {return posting_store_.cend();}
+        
         PostingList_Direct(std::string term_in);    // do we need term?
-// Return size
         std::size_t Size();
-// Get next posting for query processing
-        Posting GetPosting();    // exactly next
-        Posting GetPosting(const int &next_doc_ID);    // next Posting whose docID>next_doc_ID
-// Add a doc for creating index
+
+        // Add a doc for creating index
         void AddPosting(int docID, int term_frequency, const Positions positions);
-// Serialize
-        std::string serialize();
+        Posting ExtractPosting(const_iterator it);
+        // Serialize
+        std::string Serialize();
 };
 
 

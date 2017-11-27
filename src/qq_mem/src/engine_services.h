@@ -16,15 +16,16 @@ class DocumentStoreService {
         virtual int Size() = 0;
 };
 
+
 typedef std::string Term;
 typedef std::vector<Term> TermList;
 enum class SearchOperator {AND, OR};
 
 class InvertedIndexService {
     public:
-        virtual void AddDocument(int doc_id, TermList termlist) = 0;
-        virtual void GetPostingList(int doc_id) = 0;
-        virtual void Search(TermList terms, SearchOperator op) = 0;
+        virtual void AddDocument(const int &doc_id, const TermList &termlist) = 0;
+        virtual std::vector<int> GetDocumentIds(const Term &term) = 0;
+        virtual std::vector<int> Search(const TermList &terms, const SearchOperator &op) = 0;
 };
 
 class PostingService {
@@ -44,7 +45,7 @@ class PostingListService {
 // Add a doc for creating index
         // virtual void AddPosting(int docID, int term_frequency, const Positions positions) = 0;
 // Serialize the posting list to store 
-        virtual std::string serialize() = 0;    // serialize the posting list, return a string
+        virtual std::string Serialize() = 0;    // serialize the posting list, return a string
 
 };
 

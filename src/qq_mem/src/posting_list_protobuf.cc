@@ -80,7 +80,7 @@ void PostingList_Protobuf::AddPosting(int docID, int term_frequency, const Posit
 }
 
 // Serialize the posting list
-std::string PostingList_Protobuf::serialize() {
+std::string PostingList_Protobuf::Serialize() {
     /* format: protobuf message in posting_message.proto
     */
     posting_message::PostingList pl_message;

@@ -7,6 +7,7 @@ service QQEngine {
   // Sends a greeting
   rpc SayHello (HelloRequest) returns (HelloReply) {}
   rpc AddDocument (AddDocumentRequest) returns (StatusReply) {}
+  rpc Search (SearchRequest) returns (SearchReply) {}
 }
 
 
@@ -30,6 +31,17 @@ message StatusReply {
     string message = 2;
 }
 
+
+// Just do the simpliest thing first..
+message SearchRequest {
+    string term = 1;
+}
+
+message SearchReply {
+    repeated int32 doc_ids = 1;
+}
+
+
 // The request message containing the user's name.
 message HelloRequest {
   string name = 1;
@@ -40,26 +52,3 @@ message HelloReply {
   string message = 1;
 }
 
-/*
-// Message for add Doc
-message doc_info {
-  int32 id = 1;
-  int32 term_frequency = 2;
-  repeated int32 positions = 3;  // vector of positions
-} 
-
-// Posting
-message Posting {
-  int32 docID = 1;
-  int32 term_frequency = 2;
-  repeated int32 positions = 3;  // vector of positions
-}
-
-// Posting List
-
-// Our address book file is just one of these.
-message PostingList {
-  int32 num_postings = 1;        // number of postings in this list
-  repeated Posting postings = 2;        // posting list when creating index
-}
-*/

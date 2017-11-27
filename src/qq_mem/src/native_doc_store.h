@@ -1,9 +1,9 @@
 #ifndef NATIVE_DOC_STORE_HH
 #define NATIVE_DOC_STORE_HH
 
-#include "engine_services.h"
-
 #include <map>
+
+#include "engine_services.h"
 
 class NativeDocStore: public DocumentStoreService {
     private:
