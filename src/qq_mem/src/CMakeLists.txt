@@ -40,6 +40,7 @@ set(ENGINE_SRCS
     index_creator.cc
     qq_engine.cc
     utils.cc
+    unifiedhighlighter.cc
     )
 
 set(BOOST_LIBS

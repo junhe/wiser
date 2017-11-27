@@ -16,6 +16,8 @@
 #include "posting_list_raw.h"
 #include "posting_list_protobuf.h"
 
+#include "unifiedhighlighter.h"
+
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
 }
@@ -292,5 +294,11 @@ TEST_CASE( "boost library is usable", "[boost]" ) {
 }
 
 
-
+TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
+    UnifiedHighlighter test_highlighter();
+    // 
+    //std::vector<std::string> res = test_highlighter.highlight([], [1,2,3]);
+    //for(std::vector<std::string>::iterator cur_snippet = res.begin(); cur_snippet != res.end(); ++cur_snippet)
+    //    std::cout<<cur_snippet<<std::endl;
+}
 
