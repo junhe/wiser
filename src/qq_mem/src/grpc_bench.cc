@@ -21,11 +21,8 @@ void make_queries(int n_queries) {
     }
 }
 
-
-int main(int argc, char** argv) {
+void benchmark(int n_threads, int n_queries) {
     std::vector<std::thread> threadList;
-    int n_threads = 32;
-    int n_queries = 50000;
 
     auto start = utils::now();
 
@@ -39,8 +36,18 @@ int main(int argc, char** argv) {
 
     auto duration = utils::duration(start, end);
 
+    std::cout << "_____________________________" << std::endl;
+    std::cout << "n_threads: " << n_threads << " n_queries: " << n_queries << std::endl;
     std::cout << "Duration: " << duration << " s\n";
     std::cout << "Query per sec: " << n_queries * n_threads / duration << "\n";
+}
 
-    return 0;
+
+int main(int argc, char** argv) {
+    int total = 100000;
+    benchmark(1, total);
+    benchmark(4, total);
+    benchmark(16, total);
+    benchmark(64, total);
+    benchmark(128, total);
 }
