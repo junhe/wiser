@@ -295,10 +295,19 @@ TEST_CASE( "boost library is usable", "[boost]" ) {
 
 
 TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
-    UnifiedHighlighter test_highlighter();
-    // 
-    //std::vector<std::string> res = test_highlighter.highlight([], [1,2,3]);
-    //for(std::vector<std::string>::iterator cur_snippet = res.begin(); cur_snippet != res.end(); ++cur_snippet)
-    //    std::cout<<cur_snippet<<std::endl;
+    QQSearchEngine engine;
+    engine.AddDocument("my title", "my url", "hello world");
+    engine.AddDocument("my title", "my url", "hello earth");
+    engine.AddDocument("my title", "my url", "hello Madison");
+    engine.AddDocument("my title", "my url", "hello Wisconsin");
+
+    UnifiedHighlighter test_highlighter(engine);
+    Query query = {"Hello", "World"};
+    TopDocs topDocs = {0, 1, 3}; 
+    std::vector<std::string> res = test_highlighter.highlight(query, topDocs);
+    REQUIRE(res.size()  == topDocs.size());
+    REQUIRE(res[0] == "hello world");
+    REQUIRE(res[1] == "hello earth");
+    REQUIRE(res[2] == "hello Wisconsin");
 }
 
