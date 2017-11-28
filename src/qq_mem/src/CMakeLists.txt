@@ -46,6 +46,7 @@ set(ENGINE_SRCS
 set(BOOST_LIBS
     boost_system
     boost_filesystem
+    boost_locale
     )
 
 # Building server

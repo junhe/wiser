@@ -296,14 +296,14 @@ TEST_CASE( "boost library is usable", "[boost]" ) {
 
 TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
     QQSearchEngine engine;
-    engine.AddDocument("my title", "my url", "hello world");
-    engine.AddDocument("my title", "my url", "hello earth");
-    engine.AddDocument("my title", "my url", "hello Madison");
-    engine.AddDocument("my title", "my url", "hello Wisconsin");
+    engine.AddDocument("my title", "my url", "hello world. This is Kan!");
+    engine.AddDocument("my title", "my url", "hello earth\n This is Kan!");
+    engine.AddDocument("my title", "my url", "hello Madison.... This is Kan.");
+    engine.AddDocument("my title", "my url", "hello Wisconsin, This is Kan. Im happy.");
 
     UnifiedHighlighter test_highlighter(engine);
     Query query = {"Hello", "World"};
-    TopDocs topDocs = {0, 1, 3}; 
+    TopDocs topDocs = {0, 1, 2, 3}; 
     int maxPassages = 1;
     std::vector<std::string> res = test_highlighter.highlight(query, topDocs, maxPassages);
     REQUIRE(res.size()  == topDocs.size());

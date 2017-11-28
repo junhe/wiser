@@ -3,22 +3,27 @@
 #include "engine_services.h"
 #include "qq_engine.h"
 #include <tuple>
+#include <boost/locale.hpp>
 
 typedef TermList Query;
 typedef std::vector<int> TopDocs;
 typedef std::tuple<int, int> Offset;
 typedef std::vector<std::vector<Offset>::iterator> OffsetsEnums;
 
-class BreakIterator {
+class SentenceBreakIterator {
 
     public:
-        BreakIterator(std::string content);
+        SentenceBreakIterator(std::string content);
 
         int getStartOffset();
         int getEndOffset();
         int next();
 
     private:
+        boost::locale::generator gen;
+        boost::locale::boundary::sboundary_point_index map;
+        boost::locale::boundary::sboundary_point_index::iterator current; 
+        boost::locale::boundary::sboundary_point_index::iterator last; 
         int startoffset;
         int endoffset;
         std::string content_;

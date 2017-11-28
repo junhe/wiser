@@ -1,5 +1,6 @@
 #include "unifiedhighlighter.h"
 #include <iostream>
+
 UnifiedHighlighter::UnifiedHighlighter(QQSearchEngine & engine) {
     engine_ = engine;
 }
@@ -42,41 +43,51 @@ OffsetsEnums UnifiedHighlighter::getOffsetsEnums(Query & query, const int & docI
 
 std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnums, const int & docID) {
     // break the document according to sentence
-    BreakIterator breakiterator(engine_.GetDocument(docID));
+    SentenceBreakIterator breakiterator(engine_.GetDocument(docID));
     // traverse all sentences and print
     // merge sorting
     while (breakiterator.next()>0) {
-        std::cout << "This passage: " << breakiterator.getStartOffset() << ", " << breakiterator.getEndOffset() << std::endl;
-    } 
+        //std::cout << "This passage: " << breakiterator.getStartOffset() << ", " << breakiterator.getEndOffset() << std::endl;
+    }
+    
     return "Hello world";
 }
 
 
 // BreakIterator
-BreakIterator::BreakIterator(std::string content) {
+SentenceBreakIterator::SentenceBreakIterator(std::string content) {
     startoffset = endoffset = 0;
     content_ = content;
     std::cout << "Content: "  << content << std::endl;
+    // start boost boundary analysis
+    boost::locale::boundary::sboundary_point_index tmp(boost::locale::boundary::sentence, content_.begin(), content_.end(),gen("en_US.UTF-8"));
+    map = tmp;
+    map.rule(boost::locale::boundary::sentence_term);
+    current = map.begin(), last = map.end();
+    
     return;
 }
 
-int BreakIterator::getStartOffset() {
+int SentenceBreakIterator::getStartOffset() {
     return startoffset;
 }
 
-int BreakIterator::getEndOffset() {
+int SentenceBreakIterator::getEndOffset() {
     return endoffset;
 }
 
 // get to the next 'passage' (next sentence)
-int BreakIterator::next() {
+int SentenceBreakIterator::next() {
 // TODO delimit according to sentence
-    startoffset = endoffset+1;
-    endoffset = startoffset + 10;
-    if (startoffset >= content_.size()) 
+    if (current == last) {
         return 0;
-    if (endoffset >= content_.size())
-        endoffset = content_.size()-1;
+    }
 
+    ++current;
+    std::string::const_iterator this_offset = *current;
+    std::cout << this_offset - content_.begin() << std::endl;
+
+    startoffset = endoffset + 1;
+    endoffset = this_offset - content_.begin();
     return 1; // Success
 }
