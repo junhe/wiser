@@ -56,15 +56,17 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
 
 // BreakIterator
 SentenceBreakIterator::SentenceBreakIterator(std::string content) {
-    startoffset = endoffset = 0;
+    startoffset = endoffset = -1;
     content_ = content;
-    std::cout << "Content: "  << content << std::endl;
     // start boost boundary analysis
     boost::locale::boundary::sboundary_point_index tmp(boost::locale::boundary::sentence, content_.begin(), content_.end(),gen("en_US.UTF-8"));
     map = tmp;
     map.rule(boost::locale::boundary::sentence_term);
-    current = map.begin(), last = map.end();
     
+    current = map.begin();
+    last = map.end();
+    last_offset = content.size()-1;
+
     return;
 }
 
@@ -78,16 +80,14 @@ int SentenceBreakIterator::getEndOffset() {
 
 // get to the next 'passage' (next sentence)
 int SentenceBreakIterator::next() {
-// TODO delimit according to sentence
-    if (current == last) {
+    if (endoffset >= last_offset) {
         return 0;
     }
-
+ 
     ++current;
     std::string::const_iterator this_offset = *current;
-    std::cout << this_offset - content_.begin() << std::endl;
 
     startoffset = endoffset + 1;
-    endoffset = this_offset - content_.begin();
+    endoffset = this_offset - content_.begin() - 1;
     return 1; // Success
 }

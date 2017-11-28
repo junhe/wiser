@@ -313,3 +313,23 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     */
 }
 
+TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_breakiterator]" ) {
+
+    // init 
+    std::string test_string = "hello Wisconsin, This is Kan.  Im happy.";
+    int breakpoint[2] = {30, 39};
+    SentenceBreakIterator breakiterator(test_string);
+
+    // iterate on a string
+    int i = 0;
+    while ( breakiterator.next() > 0 ) {
+        
+        int start_offset = breakiterator.getStartOffset();
+        int end_offset = breakiterator.getEndOffset();
+        REQUIRE(end_offset == breakpoint[i++]);
+        //std::cout << "this sentence: " << start_offset << ", " << end_offset << std::endl; 
+        //std::cout << "               " << test_string.substr(start_offset, end_offset-start_offset+1) << std::endl; 
+    }   
+    REQUIRE(i == 2);
+}
+

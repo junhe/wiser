@@ -15,9 +15,9 @@ class SentenceBreakIterator {
     public:
         SentenceBreakIterator(std::string content);
 
-        int getStartOffset();
-        int getEndOffset();
-        int next();
+        int getStartOffset();  // get current sentence's start offset
+        int getEndOffset();    // get current sentence's end offset
+        int next();            // get next sentence
 
     private:
         boost::locale::generator gen;
@@ -26,6 +26,7 @@ class SentenceBreakIterator {
         boost::locale::boundary::sboundary_point_index::iterator last; 
         int startoffset;
         int endoffset;
+        int last_offset;
         std::string content_;
 };
 
