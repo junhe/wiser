@@ -14,10 +14,13 @@ class BreakIterator {
     public:
         BreakIterator(std::string content);
 
-        //int preceding(int offset);
-        //int following(int offset);
+        int getStartOffset();
+        int getEndOffset();
+        int next();
 
     private:
+        int startoffset;
+        int endoffset;
         std::string content_;
 };
 
