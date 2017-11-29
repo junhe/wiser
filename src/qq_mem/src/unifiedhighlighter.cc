@@ -14,6 +14,7 @@ std::vector<std::string> UnifiedHighlighter::highlight(Query & query, TopDocs & 
     std::vector<std::string> res = {}; // size of topDocs
     for(TopDocs::iterator cur_doc = topDocs.begin(); cur_doc != topDocs.end(); ++cur_doc) {
         std::string cur_snippet = highlightForDoc(query, *cur_doc, maxPassages);  // finally all Passages will be formated into one string
+        std::cout << "generated for " << *cur_doc << " result: " << cur_snippet << std::endl;
         res.push_back( cur_snippet );
     }
     return res;
@@ -24,7 +25,6 @@ std::vector<std::string> UnifiedHighlighter::highlight(Query & query, TopDocs & 
 std::string UnifiedHighlighter::highlightForDoc(Query & query, const int & docID, int &maxPassages) {
     // get offset iterators for each query term for this document
     OffsetsEnums offsetsEnums = getOffsetsEnums(query, docID);
-
     // highlight according to offset iterators and content of this document
     std::string res = highlightOffsetsEnums(offsetsEnums, docID, maxPassages);
     
@@ -75,6 +75,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
 
         int cur_start = cur_iter.startoffset;
         int cur_end = cur_iter.endoffset;
+        std::cout << "handling: " << cur_start << ", " << cur_end << std::endl;
         // judge whether this iterator is over
         if (cur_start == -1)
             continue;
@@ -82,7 +83,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
         // judge whether this iterator's offset is beyond current passage
         if (cur_start >= passage->endoffset) {
             // if this passage is not empty, then wrap up it and push it to the priority queue
-            if (passage->startoffset >= 0 ) {
+            if (passage->startoffset >= 0) {
                 passage->score = passage->score * 1; //TODO normalize according to passage's startoffset
                 if (passage_queue.size() == maxPassages && passage->score < passage_queue.top()->score) {
                     passage->reset();
@@ -108,24 +109,53 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
         int tf = 0;
         while (1) {
             tf++;
+            std::cout << "Add: " << cur_start << ", " <<cur_end <<std::endl;
             passage->addMatch(cur_start, cur_end); 
             cur_iter.next_position();
-            if (cur_iter.startoffset == -1)
+            if (cur_iter.startoffset == -1) {
                 break;
-            if (cur_iter.startoffset >= passage->endoffset) {
+            }
+            cur_start = cur_iter.startoffset;
+            cur_end = cur_iter.endoffset;
+            if (cur_start >= passage->endoffset) {
                 offsets_queue.push(cur_iter);
                 break;
             }
-        } 
+        }
         // Add the score from this term to this passage
         passage->score = passage->score + 1 * tf;   //TODO scoring: weight
-
     }
 
-    // TODO format it into a string to return
-    
-    
-    return "Hello world";
+    // Add the last passage
+    if (passage_queue.size() < maxPassages && passage->score > 0) {
+        passage_queue.push(passage);
+    } else {
+        if (passage->score > passage_queue.top()->score) {
+            passage_queue.pop();
+            passage_queue.push(passage);
+        }
+    }
+
+    // format it into a string to return
+    // dump the passages
+    std::cout << "          After snippet genearting, size of passage_queue: " << passage_queue.size() << std::endl; 
+    std::string res = "";
+    while (!passage_queue.empty()) {
+        Passage * output_passage = passage_queue.top();
+        std::cout << "           (" << output_passage->startoffset << ", " << output_passage->endoffset << "), score: " << output_passage->score << std::endl;
+        std::cout << "string: " << breakiterator.content_.substr(output_passage->startoffset, output_passage->endoffset) << std::endl; 
+        res += breakiterator.content_.substr(output_passage->startoffset, output_passage->endoffset);
+        std::cout << "           ";
+        for (std::vector<Offset>::iterator it = output_passage->matches.begin(); it!= output_passage->matches.end(); it++) {
+            std::cout << " (" << std::get<0>(*it) << ", " << std::get<1>(*it) << ")";
+        } 
+        std::cout << std::endl;
+
+        passage_queue.pop();
+    }
+
+    // TODO format the string(maybe highlight?)
+    return res;
 }
 
 
@@ -141,9 +171,11 @@ void Offset_Iterator::next_position() {  // go to next offset position
     cur_position++;
     if (cur_position == offsets->end()) {
         startoffset = endoffset = -1;
+        return ;
     } 
     startoffset = std::get<0>(*cur_position);
     endoffset = std::get<1>(*cur_position);
+    return;
 }
 
 

@@ -34,7 +34,6 @@ class Passage {
             score = 0;
         }
         void addMatch(int & startoffset, int & endoffset);
-    private:
         std::vector<Offset> matches = {};
 };
 
@@ -48,6 +47,8 @@ class SentenceBreakIterator {
         int getEndOffset();    // get current sentence's end offset
         int next();            // get next sentence
         int next(int offset);  // get next sentence where offset is within it
+        std::string content_;
+    
     private:
         boost::locale::generator gen;
         boost::locale::boundary::sboundary_point_index map;
@@ -56,7 +57,6 @@ class SentenceBreakIterator {
         int startoffset;
         int endoffset;
         int last_offset;
-        std::string content_;
 };
 
 class UnifiedHighlighter {
