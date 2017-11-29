@@ -1,5 +1,6 @@
 #include "unifiedhighlighter.h"
 #include <iostream>
+#include <queue>
 
 UnifiedHighlighter::UnifiedHighlighter(QQSearchEngine & engine) {
     engine_ = engine;
@@ -33,9 +34,13 @@ std::string UnifiedHighlighter::highlightForDoc(Query & query, const int & docID
 OffsetsEnums UnifiedHighlighter::getOffsetsEnums(Query & query, const int & docID) {
     //
     OffsetsEnums res = {};
-    for (Query::iterator it = query.begin(); it != query.end(); ++ it) {
+    res.push_back(Offset_Iterator(test_offsets_1));
+    res.push_back(Offset_Iterator(test_offsets_2));
+    res.push_back(Offset_Iterator(test_offsets_3));
+
+    /*for (Query::iterator it = query.begin(); it != query.end(); ++ it) {
         // push back iterator of offsets for this term in this document
-    } 
+    } */
     return res; 
 }
 
@@ -44,15 +49,67 @@ OffsetsEnums UnifiedHighlighter::getOffsetsEnums(Query & query, const int & docI
 std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnums, const int & docID) {
     // break the document according to sentence
     SentenceBreakIterator breakiterator(engine_.GetDocument(docID));
-    // traverse all sentences and print
+    
     // merge sorting
+    // priority queue for OffsetIterator
+    auto comp_offset = [] (Offset_Iterator &a, Offset_Iterator &b) -> bool { return a.startoffset > b.startoffset; };
+    std::priority_queue<Offset_Iterator, std::vector<Offset_Iterator>, decltype(comp_offset) > offsets_queue(comp_offset);
+    for (OffsetsEnums::iterator it = offsetsEnums.begin(); it != offsetsEnums.end(); it++ ) {
+        offsets_queue.push(*it);
+        std::cout << it->startoffset << " ";
+    }
+    std::cout << " End" << std::endl;
+    std::cout << " Test: ";
+    while (!offsets_queue.empty()) {
+        std::cout << offsets_queue.top().startoffset << " ";
+        offsets_queue.pop();
+    }
+    std::cout << std::endl;
+
+    // priority queue for passages
+    auto comp_passage = [] (Passage &a, Passage &b) -> bool { return a.score > b.score; };
+    std::priority_queue<Passage, std::vector<Passage>, decltype(comp_passage) > passage_queue(comp_passage);
+
+/*
+    Passage passage();
+    passage.startoffset = ;
+    passage.endoffset = ;
+ 
+    while (!offsets_queue.empty()) {
+        // analyze current passage
+        
+        poll a offset iterator
+        // judge whether this iterator is over
+
+        // judge whether this iterator's offset is beyond current passage
+
+        // Add this term to current passage until out of this passage
+        
+
+    }  
+ 
     while (breakiterator.next()>0) {
         //std::cout << "This passage: " << breakiterator.getStartOffset() << ", " << breakiterator.getEndOffset() << std::endl;
     }
-    
+*/    
     return "Hello world";
 }
 
+Offset_Iterator::Offset_Iterator(std::vector<Offset> & offsets_in) {
+    offsets = &offsets_in;
+    cur_position = offsets_in.begin(); 
+    startoffset = std::get<0>(*cur_position);
+    endoffset = std::get<1>(*cur_position);
+}
+
+void Offset_Iterator::next_position() {  // go to next offset position
+    cur_position++;
+    if (cur_position == offsets->end()) {
+        startoffset = endoffset = -1;
+    } 
+    startoffset = std::get<0>(*cur_position);
+    endoffset = std::get<1>(*cur_position);
+}
 
 // BreakIterator
 SentenceBreakIterator::SentenceBreakIterator(std::string content) {
