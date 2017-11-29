@@ -327,9 +327,14 @@ TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_break
         int start_offset = breakiterator.getStartOffset();
         int end_offset = breakiterator.getEndOffset();
         REQUIRE(end_offset == breakpoint[i++]);
-        //std::cout << "this sentence: " << start_offset << ", " << end_offset << std::endl; 
-        //std::cout << "               " << test_string.substr(start_offset, end_offset-start_offset+1) << std::endl; 
     }   
+
+    // test offset-based next
     REQUIRE(i == 2);
+    breakiterator.next(3);
+    REQUIRE(breakiterator.getEndOffset() == 30);
+    breakiterator.next(33);
+    REQUIRE(breakiterator.getEndOffset() == 39);
+    REQUIRE(breakiterator.next(40) == 0);
 }
 

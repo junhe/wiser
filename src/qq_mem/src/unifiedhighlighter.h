@@ -29,6 +29,13 @@ class Passage {
         int startoffset = -1;
         int endoffset = -1;
         float score = 0;
+        void reset() {
+            startoffset = endoffset = -1;
+            score = 0;
+        }
+        void addMatch(int & startoffset, int & endoffset);
+    private:
+        std::vector<Offset> matches = {};
 };
 
 
@@ -40,7 +47,7 @@ class SentenceBreakIterator {
         int getStartOffset();  // get current sentence's start offset
         int getEndOffset();    // get current sentence's end offset
         int next();            // get next sentence
-
+        int next(int offset);  // get next sentence where offset is within it
     private:
         boost::locale::generator gen;
         boost::locale::boundary::sboundary_point_index map;
@@ -72,11 +79,11 @@ class UnifiedHighlighter {
         std::vector<Offset> test_offsets_2 = {std::make_tuple(6, 7), std::make_tuple(18, 19), std::make_tuple(26, 28)};
         std::vector<Offset> test_offsets_3 = {std::make_tuple(0, 2), std::make_tuple(29, 30), std::make_tuple(32, 35)};
 
-        std::string highlightForDoc(Query & query, const int & docID);
+        std::string highlightForDoc(Query & query, const int & docID, int & maxPassages);
         // get each query term's offsets iterator
         OffsetsEnums getOffsetsEnums(Query & query, const int & docID);
         // highlight using the iterators and the content of the document
-        std::string highlightOffsetsEnums(OffsetsEnums & offsetsEnums, const int & docID);
+        std::string highlightOffsetsEnums(OffsetsEnums & offsetsEnums, const int & docID, int & maxPassages);
         
 }; 
 
