@@ -4,17 +4,21 @@
 #include "qq_engine.h"
 #include <tuple>
 #include <boost/locale.hpp>
+#include <math.h> 
 
 typedef TermList Query;
 typedef std::vector<int> TopDocs;
 typedef std::tuple<int, int> Offset;
 
 class Offset_Iterator {
+
     public:
         Offset_Iterator(std::vector<Offset> & offsets_in);
         int startoffset;
         int endoffset;
         void next_position();  // go to next offset position
+        int weight = 1;            // weight of this term
+
     private:
         std::vector<Offset> * offsets;
         std::vector<Offset>::iterator cur_position;
@@ -25,14 +29,17 @@ class Offset_Iterator {
 typedef std::vector<Offset_Iterator> OffsetsEnums;
 
 class Passage {
+
     public:
         int startoffset = -1;
         int endoffset = -1;
         float score = 0;
+
         void reset() {
             startoffset = endoffset = -1;
             score = 0;
         }
+
         void addMatch(int & startoffset, int & endoffset);
         std::vector<Offset> matches = {};
         std::string to_string(std::string & doc_string);
@@ -85,7 +92,12 @@ class UnifiedHighlighter {
         OffsetsEnums getOffsetsEnums(Query & query, const int & docID);
         // highlight using the iterators and the content of the document
         std::string highlightOffsetsEnums(OffsetsEnums & offsetsEnums, const int & docID, int & maxPassages);
-        
+        // passage normalization function for scoring
+        int pivot = 87;  // hard-coded average length of passage
+        float k1 = 1.2;  // BM25 parameters
+        float b = 0.75;  // BM25 parameters
+        float passage_norm(int & start_offset);
+        float tf_norm(int freq, int passageLen);
 }; 
 
 

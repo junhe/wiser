@@ -42,6 +42,7 @@ OffsetsEnums UnifiedHighlighter::getOffsetsEnums(Query & query, const int & docI
     res.push_back(Offset_Iterator(test_offsets_2));
     res.push_back(Offset_Iterator(test_offsets_3));
 
+    // TODO get real offsets from postings
     /*for (Query::iterator it = query.begin(); it != query.end(); ++ it) {
         // push back iterator of offsets for this term in this document
     } */
@@ -85,7 +86,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
         if (cur_start >= passage->endoffset) {
             // if this passage is not empty, then wrap up it and push it to the priority queue
             if (passage->startoffset >= 0) {
-                passage->score = passage->score * 1; //TODO normalize according to passage's startoffset
+                passage->score = passage->score * passage_norm(passage->startoffset); //normalize according to passage's startoffset
                 if (passage_queue.size() == maxPassages && passage->score < passage_queue.top()->score) {
                     passage->reset();
                 } else {
@@ -124,10 +125,11 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
             }
         }
         // Add the score from this term to this passage
-        passage->score = passage->score + 1 * tf;   //TODO scoring: weight
+        passage->score = passage->score + cur_iter.weight * tf_norm(tf, passage->endoffset-passage->startoffset+1);   //scoring
     }
 
     // Add the last passage
+    passage->score = passage->score * passage_norm(passage->startoffset);
     if (passage_queue.size() < maxPassages && passage->score > 0) {
         passage_queue.push(passage);
     } else {
@@ -164,6 +166,14 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
     return res;
 }
 
+float UnifiedHighlighter::passage_norm(int & start_offset) {
+    return 1 + 1/(float) log((float)(pivot + start_offset));
+}  
+
+float UnifiedHighlighter::tf_norm(int freq, int passageLen) {
+    float norm = k1 * ((1 - b) + b * (passageLen / pivot));
+    return freq / (freq + norm);
+}
 
 // Offset_Iterator Functions
 Offset_Iterator::Offset_Iterator(std::vector<Offset> & offsets_in) {
@@ -187,7 +197,6 @@ void Offset_Iterator::next_position() {  // go to next offset position
 
 //Passage 
 std::string Passage::to_string(std::string & doc_string) {
-    //TODO highlight
     std::string res= "";
     res += doc_string.substr(startoffset, endoffset - startoffset + 1) + "\n";
     
