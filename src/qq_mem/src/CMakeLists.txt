@@ -40,11 +40,13 @@ set(ENGINE_SRCS
     index_creator.cc
     qq_engine.cc
     utils.cc
+    unifiedhighlighter.cc
     )
 
 set(BOOST_LIBS
     boost_system
     boost_filesystem
+    boost_locale
     )
 
 # Building server

@@ -17,6 +17,8 @@
 #include "posting_list_raw.h"
 #include "posting_list_protobuf.h"
 
+#include "unifiedhighlighter.h"
+
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
 }
@@ -316,5 +318,48 @@ TEST_CASE( "Hash benchmark", "[benchmark]" ) {
 }
 
 
+TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
+    QQSearchEngine engine;
+    engine.AddDocument("my title", "my url", "hello world. This is Kan ...    Hello Kan, This is Madison!");
+    /*engine.AddDocument("my title", "my url", "hello earth\n This is Kan! hello world. This is Kan!");
+    engine.AddDocument("my title", "my url", "hello Madison.... This is Kan. hello world. This is Kan!");
+    engine.AddDocument("my title", "my url", "hello Wisconsin, This is Kan. Im happy. hello world. This is Kan!");
+*/
+    UnifiedHighlighter test_highlighter(engine);
+    Query query = {"hello", "kan"};
+    TopDocs topDocs = {0}; 
 
+    int maxPassages = 3;
+    std::vector<std::string> res = test_highlighter.highlight(query, topDocs, maxPassages);
+    REQUIRE(res.size()  == topDocs.size());
+    /*REQUIRE(res[0] == "hello world");
+    REQUIRE(res[1] == "hello earth");
+    REQUIRE(res[2] == "hello Wisconsin");
+    */
+}
+
+TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_breakiterator]" ) {
+
+    // init 
+    std::string test_string = "hello Wisconsin, This is Kan.  Im happy.";
+    int breakpoint[2] = {30, 39};
+    SentenceBreakIterator breakiterator(test_string);
+
+    // iterate on a string
+    int i = 0;
+    while ( breakiterator.next() > 0 ) {
+        
+        int start_offset = breakiterator.getStartOffset();
+        int end_offset = breakiterator.getEndOffset();
+        REQUIRE(end_offset == breakpoint[i++]);
+    }   
+
+    // test offset-based next
+    REQUIRE(i == 2);
+    breakiterator.next(3);
+    REQUIRE(breakiterator.getEndOffset() == 30);
+    breakiterator.next(33);
+    REQUIRE(breakiterator.getEndOffset() == 39);
+    REQUIRE(breakiterator.next(40) == 0);
+}
 
