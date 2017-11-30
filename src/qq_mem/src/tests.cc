@@ -296,7 +296,7 @@ TEST_CASE( "boost library is usable", "[boost]" ) {
 
 TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
     QQSearchEngine engine;
-    engine.AddDocument("my title", "my url", "hello world. This is Kan... \n hello world, This is Kan!");
+    engine.AddDocument("my title", "my url", "hello world. This is Kan ...    Hello Kan, This is Madison!");
     /*engine.AddDocument("my title", "my url", "hello earth\n This is Kan! hello world. This is Kan!");
     engine.AddDocument("my title", "my url", "hello Madison.... This is Kan. hello world. This is Kan!");
     engine.AddDocument("my title", "my url", "hello Wisconsin, This is Kan. Im happy. hello world. This is Kan!");

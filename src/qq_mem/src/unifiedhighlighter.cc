@@ -1,6 +1,7 @@
 #include "unifiedhighlighter.h"
 #include <iostream>
 #include <queue>
+#include <algorithm>
 
 UnifiedHighlighter::UnifiedHighlighter(QQSearchEngine & engine) {
     engine_ = engine;
@@ -75,7 +76,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
 
         int cur_start = cur_iter.startoffset;
         int cur_end = cur_iter.endoffset;
-        std::cout << "handling: " << cur_start << ", " << cur_end << std::endl;
+        //std::cout << "handling: " << cur_start << ", " << cur_end << std::endl;
         // judge whether this iterator is over
         if (cur_start == -1)
             continue;
@@ -109,7 +110,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
         int tf = 0;
         while (1) {
             tf++;
-            std::cout << "Add: " << cur_start << ", " <<cur_end <<std::endl;
+            //std::cout << "Add: " << cur_start << ", " <<cur_end <<std::endl;
             passage->addMatch(cur_start, cur_end); 
             cur_iter.next_position();
             if (cur_iter.startoffset == -1) {
@@ -131,30 +132,35 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
         passage_queue.push(passage);
     } else {
         if (passage->score > passage_queue.top()->score) {
+            Passage * tmp = passage_queue.top();
             passage_queue.pop();
+            delete tmp;
             passage_queue.push(passage);
         }
     }
 
     // format it into a string to return
     // dump the passages
-    std::cout << "          After snippet genearting, size of passage_queue: " << passage_queue.size() << std::endl; 
-    std::string res = "";
+    // transform to array
+    std::vector<Passage *> passage_vector;
     while (!passage_queue.empty()) {
-        Passage * output_passage = passage_queue.top();
-        std::cout << "           (" << output_passage->startoffset << ", " << output_passage->endoffset << "), score: " << output_passage->score << std::endl;
-        std::cout << "string: " << breakiterator.content_.substr(output_passage->startoffset, output_passage->endoffset) << std::endl; 
-        res += breakiterator.content_.substr(output_passage->startoffset, output_passage->endoffset);
-        std::cout << "           ";
-        for (std::vector<Offset>::iterator it = output_passage->matches.begin(); it!= output_passage->matches.end(); it++) {
-            std::cout << " (" << std::get<0>(*it) << ", " << std::get<1>(*it) << ")";
-        } 
-        std::cout << std::endl;
-
+        passage_vector.push_back(passage_queue.top());
         passage_queue.pop();
     }
-
-    // TODO format the string(maybe highlight?)
+    // sort array according to startoffset
+    auto comp_passage_offset = [] (Passage * & a, Passage * & b) -> bool { return a->startoffset < b->startoffset; };
+    std::sort(passage_vector.begin(), passage_vector.end(), comp_passage_offset);
+    
+    // format the final string
+    std::string res = "";
+    std::cout << breakiterator.content_ << std::endl;
+    for (auto it = passage_vector.begin(); it != passage_vector.end(); it++) {
+        res += (*it)->to_string(breakiterator.content_);   // highlight appeared terms
+        std::cout <<  "("  << (*it)->score << ") " << breakiterator.content_.substr((*it)->startoffset, (*it)->endoffset - (*it)->startoffset+1) << std::endl;
+        delete (*it);
+    }
+    std::cout << "Result:\n" << res << "\nEND" << std::endl;
+    
     return res;
 }
 
@@ -179,6 +185,22 @@ void Offset_Iterator::next_position() {  // go to next offset position
 }
 
 
+//Passage 
+std::string Passage::to_string(std::string & doc_string) {
+    //TODO highlight
+    std::string res= "";
+    res += doc_string.substr(startoffset, endoffset - startoffset + 1) + "\n";
+    
+    // highlight
+    auto cmp_terms = [] (Offset & a, Offset & b) -> bool { return (std::get<0>(a) > std::get<0>(b));};
+    std::sort(matches.begin(), matches.end(), cmp_terms);
+
+    for (auto it = matches.begin(); it != matches.end(); it++) {
+        res.insert(std::get<1>(*it)-startoffset+1, "<\\b>");
+        res.insert(std::get<0>(*it)-startoffset, "<b>");
+    }
+    return res;
+}
 
 
 // BreakIterator Functions

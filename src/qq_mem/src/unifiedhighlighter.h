@@ -35,6 +35,7 @@ class Passage {
         }
         void addMatch(int & startoffset, int & endoffset);
         std::vector<Offset> matches = {};
+        std::string to_string(std::string & doc_string);
 };
 
 
