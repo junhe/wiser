@@ -1,7 +1,7 @@
 sudo apt-get install -y curl
 
 # install grpc
-cd /tmp/
+cd ~/
 git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
 cd grpc
 git submodule update --init
@@ -15,6 +15,9 @@ cd third_party/protobuf
 ./configure
 make
 sudo make install
+
+# This is required to run performance benchmarks
+sudo apt-get install libgflags-dev
 
 
 # install new cmake
