@@ -6,10 +6,12 @@ void QQSearchEngine::AddDocument(const std::string &title, const std::string &ur
         const std::string &body, const std::string &offsets) {
     int doc_id = NextDocId();
     doc_store_.Add(doc_id, body);
-
+    
+    std::cout << "Get in Add document!!!!!\n";
     // Tokenize the document(already pre-processed using scripts)
     // get terms
     std::vector<std::string> terms = utils::explode(body, ' ');
+    std::cout << "Got terms: " << terms.size() << std::endl;
     // TODO: get offsets
     std::vector<Offsets> offset_parsed = utils::parse_offsets(offsets);
 
