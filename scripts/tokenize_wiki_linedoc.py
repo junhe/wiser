@@ -79,20 +79,19 @@ def tokenize(line_doc, output):
 
             if token["token"].encode('utf8') in dic:
                 tmp = dic[token["token"].encode('utf8')] 
-                tmp.append((token["start_offset"], token["end_offset"]))
+                tmp += (str(token["start_offset"]) + ',' + str(token["end_offset"]) + ';')
                 dic[token["token"].encode('utf8')] = tmp
                 continue
-            dic[token["token"].encode('utf8')] = [(token["start_offset"], token["end_offset"])]
+            dic[token["token"].encode('utf8')] = str(token["start_offset"]) + ',' + str(token["end_offset"]) + ';'
 
         terms = ""
         offsets = ""
         for token in dic:
             terms += token + ' '
-            offsets += str(dic[token]) + '.'
+            offsets += dic[token] + '.'
             print token, ': ', dic[token]
-        offsets = offsets.replace()
         #output.write(token["token"].encode('utf8') + ' ')
-        output.write( '\n' + terms + '\t' + offsets)
+        output.write( '\t' + terms + '\t' + offsets)
         output.write('\n')
 
 if __name__=='__main__':
