@@ -33,8 +33,10 @@ class QQEngineClient {
         QQEngineClient(std::shared_ptr<Channel> channel)
             : stub_(QQEngine::NewStub(channel)) {}
 
+        //std::string AddDocument(const std::string &title, 
+        //        const std::string &url, const std::string &body);
         std::string AddDocument(const std::string &title, 
-                const std::string &url, const std::string &body);
+                const std::string &url, const std::string &body, const std::string &offsets);
         std::string Search(const std::string &term);
 
     private:

@@ -2,6 +2,7 @@
 
 #include <set>
 
+// TODO add one more function for offsets? or change term definition
 void InvertedIndex::AddDocument(const int &doc_id, const TermList &termlist) {
     for (const auto &term : termlist) {
         auto search = index_.find(term);
@@ -13,7 +14,7 @@ void InvertedIndex::AddDocument(const int &doc_id, const TermList &termlist) {
             ret = index_.insert( std::make_pair(term, PostingList_Direct(term)) );
             it = ret.first;
         } else {
-            it = index_.find(term);
+            it = index_.find(term);  // TODO why find again? this can cost time
         }
 
         PostingList_Direct &postinglist = it->second;        

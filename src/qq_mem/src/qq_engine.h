@@ -19,9 +19,12 @@ class QQSearchEngine {
     public:
         NativeDocStore doc_store_;
         InvertedIndex inverted_index_;
+        int offsets_flag_ = 0;        // whether store offsets in postings
 
         void AddDocument(const std::string &title, const std::string &url, 
                 const std::string &body);
+        void AddDocument(const std::string &title, const std::string &url, 
+                const std::string &body, const std::string &offsets);
         std::string GetDocument(const int &doc_id);
         int NextDocId();
         std::vector<int> Search(const TermList &terms, const SearchOperator &op);

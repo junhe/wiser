@@ -1,12 +1,12 @@
 #include "qq_client.h"
 
-
 std::string QQEngineClient::AddDocument(const std::string &title, 
-        const std::string &url, const std::string &body) {
+        const std::string &url, const std::string &body, const std::string &offsets) {
     AddDocumentRequest request;
     request.mutable_document()->set_title(title);
     request.mutable_document()->set_url(url);
     request.mutable_document()->set_body(body);
+    request.mutable_document()->set_offsets(offsets);
 
     request.mutable_options()->set_save(true);
 

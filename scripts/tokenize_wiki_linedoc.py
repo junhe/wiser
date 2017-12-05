@@ -1,6 +1,7 @@
 import sys
 import requests, json
 import codecs
+import re
 
 def tokenize(line_doc, output):
 
@@ -69,19 +70,29 @@ def tokenize(line_doc, output):
         doc["text"] = doc_content
         doc_result = json.dumps(doc)
         r = requests.post(url, doc_result, headers=headers)
-        print(r.text)
         output.write(items[0]+'\t' + items[1].strip('\n')+'\t')
         
-        # unique 
+        # unique and collect offsets
         dic = {}
         for token in r.json()["tokens"]:
             # also store offsets
 
             if token["token"].encode('utf8') in dic:
+                tmp = dic[token["token"].encode('utf8')] 
+                tmp.append((token["start_offset"], token["end_offset"]))
+                dic[token["token"].encode('utf8')] = tmp
                 continue
-            dic[token["token"].encode('utf8')] = 0
-            output.write(token["token"].encode('utf8') + ' ')
-        
+            dic[token["token"].encode('utf8')] = [(token["start_offset"], token["end_offset"])]
+
+        terms = ""
+        offsets = ""
+        for token in dic:
+            terms += token + ' '
+            offsets += str(dic[token]) + '.'
+            print token, ': ', dic[token]
+        offsets = offsets.replace()
+        #output.write(token["token"].encode('utf8') + ' ')
+        output.write( '\n' + terms + '\t' + offsets)
         output.write('\n')
 
 if __name__=='__main__':

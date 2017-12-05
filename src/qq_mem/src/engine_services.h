@@ -5,6 +5,8 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <tuple>
+
 
 class DocumentStoreService {
     public:
@@ -49,5 +51,13 @@ class PostingListService {
 
 };
 
+
+// for highlighter
+typedef TermList Query;
+typedef std::vector<int> TopDocs;
+typedef std::tuple<int, int> Offset;
+
+// for add_document
+typedef std::vector<Offset> Offsets;
 
 #endif

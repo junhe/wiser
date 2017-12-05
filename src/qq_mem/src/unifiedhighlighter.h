@@ -2,13 +2,9 @@
 #define UNIFIEDHIGHLIGHTER_H
 #include "engine_services.h"
 #include "qq_engine.h"
-#include <tuple>
 #include <boost/locale.hpp>
 #include <math.h> 
 
-typedef TermList Query;
-typedef std::vector<int> TopDocs;
-typedef std::tuple<int, int> Offset;
 
 class Offset_Iterator {
 

@@ -51,6 +51,11 @@ const std::vector<std::string> explode_strict(const std::string &line, const cha
     return vec;
 }
 
+// TODO Parse offsets from string
+const std::vector<Offsets> parse_offsets(const std::string& s) {
+    std::vector<Offsets> res;
+    return res;
+}
 
 ///////////////////////////////////////////////
 // LineDoc

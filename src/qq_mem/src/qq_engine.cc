@@ -1,6 +1,22 @@
 #include "qq_engine.h"
-
+#include "engine_services.h"
 #include "utils.h"
+
+void QQSearchEngine::AddDocument(const std::string &title, const std::string &url, 
+        const std::string &body, const std::string &offsets) {
+    int doc_id = NextDocId();
+    doc_store_.Add(doc_id, body);
+
+    // Tokenize the document(already pre-processed using scripts)
+    // get terms
+    std::vector<std::string> terms = utils::explode(body, ' ');
+    // TODO: get offsets
+    std::vector<Offsets> offset_parsed = utils::parse_offsets(offsets);
+
+    // TODO construct term with offset objects
+
+    inverted_index_.AddDocument(doc_id, terms);
+}
 
 // The parameters here will certainly change. Do not rely too much on this.
 void QQSearchEngine::AddDocument(const std::string &title, const std::string &url, 
@@ -8,7 +24,9 @@ void QQSearchEngine::AddDocument(const std::string &title, const std::string &ur
     int doc_id = NextDocId();
     doc_store_.Add(doc_id, body);
 
+    // Tokenize the document(already pre-processed using scripts)
     std::vector<std::string> terms = utils::explode(body, ' ');
+    
     inverted_index_.AddDocument(doc_id, terms);
 }
 
