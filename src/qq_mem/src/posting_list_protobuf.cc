@@ -62,15 +62,17 @@ Posting PostingList_Protobuf::get_next_Posting() {  // read and parse the Postin
     // parse docID, here just skip those characters
     posting_message::Posting cur_posting = plist_message.postings(cur_index);
     int tmp_frequency = cur_posting.term_frequency();
-    Positions tmp_positions = {};
+    Offsets tmp_positions = {};
     for (int i = 0; i < tmp_frequency; i++)
-        tmp_positions.push_back(cur_posting.positions(i));
+        ;
+        //TODO change from postion to offset
+        //tmp_positions.push_back(cur_posting.positions(i));
     Posting result(cur_posting.docid(), tmp_frequency, tmp_positions);
     return result;
 }
 
 // Add a doc for creating index
-void PostingList_Protobuf::AddPosting(int docID, int term_frequency, const Positions positions) {
+void PostingList_Protobuf::AddPosting(int docID, int term_frequency, const Offsets positions) {
     //std::cout << "Add document " << docID << " for " << term_ << ": " << std::to_string(positions[0]) << std::endl;
     // add one posting to the p_list
     num_postings += 1;
@@ -92,8 +94,8 @@ std::string PostingList_Protobuf::Serialize() {
             posting_message::Posting * new_posting = pl_message.add_postings();
             new_posting->set_docid(p_list[i].docID_);
             new_posting->set_term_frequency(p_list[i].term_frequency_);
-            for (int k = 0; k < p_list[i].term_frequency_; k++) 
-                new_posting->add_positions(p_list[i].positions_[k]);
+            for (int k = 0; k < p_list[i].term_frequency_; k++) ;
+                // TODO change from positions to offset new_posting->add_positions(p_list[i].positions_[k]);
         }
     }
     std::string pl_string;

@@ -3,6 +3,7 @@
 
 #include "engine_services.h"
 
+// TODO will delete them
 typedef int Position;
 typedef std::vector<Position> Positions;
 
@@ -10,10 +11,10 @@ class Posting : public PostingService {
     public:
         int docID_;
         int term_frequency_;
-        Positions positions_;
+        Offsets positions_;
 
         Posting();
-        Posting(int docID, int term_frequency, Positions positions);
+        Posting(int docID, int term_frequency, Offsets offsets_in);
         std::string dump();
 
         // TODO Posting * next;

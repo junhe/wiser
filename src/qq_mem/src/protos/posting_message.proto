@@ -22,10 +22,15 @@ message doc_info {
 } 
 
 // Posting
+message Offset {
+  int32 start_offset = 1;
+  int32 end_offset = 2;
+}
+
 message Posting {
   int32 docID = 1;
   int32 term_frequency = 2;
-  repeated int32 positions = 3;  // vector of positions
+  repeated Offset positions = 3;  // vector of positions
 }
 
 // Posting List

@@ -91,7 +91,7 @@ def tokenize(line_doc, output):
             offsets += dic[token] + '.'
             print token, ': ', dic[token]
         #output.write(token["token"].encode('utf8') + ' ')
-        output.write( '\t' + terms + '\t' + offsets)
+        output.write( terms + '\t' + offsets)
         output.write('\n')
 
 if __name__=='__main__':

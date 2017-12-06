@@ -94,7 +94,7 @@ Posting PostingList_Raw::get_next_Posting() {  // read and parse the Posting whi
     tmp_index++;
 
     // parse positions
-    Positions tmp_positions = {};
+    Offsets tmp_positions = {};
     int tmp_length = serialized.length();
     for (int i = 0; i < tmp_frequency; i++) {
         std::string tmp = "";
@@ -103,7 +103,8 @@ Posting PostingList_Raw::get_next_Posting() {  // read and parse the Posting whi
             tmp_index++;
         }
         tmp_index++;
-        tmp_positions.push_back(stoi(tmp));
+        //TODO change from postion to offset
+        //tmp_positions.push_back(stoi(tmp));
     }
 
     // change cur_index
@@ -113,7 +114,7 @@ Posting PostingList_Raw::get_next_Posting() {  // read and parse the Posting whi
 }
 
 // Add a doc for creating index
-void PostingList_Raw::AddPosting(int docID, int term_frequency, const Positions positions) {
+void PostingList_Raw::AddPosting(int docID, int term_frequency, const Offsets positions) {
     //std::cout << "Add document " << docID << " for " << term_ << ": " << std::to_string(positions[0]) << std::endl;
     // add one posting to the p_list
     num_postings += 1;

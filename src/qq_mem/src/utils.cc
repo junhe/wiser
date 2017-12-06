@@ -51,7 +51,7 @@ const std::vector<std::string> explode_strict(const std::string &line, const cha
     return vec;
 }
 
-// TODO Parse offsets from string
+// Parse offsets from string
 void handle_positions(const std::string& s, Offset& this_position) {
     std::size_t pos_split = s.find(",");
     this_position = std::make_tuple(std::stoi(s.substr(0, pos_split)), std::stoi(s.substr(pos_split+1)));
@@ -93,7 +93,6 @@ const std::vector<Offsets> parse_offsets(const std::string& s) {
             buff = "";
         }
     }
-    std::cout << "terms size: " << res.size() << std::endl;
     return res;
 }
 

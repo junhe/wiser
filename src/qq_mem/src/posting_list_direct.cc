@@ -12,7 +12,7 @@ std::size_t PostingList_Direct::Size() {
 }
 
 // Add a doc for creating index
-void PostingList_Direct::AddPosting(int docID, int term_frequency, const Positions positions) {
+void PostingList_Direct::AddPosting(int docID, int term_frequency, const Offsets positions) {
     Posting new_posting(docID, term_frequency, positions);
     posting_store_[docID] = new_posting;
     return;

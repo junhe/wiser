@@ -1,23 +1,28 @@
 #include "qq_engine.h"
 #include "engine_services.h"
 #include "utils.h"
+#include <assert.h>
 
 void QQSearchEngine::AddDocument(const std::string &title, const std::string &url, 
         const std::string &body, const std::string &offsets) {
     int doc_id = NextDocId();
     doc_store_.Add(doc_id, body);
     
-    std::cout << "Get in Add document!!!!!\n";
     // Tokenize the document(already pre-processed using scripts)
     // get terms
     std::vector<std::string> terms = utils::explode(body, ' ');
-    std::cout << "Got terms: " << terms.size() << std::endl;
-    // TODO: get offsets
-    std::vector<Offsets> offset_parsed = utils::parse_offsets(offsets);
-
-    // TODO construct term with offset objects
-
-    inverted_index_.AddDocument(doc_id, terms);
+    // get offsets
+    std::vector<Offsets> offsets_parsed = utils::parse_offsets(offsets);
+    // construct term with offset objects
+    assert(terms.size() == offsets_parsed.size());
+    TermWithOffsetList terms_with_offset = {};
+    for (int i = 0; i < terms.size(); i++) {
+        TermWithOffset cur_term(terms[i], offsets_parsed[i]);
+        terms_with_offset.push_back(cur_term);
+    }
+    // add document
+    std::cout << terms_with_offset.size() << std::endl;
+    inverted_index_.AddDocument(doc_id, terms_with_offset);
 }
 
 // The parameters here will certainly change. Do not rely too much on this.

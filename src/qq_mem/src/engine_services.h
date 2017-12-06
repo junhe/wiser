@@ -60,4 +60,14 @@ typedef std::tuple<int, int> Offset;
 // for add_document
 typedef std::vector<Offset> Offsets;
 
+// class Term_With_Offset
+
+class TermWithOffset {
+    public:
+        Term term_;
+        Offsets offsets_;
+
+        TermWithOffset(Term term_in, Offsets offsets_in) : term_(term_in), offsets_(offsets_in) {} 
+};
+typedef std::vector<TermWithOffset> TermWithOffsetList;
 #endif

@@ -2,7 +2,26 @@
 
 #include <set>
 
-// TODO add one more function for offsets? or change term definition
+void InvertedIndex::AddDocument(const int &doc_id, const TermWithOffsetList &termlist) {
+    for (const auto &term_with_offset : termlist) {
+        Term term = term_with_offset.term_;
+        auto search = index_.find(term);
+        IndexStore::iterator it;
+
+        if (search == index_.cend()) {
+            // term does not exist
+            std::pair<IndexStore::iterator, bool> ret;
+            ret = index_.insert( std::make_pair(term, PostingList_Direct(term)) );
+            it = ret.first;
+        } else {
+            it = index_.find(term);  // TODO why find again? this can cost time
+        }
+
+        PostingList_Direct &postinglist = it->second;
+        postinglist.AddPosting(doc_id, 0, term_with_offset.offsets_);
+    }
+}
+
 void InvertedIndex::AddDocument(const int &doc_id, const TermList &termlist) {
     for (const auto &term : termlist) {
         auto search = index_.find(term);
@@ -18,7 +37,7 @@ void InvertedIndex::AddDocument(const int &doc_id, const TermList &termlist) {
         }
 
         PostingList_Direct &postinglist = it->second;        
-        postinglist.AddPosting(doc_id, 0, Positions{});
+        postinglist.AddPosting(doc_id, 0, Offsets{});
     }
 }
 

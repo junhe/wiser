@@ -30,7 +30,7 @@ class PostingList_Raw :  public PostingListService {
         Posting GetPosting();    // exactly next
         Posting GetPosting(const int &next_doc_ID);    // next Posting whose docID>next_doc_ID
 // Add a doc for creating index
-        void AddPosting(int docID, int term_frequency, const Positions positions);
+        void AddPosting(int docID, int term_frequency, const Offsets positions);
 // Serialize
         std::string Serialize();
 
