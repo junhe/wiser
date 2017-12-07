@@ -25,4 +25,4 @@
 tags
 
 *.o
-src/qq_mem/build/*
+src/qq_mem/build/
