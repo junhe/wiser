@@ -9,15 +9,15 @@
 class Offset_Iterator {
 
     public:
-        Offset_Iterator(std::vector<Offset> & offsets_in);
-        int startoffset;
+        Offset_Iterator(Offsets & offsets_in);
+        int startoffset;           // -1 means end
         int endoffset;
-        void next_position();  // go to next offset position
+        void next_position();      // go to next offset position
         int weight = 1;            // weight of this term
 
     private:
-        std::vector<Offset> * offsets;
-        std::vector<Offset>::iterator cur_position;
+        Offsets * offsets;
+        Offsets::iterator cur_position;
         
 
 };
@@ -34,10 +34,11 @@ class Passage {
         void reset() {
             startoffset = endoffset = -1;
             score = 0;
+            matches = {};
         }
 
-        void addMatch(int & startoffset, int & endoffset);
-        std::vector<Offset> matches = {};
+        void addMatch(const int & startoffset, const int & endoffset);
+        Offsets matches = {};
         std::string to_string(std::string & doc_string);
 };
 
@@ -66,7 +67,7 @@ class SentenceBreakIterator {
 class UnifiedHighlighter {
 
     public: 
-        QQSearchEngine engine_;
+        QQSearchEngine engine_;   // TODO get reference not object
          
         UnifiedHighlighter();
         UnifiedHighlighter(QQSearchEngine & engine_);
@@ -77,17 +78,13 @@ class UnifiedHighlighter {
         // topDocs: array of docID of top-ranked documents
         std::vector<std::string> highlight(Query & query, TopDocs & topDocs, int & maxPassages);
 
-    private:
-        // for test
-        std::vector<Offset> test_offsets_1 = {std::make_tuple(3, 5), std::make_tuple(9, 10), std::make_tuple(20, 25)};
-        std::vector<Offset> test_offsets_2 = {std::make_tuple(6, 7), std::make_tuple(18, 19), std::make_tuple(26, 28)};
-        std::vector<Offset> test_offsets_3 = {std::make_tuple(0, 2), std::make_tuple(29, 30), std::make_tuple(32, 35)};
-
         std::string highlightForDoc(Query & query, const int & docID, int & maxPassages);
         // get each query term's offsets iterator
         OffsetsEnums getOffsetsEnums(Query & query, const int & docID);
         // highlight using the iterators and the content of the document
         std::string highlightOffsetsEnums(OffsetsEnums & offsetsEnums, const int & docID, int & maxPassages);
+    
+    private:
         // passage normalization function for scoring
         int pivot = 87;  // hard-coded average length of passage
         float k1 = 1.2;  // BM25 parameters

@@ -36,7 +36,7 @@ class QQEngineClient {
         //std::string AddDocument(const std::string &title, 
         //        const std::string &url, const std::string &body);
         std::string AddDocument(const std::string &title, 
-                const std::string &url, const std::string &body, const std::string &offsets);
+                const std::string &url, const std::string &body, const std::string &tokens, const std::string &offsets);
         std::string Search(const std::string &term);
 
     private:

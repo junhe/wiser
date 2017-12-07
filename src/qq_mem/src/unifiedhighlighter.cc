@@ -1,8 +1,10 @@
 #include "unifiedhighlighter.h"
+#include "posting_basic.h"
 #include <iostream>
 #include <queue>
 #include <algorithm>
 
+// UnifiedHighlighter Functions
 UnifiedHighlighter::UnifiedHighlighter(QQSearchEngine & engine) {
     engine_ = engine;
 }
@@ -15,9 +17,9 @@ std::vector<std::string> UnifiedHighlighter::highlight(Query & query, TopDocs & 
     std::vector<std::string> res = {}; // size of topDocs
     for(TopDocs::iterator cur_doc = topDocs.begin(); cur_doc != topDocs.end(); ++cur_doc) {
         std::string cur_snippet = highlightForDoc(query, *cur_doc, maxPassages);  // finally all Passages will be formated into one string
-        std::cout << "generated for " << *cur_doc << " result: " << cur_snippet << std::endl;
         res.push_back( cur_snippet );
     }
+
     return res;
 }
 
@@ -33,19 +35,16 @@ std::string UnifiedHighlighter::highlightForDoc(Query & query, const int & docID
 }
 
 OffsetsEnums UnifiedHighlighter::getOffsetsEnums(Query & query, const int & docID) {
-    //
     OffsetsEnums res = {};
-
     // TODO set weight of each term 
 
-    res.push_back(Offset_Iterator(test_offsets_1));
-    res.push_back(Offset_Iterator(test_offsets_2));
-    res.push_back(Offset_Iterator(test_offsets_3));
-
-    // TODO get real offsets from postings
-    /*for (Query::iterator it = query.begin(); it != query.end(); ++ it) {
-        // push back iterator of offsets for this term in this document
-    } */
+    // get offsets from postings
+    for (auto term:query) {
+        // Posting
+        Posting & result = engine_.inverted_index_.GetPosting(term, docID);
+        // Offsets
+        res.push_back(Offset_Iterator(result.positions_));
+    }
     return res; 
 }
 
@@ -57,7 +56,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
     
     // "merge sorting" to calculate all sentence's score
     
-    // priority queue for OffsetIterator
+    // priority queue for Offset_Iterator
     auto comp_offset = [] (Offset_Iterator &a, Offset_Iterator &b) -> bool { return a.startoffset > b.startoffset; };
     std::priority_queue<Offset_Iterator, std::vector<Offset_Iterator>, decltype(comp_offset)> offsets_queue(comp_offset);
     for (OffsetsEnums::iterator it = offsetsEnums.begin(); it != offsetsEnums.end(); it++ ) {
@@ -69,7 +68,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
 
     // start caculate score for passage
     Passage * passage = new Passage();  // current passage
-
+    
     while (!offsets_queue.empty()) {
         // analyze current passage
         Offset_Iterator cur_iter = offsets_queue.top();
@@ -86,6 +85,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
         if (cur_start >= passage->endoffset) {
             // if this passage is not empty, then wrap up it and push it to the priority queue
             if (passage->startoffset >= 0) {
+                //passage->to_string(breakiterator.content_);
                 passage->score = passage->score * passage_norm(passage->startoffset); //normalize according to passage's startoffset
                 if (passage_queue.size() == maxPassages && passage->score < passage_queue.top()->score) {
                     passage->reset();
@@ -153,15 +153,14 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(OffsetsEnums & offsetsEnum
     auto comp_passage_offset = [] (Passage * & a, Passage * & b) -> bool { return a->startoffset < b->startoffset; };
     std::sort(passage_vector.begin(), passage_vector.end(), comp_passage_offset);
     
+    
     // format the final string
     std::string res = "";
-    std::cout << breakiterator.content_ << std::endl;
     for (auto it = passage_vector.begin(); it != passage_vector.end(); it++) {
         res += (*it)->to_string(breakiterator.content_);   // highlight appeared terms
-        std::cout <<  "("  << (*it)->score << ") " << breakiterator.content_.substr((*it)->startoffset, (*it)->endoffset - (*it)->startoffset+1) << std::endl;
+        // std::cout <<  "("  << (*it)->score << ") " << breakiterator.content_.substr((*it)->startoffset, (*it)->endoffset - (*it)->startoffset+1) << std::endl;
         delete (*it);
     }
-    std::cout << "Result:\n" << res << "\nEND" << std::endl;
     
     return res;
 }
@@ -195,21 +194,30 @@ void Offset_Iterator::next_position() {  // go to next offset position
 }
 
 
-//Passage 
+// Passage Functions 
 std::string Passage::to_string(std::string & doc_string) {
     std::string res= "";
     res += doc_string.substr(startoffset, endoffset - startoffset + 1) + "\n";
-    
     // highlight
+    //std::cout << "to highlight(" << startoffset << "," << endoffset << ") "<< res <<std::endl;
+ 
     auto cmp_terms = [] (Offset & a, Offset & b) -> bool { return (std::get<0>(a) > std::get<0>(b));};
     std::sort(matches.begin(), matches.end(), cmp_terms);
 
     for (auto it = matches.begin(); it != matches.end(); it++) {
+    //    std::cout << std::get<0>(*it) << "," << std::get<1>(*it) << ";";
         res.insert(std::get<1>(*it)-startoffset+1, "<\\b>");
         res.insert(std::get<0>(*it)-startoffset, "<b>");
     }
+    //std::cout << std::endl << res;
     return res;
 }
+
+void Passage::addMatch(const int & startoffset, const int & endoffset) {
+   matches.push_back(std::make_tuple(startoffset, endoffset)); 
+   return ;
+} 
+
 
 
 // BreakIterator Functions
@@ -265,11 +273,4 @@ int SentenceBreakIterator::next(int offset) {
     return 1; // Success
 }
 
-
-// Passage Funcitons
-
-void Passage::addMatch(int & startoffset, int & endoffset) {
-   matches.push_back(std::make_tuple(startoffset, endoffset)); 
-   return ;
-} 
 

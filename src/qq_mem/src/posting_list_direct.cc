@@ -28,3 +28,9 @@ std::string PostingList_Direct::Serialize() {
     return "";
 }
 
+// Find a posting according to docID
+Posting & PostingList_Direct::GetPosting(const int & docID) {
+
+    auto search = posting_store_.find(docID);
+    return search->second;
+}

@@ -1,7 +1,7 @@
 // #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include <iostream>
 #include <set>
-
+#include <sys/time.h>
 #include <boost/filesystem.hpp>
 #include <boost/lambda/lambda.hpp>    
 #include "catch.hpp"
@@ -96,7 +96,7 @@ TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
     }
 }
 
-TEST_CASE( "Basic Posting", "[posting_list]" ) {
+TEST_CASE( "Basic Posting", "[posting]" ) {
     Posting posting(100, 2, Offsets {std::make_tuple(1,3), std::make_tuple(5,8)});
     REQUIRE(posting.docID_ == 100);
     REQUIRE(posting.term_frequency_ == 2);
@@ -315,12 +315,42 @@ TEST_CASE( "Offsets Parser essential operations are OK", "[offsets_parser]" ) {
     REQUIRE(offset_parsed[1][1]  == std::make_tuple(5,6));
     REQUIRE(offset_parsed[2][0]  == std::make_tuple(7,8));
 }
-// TODO test add document, check offsets
 
-
-TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
+TEST_CASE( "Search Engine with offsets essential operations are OK", "[search_engine_offsets]" ) {
     QQSearchEngine engine;
-    //engine.AddDocument("my title", "my url", "hello world. This is Kan ...    Hello Kan, This is Madison!");
+    
+    // read in the linedoc
+    utils::LineDoc linedoc("src/testdata/line_doc_offset");
+    std::vector<std::string> items;
+    linedoc.GetRow(items);
+    
+    // adddocument
+    engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
+
+    // search for "rule"
+    std::vector<int> doc_ids = engine.Search(TermList{"rule"}, SearchOperator::AND);
+    REQUIRE(doc_ids.size() == 1);
+
+    // check doc
+    std::string doc = engine.GetDocument(doc_ids[0]);
+    REQUIRE(doc == items[1]);
+
+    // check posting
+    Posting result = engine.inverted_index_.GetPosting("rule", doc_ids[0]);
+    REQUIRE(result.docID_ == doc_ids[0]);
+    REQUIRE(result.term_frequency_ == 21);
+    REQUIRE(result.positions_.size() == 21);
+    // check Offsets
+    std::string res = "";
+    for (auto offset:result.positions_) {
+        res += std::to_string(std::get<0>(offset)) + "," + std::to_string(std::get<1>(offset)) + ";";
+    }
+    res += ".";
+    REQUIRE(res == "29,34;94,99;124,129;178,183;196,201;490,495;622,626;1525,1529;1748,1753;2119,2124;2168,2172;2623,2627;4164,4168;4784,4788;6425,6429;7507,7511;9090,9094;9894,9898;11375,11379;12093,12097;12695,12700;.");
+}
+
+TEST_CASE( "OffsetsEnums of Unified Highlighter essential operations are OK", "[offsetsenums_unified_highlighter]" ) {
+    QQSearchEngine engine;
     
     // read in the linedoc
     utils::LineDoc linedoc("src/testdata/line_doc_offset");
@@ -329,27 +359,83 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     
     
     // adddocument
-    engine.AddDocument(items[0], "http://wiki", items[2], items[3]);
+    engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
+    UnifiedHighlighter test_highlighter(engine);
+    Query query = {"rule"};
+    
+    OffsetsEnums offsetsEnums = test_highlighter.getOffsetsEnums(query, 0);
+    REQUIRE(offsetsEnums.size() == 1);
 
+    // check iterator
+    Offset_Iterator cur_iter = offsetsEnums[0];
+    std::string res = "";
+    while (1) {
+        // judge whether end
+        if (cur_iter.startoffset == -1) {
+            break;
+        }
+        // print current position
+        res += std::to_string(cur_iter.startoffset) +  "," + std::to_string(cur_iter.endoffset) + ";";
+        cur_iter.next_position();
+    } 
+    res += ".";
+    REQUIRE(res == "29,34;94,99;124,129;178,183;196,201;490,495;622,626;1525,1529;1748,1753;2119,2124;2168,2172;2623,2627;4164,4168;4784,4788;6425,6429;7507,7511;9090,9094;9894,9898;11375,11379;12093,12097;12695,12700;.");
+}
+
+TEST_CASE( "Passage of Unified Highlighter essential operations are OK", "[passage_unified_highlighter]" ) {
+    // construct a passage
+    Passage test_passage;
+    test_passage.startoffset = 0;
+    test_passage.endoffset = 10;
+
+    // add matches
+    test_passage.addMatch(0, 4);
+    test_passage.addMatch(6, 10);
+    REQUIRE(test_passage.matches.size() == 2);
+    REQUIRE(test_passage.matches[0] == std::make_tuple(0,4));
+    REQUIRE(test_passage.matches[1] == std::make_tuple(6,10));
+
+    // to_string
+    std::string doc = "Hello world. This is Kan.";
+    std::string res = test_passage.to_string(doc);
+    // check 
+    REQUIRE(res == "<b>Hello<\\b> <b>world<\\b>\n");
+
+    // reset
+    test_passage.reset();
+    REQUIRE(test_passage.matches.size() == 0);
+}
+
+TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
+    QQSearchEngine engine;
+    
+    // read in the linedoc
+    utils::LineDoc linedoc("src/testdata/line_doc_offset");
+    std::vector<std::string> items;
+    linedoc.GetRow(items);
+    
+    
+    // adddocument
+    engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
+    UnifiedHighlighter test_highlighter(engine);
+    
 
     //start highlighter
-
-    /*engine.AddDocument("my title", "my url", "hello earth\n This is Kan! hello world. This is Kan!");
-    engine.AddDocument("my title", "my url", "hello Madison.... This is Kan. hello world. This is Kan!");
-    engine.AddDocument("my title", "my url", "hello Wisconsin, This is Kan. Im happy. hello world. This is Kan!");
-*/
-    /*UnifiedHighlighter test_highlighter(engine);
-    Query query = {"hello", "kan"};
+    Query query = {"rule", "free"};
     TopDocs topDocs = {0}; 
-
     int maxPassages = 3;
+    
+    struct timeval t1,t2;
+    double timeuse;
+    gettimeofday(&t1,NULL);
+  
     std::vector<std::string> res = test_highlighter.highlight(query, topDocs, maxPassages);
-    REQUIRE(res.size()  == topDocs.size());
-    */
-    /*REQUIRE(res[0] == "hello world");
-    REQUIRE(res[1] == "hello earth");
-    REQUIRE(res[2] == "hello Wisconsin");
-    */
+    gettimeofday(&t2,NULL);
+    timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
+    printf("Use Time:%f\n",timeuse);
+    REQUIRE(res.size() == topDocs.size());
+
+    std::cout << res[0] <<std::endl;
 }
 
 TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_breakiterator]" ) {
@@ -362,7 +448,6 @@ TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_break
     // iterate on a string
     int i = 0;
     while ( breakiterator.next() > 0 ) {
-        
         int start_offset = breakiterator.getStartOffset();
         int end_offset = breakiterator.getEndOffset();
         REQUIRE(end_offset == breakpoint[i++]);
@@ -376,4 +461,3 @@ TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_break
     REQUIRE(breakiterator.getEndOffset() == 39);
     REQUIRE(breakiterator.next(40) == 0);
 }
-

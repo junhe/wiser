@@ -1,0 +1,5 @@
+# Hashes of file build rules.
+ac543d469b4f033bef8d45bce0821b92 proto-src/posting_message.grpc.pb.cc
+c4d0f648f85de2b75eb0c6287352736f proto-src/posting_message.pb.cc
+d5a48bceacfd3b0e9fccab767c885ebc proto-src/qq.grpc.pb.cc
+5722d951aa670333091087fba8ae94a9 proto-src/qq.pb.cc

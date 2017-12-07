@@ -21,6 +21,7 @@ class DocumentStoreService {
 
 typedef std::string Term;
 typedef std::vector<Term> TermList;
+typedef TermList Query;
 enum class SearchOperator {AND, OR};
 
 class InvertedIndexService {
@@ -53,7 +54,6 @@ class PostingListService {
 
 
 // for highlighter
-typedef TermList Query;
 typedef std::vector<int> TopDocs;
 typedef std::tuple<int, int> Offset;
 

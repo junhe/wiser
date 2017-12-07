@@ -44,7 +44,7 @@ class QQEngineServiceImpl final : public QQEngine::Service {
         } else {
             search_engine_.offsets_flag_ = 1;     // TODO should not be set here
             search_engine_.AddDocument(request->document().title(),
-                    request->document().url(), request->document().body(), request->document().offsets());
+                    request->document().url(), request->document().body(), request->document().tokens(), request->document().offsets());
         
         }
 

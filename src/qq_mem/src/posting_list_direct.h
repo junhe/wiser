@@ -36,6 +36,8 @@ class PostingList_Direct :  public PostingListService {
         // Add a doc for creating index
         void AddPosting(int docID, int term_frequency, const Offsets positions);
         Posting ExtractPosting(const_iterator it);
+        // Find a posting according to docID
+        Posting & GetPosting(const int & docID);
         // Serialize
         std::string Serialize();
 };

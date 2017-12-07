@@ -18,7 +18,7 @@ void InvertedIndex::AddDocument(const int &doc_id, const TermWithOffsetList &ter
         }
 
         PostingList_Direct &postinglist = it->second;
-        postinglist.AddPosting(doc_id, 0, term_with_offset.offsets_);
+        postinglist.AddPosting(doc_id, term_with_offset.offsets_.size(), term_with_offset.offsets_);
     }
 }
 
@@ -78,3 +78,7 @@ std::vector<int> InvertedIndex::Search(const TermList &terms, const SearchOperat
     return std::vector<int> (id_set.begin(), id_set.end());
 }
 
+// Get the posting according to term and docID
+Posting & InvertedIndex::GetPosting(Term term, const int & doc_id)  {
+    return (index_.find(term)->second).GetPosting(doc_id);
+}

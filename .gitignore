@@ -23,3 +23,6 @@
 
 # c-tag files for VIM
 tags
+
+*.o
+src/qq_mem/build/*

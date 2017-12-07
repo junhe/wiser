@@ -24,7 +24,7 @@ class QQSearchEngine {
         void AddDocument(const std::string &title, const std::string &url, 
                 const std::string &body);
         void AddDocument(const std::string &title, const std::string &url, 
-                const std::string &body, const std::string &offsets);
+                const std::string &body, const std::string &tokens, const std::string &offsets);
         std::string GetDocument(const int &doc_id);
         int NextDocId();
         std::vector<int> Search(const TermList &terms, const SearchOperator &op);
