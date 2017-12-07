@@ -71,6 +71,9 @@ def add_document():
     
     input_file = open('line_doc_offset')
     header = input_file.readline()
+    header = input_file.readline()
+    header = input_file.readline()
+    header = input_file.readline()
     for line in input_file:
         items = line.split("\t")
         doc = {}
@@ -97,7 +100,7 @@ def benchmark():
     {
       "query": {
         "terms": {
-          "body" : ["rule"]
+          "body" : ["mondai"]
         }
       },
       "highlight" : {
@@ -111,9 +114,10 @@ def benchmark():
     }
     """
 
-    print "====", query_payload
+    #print "====", query_payload
     r = requests.post(url_search, query_payload, headers=headers)
-    print(r.text)
+    print " Take time: ", r.json()["took"], "ms"
+    print " Highlighting: ", r.json()["hits"]["hits"][0]["highlight"]
 
 if __name__=='__main__':
     # print help

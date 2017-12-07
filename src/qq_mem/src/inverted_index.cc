@@ -80,5 +80,6 @@ std::vector<int> InvertedIndex::Search(const TermList &terms, const SearchOperat
 
 // Get the posting according to term and docID
 Posting & InvertedIndex::GetPosting(const Term & term, const int & doc_id)  {
+    // TODO check whether has this term
     return (index_.find(term)->second).GetPosting(doc_id);
 }

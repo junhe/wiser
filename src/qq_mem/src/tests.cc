@@ -323,6 +323,7 @@ TEST_CASE( "Search Engine with offsets essential operations are OK", "[search_en
     utils::LineDoc linedoc("src/testdata/line_doc_offset");
     std::vector<std::string> items;
     linedoc.GetRow(items);
+    linedoc.GetRow(items);
     
     // adddocument
     engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
@@ -363,6 +364,7 @@ TEST_CASE( "OffsetsEnums of Unified Highlighter essential operations are OK", "[
     // read in the linedoc
     utils::LineDoc linedoc("src/testdata/line_doc_offset");
     std::vector<std::string> items;
+    linedoc.GetRow(items);
     linedoc.GetRow(items);
     
     
@@ -421,34 +423,37 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     utils::LineDoc linedoc("src/testdata/line_doc_offset");
     std::vector<std::string> items;
     linedoc.GetRow(items);
-    
+    linedoc.GetRow(items); 
+    linedoc.GetRow(items); 
+    linedoc.GetRow(items); 
     
     // adddocument
     engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
+    //engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
     UnifiedHighlighter test_highlighter(engine);
     
 
     //start highlighter
+    //Query query = {"park"};
     //Query query = {"rule"};
-    Query query = {"rule"};
-    //TopDocs topDocs = {0}; 
-    int maxPassages = 20;
+    //Query query = {"author"};
+    Query query = {"mondai"};
+    TopDocs topDocs = {0}; 
+    int maxPassages = 5;
     
-    //TopDocs topDocs = engine.Search(query, SearchOperator::AND);
-    //REQUIRE(topDocs.size() == 1);
-   
     std::vector<std::string> res;
-    for (int i = 0; i < 3; i++) { 
+    for (int i = 0; i < 4; i++) { 
         struct timeval t1,t2;
         double timeuse;
         gettimeofday(&t1,NULL);
-        TopDocs topDocs = engine.Search(query, SearchOperator::AND);
+        //TopDocs topDocs = engine.Search(query, SearchOperator::AND);
         res = test_highlighter.highlight(query, topDocs, maxPassages);
         gettimeofday(&t2,NULL);
         timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
-        printf("Use Time:%fs\n",timeuse);
+        printf("Use Time:%fms\n",timeuse*1000);
         REQUIRE(res.size() == topDocs.size());
         std::cout << res[0] <<std::endl;
+        //if (i>1) topDocs = {0, 1};
     }
 
 }

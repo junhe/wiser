@@ -42,6 +42,7 @@ OffsetsEnums UnifiedHighlighter::getOffsetsEnums(const Query & query, const int 
         Posting & result = engine_.inverted_index_.GetPosting(term, docID);
         // Offsets
         res.push_back(Offset_Iterator(result.positions_));
+        // TODO check whether empty?
     }
     return res; 
 }
