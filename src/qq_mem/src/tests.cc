@@ -343,10 +343,18 @@ TEST_CASE( "Search Engine with offsets essential operations are OK", "[search_en
     // check Offsets
     std::string res = "";
     for (auto offset:result.positions_) {
-        res += std::to_string(std::get<0>(offset)) + "," + std::to_string(std::get<1>(offset)) + ";";
+        int startoffset = std::get<0>(offset);
+        int endoffset = std::get<1>(offset);
+
+        res += std::to_string(startoffset) + "," + std::to_string(endoffset) + ";";
+        // check string
+        //std::cout << items[1].substr(startoffset, endoffset-startoffset+1) << std::endl;
     }
     res += ".";
     REQUIRE(res == "29,34;94,99;124,129;178,183;196,201;490,495;622,626;1525,1529;1748,1753;2119,2124;2168,2172;2623,2627;4164,4168;4784,4788;6425,6429;7507,7511;9090,9094;9894,9898;11375,11379;12093,12097;12695,12700;.");
+
+
+    
 }
 
 TEST_CASE( "OffsetsEnums of Unified Highlighter essential operations are OK", "[offsetsenums_unified_highlighter]" ) {
@@ -423,15 +431,18 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     //start highlighter
     //Query query = {"rule"};
     Query query = {"rule"};
-    TopDocs topDocs = {0}; 
-    int maxPassages = 10;
+    //TopDocs topDocs = {0}; 
+    int maxPassages = 20;
+    
+    //TopDocs topDocs = engine.Search(query, SearchOperator::AND);
+    //REQUIRE(topDocs.size() == 1);
    
     std::vector<std::string> res;
     for (int i = 0; i < 3; i++) { 
         struct timeval t1,t2;
         double timeuse;
         gettimeofday(&t1,NULL);
-  
+        TopDocs topDocs = engine.Search(query, SearchOperator::AND);
         res = test_highlighter.highlight(query, topDocs, maxPassages);
         gettimeofday(&t2,NULL);
         timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
@@ -455,7 +466,7 @@ TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_break
         int start_offset = breakiterator.getStartOffset();
         int end_offset = breakiterator.getEndOffset();
         REQUIRE(end_offset == breakpoint[i++]);
-    }   
+    }
 
     // test offset-based next
     REQUIRE(i == 2);

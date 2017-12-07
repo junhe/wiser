@@ -27,7 +27,7 @@ std::vector<std::string> UnifiedHighlighter::highlight(const Query & query, cons
 
 std::string UnifiedHighlighter::highlightForDoc(const Query & query, const int & docID, const int &maxPassages) {
     // highlight according to offset iterators and content of this document
-    std::string res = highlightOffsetsEnums(getOffsetsEnums(query, docID), docID, maxPassages); // TODO 
+    std::string res = highlightOffsetsEnums(getOffsetsEnums(query, docID), docID, maxPassages);
     
     return res;
 }
@@ -146,7 +146,8 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offse
         passage_queue.pop();
     }
     // sort array according to startoffset
-    auto comp_passage_offset = [] (Passage * & a, Passage * & b) -> bool { return a->startoffset < b->startoffset; };
+    //auto comp_passage_offset = [] (Passage * & a, Passage * & b) -> bool { return a->startoffset < b->startoffset; };
+    auto comp_passage_offset = [] (Passage * & a, Passage * & b) -> bool { return a->score > b->score; };
     std::sort(passage_vector.begin(), passage_vector.end(), comp_passage_offset);
     
     

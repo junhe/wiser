@@ -2,6 +2,7 @@ import sys
 import requests, json
 import codecs
 import re
+import io
 
 def tokenize(line_doc, output):
 
@@ -70,7 +71,7 @@ def tokenize(line_doc, output):
         doc["text"] = doc_content
         doc_result = json.dumps(doc)
         r = requests.post(url, doc_result, headers=headers)
-        output.write(items[0]+'\t' + items[1].strip('\n')+'\t')
+        output.write(unicode(items[0] +'\t' + items[1].strip('\n') +'\t'))
         
         # unique and collect offsets
         dic = {}
@@ -91,8 +92,8 @@ def tokenize(line_doc, output):
             offsets += dic[token] + '.'
             print token, ': ', dic[token]
         #output.write(token["token"].encode('utf8') + ' ')
-        output.write( terms + '\t' + offsets)
-        output.write('\n')
+        output.write( unicode(terms + '\t' + offsets) )
+        output.write( unicode('\n') )
 
 if __name__=='__main__':
     # print help
@@ -101,9 +102,9 @@ if __name__=='__main__':
         exit(1)
     
     # do analysis
-    line_doc = open(sys.argv[1])
-    output = open(sys.argv[1] + '_tokenized', 'w')
-    
-    tokenize(line_doc, output)
-    line_doc.close()
+    #line_doc = open(sys.argv[1])
+    output = io.open(sys.argv[1] + '_tokenized', 'w', encoding="utf-8")
+    with io.open(sys.argv[1], "r", encoding="utf-8") as line_doc:
+        tokenize(line_doc, output)
+    #line_doc.close()
     output.close()

@@ -2,7 +2,6 @@ import sys
 import requests, json
 import codecs
 
-
 parse_flag = False
 #parse_flag = True
 doc_num = 1
@@ -104,6 +103,7 @@ def benchmark():
       "highlight" : {
         "number_of_fragments" : 10,
         "fragment_size" : 0,
+        "order" : "score",
         "fields" : {
             "body" : {}
         }

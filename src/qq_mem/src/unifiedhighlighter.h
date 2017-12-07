@@ -85,7 +85,7 @@ class UnifiedHighlighter {
     
     private:
         // passage normalization function for scoring
-        int pivot = 87;  // hard-coded average length of passage
+        float pivot = 87;  // hard-coded average length of passage
         float k1 = 1.2;  // BM25 parameters
         float b = 0.75;  // BM25 parameters
         float passage_norm(int & start_offset);
