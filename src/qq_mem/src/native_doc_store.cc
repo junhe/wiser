@@ -16,7 +16,7 @@ bool NativeDocStore::Has(int id) {
     return store_.count(id) == 1;
 }
 
-std::string NativeDocStore::Get(int id) {
+std::string & NativeDocStore::Get(int id) {
     return store_[id];
 }
 

@@ -5,7 +5,7 @@ import codecs
 
 parse_flag = False
 #parse_flag = True
-doc_num = 0
+doc_num = 1
 headers = {'Content-Type': 'application/json'}
 url_setting = 'http://localhost:9200/my_index?pretty'
 url_index = 'http://localhost:9200/my_index/my_type/1?pretty'
@@ -70,24 +70,27 @@ def add_document():
 
     ######## Index a Document
     
-    input_file = open('test_document')
-    lines = input_file.readlines()
-    doc = {}
-    doc_content = lines[doc_num]
-    doc["body"] = doc_content
-    doc_result = json.dumps(doc)
-    print "====", doc_result
-    r = requests.put(url_index, doc_result, headers=headers)
-    print(r.text)
+    input_file = open('line_doc_offset')
+    header = input_file.readline()
+    for line in input_file:
+        items = line.split("\t")
+        doc = {}
+        doc_content = items[1]
+        doc["body"] = doc_content
+        doc_result = json.dumps(doc)
+        print "====", doc_result
+        r = requests.put(url_index, doc_result, headers=headers)
+        print(r.text)
 
-    ####### Analyze this document
-    doc = {}
-    doc["field"] = "body"
-    doc["text"] = doc_content
-    doc_result = json.dumps(doc)
-    r = requests.post(url_analyze, doc_result, headers=headers)
-    print(r.text)
-  
+        ####### Analyze this document
+        '''
+        doc = {}
+        doc["field"] = "body"
+        doc["text"] = doc_content
+        doc_result = json.dumps(doc)
+        r = requests.post(url_analyze, doc_result, headers=headers)
+        print(r.text)
+        '''
 
 def benchmark():
     ######## Query on
@@ -95,11 +98,11 @@ def benchmark():
     {
       "query": {
         "terms": {
-          "body" : ["social", "question"]
+          "body" : ["rule"]
         }
       },
       "highlight" : {
-        "number_of_fragments" : 5,
+        "number_of_fragments" : 10,
         "fragment_size" : 0,
         "fields" : {
             "body" : {}

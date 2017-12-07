@@ -18,7 +18,6 @@ class Offset_Iterator {
     private:
         Offsets * offsets;
         Offsets::iterator cur_position;
-        
 
 };
 
@@ -39,24 +38,24 @@ class Passage {
 
         void addMatch(const int & startoffset, const int & endoffset);
         Offsets matches = {};
-        std::string to_string(std::string & doc_string);
+        std::string to_string(std::string * doc_string);
 };
 
 
 class SentenceBreakIterator {
 
     public:
-        SentenceBreakIterator(std::string content);
+        SentenceBreakIterator(std::string & content);
 
         int getStartOffset();  // get current sentence's start offset
         int getEndOffset();    // get current sentence's end offset
         int next();            // get next sentence
         int next(int offset);  // get next sentence where offset is within it
-        std::string content_;
+        std::string * content_;
     
     private:
         boost::locale::generator gen;
-        boost::locale::boundary::sboundary_point_index map;
+        boost::locale::boundary::sboundary_point_index map;    //TODO extra copy operation
         boost::locale::boundary::sboundary_point_index::iterator current; 
         boost::locale::boundary::sboundary_point_index::iterator last; 
         int startoffset;
@@ -76,13 +75,13 @@ class UnifiedHighlighter {
         // primary method: Return snippets generated for the top-ranked documents
         // query: terms of this query
         // topDocs: array of docID of top-ranked documents
-        std::vector<std::string> highlight(Query & query, TopDocs & topDocs, int & maxPassages);
+        std::vector<std::string> highlight(const Query & query, const TopDocs & topDocs, const int & maxPassages);
 
-        std::string highlightForDoc(Query & query, const int & docID, int & maxPassages);
+        std::string highlightForDoc(const Query & query, const int & docID, const int & maxPassages);
         // get each query term's offsets iterator
-        OffsetsEnums getOffsetsEnums(Query & query, const int & docID);
+        OffsetsEnums getOffsetsEnums(const Query & query, const int & docID);
         // highlight using the iterators and the content of the document
-        std::string highlightOffsetsEnums(OffsetsEnums & offsetsEnums, const int & docID, int & maxPassages);
+        std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, const int & docID, const int & maxPassages);
     
     private:
         // passage normalization function for scoring

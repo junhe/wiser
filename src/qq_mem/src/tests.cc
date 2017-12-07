@@ -397,7 +397,7 @@ TEST_CASE( "Passage of Unified Highlighter essential operations are OK", "[passa
 
     // to_string
     std::string doc = "Hello world. This is Kan.";
-    std::string res = test_passage.to_string(doc);
+    std::string res = test_passage.to_string(&doc);
     // check 
     REQUIRE(res == "<b>Hello<\\b> <b>world<\\b>\n");
 
@@ -421,21 +421,25 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     
 
     //start highlighter
-    Query query = {"rule", "free"};
+    //Query query = {"rule"};
+    Query query = {"rule"};
     TopDocs topDocs = {0}; 
-    int maxPassages = 3;
-    
-    struct timeval t1,t2;
-    double timeuse;
-    gettimeofday(&t1,NULL);
+    int maxPassages = 10;
+   
+    std::vector<std::string> res;
+    for (int i = 0; i < 3; i++) { 
+        struct timeval t1,t2;
+        double timeuse;
+        gettimeofday(&t1,NULL);
   
-    std::vector<std::string> res = test_highlighter.highlight(query, topDocs, maxPassages);
-    gettimeofday(&t2,NULL);
-    timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
-    printf("Use Time:%f\n",timeuse);
-    REQUIRE(res.size() == topDocs.size());
+        res = test_highlighter.highlight(query, topDocs, maxPassages);
+        gettimeofday(&t2,NULL);
+        timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
+        printf("Use Time:%fs\n",timeuse);
+        REQUIRE(res.size() == topDocs.size());
+        std::cout << res[0] <<std::endl;
+    }
 
-    std::cout << res[0] <<std::endl;
 }
 
 TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_breakiterator]" ) {

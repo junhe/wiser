@@ -36,7 +36,7 @@ void QQSearchEngine::AddDocument(const std::string &title, const std::string &ur
     inverted_index_.AddDocument(doc_id, terms);
 }
 
-std::string QQSearchEngine::GetDocument(const int &doc_id) {
+std::string & QQSearchEngine::GetDocument(const int &doc_id) {
     return doc_store_.Get(doc_id);
 }
 

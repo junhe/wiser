@@ -14,7 +14,7 @@ class NativeDocStore: public DocumentStoreService {
 
         void Add(int id, std::string document);
         void Remove(int id);
-        std::string Get(int id);
+        std::string & Get(int id);
         bool Has(int id);
         void Clear();
         int Size();
