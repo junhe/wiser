@@ -2,9 +2,9 @@
 #define UNIFIEDHIGHLIGHTER_H
 #include "engine_services.h"
 #include "qq_engine.h"
+#include "lrucache.h"
 #include <boost/locale.hpp>
 #include <math.h> 
-
 
 class Offset_Iterator {
 
@@ -82,8 +82,15 @@ class UnifiedHighlighter {
         OffsetsEnums getOffsetsEnums(const Query & query, const int & docID);
         // highlight using the iterators and the content of the document
         std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, const int & docID, const int & maxPassages);
+       
+        // helper for generating key in hash table 
+        std::string construct_key(const Query & query, const int & docID);
     
     private:
+        // cache for snippets ( docID+query -> string )
+        cache::lru_cache<std::string, std::string> _snippets_cache_ {cache::lru_cache<std::string, std::string>(SNIPPETS_CACHE_SIZE)};
+
+
         // passage normalization function for scoring
         float pivot = 87;  // hard-coded average length of passage
         float k1 = 1.2;  // BM25 parameters

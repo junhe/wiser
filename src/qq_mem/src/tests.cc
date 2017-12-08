@@ -425,9 +425,9 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     utils::LineDoc linedoc("src/testdata/line_doc_offset");
     std::vector<std::string> items;
     linedoc.GetRow(items);
-    //linedoc.GetRow(items);
-    //linedoc.GetRow(items); 
-    //linedoc.GetRow(items); 
+    linedoc.GetRow(items);
+    linedoc.GetRow(items); 
+    linedoc.GetRow(items); 
     //linedoc.GetRow(items); 
     
     // adddocument
@@ -437,10 +437,10 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     
 
     //start highlighter
-    Query query = {"park"}; // attack build knife zoo
+    //Query query = {"park"}; // attack build knife zoo
     //Query query = {"rule"}; // we doctor incorrect problem
     //Query query = {"author"}; // similar life accord code
-    //Query query = {"mondai"}; // support student report telephon
+    Query query = {"mondai"}; // support student report telephon
     //Query query = {"polic"};  // bulletin inform law system
     
     // terms
@@ -458,7 +458,10 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     //int maxPassages = 30;
     //int maxPassages = 40;
     //int maxPassages = 50;
-    
+   
+    // warm up
+    test_highlighter.highlight({"support"}, topDocs, maxPassages);
+ 
     std::vector<std::string> res;
     for (int i = 0; i < 4; i++) { 
         struct timeval t1,t2;
@@ -468,9 +471,9 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
         res = test_highlighter.highlight(query, topDocs, maxPassages);
         gettimeofday(&t2,NULL);
         timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
-        //printf("Use Time:%fms\n",timeuse*1000);
+        printf("Use Time:%fms\n",timeuse*1000);
         REQUIRE(res.size() == topDocs.size());
-        //std::cout << res[0] <<std::endl;
+        std::cout << res[0] <<std::endl;
         //if (i>1) topDocs = {0, 1};
     }
 
@@ -534,4 +537,15 @@ TEST_CASE( "LRUCache Template essential Capacity limited  opeartions are OK", "[
     }
 
     REQUIRE(cache_lru.size() == 10);
+}
+
+
+TEST_CASE( "UnifiedHighlighter snippets cache key constructor  essential opeartions are OK", "[UnifiedHighlighter_ConstructKey]") {
+    // create cache
+    QQSearchEngine engine;
+    UnifiedHighlighter test_highlighter(engine);
+
+    // construct key
+    std::string res = test_highlighter.construct_key({"hello", "world"}, 3);
+    REQUIRE(res == "3:hello,world,");
 }

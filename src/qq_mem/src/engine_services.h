@@ -8,6 +8,10 @@
 #include <tuple>
 #include "lrucache.h"
 
+// size of snippets cache of highlighter
+#define SNIPPETS_CACHE_SIZE 100
+
+
 class DocumentStoreService {
     public:
         virtual void Add(int id, std::string document) = 0;

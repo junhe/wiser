@@ -8,6 +8,8 @@
 
 namespace cache {
 
+
+// TODO multi-threaded visiting?
 template<typename key_t, typename value_t>
 class lru_cache {
     public:

@@ -24,12 +24,19 @@ std::vector<std::string> UnifiedHighlighter::highlight(const Query & query, cons
     return res;
 }
 
-
-
 std::string UnifiedHighlighter::highlightForDoc(const Query & query, const int & docID, const int &maxPassages) {
+    // check cache
+    std::string this_key = construct_key(query, docID);
+    if (_snippets_cache_.exists(this_key)) {
+        return _snippets_cache_.get(this_key);
+    }
+
     // highlight according to offset iterators and content of this document
     std::string res = highlightOffsetsEnums(getOffsetsEnums(query, docID), docID, maxPassages);
-    
+
+    // update cache
+    _snippets_cache_.put(this_key, res);
+
     return res;
 }
 
@@ -171,6 +178,14 @@ float UnifiedHighlighter::passage_norm(int & start_offset) {
 float UnifiedHighlighter::tf_norm(int freq, int passageLen) {
     float norm = k1 * ((1 - b) + b * (passageLen / pivot));
     return freq / (freq + norm);
+}
+
+std::string UnifiedHighlighter::construct_key(const Query & query, const int & docID) {
+    std::string res = std::to_string(docID) + ":";
+    for (auto term:query) {
+        res += term + ",";
+    }
+    return res;
 }
 
 // Offset_Iterator Functions
