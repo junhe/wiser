@@ -5,6 +5,7 @@
 #include "lrucache.h"
 #include <boost/locale.hpp>
 #include <math.h> 
+#include <fstream>
 
 class Offset_Iterator {
 
@@ -89,6 +90,8 @@ class UnifiedHighlighter {
     private:
         // cache for snippets ( docID+query -> string )
         cache::lru_cache<std::string, std::string> _snippets_cache_ {cache::lru_cache<std::string, std::string>(SNIPPETS_CACHE_SIZE)};
+        cache::lru_cache<std::string, int> _snippets_cache_falsh_ {cache::lru_cache<std::string, int>(SNIPPETS_CACHE_ON_FLASH_SIZE)};
+        //TODO file to hold the cache
 
 
         // passage normalization function for scoring

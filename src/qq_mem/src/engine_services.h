@@ -10,7 +10,9 @@
 
 // size of snippets cache of highlighter
 #define SNIPPETS_CACHE_SIZE 100
-
+#define FLAG_SNIPPETS_CACHE false
+#define SNIPPETS_CACHE_ON_FLASH_SIZE 100
+#define FLAG_SNIPPETS_CACHE_ON_FLASH true
 
 class DocumentStoreService {
     public:

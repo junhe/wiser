@@ -7,6 +7,7 @@
 // UnifiedHighlighter Functions
 UnifiedHighlighter::UnifiedHighlighter(QQSearchEngine & engine) {
     engine_ = engine;
+    //_snippets_on_flash_.open("snippets_cache");
 }
 
 UnifiedHighlighter::UnifiedHighlighter() {
@@ -26,16 +27,40 @@ std::vector<std::string> UnifiedHighlighter::highlight(const Query & query, cons
 
 std::string UnifiedHighlighter::highlightForDoc(const Query & query, const int & docID, const int &maxPassages) {
     // check cache
-    std::string this_key = construct_key(query, docID);
-    if (_snippets_cache_.exists(this_key)) {
-        return _snippets_cache_.get(this_key);
+
+    std::string this_key = "";
+    if (FLAG_SNIPPETS_CACHE) { 
+        this_key = construct_key(query, docID);
+        if (_snippets_cache_.exists(this_key)) {
+           return _snippets_cache_.get(this_key);
+        }
     }
 
-    // highlight according to offset iterators and content of this document
+    // check flash cache
+    if (FLAG_SNIPPETS_CACHE_ON_FLASH) {
+        this_key = construct_key(query, docID);
+        if (_snippets_cache_falsh_.exists(this_key)) {
+           int pos = _snippets_cache_falsh_.get(this_key);
+           // TODO read in the snippets
+           
+           return "";
+        }
+    }
+
+    // Real Work: highlight according to offset iterators and content of this document
     std::string res = highlightOffsetsEnums(getOffsetsEnums(query, docID), docID, maxPassages);
 
     // update cache
-    _snippets_cache_.put(this_key, res);
+    if (FLAG_SNIPPETS_CACHE) {
+        _snippets_cache_.put(this_key, res);
+    }
+    // update flash caceh
+    if (FLAG_SNIPPETS_CACHE_ON_FLASH) {
+        int pos = 10;
+        _snippets_cache_falsh_.put(this_key, pos);
+        
+        // TODO write out this snippet
+    }
 
     return res;
 }
