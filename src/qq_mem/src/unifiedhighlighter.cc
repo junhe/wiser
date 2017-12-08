@@ -16,6 +16,7 @@ UnifiedHighlighter::UnifiedHighlighter() {
 std::vector<std::string> UnifiedHighlighter::highlight(const Query & query, const TopDocs & topDocs, const int & maxPassages) {
     std::vector<std::string> res = {}; // size of topDocs
     for(TopDocs::const_iterator cur_doc = topDocs.begin(); cur_doc != topDocs.end(); ++cur_doc) {
+        // TODO multi-thread for multi docs
         std::string cur_snippet = highlightForDoc(query, *cur_doc, maxPassages);  // finally all Passages will be formated into one string
         res.push_back( cur_snippet );
     }

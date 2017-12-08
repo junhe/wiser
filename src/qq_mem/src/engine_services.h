@@ -6,7 +6,7 @@
 #include <vector>
 #include <map>
 #include <tuple>
-
+#include "lrucache.h"
 
 class DocumentStoreService {
     public:
@@ -61,7 +61,6 @@ typedef std::tuple<int, int> Offset;
 typedef std::vector<Offset> Offsets;
 
 // class Term_With_Offset
-
 class TermWithOffset {
     public:
         Term term_;
