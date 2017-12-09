@@ -6,13 +6,13 @@
 #include <vector>
 #include <map>
 #include <tuple>
-#include "lrucache.h"
 
 // size of snippets cache of highlighter
 #define SNIPPETS_CACHE_SIZE 100
 #define FLAG_SNIPPETS_CACHE false
 #define SNIPPETS_CACHE_ON_FLASH_SIZE 100
-#define FLAG_SNIPPETS_CACHE_ON_FLASH true
+#define FLAG_SNIPPETS_CACHE_ON_FLASH false
+#define SNIPPETS_CACHE_ON_FLASH_FILE "snippets_store"
 
 class DocumentStoreService {
     public:
@@ -75,4 +75,20 @@ class TermWithOffset {
         TermWithOffset(Term term_in, Offsets offsets_in) : term_(term_in), offsets_(offsets_in) {} 
 };
 typedef std::vector<TermWithOffset> TermWithOffsetList;
+
+
+// File Reader (TODO become a abstract class?)
+typedef std::pair<int, int> Store_Segment;    // startoffset, length on flash based file
+class FlashReader {
+    public:
+        FlashReader(const std::string & based_file);
+        std::string read(const Store_Segment & segment);
+        Store_Segment append(const std::string & value);
+
+    private:
+        std::string _file_name_;
+        int _fd_;
+        int _last_offset_; // append from it
+};
+
 #endif

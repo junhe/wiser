@@ -39,11 +39,8 @@ std::string UnifiedHighlighter::highlightForDoc(const Query & query, const int &
     // check flash cache
     if (FLAG_SNIPPETS_CACHE_ON_FLASH) {
         this_key = construct_key(query, docID);
-        if (_snippets_cache_falsh_.exists(this_key)) {
-           int pos = _snippets_cache_falsh_.get(this_key);
-           // TODO read in the snippets
-           
-           return "";
+        if (_snippets_cache_flash_.exists(this_key)) {
+           return _snippets_cache_flash_.get(this_key);
         }
     }
 
@@ -54,12 +51,10 @@ std::string UnifiedHighlighter::highlightForDoc(const Query & query, const int &
     if (FLAG_SNIPPETS_CACHE) {
         _snippets_cache_.put(this_key, res);
     }
+
     // update flash caceh
     if (FLAG_SNIPPETS_CACHE_ON_FLASH) {
-        int pos = 10;
-        _snippets_cache_falsh_.put(this_key, pos);
-        
-        // TODO write out this snippet
+        _snippets_cache_flash_.put(this_key, res);
     }
 
     return res;

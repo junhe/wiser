@@ -5,6 +5,7 @@
 #include <list>
 #include <cstddef>
 #include <stdexcept>
+#include "engine_services.h"
 
 namespace cache {
 
@@ -60,6 +61,52 @@ class lru_cache {
         std::unordered_map<key_t, list_iterator_t> _cache_items_map;
         size_t _max_size;
 };
+
+
+template<typename key_t, typename value_t>
+class lru_flash_cache {
+    public:
+        lru_flash_cache(const size_t & max_size, const std::string & based_file) {
+            _map_ = new lru_cache<key_t, Store_Segment>(max_size);
+            _store_reader_ = new FlashReader(based_file);
+        }
+
+        ~lru_flash_cache() {
+            delete _map_;
+            delete _store_reader_;
+        }
+
+        void put(const key_t& key, const value_t& value) {
+            // store in file
+            Store_Segment segment = _store_reader_->append(value);    //TODO what if value != string
+            // update map
+            _map_->put(key, segment);
+        }
+
+	//const value_t& get(const key_t& key) {
+	const value_t get(const key_t& key) {
+            // check map
+            Store_Segment segment = _map_->get(key);
+            // read from file
+            std::string res = _store_reader_->read(segment);
+            return res;
+        }
+
+        bool exists(const key_t& key) {
+            return _map_->exists(key);
+        }
+        
+        size_t size() {
+            return _map_->size();
+        }
+    
+    private:
+        lru_cache<key_t, Store_Segment> * _map_;  // map from key to position of file
+        //lru_cache<std::string, Store_Segment> * _map_;  // map from key to position of file
+        FlashReader * _store_reader_;
+
+};
+
 
 } // namespace cache
 

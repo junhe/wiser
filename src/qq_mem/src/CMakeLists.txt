@@ -41,6 +41,7 @@ set(ENGINE_SRCS
     qq_engine.cc
     utils.cc
     unifiedhighlighter.cc
+    flashreader.cc
     )
 
 set(BOOST_LIBS

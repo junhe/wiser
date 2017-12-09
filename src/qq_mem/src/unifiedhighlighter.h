@@ -78,26 +78,23 @@ class UnifiedHighlighter {
         // topDocs: array of docID of top-ranked documents
         std::vector<std::string> highlight(const Query & query, const TopDocs & topDocs, const int & maxPassages);
 
-        std::string highlightForDoc(const Query & query, const int & docID, const int & maxPassages);
-        // get each query term's offsets iterator
-        OffsetsEnums getOffsetsEnums(const Query & query, const int & docID);
-        // highlight using the iterators and the content of the document
-        std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, const int & docID, const int & maxPassages);
+        std::string highlightForDoc(const Query & query, const int & docID, const int & maxPassages);  // highlight each document
+        OffsetsEnums getOffsetsEnums(const Query & query, const int & docID);  // get each query term's offsets iterator
+        std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, const int & docID, const int & maxPassages);  // highlight using the iterators and the content of the document
        
-        // helper for generating key in hash table 
-        std::string construct_key(const Query & query, const int & docID);
+        std::string construct_key(const Query & query, const int & docID); // helper for generating key for search in cache
     
     private:
         // cache for snippets ( docID+query -> string )
         cache::lru_cache<std::string, std::string> _snippets_cache_ {cache::lru_cache<std::string, std::string>(SNIPPETS_CACHE_SIZE)};
-        cache::lru_cache<std::string, int> _snippets_cache_falsh_ {cache::lru_cache<std::string, int>(SNIPPETS_CACHE_ON_FLASH_SIZE)};
-        //TODO file to hold the cache
+        // cache for on-flash snippets (docID+query -> position(int) of _snippets_store_)
+        cache::lru_flash_cache<std::string, std::string> _snippets_cache_flash_ {cache::lru_flash_cache<std::string, std::string>(SNIPPETS_CACHE_ON_FLASH_SIZE, SNIPPETS_CACHE_ON_FLASH_FILE) };
 
-
-        // passage normalization function for scoring
-        float pivot = 87;  // hard-coded average length of passage
-        float k1 = 1.2;  // BM25 parameters
-        float b = 0.75;  // BM25 parameters
+        // passage normalization parameters for scoring
+        float pivot = 87;  // hard-coded average length of passage(according to Lucene)
+        float k1 = 1.2;    // BM25 parameters
+        float b = 0.75;    // BM25 parameters
+        // passage normalization functions for scoring
         float passage_norm(int & start_offset);
         float tf_norm(int freq, int passageLen);
 }; 

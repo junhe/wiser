@@ -460,12 +460,18 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     //int maxPassages = 50;
    
     // warm up
-    test_highlighter.highlight({"support"}, topDocs, maxPassages);
+    //test_highlighter.highlight({"support"}, topDocs, maxPassages);
  
+    struct timeval t1,t2;
+    double timeuse;
+    /*gettimeofday(&t1,NULL);
+    for (int i = 0; i< 1000000000; i++) {
+    }
+    gettimeofday(&t2,NULL);
+    timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
+    */
     std::vector<std::string> res;
     for (int i = 0; i < 4; i++) { 
-        struct timeval t1,t2;
-        double timeuse;
         gettimeofday(&t1,NULL);
         //TopDocs topDocs = engine.Search(query, SearchOperator::AND);
         res = test_highlighter.highlight(query, topDocs, maxPassages);
