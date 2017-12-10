@@ -47,19 +47,7 @@ set(BOOST_LIBS
     boost_filesystem
     )
 
-# Building server
-add_executable(qq_server
-    ${ENGINE_SRCS}
-    qq_client.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/qq_server.cc
-    ${PROTO_SRCS}
-    ${GRPC_SRCS}
-)
-target_link_libraries(qq_server
-    gRPC::grpc++_reflection
-    protobuf::libprotobuf
-    ${BOOST_LIBS}
-)
+
 
 # Building client
 add_executable(client
@@ -96,11 +84,6 @@ add_executable(hash_benchmark
     hash_benchmark.cc
     utils.cc
 )
-#target_link_libraries(qq_server
-    #gRPC::grpc++_reflection
-    #protobuf::libprotobuf
-    #${BOOST_LIBS}
-#)
 
 
 add_executable(grpc_benchmark

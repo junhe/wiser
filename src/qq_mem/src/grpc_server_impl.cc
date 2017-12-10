@@ -36,8 +36,6 @@
 #include <grpc++/security/server_credentials.h>
 #include "qq.grpc.pb.h"
 
-#include "grpc_service_impl.h"
-
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -62,6 +60,70 @@ void sleep(int n_secs) {
 
   sleep_for(seconds(n_secs));
 }
+
+
+class QQEngineServiceImpl : public QQEngine::Service {
+  public:
+    int count = 0;
+
+    Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
+            StatusReply* reply) override {
+        // std::cout << "title" << request->document().title() << std::endl;
+        // std::cout << "url" << request->document().url() << std::endl;
+        // std::cout << "body" << request->document().body() << std::endl;
+
+        search_engine_.AddDocument(request->document().title(),
+                request->document().url(), request->document().body());
+
+        count++;
+
+        if (count % 10000 == 0) {
+            std::cout << count << std::endl;
+        }
+
+        reply->set_message("Doc added");
+        reply->set_ok(true);
+        return Status::OK;
+    }
+
+    Status Search(ServerContext* context, const SearchRequest* request,
+            SearchReply* reply) override {
+        Term term = request->term();
+
+        // std::cout << "search term: " << term << std::endl;
+
+        auto doc_ids = search_engine_.Search(TermList{term}, SearchOperator::AND);
+        
+        for (auto id : doc_ids) {
+            reply->add_doc_ids(id);
+
+            // std::string doc = search_engine_.GetDocument(id);
+            // std::cout << "Document found: " << doc << std::endl;
+            break;
+        }
+        return Status::OK;
+    }
+
+    Status Echo(ServerContext* context, const EchoData* request,
+            EchoData* reply) override {
+
+        std::string msg = request->message();
+        reply->set_message(msg);
+        
+        return Status::OK;
+    }
+
+    public:
+        QQSearchEngine search_engine_;
+};
+
+
+
+
+
+
+
+
 
 std::mutex w_mutex;
 int write_count = 0;
@@ -143,6 +205,7 @@ class AsyncServer {
 
  private:
   class ServerRpcContext;
+  typedef QQEngine::WithAsyncMethod_StreamingSearch<QQEngineServiceImpl> AsyncServiceType;
 
   void ThreadFunc(int thread_idx) {
     // Wait until work is available or we are shutting down
@@ -182,7 +245,7 @@ class AsyncServer {
 
   class ServerRpcContext {
    public:
-      ServerRpcContext(QQEngine::AsyncService *async_service,
+      ServerRpcContext(AsyncServiceType *async_service,
                        grpc::ServerCompletionQueue *cq
                        )
         : async_service_(async_service), 
@@ -266,7 +329,7 @@ class AsyncServer {
 
     State next_state_;
     grpc::ServerCompletionQueue *cq_;
-    QQEngine::AsyncService *async_service_;
+    AsyncServiceType *async_service_;
     std::unique_ptr<grpc::ServerContext> srv_ctx_;
     SearchRequest req_;
     SearchReply response_;
@@ -280,7 +343,7 @@ class AsyncServer {
   std::unique_ptr<grpc::Server> server_;
   std::vector<std::unique_ptr<grpc::ServerCompletionQueue>> srv_cqs_;
   std::vector<int> cq_;
-  QQEngine::AsyncService async_service_;
+  AsyncServiceType async_service_;
   std::vector<std::unique_ptr<ServerRpcContext>> contexts_;
 
   struct PerThreadShutdownState {
