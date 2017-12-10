@@ -39,6 +39,7 @@ set(ENGINE_SRCS
     inverted_index.cc
     index_creator.cc
     qq_engine.cc
+    qq_client.cc
     utils.cc
     )
 
@@ -48,12 +49,26 @@ set(BOOST_LIBS
     )
 
 
+#######################################
+# GRPC Client and server
+#######################################
+add_executable(server
+    qq_server.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(server
+    gRPC::grpc++_reflection
+    protobuf::libprotobuf
+    ${BOOST_LIBS}
+    pthread
+)
 
 # Building client
 add_executable(client
-    qq_client.cc
-    ${ENGINE_SRCS}
     ${CMAKE_CURRENT_SOURCE_DIR}/client.cc
+    ${ENGINE_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
@@ -64,6 +79,11 @@ target_link_libraries(client
     pthread
 )
 
+
+
+#######################################
+# Catch2 testing framework
+#######################################
 add_library( CatchMain OBJECT catch_main.cc catch.hpp )
 add_executable( testmain tests.cc 
     qq_client.cc

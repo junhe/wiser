@@ -36,6 +36,8 @@
 #include <grpc++/security/server_credentials.h>
 #include "qq.grpc.pb.h"
 
+#include "qq_engine.h"
+
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -44,9 +46,20 @@ using grpc::ServerReaderWriter;
 using grpc::ServerWriter;
 using grpc::Status;
 
+using qq::QQEngine;
+
+// for AddDocument
+using qq::AddDocumentRequest;
+using qq::StatusReply;
+
+// for Search
 using qq::SearchRequest;
 using qq::SearchReply;
-using qq::QQEngine;
+
+// for Echo
+using qq::EchoData;
+
+
 
 using std::chrono::system_clock;
 
