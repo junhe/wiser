@@ -7,12 +7,15 @@
 #include <map>
 #include <tuple>
 
+// for direct IO
+#define PAGE_SIZE 512
+
 // size of snippets cache of highlighter
 #define SNIPPETS_CACHE_SIZE 100
 #define FLAG_SNIPPETS_CACHE false
 #define SNIPPETS_CACHE_ON_FLASH_SIZE 100
-#define FLAG_SNIPPETS_CACHE_ON_FLASH false
-#define SNIPPETS_CACHE_ON_FLASH_FILE "snippets_store"
+#define FLAG_SNIPPETS_CACHE_ON_FLASH true
+#define SNIPPETS_CACHE_ON_FLASH_FILE "snippets_store.cache"
 
 class DocumentStoreService {
     public:
@@ -82,6 +85,7 @@ typedef std::pair<int, int> Store_Segment;    // startoffset, length on flash ba
 class FlashReader {
     public:
         FlashReader(const std::string & based_file);
+        ~FlashReader();
         std::string read(const Store_Segment & segment);
         Store_Segment append(const std::string & value);
 

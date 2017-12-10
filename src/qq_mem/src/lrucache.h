@@ -63,7 +63,7 @@ class lru_cache {
 };
 
 
-template<typename key_t, typename value_t>
+template<typename key_t, typename value_t> // right now value_t should be std::string TODO
 class lru_flash_cache {
     public:
         lru_flash_cache(const size_t & max_size, const std::string & based_file) {
@@ -77,7 +77,7 @@ class lru_flash_cache {
         }
 
         void put(const key_t& key, const value_t& value) {
-            // store in file
+            // store in file   // TODO get this async 
             Store_Segment segment = _store_reader_->append(value);    //TODO what if value != string
             // update map
             _map_->put(key, segment);

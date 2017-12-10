@@ -424,11 +424,11 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     // read in the linedoc
     utils::LineDoc linedoc("src/testdata/line_doc_offset");
     std::vector<std::string> items;
-    linedoc.GetRow(items);
-    linedoc.GetRow(items);
-    linedoc.GetRow(items); 
-    linedoc.GetRow(items); 
-    //linedoc.GetRow(items); 
+    linedoc.GetRow(items);   // 884B
+    linedoc.GetRow(items);   // 15KB
+    linedoc.GetRow(items);   // 177KB
+    //linedoc.GetRow(items);   // 1MB
+    //linedoc.GetRow(items); // 8KB
     
     // adddocument
     engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
@@ -439,8 +439,8 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     //start highlighter
     //Query query = {"park"}; // attack build knife zoo
     //Query query = {"rule"}; // we doctor incorrect problem
-    //Query query = {"author"}; // similar life accord code
-    Query query = {"mondai"}; // support student report telephon
+    Query query = {"author"}; // similar life accord code
+    //Query query = {"mondai"}; // support student report telephon
     //Query query = {"polic"};  // bulletin inform law system
     
     // terms
@@ -479,7 +479,7 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
         timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
         printf("Use Time:%fms\n",timeuse*1000);
         REQUIRE(res.size() == topDocs.size());
-        std::cout << res[0] <<std::endl;
+        //std::cout << res[0] <<std::endl;
         //if (i>1) topDocs = {0, 1};
     }
 
@@ -545,6 +545,21 @@ TEST_CASE( "LRUCache Template essential Capacity limited  opeartions are OK", "[
     REQUIRE(cache_lru.size() == 10);
 }
 
+TEST_CASE( "Flash based LRUCache Template essential put/get opeartions are OK", "[put_get_LRUCache_Flash]") {
+    // create cache
+    cache::lru_flash_cache<int, std::string> cache_lru(1, "src/testdata/flash_cache_test");
+
+    // put/get test
+    cache_lru.put(7, "hello world");
+    REQUIRE(cache_lru.exists(7) == true);
+    std::string s("hello world");
+    //REQUIRE( cache_lru.get(7).compare(s) == 0);
+    REQUIRE(1 == cache_lru.size());
+
+    // miss
+    REQUIRE(cache_lru.exists(17) == false);
+    REQUIRE_THROWS_AS(cache_lru.get(17), std::range_error);
+}
 
 TEST_CASE( "UnifiedHighlighter snippets cache key constructor  essential opeartions are OK", "[UnifiedHighlighter_ConstructKey]") {
     // create cache

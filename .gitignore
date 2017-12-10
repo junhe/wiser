@@ -26,3 +26,4 @@ tags
 
 *.o
 src/qq_mem/build/
+*.cache

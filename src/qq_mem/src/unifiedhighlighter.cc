@@ -40,6 +40,7 @@ std::string UnifiedHighlighter::highlightForDoc(const Query & query, const int &
     if (FLAG_SNIPPETS_CACHE_ON_FLASH) {
         this_key = construct_key(query, docID);
         if (_snippets_cache_flash_.exists(this_key)) {
+           std::cout << "Hit in flash cache " << std::endl;
            return _snippets_cache_flash_.get(this_key);
         }
     }
@@ -54,6 +55,7 @@ std::string UnifiedHighlighter::highlightForDoc(const Query & query, const int &
 
     // update flash caceh
     if (FLAG_SNIPPETS_CACHE_ON_FLASH) {
+        std::cout << "Add to flash cache " << this_key << " size: " << res.size() << std::endl;
         _snippets_cache_flash_.put(this_key, res);
     }
 
