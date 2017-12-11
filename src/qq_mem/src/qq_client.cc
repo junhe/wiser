@@ -294,7 +294,10 @@ void AsyncClient::DestroyMultithreading() {
 
 
 void AsyncClient::Wait() {
+  std::cout << "About to wait" << std::endl;
+  std::cout << "Waiting for " << config_.at("benchmark_duration") << " seconds.\n";
   utils::sleep(std::stoi(config_.at("benchmark_duration")));
+  std::cout << "The wait is done" << std::endl;
 
   DestroyMultithreading();
 

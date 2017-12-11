@@ -367,7 +367,7 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
 
   // Use another thread to create client
   // std::thread client_thread(run_client);
-  auto client = CreateAsyncClient("localhost:50051", 64, 100, 1000, 8, 1, 8);
+  auto client = CreateAsyncClient("localhost:50051", 64, 100, 1000, 8, 1, 2);
   client->Wait();
   client.release();
 
