@@ -316,7 +316,7 @@ TEST_CASE( "Hash benchmark", "[benchmark]" ) {
 
 }
 
-TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
+TEST_CASE( "GRPC Sync Client and Server", "[grpc]" ) {
   auto server = CreateServer(std::string("localhost:50051"), 1, 1, 0);
   utils::sleep(1); // warm up the server
 
@@ -331,6 +331,8 @@ TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
     REQUIRE(ret == true);
     REQUIRE(reply.message() == "hello");
     utils::sleep(1);
+
+    // server will automatically destructed here.
   }
 
   SECTION("Add documents and search") {
@@ -348,9 +350,16 @@ TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
     client->Search("body", doc_ids);
     REQUIRE(ret == true);
     REQUIRE(doc_ids.size() == 1);
+
+    // server will automatically destructed here.
   }
 
-  // server will automatically destructed here.
 }
+
+
+TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
+
+}
+
 
 

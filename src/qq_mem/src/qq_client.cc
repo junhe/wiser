@@ -117,7 +117,7 @@ class RPCContext {
     finished_call_counts_(finished_call_counts),
     finished_roundtrips_(finished_roundtrips)
   {
-      // req_.set_response_size(888);  
+      req_.set_term("hello");
       Start();
   } 
 

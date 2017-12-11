@@ -77,10 +77,14 @@ void sleep(int n_secs) {
 }
 
 
-class QQEngineServiceImpl : public QQEngine::Service {
+// Service Inheritence:
+// Service
+//   |
+// WithAsyncMethod_StreamingSearch: Async methods are provided here
+//   |
+// QQEngineServiceImpl: Sync methods are implemented here
+class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEngine::Service> {
   public:
-    int count = 0;
-
     Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
             StatusReply* reply) override {
         // std::cout << "title" << request->document().title() << std::endl;
@@ -128,15 +132,10 @@ class QQEngineServiceImpl : public QQEngine::Service {
         return Status::OK;
     }
 
-    public:
+    private:
+        int count = 0;
         QQSearchEngine search_engine_;
 };
-
-
-
-
-
-
 
 
 
@@ -215,7 +214,7 @@ class AsyncServer {
 
  private:
   class ServerRpcContext;
-  typedef QQEngine::WithAsyncMethod_StreamingSearch<QQEngineServiceImpl> AsyncServiceType;
+  typedef QQEngineServiceImpl AsyncServiceType;
 
   void ThreadFunc(int thread_idx) {
     // Wait until work is available or we are shutting down
