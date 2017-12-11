@@ -315,6 +315,11 @@ TEST_CASE( "Hash benchmark", "[benchmark]" ) {
 
 }
 
+TEST_CASE( "GRPC Echo", "[grpc]" ) {
+
+}
+
+
 
 
 

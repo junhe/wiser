@@ -143,7 +143,7 @@ int write_count = 0;
 
 class AsyncServer {
  public:
-  AsyncServer(const ConfigType &config): config_(config) {
+  AsyncServer(const ConfigType config): config_(config) {
     ServerBuilder builder;
 
     std::cout << "listening on " << config.at("target") << std::endl;
@@ -368,5 +368,21 @@ class AsyncServer {
   std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
   const ConfigType &config_;
 };
+
+
+std::unique_ptr<AsyncServer> CreateServer(const std::string &target, 
+    int n_threads_per_cq, int n_server_threads, int n_secs) {
+
+  ConfigType config;
+  config["target"] = target;
+  config["n_threads_per_cq"] = std::to_string(n_threads_per_cq);
+  config["n_server_threads"] = std::to_string(n_threads_per_cq);
+  config["server_duration"] = std::to_string(n_secs);
+
+  std::unique_ptr<AsyncServer> server(new AsyncServer(config));
+  return server;
+}
+
+
 
 

@@ -57,13 +57,14 @@ int main(int argc, char** argv) {
   std::string port(argv[1]);
   std::string n_secs(argv[2]);
 
-  ConfigType config;
-  config["target"] = std::string("localhost:") + port;
-  config["n_threads_per_cq"] = "1";
-  config["n_server_threads"] = "40";
-  config["server_duration"] = n_secs;
+  // ConfigType config;
+  // config["target"] = std::string("localhost:") + port;
+  // config["n_threads_per_cq"] = "1";
+  // config["n_server_threads"] = "40";
+  // config["server_duration"] = n_secs;
 
-  AsyncServer server(config);
+  // AsyncServer server(config);
+  auto server = CreateServer(std::string("localhost:") + port, 1, 40, 0);
 
   if (std::stoi(n_secs) == 0) {
     while (!got_sigint) {
@@ -71,7 +72,7 @@ int main(int argc, char** argv) {
                                    gpr_time_from_seconds(5, GPR_TIMESPAN)));
     }
   } else {
-    server.Wait();
+    server->Wait();
   }
 
   std::cout << "Server about to be destruct" << std::endl;
