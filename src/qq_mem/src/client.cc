@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
   IndexCreator index_creator(
         "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", *client);
         // "src/testdata/enwiki-abstract_tokenized.linedoc.sample", *client);
-  index_creator.DoIndex(100);
+  index_creator.DoIndex(100000);
 
   // Search synchroniously
   std::vector<int> doc_ids;
@@ -37,6 +37,8 @@ int main(int argc, char** argv) {
   ret = client->Search("multicellular", doc_ids);
   assert(ret == true);
   assert(doc_ids.size() >= 1);
+
+  utils::sleep(5);
 
   auto async_client = CreateAsyncClient("localhost:50051", 
       64,  // n channels

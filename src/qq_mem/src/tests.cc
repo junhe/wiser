@@ -396,5 +396,14 @@ TEST_CASE( "IndexCreator works over the network", "[grpc]" ) {
 }
 
 
+TEST_CASE( "Search engine can load document and index them locally", "[engine]" ) {
+  QQSearchEngine engine;
+  int ret = engine.LoadLocalDocuments("src/testdata/enwiki-abstract_tokenized.linedoc.sample", 90);
+  REQUIRE(ret == 90);
+
+  std::vector<int> doc_ids = engine.Search(TermList{"multicellular"}, SearchOperator::AND);
+  REQUIRE(doc_ids.size() == 1);
+}
+
 
 
