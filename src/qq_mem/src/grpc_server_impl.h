@@ -174,7 +174,8 @@ class AsyncServer {
     // contexts_ has [cq0, cq1, ... cqn-1, cq0, .....]
     for (int i = 0; i < 5000; i++) {
       for (int j = 0; j < num_cqs; j++) {
-        contexts_.emplace_back(new ServerRpcContext(&async_service_, srv_cqs_[j].get()));
+        contexts_.emplace_back(new ServerRpcContext(
+              &async_service_, srv_cqs_[j].get(), search_engine_.get()));
       }
     }
     assert(contexts_.size() == 5000 * num_cqs);
@@ -262,13 +263,14 @@ class AsyncServer {
   class ServerRpcContext {
    public:
       ServerRpcContext(QQEngineServiceImpl *async_service,
-                       grpc::ServerCompletionQueue *cq
-                       )
+                       grpc::ServerCompletionQueue *cq,
+                       QQSearchEngine *search_engine)
         : async_service_(async_service), 
           cq_(cq),
           srv_ctx_(new grpc::ServerContext),
           next_state_(State::REQUEST_DONE),
-          stream_(srv_ctx_.get())
+          stream_(srv_ctx_.get()),
+          search_engine_(search_engine)
       {
           response_.add_doc_ids(88);
           RequestCall();
@@ -298,6 +300,9 @@ class AsyncServer {
             // std::cout << "State READ_DONE" << std::endl;
             if (ok) {
               next_state_ = State::WRITE_DONE;
+
+              auto doc_ids = search_engine_->Search(
+                  TermList{req_.term()}, SearchOperator::AND);
               stream_.Write(response_, AsyncServer::tag(this));
             } else {  // client has sent writes done
               next_state_ = State::FINISH_DONE;
@@ -350,6 +355,7 @@ class AsyncServer {
     grpc::ServerAsyncReaderWriter<SearchReply, SearchRequest> stream_;
     std::mutex mu_;
     grpc::Status status_;
+    QQSearchEngine *search_engine_;
   };
 
   std::vector<std::thread> threads_;
