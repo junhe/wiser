@@ -85,13 +85,19 @@ void sleep(int n_secs) {
 // QQEngineServiceImpl: Sync methods are implemented here
 class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEngine::Service> {
   public:
+    void Initialize(QQSearchEngine* search_engine) {
+      // TODO: This function is ugly. Need to find a better way to 
+      // initialize search engine pointer at class initialization.
+      search_engine_ = search_engine;
+    }
+
     Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
             StatusReply* reply) override {
         // std::cout << "title" << request->document().title() << std::endl;
         // std::cout << "url" << request->document().url() << std::endl;
         // std::cout << "body" << request->document().body() << std::endl;
 
-        search_engine_.AddDocument(request->document().title(),
+        search_engine_->AddDocument(request->document().title(),
                 request->document().url(), request->document().body());
 
         count++;
@@ -111,12 +117,12 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
 
         // std::cout << "search term: " << term << std::endl;
 
-        auto doc_ids = search_engine_.Search(TermList{term}, SearchOperator::AND);
+        auto doc_ids = search_engine_->Search(TermList{term}, SearchOperator::AND);
         
         for (auto id : doc_ids) {
             reply->add_doc_ids(id);
 
-            // std::string doc = search_engine_.GetDocument(id);
+            // std::string doc = search_engine_->GetDocument(id);
             // std::cout << "Document found: " << doc << std::endl;
             break;
         }
@@ -134,18 +140,20 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
 
     private:
         int count = 0;
-        QQSearchEngine search_engine_;
+        QQSearchEngine* search_engine_ = nullptr;
 };
 
 
 
 class AsyncServer {
  public:
-  AsyncServer(const ConfigType config): config_(config) {
+  AsyncServer(const ConfigType config)
+      :config_(config), search_engine_(new QQSearchEngine) {
     ServerBuilder builder;
 
     std::cout << "listening on " << config.at("target") << std::endl;
     builder.AddListeningPort(config.at("target"), grpc::InsecureServerCredentials());
+    async_service_.Initialize(search_engine_.get());
     builder.RegisterService(&async_service_);
     
     int num_threads = std::stoi(config.at("n_server_threads")); 
@@ -214,7 +222,6 @@ class AsyncServer {
 
  private:
   class ServerRpcContext;
-  typedef QQEngineServiceImpl AsyncServiceType;
 
   void ThreadFunc(int thread_idx) {
     // Wait until work is available or we are shutting down
@@ -254,7 +261,7 @@ class AsyncServer {
 
   class ServerRpcContext {
    public:
-      ServerRpcContext(AsyncServiceType *async_service,
+      ServerRpcContext(QQEngineServiceImpl *async_service,
                        grpc::ServerCompletionQueue *cq
                        )
         : async_service_(async_service), 
@@ -335,7 +342,7 @@ class AsyncServer {
 
     State next_state_;
     grpc::ServerCompletionQueue *cq_;
-    AsyncServiceType *async_service_;
+    QQEngineServiceImpl *async_service_;
     std::unique_ptr<grpc::ServerContext> srv_ctx_;
     SearchRequest req_;
     SearchReply response_;
@@ -349,7 +356,7 @@ class AsyncServer {
   std::unique_ptr<grpc::Server> server_;
   std::vector<std::unique_ptr<grpc::ServerCompletionQueue>> srv_cqs_;
   std::vector<int> cq_;
-  AsyncServiceType async_service_;
+  QQEngineServiceImpl async_service_;
   std::vector<std::unique_ptr<ServerRpcContext>> contexts_;
 
   struct PerThreadShutdownState {
@@ -360,6 +367,7 @@ class AsyncServer {
 
   std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
   const ConfigType &config_;
+  std::unique_ptr<QQSearchEngine> search_engine_;
 };
 
 
