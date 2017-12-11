@@ -22,23 +22,21 @@ void make_queries(int n_queries) {
 
 
 int main(int argc, char** argv) {
-
-  auto client = CreateSyncClient("localhost:50051");
-
   // Create index on server side
-  IndexCreator index_creator(
-        "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", *client);
+  // IndexCreator index_creator(
+        // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", *client);
         // "src/testdata/enwiki-abstract_tokenized.linedoc.sample", *client);
-  index_creator.DoIndex(100000);
+  // index_creator.DoIndex(100000);
 
   // Search synchroniously
+  auto client = CreateSyncClient("localhost:50051");
   std::vector<int> doc_ids;
   bool ret;
   ret = client->Search("multicellular", doc_ids);
   assert(ret == true);
   assert(doc_ids.size() >= 1);
 
-  utils::sleep(5);
+  utils::sleep(1);
 
   auto async_client = CreateAsyncClient("localhost:50051", 
       64,  // n channels
