@@ -139,9 +139,9 @@ class RPCContext {
           if (!ok) {
             return false;
           }
-          w_mutex.lock();
-          write_count++;
-          w_mutex.unlock();
+          // w_mutex.lock();
+          // write_count++;
+          // w_mutex.unlock();
           next_state_ = State::WRITE_DONE;
           stream_->Write(req_, RPCContext::tag(this));
           return true;
@@ -325,7 +325,7 @@ void AsyncClient::ShowStats() {
   std::cout << "Calls Per Second: " << total_calls / n_secs << std::endl;
   std::cout << "Roundtrip Per Second: " 
     << total_roundtrips / n_secs << std::endl;
-  std::cout << "Client stream write count: " << write_count << std::endl;
+  // std::cout << "Client stream write count: " << write_count << std::endl;
 }
 
 AsyncClient::~AsyncClient() {

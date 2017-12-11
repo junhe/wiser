@@ -37,7 +37,13 @@ int main(int argc, char** argv) {
   assert(ret == true);
   assert(doc_ids.size() >= 1);
 
-  auto async_client = CreateAsyncClient("localhost:50051", 64, 100, 1000, 32, 1, 8);
+  auto async_client = CreateAsyncClient("localhost:50051", 
+      64,  // n channels
+      100,  // rpcs per channel
+      100000,  // messages per rpc
+      40,  // n threads
+      1,  // thread per cq
+      30); // duration (seconds)
   async_client->Wait();
   async_client->ShowStats();
   return 0;

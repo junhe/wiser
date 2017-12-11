@@ -301,6 +301,7 @@ class AsyncServer {
             if (ok) {
               next_state_ = State::WRITE_DONE;
 
+              // std::cout << "term: " << req_.term() << std::endl;
               auto doc_ids = search_engine_->Search(
                   TermList{req_.term()}, SearchOperator::AND);
               stream_.Write(response_, AsyncServer::tag(this));

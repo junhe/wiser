@@ -57,14 +57,10 @@ int main(int argc, char** argv) {
   std::string port(argv[1]);
   std::string n_secs(argv[2]);
 
-  // ConfigType config;
-  // config["target"] = std::string("localhost:") + port;
-  // config["n_threads_per_cq"] = "1";
-  // config["n_server_threads"] = "40";
-  // config["server_duration"] = n_secs;
-
-  // AsyncServer server(config);
-  auto server = CreateServer(std::string("localhost:") + port, 1, 40, 0);
+  auto server = CreateServer(std::string("localhost:") + port, 
+      1, // threads per cq
+      40,  // n threads
+      0); // duration(seconds)
 
   if (std::stoi(n_secs) == 0) {
     while (!got_sigint) {
