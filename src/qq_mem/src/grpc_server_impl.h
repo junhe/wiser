@@ -149,6 +149,14 @@ class AsyncServer {
  public:
   AsyncServer(const ConfigType config)
       :config_(config), search_engine_(new QQSearchEngine) {
+
+    std::string line_doc_path = config.at("line_doc_path");
+    if (line_doc_path.size() > 0) {
+      int n_rows = std::stoi(config.at("n_line_doc_rows"));
+      int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows);
+      std::cout << ret << " docs indexed to search engine." << std::endl;
+    }
+
     ServerBuilder builder;
 
     std::cout << "listening on " << config.at("target") << std::endl;
@@ -386,9 +394,31 @@ std::unique_ptr<AsyncServer> CreateServer(const std::string &target,
   config["n_threads_per_cq"] = std::to_string(n_threads_per_cq);
   config["n_server_threads"] = std::to_string(n_server_threads);
   config["server_duration"] = std::to_string(n_secs);
+  config["line_doc_path"] = "";
+  config["n_line_doc_rows"] = "";
 
   std::unique_ptr<AsyncServer> server(new AsyncServer(config));
   return server;
 }
+
+
+std::unique_ptr<AsyncServer> CreateServer(const std::string &target, 
+    int n_threads_per_cq, int n_server_threads, int n_secs,
+    const std::string &line_doc_path, const int &n_rows) {
+
+  ConfigType config;
+  config["target"] = target;
+  config["n_threads_per_cq"] = std::to_string(n_threads_per_cq);
+  config["n_server_threads"] = std::to_string(n_server_threads);
+  config["server_duration"] = std::to_string(n_secs);
+  config["line_doc_path"] = line_doc_path;
+  config["n_line_doc_rows"] = std::to_string(n_rows);
+
+  std::unique_ptr<AsyncServer> server(new AsyncServer(config));
+  return server;
+}
+
+
+
 
 #endif
