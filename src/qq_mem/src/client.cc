@@ -8,12 +8,11 @@
 void make_queries(int n_queries) {
     std::string reply;
 
-    QQEngineSyncClient qqengine(grpc::CreateChannel(
-                "localhost:50051", grpc::InsecureChannelCredentials()));
+    auto qqengine = CreateSyncClient("localhost:50051");
 
 
     for (int i = 0; i < n_queries; i++) {
-        reply = qqengine.Search("hello");
+        reply = qqengine->Search("hello");
     }
 
 }

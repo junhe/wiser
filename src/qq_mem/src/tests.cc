@@ -317,9 +317,20 @@ TEST_CASE( "Hash benchmark", "[benchmark]" ) {
 }
 
 TEST_CASE( "GRPC Echo", "[grpc]" ) {
-  auto server = CreateServer(std::string("localhost:50051"), 1, 40, 10);
+  auto server = CreateServer(std::string("localhost:50051"), 1, 1, 0);
+
+  auto client = CreateSyncClient("localhost:50051");
+
+  EchoData request;
+  request.set_message("hello");
+  EchoData reply;
+  auto ret = client->Echo(request, reply);
+
+  REQUIRE(ret == true);
+  REQUIRE(reply.message() == "hello");
   utils::sleep(1);
 
+  // server will automatically destructed here.
 }
 
 

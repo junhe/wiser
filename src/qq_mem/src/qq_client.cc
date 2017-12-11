@@ -67,6 +67,23 @@ std::string QQEngineSyncClient::Echo(const std::string &msg) {
 }
 
 
+bool QQEngineSyncClient::Echo(const EchoData &request, EchoData &reply) {
+    ClientContext context;
+
+    Status status = stub_->Echo(&context, request,  &reply);
+    if (status.ok()) {
+        return true;
+    } else {
+        std::cout << status.error_code() 
+            << ": " << status.error_message()
+            << std::endl;
+        return false;
+    }
+}
+
+
+
+
 std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target) {
   std::unique_ptr<QQEngineSyncClient> client(
       new QQEngineSyncClient(
@@ -74,7 +91,10 @@ std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target) 
   return client;
 }
 
-
+std::unique_ptr<QQEngine::Stub> CreateStub(const std::string &target) {
+  return QQEngine::NewStub(
+      grpc::CreateChannel(target, grpc::InsecureChannelCredentials()));
+}
 
 
 

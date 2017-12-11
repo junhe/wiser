@@ -40,6 +40,7 @@ class QQEngineSyncClient {
                 const std::string &url, const std::string &body);
         std::string Search(const std::string &term);
         std::string Echo(const std::string &msg);
+        bool Echo(const EchoData &request, EchoData &reply);
 
     private:
         std::unique_ptr<QQEngine::Stub> stub_;

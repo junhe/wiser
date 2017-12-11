@@ -378,7 +378,7 @@ std::unique_ptr<AsyncServer> CreateServer(const std::string &target,
   ConfigType config;
   config["target"] = target;
   config["n_threads_per_cq"] = std::to_string(n_threads_per_cq);
-  config["n_server_threads"] = std::to_string(n_threads_per_cq);
+  config["n_server_threads"] = std::to_string(n_server_threads);
   config["server_duration"] = std::to_string(n_secs);
 
   std::unique_ptr<AsyncServer> server(new AsyncServer(config));
