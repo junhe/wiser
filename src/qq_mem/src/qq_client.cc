@@ -59,19 +59,6 @@ bool QQEngineSyncClient::Echo(const EchoData &request, EchoData &reply) {
 
 
 
-std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target) {
-  std::unique_ptr<QQEngineSyncClient> client(
-      new QQEngineSyncClient(
-        grpc::CreateChannel(target, grpc::InsecureChannelCredentials())));
-  return client;
-}
-
-std::unique_ptr<QQEngine::Stub> CreateStub(const std::string &target) {
-  return QQEngine::NewStub(
-      grpc::CreateChannel(target, grpc::InsecureChannelCredentials()));
-}
-
-
 static std::mutex w_mutex;
 static int write_count = 0;
 
@@ -85,6 +72,8 @@ struct ChannelInfo {
     channel_ = grpc::CreateChannel(target, grpc::InsecureChannelCredentials());
 
     auto start = utils::now();
+    std::cout << "Waiting for chnnael to be conneted to "
+      << target << std::endl;
     channel_->WaitForConnected(
         gpr_time_add(
           gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(300, GPR_TIMESPAN)));
@@ -397,5 +386,18 @@ std::unique_ptr<AsyncClient> CreateAsyncClient(const std::string &target,
   return client;
 }
 
+
+std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target) {
+  std::unique_ptr<QQEngineSyncClient> client(
+      new QQEngineSyncClient(
+        grpc::CreateChannel(target, grpc::InsecureChannelCredentials())));
+  return client;
+}
+
+
+std::unique_ptr<QQEngine::Stub> CreateStub(const std::string &target) {
+  return QQEngine::NewStub(
+      grpc::CreateChannel(target, grpc::InsecureChannelCredentials()));
+}
 
 

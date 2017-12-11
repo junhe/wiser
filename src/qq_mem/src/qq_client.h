@@ -87,6 +87,9 @@ class AsyncClient {
 
 
 std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target);
+std::unique_ptr<AsyncClient> CreateAsyncClient(const std::string &target, 
+  int n_client_channels, int n_rpcs_per_channel, int n_messages_per_call,
+  int n_async_threads, int n_threads_per_cq, int benchmark_duration);
 
 #endif
 
