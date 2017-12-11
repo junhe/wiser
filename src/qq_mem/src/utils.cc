@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <thread>
 #include <iterator>
 #include <cassert>
 #include <stdexcept>
@@ -49,6 +50,13 @@ const std::vector<std::string> explode_strict(const std::string &line, const cha
     vec.push_back(buff);
     
     return vec;
+}
+
+void sleep(int n_secs) {
+  using namespace std::this_thread; // sleep_for, sleep_until
+  using namespace std::chrono; // nanoseconds, system_clock, seconds
+
+  sleep_for(seconds(n_secs));
 }
 
 const std::chrono::time_point<std::chrono::system_clock> now() {

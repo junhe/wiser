@@ -2,7 +2,7 @@
 #include "utils.h"
 
 
-IndexCreator::IndexCreator(const std::string &line_doc_path, QQEngineClient &client) 
+IndexCreator::IndexCreator(const std::string &line_doc_path, QQEngineSyncClient &client) 
     :line_doc_path_(line_doc_path), client_(client)
 {}
 

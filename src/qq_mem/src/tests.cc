@@ -12,6 +12,7 @@
 #include "index_creator.h"
 #include "utils.h"
 #include "hash_benchmark.h"
+#include "grpc_server_impl.h"
 
 #include "posting_list_direct.h"
 #include "posting_list_raw.h"
@@ -316,10 +317,10 @@ TEST_CASE( "Hash benchmark", "[benchmark]" ) {
 }
 
 TEST_CASE( "GRPC Echo", "[grpc]" ) {
+  auto server = CreateServer(std::string("localhost:50051"), 1, 40, 10);
+  utils::sleep(1);
 
 }
-
-
 
 
 

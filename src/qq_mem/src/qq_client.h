@@ -31,9 +31,9 @@ using qq::EchoData;
 // AddDocument().
 
 
-class QQEngineClient {
+class QQEngineSyncClient {
     public:
-        QQEngineClient(std::shared_ptr<Channel> channel)
+        QQEngineSyncClient(std::shared_ptr<Channel> channel)
             : stub_(QQEngine::NewStub(channel)) {}
 
         std::string AddDocument(const std::string &title, 
@@ -45,4 +45,8 @@ class QQEngineClient {
         std::unique_ptr<QQEngine::Stub> stub_;
 };
 
+
+std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target);
+
 #endif
+

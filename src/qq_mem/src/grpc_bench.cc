@@ -10,7 +10,7 @@
 void make_queries(int n_queries) {
     std::string reply;
 
-    QQEngineClient qqengine(grpc::CreateChannel(
+    QQEngineSyncClient qqengine(grpc::CreateChannel(
                 "localhost:50051", grpc::InsecureChannelCredentials()));
 
     for (int i = 0; i < n_queries; i++) {

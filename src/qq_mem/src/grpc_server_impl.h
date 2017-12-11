@@ -15,6 +15,8 @@
  * limitations under the License.
  *
  */
+#ifndef GRPC_SERVER_IMPL_H
+#define GRPC_SERVER_IMPL_H
 
 #include <signal.h>
 
@@ -383,6 +385,4 @@ std::unique_ptr<AsyncServer> CreateServer(const std::string &target,
   return server;
 }
 
-
-
-
+#endif

@@ -8,7 +8,7 @@
 void make_queries(int n_queries) {
     std::string reply;
 
-    QQEngineClient qqengine(grpc::CreateChannel(
+    QQEngineSyncClient qqengine(grpc::CreateChannel(
                 "localhost:50051", grpc::InsecureChannelCredentials()));
 
 
@@ -21,12 +21,13 @@ void make_queries(int n_queries) {
 
 
 int main(int argc, char** argv) {
-    QQEngineClient qqengine(grpc::CreateChannel(
-                "localhost:50051", grpc::InsecureChannelCredentials()));
+    // QQEngineSyncClient qqengine(grpc::CreateChannel(
+                // "localhost:50051", grpc::InsecureChannelCredentials()));
+    auto qqengine = CreateSyncClient("localhost:50051");
 
     // IndexCreator index_creator("src/testdata/tokenized_wiki_abstract_line_doc", qqengine);
     // IndexCreator index_creator("/mnt/ssd/downloads/test_doc_tokenized", qqengine);
-    IndexCreator index_creator("/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", qqengine);
+    IndexCreator index_creator("/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", *qqengine);
     index_creator.DoIndex();
 
     std::vector<std::thread> threadList;

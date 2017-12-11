@@ -1,7 +1,7 @@
 #include "qq_client.h"
 
 
-std::string QQEngineClient::AddDocument(const std::string &title, 
+std::string QQEngineSyncClient::AddDocument(const std::string &title, 
         const std::string &url, const std::string &body) {
     AddDocumentRequest request;
     request.mutable_document()->set_title(title);
@@ -26,7 +26,7 @@ std::string QQEngineClient::AddDocument(const std::string &title,
 }
 
 
-std::string QQEngineClient::Search(const std::string &term) {
+std::string QQEngineSyncClient::Search(const std::string &term) {
     SearchRequest request;
     SearchReply reply;
     ClientContext context;
@@ -48,7 +48,7 @@ std::string QQEngineClient::Search(const std::string &term) {
     }
 }
 
-std::string QQEngineClient::Echo(const std::string &msg) {
+std::string QQEngineSyncClient::Echo(const std::string &msg) {
     EchoData request;
     EchoData reply;
     ClientContext context;
@@ -65,4 +65,16 @@ std::string QQEngineClient::Echo(const std::string &msg) {
         return "RPC failed";
     }
 }
+
+
+std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target) {
+  std::unique_ptr<QQEngineSyncClient> client(
+      new QQEngineSyncClient(
+        grpc::CreateChannel(target, grpc::InsecureChannelCredentials())));
+  return client;
+}
+
+
+
+
 

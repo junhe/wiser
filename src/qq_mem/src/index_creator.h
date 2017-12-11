@@ -9,10 +9,10 @@
 class IndexCreator {
     private:
         std::string line_doc_path_;
-        QQEngineClient &client_;
+        QQEngineSyncClient &client_;
 
     public:
-        IndexCreator(const std::string &line_doc_path, QQEngineClient &client);
+        IndexCreator(const std::string &line_doc_path, QQEngineSyncClient &client);
         void DoIndex();
 };
 
