@@ -369,10 +369,32 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
   // std::thread client_thread(run_client);
   auto client = CreateAsyncClient("localhost:50051", 64, 100, 1000, 8, 1, 2);
   client->Wait();
+  // client->ShowStats();
   client.release();
 
   // client_thread.join();
 }
+
+TEST_CASE( "IndexCreator works over the network", "[grpc]" ) {
+  auto server = CreateServer(std::string("localhost:50051"), 1, 40, 0);
+  utils::sleep(1); // warm up the server
+
+  auto client = CreateSyncClient("localhost:50051");
+
+  IndexCreator index_creator(
+        "src/testdata/enwiki-abstract_tokenized.linedoc.sample", *client);
+  index_creator.DoIndex();
+
+  // Search synchroniously
+  std::vector<int> doc_ids;
+  bool ret;
+  ret = client->Search("multicellular", doc_ids);
+  REQUIRE(ret == true);
+  REQUIRE(doc_ids.size() == 1);
+
+  // client_thread.join();
+}
+
 
 
 

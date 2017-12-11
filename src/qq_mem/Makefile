@@ -17,3 +17,9 @@ test:
 	./build.sh
 	./build/testmain
 
+test_args:
+	rm -f ./build/testmain
+	./build.sh
+	./build/testmain ${args}
+
+
