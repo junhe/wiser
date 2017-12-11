@@ -3,6 +3,34 @@
 #include "utils.h"
 #include <assert.h>
 
+// For precomputation, insert splits into offsets(with fake offset)
+void QQSearchEngine::precompute_insert_splits(Passage_Segements & splits, Offsets & offsets_in) {
+    // insert split (after split, there are offset ranges for each split)
+    if (offsets_in.size() > 0)
+        offsets_in.push_back(Offset(-1, -1));
+
+    // calculate scores, add to final
+    int start_one; 
+    int end_one = -1;
+    for (int i = 0; i < splits.size(); i++) {
+        // calculate range for splits[i]
+        start_one = end_one + 1;
+        int start_offset = splits[i].first;
+        int end_offset = splits[i].second + start_offset - 1;
+        while(std::get<0>(offsets_in[start_one]) < start_offset)
+            start_one ++;
+        end_one = start_one;
+        while (std::get<1>(offsets_in[end_one]) <= end_offset)
+            end_one ++;
+        end_one--;
+        int len = end_one - start_one + 1;
+       
+        if (len > 0)
+            offsets_in.push_back(Offset(i, len));
+    }
+    return ;
+}
+
 void QQSearchEngine::AddDocument(const std::string &title, const std::string &url, 
         const std::string &body, const std::string &tokens,  const std::string &offsets) {
     int doc_id = NextDocId();
@@ -17,9 +45,11 @@ void QQSearchEngine::AddDocument(const std::string &title, const std::string &ur
     assert(terms.size() == offsets_parsed.size());
     TermWithOffsetList terms_with_offset = {};
     for (int i = 0; i < terms.size(); i++) {
-        // TODO add passages split to offsets_parsed
-
-        TermWithOffset cur_term(terms[i], offsets_parsed[i]);
+        Offsets tmp_offsets = offsets_parsed[i];
+        if (FLAG_SNIPPETS_PRECOMPUTE) {
+            precompute_insert_splits(doc_store_.GetPassages(doc_id), tmp_offsets);
+        }
+        TermWithOffset cur_term(terms[i], tmp_offsets);
         terms_with_offset.push_back(cur_term);
     }
     // add document

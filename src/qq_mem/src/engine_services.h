@@ -68,7 +68,7 @@ class PostingListService {
 
 // for highlighter
 typedef std::vector<int> TopDocs;
-typedef std::tuple<int, int> Offset;
+typedef std::tuple<int, int> Offset;  //startoffset, endoffset
 
 // for add_document
 typedef std::vector<Offset> Offsets;

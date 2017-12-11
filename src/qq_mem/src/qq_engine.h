@@ -29,6 +29,11 @@ class QQSearchEngine {
         Passage_Segements & GetDocumentPassages(const int &doc_id);    // get precompute passages of document
         int NextDocId();
         std::vector<int> Search(const TermList &terms, const SearchOperator &op);
+
+
+    private:
+        void precompute_insert_splits(Passage_Segements & splits, Offsets & offsets_in);
+        
 };
 
 #endif
