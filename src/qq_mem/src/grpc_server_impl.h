@@ -140,9 +140,6 @@ class QQEngineServiceImpl : public QQEngine::Service {
 
 
 
-std::mutex w_mutex;
-int write_count = 0;
-
 class AsyncServer {
  public:
   AsyncServer(const ConfigType config): config_(config) {
@@ -209,8 +206,6 @@ class AsyncServer {
 
     shutdown_thread.join();
     std::cout << "Server destructed" << std::endl;
-    std::cout << "Server write count " << write_count << std::endl;
-
   }
 
   void Wait() {
@@ -298,9 +293,6 @@ class AsyncServer {
             if (ok) {
               next_state_ = State::WRITE_DONE;
               stream_.Write(response_, AsyncServer::tag(this));
-              w_mutex.lock();
-              write_count++;
-              w_mutex.unlock();
             } else {  // client has sent writes done
               next_state_ = State::FINISH_DONE;
               stream_.Finish(Status::OK, AsyncServer::tag(this));
