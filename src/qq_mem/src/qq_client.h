@@ -38,7 +38,7 @@ class QQEngineSyncClient {
 
         bool AddDocument(const std::string &title, 
                 const std::string &url, const std::string &body);
-        bool Search(const std::string &term);
+        bool Search(const std::string &term, std::vector<int> &doc_ids);
         bool Echo(const EchoData &request, EchoData &reply);
 
     private:

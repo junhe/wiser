@@ -12,7 +12,8 @@ void make_queries(int n_queries) {
 
 
     for (int i = 0; i < n_queries; i++) {
-        reply = qqengine->Search("hello");
+        std::vector<int> doc_ids;
+        qqengine->Search("hello", doc_ids);
     }
 
 }

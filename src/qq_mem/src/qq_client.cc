@@ -20,15 +20,24 @@ bool QQEngineSyncClient::AddDocument(const std::string &title,
 }
 
 
-bool QQEngineSyncClient::Search(const std::string &term) {
+bool QQEngineSyncClient::Search(const std::string &term, std::vector<int> &doc_ids) {
     SearchRequest request;
     SearchReply reply;
     ClientContext context;
+
+    assert(doc_ids.size() == 0);
 
     request.set_term(term);
 
     // Here we can the stub's newly available method we just added.
     Status status = stub_->Search(&context, request,  &reply);
+    
+    if (status.ok()) {
+      for (int i = 0; i < reply.doc_ids_size(); i++) {
+        doc_ids.push_back(reply.doc_ids(i));
+      }
+    }
+
     return status.ok();
 }
 
