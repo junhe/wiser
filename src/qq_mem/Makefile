@@ -10,7 +10,7 @@ grpc_benchmark:
 
 run_qq_mem:
 	./build.sh
-	python ./tools/run_client_server.py ./build/client ./build/qq_server
+	python ./tools/run_client_server.py ./build/client "" ./build/qq_server 50051,0
 
 test:
 	rm -f ./build/testmain

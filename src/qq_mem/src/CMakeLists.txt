@@ -52,13 +52,13 @@ set(BOOST_LIBS
 #######################################
 # GRPC Client and server
 #######################################
-add_executable(server
+add_executable(qq_server
     qq_server.cc
     ${ENGINE_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
-target_link_libraries(server
+target_link_libraries(qq_server
     gRPC::grpc++_reflection
     protobuf::libprotobuf
     ${BOOST_LIBS}
