@@ -79,6 +79,7 @@ class UnifiedHighlighter {
         std::vector<std::string> highlight(const Query & query, const TopDocs & topDocs, const int & maxPassages);
 
         std::string highlightForDoc(const Query & query, const int & docID, const int & maxPassages);  // highlight each document
+        std::string highlightQuick(); // quick highlighting with precomputed scores
         OffsetsEnums getOffsetsEnums(const Query & query, const int & docID);  // get each query term's offsets iterator
         std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, const int & docID, const int & maxPassages);  // highlight using the iterators and the content of the document
        

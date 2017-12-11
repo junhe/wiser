@@ -10,11 +10,15 @@
 // for direct IO
 #define PAGE_SIZE 512
 
+// for precomputing of snippets generating
+#define FLAG_SNIPPETS_PRECOMPUTE true
+
+
 // size of snippets cache of highlighter
 #define SNIPPETS_CACHE_SIZE 100
 #define FLAG_SNIPPETS_CACHE false
 #define SNIPPETS_CACHE_ON_FLASH_SIZE 100
-#define FLAG_SNIPPETS_CACHE_ON_FLASH true
+#define FLAG_SNIPPETS_CACHE_ON_FLASH false
 #define SNIPPETS_CACHE_ON_FLASH_FILE "snippets_store.cache"
 
 class DocumentStoreService {
@@ -79,6 +83,11 @@ class TermWithOffset {
 };
 typedef std::vector<TermWithOffset> TermWithOffsetList;
 
+// for precompute (score of each passage of each term)
+typedef std::pair<int, float> Passage_Score;
+typedef std::vector<Passage_Score> Passage_Scores;
+typedef std::pair<int, int> Passage_Segement; // startoffset, length
+typedef std::vector<Passage_Segement> Passage_Segements;
 
 // File Reader (TODO become a abstract class?)
 typedef std::pair<int, int> Store_Segment;    // startoffset, length on flash based file

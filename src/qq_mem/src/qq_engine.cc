@@ -49,4 +49,6 @@ std::vector<int> QQSearchEngine::Search(const TermList &terms, const SearchOpera
     return inverted_index_.Search(terms, op); 
 }
 
-
+Passage_Segements & QQSearchEngine::GetDocumentPassages(const int &doc_id) {
+    return doc_store_.GetPassages(doc_id);
+}

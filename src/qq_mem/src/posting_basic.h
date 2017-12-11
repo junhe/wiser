@@ -12,7 +12,9 @@ class Posting : public PostingService {
         int docID_;
         int term_frequency_;
         Offsets positions_;
-
+        
+        Passage_Scores passage_scores_;
+        
         Posting();
         Posting(int docID, int term_frequency, Offsets offsets_in);
         std::string dump();

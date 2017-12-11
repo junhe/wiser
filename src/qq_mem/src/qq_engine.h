@@ -26,6 +26,7 @@ class QQSearchEngine {
         void AddDocument(const std::string &title, const std::string &url, 
                 const std::string &body, const std::string &tokens, const std::string &offsets);
         std::string & GetDocument(const int &doc_id);
+        Passage_Segements & GetDocumentPassages(const int &doc_id);    // get precompute passages of document
         int NextDocId();
         std::vector<int> Search(const TermList &terms, const SearchOperator &op);
 };

@@ -46,7 +46,11 @@ std::string UnifiedHighlighter::highlightForDoc(const Query & query, const int &
     }
 
     // Real Work: highlight according to offset iterators and content of this document
-    std::string res = highlightOffsetsEnums(getOffsetsEnums(query, docID), docID, maxPassages);
+    std::string res;
+    if (FLAG_SNIPPETS_PRECOMPUTE)
+        res = highlightQuick();
+    else 
+        res = highlightOffsetsEnums(getOffsetsEnums(query, docID), docID, maxPassages);
 
     // update cache
     if (FLAG_SNIPPETS_CACHE) {
@@ -77,7 +81,10 @@ OffsetsEnums UnifiedHighlighter::getOffsetsEnums(const Query & query, const int 
     return res; 
 }
 
+std::string UnifiedHighlighter::highlightQuick() {
 
+    return "";
+}
 
 std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, const int & docID, const int & maxPassages) {
     // break the document according to sentence

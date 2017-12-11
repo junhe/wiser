@@ -6,6 +6,8 @@
 
 void NativeDocStore::Add(int id, std::string document) {
     store_[id] = document;
+
+    // TODO precompute passages?
 }
 
 void NativeDocStore::Remove(int id) {
@@ -18,6 +20,11 @@ bool NativeDocStore::Has(int id) {
 
 std::string & NativeDocStore::Get(int id) {
     return store_[id];
+}
+
+// for precompute
+Passage_Segements & NativeDocStore::GetPassages(int id) {
+    return passages_store_[id];
 }
 
 void NativeDocStore::Clear() {

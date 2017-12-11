@@ -7,6 +7,8 @@
 Posting::Posting(int docID, int term_frequency, const Offsets offsets_in)
     :docID_(docID), term_frequency_(term_frequency), positions_(offsets_in)
 { // TODO next?
+  // TODO precompute passage scores?
+
 }
 
 
