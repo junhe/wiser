@@ -36,10 +36,9 @@ class QQEngineSyncClient {
         QQEngineSyncClient(std::shared_ptr<Channel> channel)
             : stub_(QQEngine::NewStub(channel)) {}
 
-        std::string AddDocument(const std::string &title, 
+        bool AddDocument(const std::string &title, 
                 const std::string &url, const std::string &body);
-        std::string Search(const std::string &term);
-        std::string Echo(const std::string &msg);
+        bool Search(const std::string &term);
         bool Echo(const EchoData &request, EchoData &reply);
 
     private:

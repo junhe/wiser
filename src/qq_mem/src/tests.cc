@@ -318,6 +318,7 @@ TEST_CASE( "Hash benchmark", "[benchmark]" ) {
 
 TEST_CASE( "GRPC Echo", "[grpc]" ) {
   auto server = CreateServer(std::string("localhost:50051"), 1, 1, 0);
+  utils::sleep(1); // warm up the server
 
   auto client = CreateSyncClient("localhost:50051");
 
