@@ -225,7 +225,7 @@ class RPCContext {
 };
 
 
-AsyncClient::AsyncClient(const ConfigType &config)
+AsyncClient::AsyncClient(const ConfigType config)
   :config_(config){
   int tpc = std::stoi(config.at("n_threads_per_cq")); 
   int num_async_threads = std::stoi(config.at("n_async_threads"));

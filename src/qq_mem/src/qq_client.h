@@ -60,7 +60,7 @@ class AsyncClient {
   AsyncClient(AsyncClient&&) = default;
   AsyncClient& operator=(AsyncClient&&) = default;
 
-  AsyncClient(const ConfigType &config);
+  AsyncClient(const ConfigType config);
   void DestroyMultithreading();
   void Wait();
   void ShowStats();
@@ -69,7 +69,7 @@ class AsyncClient {
   void ThreadFunc(int thread_idx);
 
  private:
-  const ConfigType &config_;
+  const ConfigType config_;
   std::vector<ChannelInfo> channels_;
   std::vector<std::unique_ptr<CompletionQueue>> cli_cqs_;
 
