@@ -13,7 +13,7 @@ class IndexCreator {
 
     public:
         IndexCreator(const std::string &line_doc_path, QQEngineSyncClient &client);
-        void DoIndex();
+        void DoIndex(int n_rows = -1);
 };
 
 #endif

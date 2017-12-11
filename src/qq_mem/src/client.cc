@@ -27,8 +27,9 @@ int main(int argc, char** argv) {
 
   // Create index on server side
   IndexCreator index_creator(
-        "src/testdata/enwiki-abstract_tokenized.linedoc.sample", *client);
-  index_creator.DoIndex();
+        "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", *client);
+        // "src/testdata/enwiki-abstract_tokenized.linedoc.sample", *client);
+  index_creator.DoIndex(100);
 
   // Search synchroniously
   std::vector<int> doc_ids;
@@ -43,7 +44,7 @@ int main(int argc, char** argv) {
       100000,  // messages per rpc
       40,  // n threads
       1,  // thread per cq
-      30); // duration (seconds)
+      5); // duration (seconds)
   async_client->Wait();
   async_client->ShowStats();
   return 0;
