@@ -2,12 +2,29 @@
 
 #include <string>
 #include <iostream>
-
+#include "unifiedhighlighter.h"
 
 void NativeDocStore::Add(int id, std::string document) {
     store_[id] = document;
 
-    // TODO precompute passages?
+    // TODO split into passages
+    if (FLAG_SNIPPETS_PRECOMPUTE) {
+        Passage_Segements res;
+        typedef std::vector<Passage_Segement> Passage_Segements;
+        
+        SentenceBreakIterator breakiterator(document);
+
+        // iterate on a string
+        int i = 0;
+        while ( breakiterator.next() > 0 ) {
+            int start_offset = breakiterator.getStartOffset();
+            int end_offset = breakiterator.getEndOffset();
+            res.push_back(Passage_Segement(start_offset, end_offset-start_offset+1));
+        }
+
+        
+        passages_store_[id] = res; 
+    }
 }
 
 void NativeDocStore::Remove(int id) {

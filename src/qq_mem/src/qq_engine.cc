@@ -17,6 +17,8 @@ void QQSearchEngine::AddDocument(const std::string &title, const std::string &ur
     assert(terms.size() == offsets_parsed.size());
     TermWithOffsetList terms_with_offset = {};
     for (int i = 0; i < terms.size(); i++) {
+        // TODO add passages split to offsets_parsed
+
         TermWithOffset cur_term(terms[i], offsets_parsed[i]);
         terms_with_offset.push_back(cur_term);
     }

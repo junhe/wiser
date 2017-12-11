@@ -81,7 +81,7 @@ OffsetsEnums UnifiedHighlighter::getOffsetsEnums(const Query & query, const int 
     return res; 
 }
 
-std::string UnifiedHighlighter::highlightQuick() {
+std::string UnifiedHighlighter::highlightQuick() { // TODO
 
     return "";
 }

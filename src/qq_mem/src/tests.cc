@@ -570,3 +570,21 @@ TEST_CASE( "UnifiedHighlighter snippets cache key constructor  essential opearti
     std::string res = test_highlighter.construct_key({"hello", "world"}, 3);
     REQUIRE(res == "3:hello,world,");
 }
+
+TEST_CASE("Precompute and store document sentence segements successfully", "[Precompute_StorePassages]") {
+    NativeDocStore store;
+    int doc_id = 88;
+    std::string doc = "it is a doc. We are the second sentence. I'm the third sentence! ";
+    store.Add(doc_id, doc);
+    
+    if (FLAG_SNIPPETS_PRECOMPUTE) {
+        store.Add(doc_id, doc);
+        // check document body
+        REQUIRE(store.Get(doc_id) == doc);
+        // check document passages
+        REQUIRE(store.GetPassages(doc_id).size() == 3 );
+        REQUIRE(store.GetPassages(doc_id)[0] == Passage_Segement(0,13) );
+        REQUIRE(store.GetPassages(doc_id)[1] == Passage_Segement(13,28) );
+        REQUIRE(store.GetPassages(doc_id)[2] == Passage_Segement(41,24) );
+    }
+}

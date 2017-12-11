@@ -5,10 +5,19 @@
 
 //Posting
 Posting::Posting(int docID, int term_frequency, const Offsets offsets_in)
-    :docID_(docID), term_frequency_(term_frequency), positions_(offsets_in)
+    :docID_(docID)
 { // TODO next?
   // TODO precompute passage scores?
-
+    if (FLAG_SNIPPETS_PRECOMPUTE) {
+        //parse_offsets_with_precomputing(offsets_in, positions_, passage_scores_);
+        positions_ = offsets_in;
+        term_frequency_ = term_frequency;
+    
+    } else {
+        positions_ = offsets_in;
+        term_frequency_ = term_frequency;
+    }
+  //passage_scores_ == 
 }
 
 
