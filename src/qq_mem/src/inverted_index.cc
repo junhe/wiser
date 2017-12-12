@@ -58,3 +58,10 @@ std::vector<int> InvertedIndex::Search(const TermList &terms, const SearchOperat
     return std::vector<int> (id_set.begin(), id_set.end());
 }
 
+IndexStore::const_iterator InvertedIndex::Find(const Term &term) {
+    return index_.find(term);
+}
+
+IndexStore::const_iterator InvertedIndex::ConstEnd() {
+    return index_.cend();
+}

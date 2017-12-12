@@ -56,6 +56,15 @@ TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
     index.AddDocument(100, TermList{"hello", "world"});
     index.AddDocument(101, TermList{"hello", "earth"});
 
+    // Get just the iterator
+    {
+      IndexStore::const_iterator ci = index.Find(Term("hello"));
+      REQUIRE(index.ConstEnd() != ci);
+
+      ci = index.Find(Term("hellox"));
+      REQUIRE(index.ConstEnd() == ci);
+    }
+
     // Get non-exist
     {
         std::vector<int> ids = index.GetDocumentIds("notexist");
