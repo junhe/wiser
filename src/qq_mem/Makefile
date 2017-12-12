@@ -8,6 +8,10 @@ grpc_benchmark:
 	./build.sh
 	python ./tools/run_client_server.py ./build/grpc_benchmark ./build/qq_server
 
+in_proc_engine_bench:
+	./build.sh
+	./build/in_proc_engine_bench
+
 run_qq_mem:
 	./build.sh
 	python ./tools/run_client_server.py ./build/client "" ./build/qq_server 50051,0

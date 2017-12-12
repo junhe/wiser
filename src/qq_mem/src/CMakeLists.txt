@@ -98,13 +98,26 @@ target_link_libraries(testmain
 )
 
 
+#######################################
 # For benchmarks
-
+#######################################
 add_executable(hash_benchmark
     hash_benchmark.cc
     utils.cc
 )
 
+add_executable(in_proc_engine_bench
+    in_proc_engine_bench.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(in_proc_engine_bench
+    gRPC::grpc++_reflection
+    protobuf::libprotobuf
+    ${BOOST_LIBS}
+    pthread
+)
 
 add_executable(grpc_benchmark
     qq_client.cc
