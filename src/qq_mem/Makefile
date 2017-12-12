@@ -16,6 +16,13 @@ run_qq_mem:
 	./build.sh
 	python ./tools/run_client_server.py ./build/client "" ./build/qq_server 50051,0
 
+server:
+	./build.sh
+	./build/qq_server 50051 0
+
+client:
+	./build/client
+
 test:
 	rm -f ./build/testmain
 	./build.sh
