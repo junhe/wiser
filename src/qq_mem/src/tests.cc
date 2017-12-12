@@ -198,6 +198,20 @@ TEST_CASE( "QQSearchEngine", "[engine]" ) {
     REQUIRE(doc == "my body");
 }
 
+
+TEST_CASE( "QQSearchEngine can Find() a term", "[engine, benchmark]" ) {
+    QQSearchEngine engine;
+
+    engine.AddDocument("my title", "my url", "my body");
+
+    InvertedIndex::const_iterator it = engine.Find(Term("my"));
+
+    // We do not do any assertion here. 
+    // Just want to make sure it runs. 
+}
+
+
+
 TEST_CASE( "Utilities", "[utils]" ) {
     SECTION("Leading space and Two spaces") {
         std::vector<std::string> vec = utils::explode(" hello  world", ' ');

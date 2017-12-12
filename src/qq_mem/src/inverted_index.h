@@ -14,6 +14,8 @@ class InvertedIndex: public InvertedIndexService {
         IndexStore index_;
 
     public:
+        typedef IndexStore::const_iterator const_iterator;
+
         void AddDocument(const int &doc_id, const TermList &termlist);
         std::vector<int> GetDocumentIds(const Term &term);
         std::vector<int> Search(const TermList &terms, const SearchOperator &op);

@@ -26,6 +26,7 @@ class QQSearchEngine {
         int NextDocId();
         std::vector<int> Search(const TermList &terms, const SearchOperator &op);
         int LoadLocalDocuments(const std::string &line_doc_path, int n_rows);
+        InvertedIndex::const_iterator Find(const Term &term);
 };
 
 #endif

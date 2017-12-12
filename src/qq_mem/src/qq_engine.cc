@@ -49,4 +49,11 @@ int QQSearchEngine::LoadLocalDocuments(const std::string &line_doc_path, int n_r
   return count;
 }
 
+// This function is currently for benchmarking
+// It returns an iterator without parsing the posting list
+InvertedIndex::const_iterator QQSearchEngine::Find(const Term &term) {
+  volatile auto it = inverted_index_.Find(term);
+}
+
+
 
