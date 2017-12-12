@@ -5,13 +5,13 @@
 #include "qq_engine.h"
 #include "utils.h"
 
-int K = 1000;
-int M = 1000 * K;
-int B = 1000 * M;
+const int K = 1000;
+const int M = 1000 * K;
+const int B = 1000 * M;
 
 int main(int argc, char **argv) {
-  int n_queries = 1 * M;
-  int n_rows = 1 * M;
+  const int n_queries = 1 * M;
+  const int n_rows = 1 * M;
   std::vector<int> doc_ids; 
 
   QQSearchEngine engine;
