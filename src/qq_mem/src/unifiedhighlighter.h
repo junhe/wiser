@@ -85,6 +85,9 @@ class UnifiedHighlighter {
        
         std::string construct_key(const Query & query, const int & docID); // helper for generating key for search in cache
     
+        float passage_norm(int & start_offset);
+        float tf_norm(int freq, int passageLen);
+    
     private:
         // cache for snippets ( docID+query -> string )
         cache::lru_cache<std::string, std::string> _snippets_cache_ {cache::lru_cache<std::string, std::string>(SNIPPETS_CACHE_SIZE)};
@@ -96,8 +99,8 @@ class UnifiedHighlighter {
         float k1 = 1.2;    // BM25 parameters
         float b = 0.75;    // BM25 parameters
         // passage normalization functions for scoring
-        float passage_norm(int & start_offset);
-        float tf_norm(int freq, int passageLen);
+        //float passage_norm(int & start_offset);
+        //float tf_norm(int freq, int passageLen);
 }; 
 
 

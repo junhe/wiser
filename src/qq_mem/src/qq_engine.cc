@@ -1,5 +1,6 @@
 #include "qq_engine.h"
 #include "engine_services.h"
+#include "unifiedhighlighter.h" // TODO change the API
 #include "utils.h"
 #include <assert.h>
 
@@ -24,9 +25,14 @@ void QQSearchEngine::precompute_insert_splits(Passage_Segements & splits, Offset
             end_one ++;
         end_one--;
         int len = end_one - start_one + 1;
-       
-        if (len > 0)
-            offsets_in.push_back(Offset(i, len));
+        if (len > 0) {
+             UnifiedHighlighter tmp_highlighter;   // just for scoring 
+            // store the score
+            int passage_length = splits[i].second;
+            int score = (int)(tmp_highlighter.tf_norm(len, passage_length)*1000000000);
+            std::cout << "score: " << score << std::endl;
+            offsets_in.push_back(Offset(i, score));
+        }
     }
     return ;
 }

@@ -2,7 +2,7 @@
 
 #include <string>
 #include <iostream>
-#include "unifiedhighlighter.h"
+#include "unifiedhighlighter.h"  // To change the API
 
 void NativeDocStore::Add(int id, std::string document) {
     store_[id] = document;

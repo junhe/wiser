@@ -54,6 +54,8 @@ TEST_CASE( "Document store implemented by C++ map", "[docstore]" ) {
 }
 
 TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
+    if (FLAG_SNIPPETS_PRECOMPUTE)
+        return ;
     InvertedIndex index;     
     index.AddDocument(100, TermList{"hello", "world"});
     index.AddDocument(101, TermList{"hello", "earth"});
@@ -99,6 +101,8 @@ TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
 }
 
 TEST_CASE( "Basic Posting", "[posting]" ) {
+    if (FLAG_SNIPPETS_PRECOMPUTE)
+        return;
     Posting posting(100, 2, Offsets {std::make_tuple(1,3), std::make_tuple(5,8)});
     REQUIRE(posting.docID_ == 100);
     REQUIRE(posting.term_frequency_ == 2);
@@ -108,6 +112,8 @@ TEST_CASE( "Basic Posting", "[posting]" ) {
 }
 
 TEST_CASE( "Direct Posting List essential operations are OK", "[posting_list_direct]" ) {
+    if (FLAG_SNIPPETS_PRECOMPUTE)
+        return;
     PostingList_Direct pl("term001");
     REQUIRE(pl.Size() == 0);
 
@@ -187,6 +193,9 @@ TEST_CASE( "Protobuf based Posting List essential operations are OK", "[posting_
 }
 
 TEST_CASE( "QQSearchEngine", "[engine]" ) {
+    if (FLAG_SNIPPETS_PRECOMPUTE)
+        return;
+
     QQSearchEngine engine;
 
     REQUIRE(engine.NextDocId() == 0);
@@ -319,6 +328,9 @@ TEST_CASE( "Offsets Parser essential operations are OK", "[offsets_parser]" ) {
 }
 
 TEST_CASE( "Search Engine with offsets essential operations are OK", "[search_engine_offsets]" ) {
+    if (FLAG_SNIPPETS_PRECOMPUTE)
+        return;
+    
     QQSearchEngine engine;
     
     // read in the linedoc
@@ -361,6 +373,9 @@ TEST_CASE( "Search Engine with offsets essential operations are OK", "[search_en
 }
 
 TEST_CASE( "OffsetsEnums of Unified Highlighter essential operations are OK", "[offsetsenums_unified_highlighter]" ) {
+    if (FLAG_SNIPPETS_PRECOMPUTE)
+        return;
+
     QQSearchEngine engine;
     
     // read in the linedoc
@@ -419,6 +434,9 @@ TEST_CASE( "Passage of Unified Highlighter essential operations are OK", "[passa
 }
 
 TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
+    if (FLAG_SNIPPETS_PRECOMPUTE)
+        return;
+    
     QQSearchEngine engine;
     
     // read in the linedoc
