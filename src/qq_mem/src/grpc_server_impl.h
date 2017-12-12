@@ -310,8 +310,9 @@ class AsyncServer {
               next_state_ = State::WRITE_DONE;
 
               // std::cout << "term: " << req_.term() << std::endl;
-              auto doc_ids = search_engine_->Search(
-                  TermList{req_.term()}, SearchOperator::AND);
+              // auto doc_ids = search_engine_->Search(
+                  // TermList{req_.term()}, SearchOperator::AND);
+              volatile auto it = search_engine_->Find(Term("hello"));
               stream_.Write(response_, AsyncServer::tag(this));
             } else {  // client has sent writes done
               next_state_ = State::FINISH_DONE;
