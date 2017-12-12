@@ -42,9 +42,9 @@ int main(int argc, char** argv) {
       64,  // n channels
       100,  // rpcs per channel
       100000,  // messages per rpc
-      40,  // n threads
+      16,  // n threads
       1,  // thread per cq
-      5); // duration (seconds)
+      30); // duration (seconds)
   async_client->Wait();
   async_client->ShowStats();
   return 0;

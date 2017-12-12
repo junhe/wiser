@@ -59,8 +59,12 @@ int main(int argc, char** argv) {
 
   auto server = CreateServer(std::string("localhost:") + port, 
       1, // threads per cq
-      40,  // n threads
-      0); // duration(seconds)
+      32,  // n threads
+      0, // duration(seconds)
+      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc",
+      // 9000000
+      500000
+  );
 
   if (std::stoi(n_secs) == 0) {
     while (!got_sigint) {
