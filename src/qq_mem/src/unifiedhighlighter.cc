@@ -142,9 +142,11 @@ std::vector<int> UnifiedHighlighter::get_top_passages(const ScoresEnums & scores
 
         // format it into a string to return
         while (!passage_queue.empty()) {
+            std::cout << passage_queue.top().first << "," << passage_queue.top().second << ";"; 
             res.push_back(passage_queue.top().first);
             passage_queue.pop();
         }
+        std::cout << std::endl;
     } else {
     
 
@@ -166,11 +168,13 @@ ScoresEnums UnifiedHighlighter::get_passages_scoresEnums(const Query & query, co
     
 }
 
-std::string UnifiedHighlighter::highlight_passages(const Query & query, const int & docID, const std::vector<int> & top_passages) { // TODO
+std::string UnifiedHighlighter::highlight_passages(const Query & query, const int & docID, const std::vector<int> & top_passages) {
     // get the offset of
     Passage cur_passage;
     std::string res = "";
-    for (auto passage_id : top_passages) {
+    std::vector<int> passages = top_passages;
+    std::sort(passages.begin(), passages.end()); 
+    for (auto passage_id : passages) {
         cur_passage.reset();
         // add matches for highlighting
         for (auto term:query) {
@@ -201,7 +205,6 @@ std::string UnifiedHighlighter::highlightQuickForDoc(const Query & query, const 
     */
     // Get top passages
     std::vector<int> top_passages = get_top_passages(get_passages_scoresEnums(query, docID), maxPassages);
-
     // Highlight words
     std::string res = highlight_passages(query, docID, top_passages);
     return res;
@@ -233,7 +236,6 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offse
 
         int cur_start = cur_iter.startoffset;
         int cur_end = cur_iter.endoffset;
-        //std::cout << "handling: " << cur_start << ", " << cur_end << std::endl;
         // judge whether this iterator is over
         if (cur_start == -1)
             continue;
@@ -267,7 +269,6 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offse
         int tf = 0;
         while (1) {
             tf++;
-            //std::cout << "Add: " << cur_start << ", " <<cur_end <<std::endl;
             passage->addMatch(cur_start, cur_end); 
             cur_iter.next_position();
             if (cur_iter.startoffset == -1) {
@@ -305,7 +306,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offse
     }
     // sort array according to startoffset
     //auto comp_passage_offset = [] (Passage * & a, Passage * & b) -> bool { return a->startoffset < b->startoffset; };
-    auto comp_passage_offset = [] (Passage * & a, Passage * & b) -> bool { return a->score > b->score; };
+    auto comp_passage_offset = [] (Passage * & a, Passage * & b) -> bool { return a->startoffset < b->startoffset; };
     std::sort(passage_vector.begin(), passage_vector.end(), comp_passage_offset);
     
     
@@ -313,7 +314,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offse
     std::string res = "";
     for (auto it = passage_vector.begin(); it != passage_vector.end(); it++) {
         res += (*it)->to_string(breakiterator.content_);   // highlight appeared terms
-        // std::cout <<  "("  << (*it)->score << ") " << breakiterator.content_.substr((*it)->startoffset, (*it)->endoffset - (*it)->startoffset+1) << std::endl;
+        std::cout <<  "("  << (*it)->score << ") " << breakiterator.content_->substr((*it)->startoffset, (*it)->endoffset - (*it)->startoffset+1) << std::endl;
         delete (*it);
     }
     
@@ -382,13 +383,11 @@ std::string Passage::to_string(std::string * doc_string) {
     std::string res= "";
     res += doc_string->substr(startoffset, endoffset - startoffset + 1) + "\n";
     // highlight
-    //std::cout << "to highlight(" << startoffset << "," << endoffset << ") "<< res <<std::endl;
  
     auto cmp_terms = [] (Offset & a, Offset & b) -> bool { return (std::get<0>(a) > std::get<0>(b));};
     std::sort(matches.begin(), matches.end(), cmp_terms);
 
     for (auto it = matches.begin(); it != matches.end(); it++) {
-    //    std::cout << std::get<0>(*it) << "," << std::get<1>(*it) << ";";
         res.insert(std::get<1>(*it)-startoffset+1, "<\\b>");
         res.insert(std::get<0>(*it)-startoffset, "<b>");
     }

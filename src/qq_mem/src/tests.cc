@@ -434,9 +434,6 @@ TEST_CASE( "Passage of Unified Highlighter essential operations are OK", "[passa
 }
 
 TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
-    if (FLAG_SNIPPETS_PRECOMPUTE)
-        return;
-    
     QQSearchEngine engine;
     
     // read in the linedoc
@@ -452,7 +449,6 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
     //engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
     UnifiedHighlighter test_highlighter(engine);
-    
 
     //start highlighter
     //Query query = {"park"}; // attack build knife zoo
@@ -497,8 +493,7 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
         timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
         printf("Use Time:%fms\n",timeuse*1000);
         REQUIRE(res.size() == topDocs.size());
-        //std::cout << res[0] <<std::endl;
-        //if (i>1) topDocs = {0, 1};
+        std::cout << res[0] <<std::endl;
     }
 
 }
@@ -506,6 +501,8 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
 
 
 TEST_CASE( "ScoreEnums of Pre-computation based Unified Highlighter essential operations are OK", "[scoresenums_precompute_unified_highlighter]" ) {
+    if (!FLAG_SNIPPETS_PRECOMPUTE)
+        return;
     QQSearchEngine engine;
     
     // read in the linedoc
@@ -536,7 +533,6 @@ TEST_CASE( "ScoreEnums of Pre-computation based Unified Highlighter essential op
         cur_iter.next_passage();
     } 
     res += ".";
-    std::cout << res << std::endl;
     REQUIRE(res == "38,0.428823;39,0.609594;113,0.351342;.");
 }
 
