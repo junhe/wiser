@@ -48,7 +48,7 @@ std::string UnifiedHighlighter::highlightForDoc(const Query & query, const int &
     // Real Work: highlight according to offset iterators and content of this document
     std::string res;
     if (FLAG_SNIPPETS_PRECOMPUTE)
-        res = highlightQuick();
+        res = highlightQuickForDoc(query, docID, maxPassages);
     else 
         res = highlightOffsetsEnums(getOffsetsEnums(query, docID), docID, maxPassages);
 
@@ -57,7 +57,7 @@ std::string UnifiedHighlighter::highlightForDoc(const Query & query, const int &
         _snippets_cache_.put(this_key, res);
     }
 
-    // update flash caceh
+    // update flash cache
     if (FLAG_SNIPPETS_CACHE_ON_FLASH) {
         std::cout << "Add to flash cache " << this_key << " size: " << res.size() << std::endl;
         _snippets_cache_flash_.put(this_key, res);
@@ -78,12 +78,133 @@ OffsetsEnums UnifiedHighlighter::getOffsetsEnums(const Query & query, const int 
         res.push_back(Offset_Iterator(result.positions_));
         // TODO check whether empty?
     }
-    return res; 
+    return res;
 }
 
-std::string UnifiedHighlighter::highlightQuick() { // TODO
+std::vector<int> UnifiedHighlighter::get_top_passages(const ScoresEnums & scoresEnums, const int & maxPassages) { // TODO
+    bool FLAG_PAAT = true;   // PAAT means passage at a term algorithm; TAAT means term as a time
+    std::vector<int> res = {};
 
-    return "";
+    if (FLAG_PAAT) {
+        // priority queue for passage_score iterators, holding the first passage IDs
+        auto comp_passage_id = [] ( PassageScore_Iterator &a, PassageScore_Iterator &b ) -> bool { return a.cur_passage_id_ > b.cur_passage_id_; };
+        std::priority_queue<PassageScore_Iterator, std::vector<PassageScore_Iterator>, decltype(comp_passage_id)> scores_iterator_queue(comp_passage_id);
+        for (auto scores_iter:scoresEnums) {
+            scores_iterator_queue.push(scores_iter);
+        }
+        
+        // priority queue for passages, holding top passages
+        auto comp_passage = [] (std::pair<int, float> & a, std::pair<int, float> & b) -> bool { return a.second > b.second; };
+        std::priority_queue<std::pair<int, float>, std::vector<std::pair<int, float>>, decltype(comp_passage)> passage_queue(comp_passage); 
+
+        // merge
+        std::pair<int, float> passage(-1, 0);  // current passage (id, score)
+        while (!scores_iterator_queue.empty()) {
+           PassageScore_Iterator cur_iter = scores_iterator_queue.top();
+           scores_iterator_queue.pop();  // push_back
+           
+           int next_passage_id = cur_iter.cur_passage_id_;
+           if (next_passage_id == -1)
+               continue;
+
+           // if not same with cur_passage
+           if (next_passage_id != passage.first) {
+               if (passage.first != -1) {
+                   if (passage_queue.size() == maxPassages && passage.second < passage_queue.top().second) {
+                       passage.first = -1; passage.second = 0;
+                   } else {
+                       passage_queue.push(passage);
+                       if (passage_queue.size() > maxPassages) {
+                           passage = passage_queue.top();
+                           passage_queue.pop();
+                       } 
+                       passage.first = -1; passage.second = 0;
+                   }
+               }
+               // advance to next passage
+               passage.first = next_passage_id;
+           }
+           passage.second = passage.second + cur_iter.weight * cur_iter.score_;
+           // push back this scores iterator
+           cur_iter.next_passage();
+           scores_iterator_queue.push(cur_iter);
+        }
+
+        // Add the last passage
+        if (passage_queue.size() < maxPassages && passage.second > 0) {
+            passage_queue.push(passage);
+        } else {
+            if (passage.second > passage_queue.top().second) {
+                passage_queue.pop();
+                passage_queue.push(passage);
+            }
+        }
+
+        // format it into a string to return
+        while (!passage_queue.empty()) {
+            res.push_back(passage_queue.top().first);
+            passage_queue.pop();
+        }
+    } else {
+    
+
+    }
+    return res;
+}
+
+ScoresEnums UnifiedHighlighter::get_passages_scoresEnums(const Query & query, const int & docID) {
+    ScoresEnums res = {};
+
+    // get passage_scores from postings
+    for (auto term:query) {
+        // Posting
+        Posting & result = engine_.inverted_index_.GetPosting(term, docID);
+        // Offsets
+        res.push_back(PassageScore_Iterator(result.passage_scores_));
+    }
+    return res;
+    
+}
+
+std::string UnifiedHighlighter::highlight_passages(const Query & query, const int & docID, const std::vector<int> & top_passages) { // TODO
+    // get the offset of
+    Passage cur_passage;
+    std::string res = "";
+    for (auto passage_id : top_passages) {
+        cur_passage.reset();
+        // add matches for highlighting
+        for (auto term:query) {
+            Posting & cur_posting = engine_.inverted_index_.GetPosting(term, docID);
+            int startoffset = cur_posting.passage_splits_[passage_id].first;
+            int len = cur_posting.passage_splits_[passage_id].second;
+            for (int i = 0; i < len; i++) {
+                cur_passage.addMatch(std::get<0>(cur_posting.positions_[startoffset+i]), std::get<1>(cur_posting.positions_[startoffset+i]));
+            }
+        }
+        // get the string of this passage
+        // get offsets
+        cur_passage.startoffset = engine_.doc_store_.GetPassages(docID)[passage_id].first;
+        cur_passage.endoffset = cur_passage.startoffset - 1 + engine_.doc_store_.GetPassages(docID)[passage_id].second;
+        // get passage
+        res += cur_passage.to_string(&engine_.doc_store_.Get(docID));
+    }
+    return res;
+}
+
+
+std::string UnifiedHighlighter::highlightQuickForDoc(const Query & query, const int & docID, const int &maxPassages) {
+    /* precomputed:
+           1. passage sentence splits in DocumentStoreService.passages_store_
+           2. each item, each posting: every passage score for this document in posting_basic.passage_scores_
+       to compute:
+           1. top-maxPassages scores of those passages for (query, docID)
+    */
+    // Get top passages
+    std::vector<int> top_passages = get_top_passages(get_passages_scoresEnums(query, docID), maxPassages);
+
+    // Highlight words
+    std::string res = highlight_passages(query, docID, top_passages);
+    return res;
 }
 
 std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, const int & docID, const int & maxPassages) {
@@ -121,7 +242,6 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offse
         if (cur_start >= passage->endoffset) {
             // if this passage is not empty, then wrap up it and push it to the priority queue
             if (passage->startoffset >= 0) {
-                //passage->to_string(breakiterator.content_);
                 passage->score = passage->score * passage_norm(passage->startoffset); //normalize according to passage's startoffset
                 if (passage_queue.size() == maxPassages && passage->score < passage_queue.top()->score) {
                     passage->reset();
@@ -200,11 +320,11 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offse
     return res;
 }
 
-float UnifiedHighlighter::passage_norm(int & start_offset) {
+float UnifiedHighlighter::passage_norm(const int & start_offset) {
     return 1 + 1/(float) log((float)(pivot + start_offset));
-}  
+}
 
-float UnifiedHighlighter::tf_norm(int freq, int passageLen) {
+float UnifiedHighlighter::tf_norm(const int & freq, const int & passageLen) {
     float norm = k1 * ((1 - b) + b * (passageLen / pivot));
     return freq / (freq + norm);
 }
@@ -216,6 +336,26 @@ std::string UnifiedHighlighter::construct_key(const Query & query, const int & d
     }
     return res;
 }
+
+// PassageScore_Iterator Functions
+PassageScore_Iterator::PassageScore_Iterator(Passage_Scores & passage_scores_in) {
+    _passage_scores_ = &passage_scores_in;
+    _cur_passage_ = passage_scores_in.begin(); 
+    cur_passage_id_ = (*_cur_passage_).first;
+    score_ = (*_cur_passage_).second; 
+}
+
+void PassageScore_Iterator::next_passage() {  // go to next passage
+    _cur_passage_++;
+    if (_cur_passage_ == _passage_scores_->end()) {
+        cur_passage_id_ = -1;
+        return ;
+    } 
+    cur_passage_id_ = (*_cur_passage_).first;
+    score_ = (*_cur_passage_).second;
+    return;
+}
+
 
 // Offset_Iterator Functions
 Offset_Iterator::Offset_Iterator(std::vector<Offset> & offsets_in) {

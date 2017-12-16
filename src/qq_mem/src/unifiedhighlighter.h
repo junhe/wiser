@@ -7,6 +7,22 @@
 #include <math.h> 
 #include <fstream>
 
+class PassageScore_Iterator {
+
+    public:
+        PassageScore_Iterator(Passage_Scores & passage_scores_in);
+        void next_passage();
+        
+        int cur_passage_id_;       // -1 means end
+        int weight = 1;            // weight of this term
+        float score_ = 0;          // score of this passage for this term
+    private:
+        Passage_Scores * _passage_scores_;
+        Passage_Scores::iterator _cur_passage_;
+
+};
+typedef std::vector<PassageScore_Iterator> ScoresEnums;
+
 class Offset_Iterator {
 
     public:
@@ -79,15 +95,20 @@ class UnifiedHighlighter {
         std::vector<std::string> highlight(const Query & query, const TopDocs & topDocs, const int & maxPassages);
 
         std::string highlightForDoc(const Query & query, const int & docID, const int & maxPassages);  // highlight each document
-        std::string highlightQuick(); // quick highlighting with precomputed scores
         OffsetsEnums getOffsetsEnums(const Query & query, const int & docID);  // get each query term's offsets iterator
         std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, const int & docID, const int & maxPassages);  // highlight using the iterators and the content of the document
        
         std::string construct_key(const Query & query, const int & docID); // helper for generating key for search in cache
     
-        float passage_norm(int & start_offset);
-        float tf_norm(int freq, int passageLen);
-    
+        float passage_norm(const int & start_offset);
+        float tf_norm(const int & freq, const int & passageLen);
+        
+        // highlight based on precomputed scores:
+        // primary method highlightQuickForDoc 
+        std::string highlightQuickForDoc(const Query & query, const int & docID, const int &maxPassages);  // highlight each document assisted by precomputed scores
+        std::vector<int> get_top_passages(const ScoresEnums & scoresEnums, const int & maxPassages); // Helper function for precomputation based snippet generating
+        ScoresEnums get_passages_scoresEnums(const Query & query, const int & docID);
+        std::string highlight_passages(const Query & query, const int & docID, const std::vector<int> & top_passages); 
     private:
         // cache for snippets ( docID+query -> string )
         cache::lru_cache<std::string, std::string> _snippets_cache_ {cache::lru_cache<std::string, std::string>(SNIPPETS_CACHE_SIZE)};
@@ -101,6 +122,8 @@ class UnifiedHighlighter {
         // passage normalization functions for scoring
         //float passage_norm(int & start_offset);
         //float tf_norm(int freq, int passageLen);
+
+
 }; 
 
 

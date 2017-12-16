@@ -10,7 +10,8 @@ Posting::Posting(int docID, int term_frequency, const Offsets offsets_in)
   // get precomputed passage scores
     if (FLAG_SNIPPETS_PRECOMPUTE) {
         // find (-1, -1)  = cur_pos - 1
-        int cur_pos = offsets_in.size() - std::get<0>(offsets_in.back()) - 1 - 1;
+        int len_offsets = offsets_in.size();
+        int cur_pos = std::max(0, len_offsets - 2*(std::get<0>(offsets_in[len_offsets-1])+1) - 1);
         while (std::get<0>(offsets_in[cur_pos]) != -1) {
             cur_pos++;
         }
@@ -20,11 +21,12 @@ Posting::Posting(int docID, int term_frequency, const Offsets offsets_in)
         positions_.assign(offsets_in.begin(), offsets_in.begin() + cur_pos-2);
         term_frequency_ = cur_pos-1;
         
-        // get precomputed scores
-        for (; cur_pos < offsets_in.size(); cur_pos++) {
-            float score = (float)(std::get<1>(offsets_in[cur_pos])) / 1000000000;
-            std::cout << "Posting get score: " << score << std::endl;
-            passage_scores_.push_back(Passage_Score(std::get<0>(offsets_in[cur_pos]), score));
+        // get precomputed scores & splits
+        for (; cur_pos < len_offsets; cur_pos+=2) {
+            float score = (float)(std::get<1>(offsets_in[cur_pos])) / 100000000;
+            int passage_id = std::get<0>(offsets_in[cur_pos]);
+            passage_scores_.push_back(Passage_Score(passage_id, score));
+            passage_splits_[passage_id] = Passage_Split(std::get<0>(offsets_in[cur_pos+1]), std::get<1>(offsets_in[cur_pos+1]));
         }
     }
 }

@@ -502,6 +502,43 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     }
 
 }
+// TODO test case for repcompute score:
+
+
+TEST_CASE( "ScoreEnums of Pre-computation based Unified Highlighter essential operations are OK", "[scoresenums_precompute_unified_highlighter]" ) {
+    QQSearchEngine engine;
+    
+    // read in the linedoc
+    utils::LineDoc linedoc("src/testdata/line_doc_offset");
+    std::vector<std::string> items;
+    linedoc.GetRow(items);
+    linedoc.GetRow(items);
+    
+    
+    // adddocument
+    engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
+    UnifiedHighlighter test_highlighter(engine);
+    Query query = {"problem"};
+   
+    ScoresEnums scoresEnums = test_highlighter.get_passages_scoresEnums(query, 0);
+    REQUIRE(scoresEnums.size() == 1);
+
+    // check iterator
+    PassageScore_Iterator cur_iter = scoresEnums[0];
+    std::string res = "";
+    while (1) {
+        // judge whether end
+        if (cur_iter.cur_passage_id_ == -1) {
+            break;
+        }
+        // print current position
+        res += std::to_string(cur_iter.cur_passage_id_) +  "," + std::to_string(cur_iter.score_) + ";";
+        cur_iter.next_passage();
+    } 
+    res += ".";
+    std::cout << res << std::endl;
+    REQUIRE(res == "38,0.428823;39,0.609594;113,0.351342;.");
+}
 
 TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_breakiterator]" ) {
 

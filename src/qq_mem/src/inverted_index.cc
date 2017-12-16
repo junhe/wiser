@@ -1,6 +1,7 @@
 #include "inverted_index.h"
 
 #include <set>
+#include <iostream>
 
 void InvertedIndex::AddDocument(const int &doc_id, const TermWithOffsetList &termlist) {
     for (const auto &term_with_offset : termlist) {
@@ -57,7 +58,7 @@ std::vector<int> InvertedIndex::GetDocumentIds(const Term &term) {
         auto posting = pl.ExtractPosting(it);
         doc_ids.push_back(posting.docID_);
     }
-  
+
     return doc_ids;
 }
 

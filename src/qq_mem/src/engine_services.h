@@ -84,8 +84,22 @@ class TermWithOffset {
 typedef std::vector<TermWithOffset> TermWithOffsetList;
 
 // for precompute (score of each passage of each term)
+/*
+typedef std::pair<int, int> Passage_Split; // start#offset end#offset
+class PassageInfo { // A term's information for a passage
+    public:
+        int passage_id_;
+        float score_;
+        Passage_Split split_;  // from which offset of term is in this passage, how many offsets
+        
+        PassageInfo(const int & id, const float & score, const & Passage_Split split) : passage_id_(id), score_(score), split_(split) {} 
+};
+*/
+// for (term, doc)
 typedef std::pair<int, float> Passage_Score; // passage->score
 typedef std::vector<Passage_Score> Passage_Scores;
+typedef std::pair<int, int> Passage_Split; // start offset in offsets, len
+// for each doc
 typedef std::pair<int, int> Passage_Segement; // startoffset, length
 typedef std::vector<Passage_Segement> Passage_Segements;
 
