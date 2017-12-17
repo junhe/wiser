@@ -10,16 +10,20 @@
 // for direct IO
 #define PAGE_SIZE 512
 
-// for precomputing of snippets generating
-#define FLAG_SNIPPETS_PRECOMPUTE true
+// for flash based postings
+#define FLAG_POSTINGS_ON_FLASH false
+#define POSTINGS_CACHE_SIZE 100
+#define POSTINGS_ON_FLASH_FILE "/mnt/ssd/postings_store"
 
+// for precomputing of snippets generating
+#define FLAG_SNIPPETS_PRECOMPUTE false
 
 // size of snippets cache of highlighter
 #define SNIPPETS_CACHE_SIZE 100
 #define FLAG_SNIPPETS_CACHE false
 #define SNIPPETS_CACHE_ON_FLASH_SIZE 100
-#define FLAG_SNIPPETS_CACHE_ON_FLASH false
-#define SNIPPETS_CACHE_ON_FLASH_FILE "snippets_store.cache"
+#define FLAG_SNIPPETS_CACHE_ON_FLASH true
+#define SNIPPETS_CACHE_ON_FLASH_FILE "/mnt/ssd/snippets_store.cache"
 
 class DocumentStoreService {
     public:

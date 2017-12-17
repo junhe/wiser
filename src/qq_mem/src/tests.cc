@@ -442,7 +442,7 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     linedoc.GetRow(items);   // 884B
     linedoc.GetRow(items);   // 15KB
     linedoc.GetRow(items);   // 177KB
-    //linedoc.GetRow(items);   // 1MB
+    linedoc.GetRow(items);   // 1MB
     //linedoc.GetRow(items); // 8KB
     
     // adddocument
@@ -453,8 +453,8 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     //start highlighter
     //Query query = {"park"}; // attack build knife zoo
     //Query query = {"rule"}; // we doctor incorrect problem
-    Query query = {"author"}; // similar life accord code
-    //Query query = {"mondai"}; // support student report telephon
+    //Query query = {"author"}; // similar life accord code
+    Query query = {"mondai"}; // support student report telephon
     //Query query = {"polic"};  // bulletin inform law system
     
     // terms

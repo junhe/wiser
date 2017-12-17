@@ -82,5 +82,15 @@ std::vector<int> InvertedIndex::Search(const TermList &terms, const SearchOperat
 // Get the posting according to term and docID
 Posting & InvertedIndex::GetPosting(const Term & term, const int & doc_id)  {
     // TODO check whether has this term
-    return (index_.find(term)->second).GetPosting(doc_id);
+    if (FLAG_POSTINGS_ON_FLASH) {
+        // TODO check whether this Posting is in cache
+        // TODO Not in cache, read from flash
+        // GetPostingStorage ...
+        // read ... 
+        // add to cache
+        // return posting        TODO Lock Problems(should not kick out a posting from cache while still using it)
+
+    } else {
+        return (index_.find(term)->second).GetPosting(doc_id);
+    }
 }

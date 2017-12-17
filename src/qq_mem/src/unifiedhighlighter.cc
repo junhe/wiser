@@ -110,7 +110,7 @@ std::vector<int> UnifiedHighlighter::get_top_passages(const ScoresEnums & scores
            // if not same with cur_passage
            if (next_passage_id != passage.first) {
                if (passage.first != -1) {
-                   if (passage_queue.size() == maxPassages && passage.second < passage_queue.top().second) {
+                   if (passage_queue.size() == maxPassages && passage.second <= passage_queue.top().second) {
                        passage.first = -1; passage.second = 0;
                    } else {
                        passage_queue.push(passage);
@@ -142,11 +142,11 @@ std::vector<int> UnifiedHighlighter::get_top_passages(const ScoresEnums & scores
 
         // format it into a string to return
         while (!passage_queue.empty()) {
-            std::cout << passage_queue.top().first << "," << passage_queue.top().second << ";"; 
+            //std::cout << passage_queue.top().first << "," << passage_queue.top().second << ";"; 
             res.push_back(passage_queue.top().first);
             passage_queue.pop();
         }
-        std::cout << std::endl;
+        //std::cout << std::endl;
     } else {
     
 
@@ -245,7 +245,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offse
             // if this passage is not empty, then wrap up it and push it to the priority queue
             if (passage->startoffset >= 0) {
                 passage->score = passage->score * passage_norm(passage->startoffset); //normalize according to passage's startoffset
-                if (passage_queue.size() == maxPassages && passage->score < passage_queue.top()->score) {
+                if (passage_queue.size() == maxPassages && passage->score <= passage_queue.top()->score) {
                     passage->reset();
                 } else {
                     passage_queue.push(passage);
@@ -305,7 +305,6 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offse
         passage_queue.pop();
     }
     // sort array according to startoffset
-    //auto comp_passage_offset = [] (Passage * & a, Passage * & b) -> bool { return a->startoffset < b->startoffset; };
     auto comp_passage_offset = [] (Passage * & a, Passage * & b) -> bool { return a->startoffset < b->startoffset; };
     std::sort(passage_vector.begin(), passage_vector.end(), comp_passage_offset);
     
@@ -314,7 +313,7 @@ std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offse
     std::string res = "";
     for (auto it = passage_vector.begin(); it != passage_vector.end(); it++) {
         res += (*it)->to_string(breakiterator.content_);   // highlight appeared terms
-        std::cout <<  "("  << (*it)->score << ") " << breakiterator.content_->substr((*it)->startoffset, (*it)->endoffset - (*it)->startoffset+1) << std::endl;
+        //std::cout <<  "("  << (*it)->score << ") " << breakiterator.content_->substr((*it)->startoffset, (*it)->endoffset - (*it)->startoffset+1) << std::endl;
         delete (*it);
     }
     
