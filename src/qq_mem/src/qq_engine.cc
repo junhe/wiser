@@ -4,6 +4,9 @@
 #include "utils.h"
 #include <assert.h>
 
+
+FlashReader * Global_Posting_Store; //defined in qq_engine.h
+
 // For precomputation, insert splits into offsets(with fake offset)
 void QQSearchEngine::precompute_insert_splits(Passage_Segements & splits, Offsets & offsets_in) {
     // insert split (after split, there are offset ranges for each split)
@@ -51,7 +54,7 @@ void QQSearchEngine::AddDocument(const std::string &title, const std::string &ur
     // Tokenize the document(already pre-processed using scripts)
     // get terms
     std::vector<std::string> terms = utils::explode(tokens, ' ');
-    // get offsets
+    std::cout << "Here has " << terms.size() << " terms" << std::endl;
     std::vector<Offsets> offsets_parsed = utils::parse_offsets(offsets);
     // construct term with offset objects
     assert(terms.size() == offsets_parsed.size());

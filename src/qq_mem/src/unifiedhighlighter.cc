@@ -73,7 +73,7 @@ OffsetsEnums UnifiedHighlighter::getOffsetsEnums(const Query & query, const int 
     // get offsets from postings
     for (auto term:query) {
         // Posting
-        Posting & result = engine_.inverted_index_.GetPosting(term, docID);
+        const Posting & result = engine_.inverted_index_.GetPosting(term, docID);
         // Offsets
         res.push_back(Offset_Iterator(result.positions_));
         // TODO check whether empty?
@@ -160,7 +160,7 @@ ScoresEnums UnifiedHighlighter::get_passages_scoresEnums(const Query & query, co
     // get passage_scores from postings
     for (auto term:query) {
         // Posting
-        Posting & result = engine_.inverted_index_.GetPosting(term, docID);
+        const Posting & result = engine_.inverted_index_.GetPosting(term, docID);
         // Offsets
         res.push_back(PassageScore_Iterator(result.passage_scores_));
     }
@@ -178,9 +178,9 @@ std::string UnifiedHighlighter::highlight_passages(const Query & query, const in
         cur_passage.reset();
         // add matches for highlighting
         for (auto term:query) {
-            Posting & cur_posting = engine_.inverted_index_.GetPosting(term, docID);
-            int startoffset = cur_posting.passage_splits_[passage_id].first;
-            int len = cur_posting.passage_splits_[passage_id].second;
+            const Posting & cur_posting = engine_.inverted_index_.GetPosting(term, docID);
+            int startoffset = cur_posting.passage_splits_.at(passage_id).first;
+            int len = cur_posting.passage_splits_.at(passage_id).second;
             for (int i = 0; i < len; i++) {
                 cur_passage.addMatch(std::get<0>(cur_posting.positions_[startoffset+i]), std::get<1>(cur_posting.positions_[startoffset+i]));
             }
@@ -338,7 +338,7 @@ std::string UnifiedHighlighter::construct_key(const Query & query, const int & d
 }
 
 // PassageScore_Iterator Functions
-PassageScore_Iterator::PassageScore_Iterator(Passage_Scores & passage_scores_in) {
+PassageScore_Iterator::PassageScore_Iterator(const Passage_Scores & passage_scores_in) {
     _passage_scores_ = &passage_scores_in;
     _cur_passage_ = passage_scores_in.begin(); 
     cur_passage_id_ = (*_cur_passage_).first;
@@ -358,7 +358,7 @@ void PassageScore_Iterator::next_passage() {  // go to next passage
 
 
 // Offset_Iterator Functions
-Offset_Iterator::Offset_Iterator(std::vector<Offset> & offsets_in) {
+Offset_Iterator::Offset_Iterator(const std::vector<Offset> & offsets_in) {
     offsets = &offsets_in;
     cur_position = offsets_in.begin(); 
     startoffset = std::get<0>(*cur_position);

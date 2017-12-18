@@ -17,7 +17,12 @@ void PostingList_Direct::AddPosting(int docID, int term_frequency, const Offsets
         Posting new_posting(docID, term_frequency, positions);
         posting_store_[docID] = new_posting;
     } else {
-    // TODO if stored in flash
+        // TODO if stored in flash
+        Posting new_posting(docID, term_frequency, positions);
+        // write out to flash
+        Store_Segment store_position = Global_Posting_Store->append(new_posting.dump()); 
+        // store address in posting_flash_store_
+        posting_flash_store_[docID] = store_position;
     }
     return;
 }
@@ -37,3 +42,6 @@ Posting & PostingList_Direct::GetPosting(const int & docID) {
     //auto search = posting_store_.find(docID);
     return (posting_store_.find(docID))->second;
 }
+
+
+// TODO get posting position

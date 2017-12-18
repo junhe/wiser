@@ -1,4 +1,5 @@
 #include "posting_basic.h"
+#include "posting_list_protobuf.h"
 
 #include <string.h>
 #include <iostream>
@@ -59,12 +60,52 @@ Posting::Posting()
 {}
 
 
-std::string Posting::dump() {
-    std::string result="-";
-    result = result + std::to_string(docID_)+ "_" + std::to_string(term_frequency_);
-    for (int i = 0; i < term_frequency_; i++) {
-       // result += "_" + std::to_string(positions_[i]);
+std::string Posting::dump() {    // serialize function
+    // use protobuf
+    /*
+    message Posting_Precomputed_4_Snippets {
+  int32 docID = 1;
+  int32 term_frequency = 2;
+  repeated Offset positions = 3;  // vector of positions
+  repeated Passage_Score passage_scores = 4;
+   }
+
+    */
+    if (!FLAG_SNIPPETS_PRECOMPUTE) 
+        return "";
+    
+
+    posting_message::Posting_Precomputed_4_Snippets p_message;
+    {
+        // docID
+        p_message.set_docid(docID_);
+        // term_frequency
+        p_message.set_term_frequency(term_frequency_);
+        // Offsets
+        for (int i = 0; i < term_frequency_; i++) {
+            posting_message::Offset * new_offset = p_message.add_offsets();
+            new_offset->set_start_offset(std::get<0>(positions_[i]));
+            new_offset->set_end_offset(std::get<1>(positions_[i]));
+        }
+
+        //passage_scores
+        for (int i = 0; i < passage_scores_.size(); i++) {
+            posting_message::Passage_Score * new_passage_score = p_message.add_passage_scores();
+            new_passage_score->set_passage_id(passage_scores_[i].first);
+            new_passage_score->set_score(passage_scores_[i].second);
+        }
+        // passage_splits  could be faster?
+        auto & splits = *p_message.mutable_passage_splits();
+        for (auto cur_split:passage_splits_) {
+            posting_message::Passage_Split new_split;
+            new_split.set_start_offset(cur_split.second.first);
+            new_split.set_len(cur_split.second.second);
+            splits[cur_split.first] = new_split;
+        }
     }
-    return result;
+
+    std::string p_string;
+    p_message.SerializeToString(&p_string);
+    return p_string;
 }
 

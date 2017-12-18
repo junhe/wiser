@@ -10,15 +10,15 @@
 class PassageScore_Iterator {
 
     public:
-        PassageScore_Iterator(Passage_Scores & passage_scores_in);
+        PassageScore_Iterator(const Passage_Scores & passage_scores_in);
         void next_passage();
         
         int cur_passage_id_;       // -1 means end
         int weight = 1;            // weight of this term
         float score_ = 0;          // score of this passage for this term
     private:
-        Passage_Scores * _passage_scores_;
-        Passage_Scores::iterator _cur_passage_;
+        const Passage_Scores * _passage_scores_;
+        Passage_Scores::const_iterator _cur_passage_;
 
 };
 typedef std::vector<PassageScore_Iterator> ScoresEnums;
@@ -26,15 +26,15 @@ typedef std::vector<PassageScore_Iterator> ScoresEnums;
 class Offset_Iterator {
 
     public:
-        Offset_Iterator(Offsets & offsets_in);
+        Offset_Iterator(const Offsets & offsets_in);
         int startoffset;           // -1 means end
         int endoffset;
         void next_position();      // go to next offset position
         int weight = 1;            // weight of this term
 
     private:
-        Offsets * offsets;
-        Offsets::iterator cur_position;
+        const Offsets * offsets;
+        Offsets::const_iterator cur_position;
 
 };
 

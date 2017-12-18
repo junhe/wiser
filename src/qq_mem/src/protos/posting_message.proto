@@ -33,6 +33,24 @@ message Posting {
   repeated Offset positions = 3;  // vector of positions
 }
 
+// Posting with precomputed scores fro snippet generating
+message Passage_Score {
+  int32 passage_id = 1;
+  float score = 2;
+}
+message Passage_Split {
+  int32 start_offset = 1;
+  int32 len = 2;
+}
+
+message Posting_Precomputed_4_Snippets {
+  int32 docID = 1;
+  int32 term_frequency = 2;
+  repeated Offset offsets = 3;  // vector of positions
+  repeated Passage_Score passage_scores = 4;
+  map<int32, Passage_Split> passage_splits = 5;
+}
+
 // Posting List
 
 // Our address book file is just one of these.

@@ -13,7 +13,7 @@ FlashReader::FlashReader(const std::string & based_file) {
     _file_name_ = based_file;
     _last_offset_ = 0; 
     // open cache file
-    _fd_ = open(based_file.c_str(), O_RDWR|O_CREAT|O_SYNC|O_DIRECT);
+    _fd_ = open(based_file.c_str(), O_RDWR|O_CREAT|O_DIRECT);
 }
 
 FlashReader::~FlashReader() {
@@ -27,7 +27,8 @@ FlashReader::~FlashReader() {
 std::string FlashReader::read(const Store_Segment & segment) {
     // read from file, in area of segment
     int start_offset = segment.first;
-    int len = segment.second;
+    //int len = segment.second;
+    int len = PAGE_SIZE* ((segment.second + 1 + PAGE_SIZE -1 )/PAGE_SIZE);
     
     // read 
     // align buffer TODO better?
@@ -65,5 +66,6 @@ Store_Segment FlashReader::append(const std::string & value) {
     // update last_offset
     _last_offset_ += str_size;
     std::cout << size << " write out "  << " to " << _last_offset_-str_size << ", " << str_size << std::endl; 
-    return Store_Segment(_last_offset_-str_size, str_size);
+    //return Store_Segment(_last_offset_-str_size, str_size);
+    return Store_Segment(_last_offset_-str_size, value.size()+1);
 }

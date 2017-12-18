@@ -11,6 +11,7 @@ namespace cache {
 
 
 // TODO multi-threaded visiting?
+// TODO currently, string as key only (other you need to define the hash_function)
 template<typename key_t, typename value_t>
 class lru_cache {
     public:

@@ -80,17 +80,27 @@ std::vector<int> InvertedIndex::Search(const TermList &terms, const SearchOperat
 }
 
 // Get the posting according to term and docID
-Posting & InvertedIndex::GetPosting(const Term & term, const int & doc_id)  {
+const Posting & InvertedIndex::GetPosting(const Term & term, const int & doc_id)  {
     // TODO check whether has this term
     if (FLAG_POSTINGS_ON_FLASH) {
-        // TODO check whether this Posting is in cache
-        // TODO Not in cache, read from flash
-        // GetPostingStorage ...
-        // read ... 
+        // Check whether this Posting is in cache
+        std::string this_key = construct_key({term}, doc_id);
+        std::cout << "key: " << this_key << std::endl;
+        if (_postings_cache_.exists(this_key)) {
+           return _postings_cache_.get(this_key);
+        }
+        // Not in cache, read from flash
+        // get postion
+        // read, parse 
         // add to cache
         // return posting        TODO Lock Problems(should not kick out a posting from cache while still using it)
 
     } else {
         return (index_.find(term)->second).GetPosting(doc_id);
     }
+}
+
+std::string InvertedIndex::construct_key(const Term & term, const int & docID) {
+    std::string res = term + "_" + std::to_string(docID);
+    return res;
 }

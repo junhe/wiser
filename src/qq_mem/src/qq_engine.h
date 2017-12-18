@@ -21,6 +21,7 @@ class QQSearchEngine {
         InvertedIndex inverted_index_;
         int offsets_flag_ = 0;        // whether store offsets in postings
 
+        QQSearchEngine(){Global_Posting_Store = new FlashReader(POSTINGS_ON_FLASH_FILE);}    // TODO init the posting store here
         void AddDocument(const std::string &title, const std::string &url, 
                 const std::string &body);
         void AddDocument(const std::string &title, const std::string &url, 

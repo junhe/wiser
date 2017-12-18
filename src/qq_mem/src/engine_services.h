@@ -11,12 +11,12 @@
 #define PAGE_SIZE 512
 
 // for flash based postings
-#define FLAG_POSTINGS_ON_FLASH false
+#define FLAG_POSTINGS_ON_FLASH true
 #define POSTINGS_CACHE_SIZE 100
 #define POSTINGS_ON_FLASH_FILE "/mnt/ssd/postings_store"
 
 // for precomputing of snippets generating
-#define FLAG_SNIPPETS_PRECOMPUTE false
+#define FLAG_SNIPPETS_PRECOMPUTE true
 
 // size of snippets cache of highlighter
 #define SNIPPETS_CACHE_SIZE 100
@@ -88,17 +88,6 @@ class TermWithOffset {
 typedef std::vector<TermWithOffset> TermWithOffsetList;
 
 // for precompute (score of each passage of each term)
-/*
-typedef std::pair<int, int> Passage_Split; // start#offset end#offset
-class PassageInfo { // A term's information for a passage
-    public:
-        int passage_id_;
-        float score_;
-        Passage_Split split_;  // from which offset of term is in this passage, how many offsets
-        
-        PassageInfo(const int & id, const float & score, const & Passage_Split split) : passage_id_(id), score_(score), split_(split) {} 
-};
-*/
 // for (term, doc)
 typedef std::pair<int, float> Passage_Score; // passage->score
 typedef std::vector<Passage_Score> Passage_Scores;
@@ -121,5 +110,8 @@ class FlashReader {
         int _fd_;
         int _last_offset_; // append from it
 };
+
+// TODO: this design is not good!
+extern FlashReader * Global_Posting_Store; //defined in qq_engine.cc
 
 #endif

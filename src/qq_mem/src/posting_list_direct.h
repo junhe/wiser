@@ -14,7 +14,7 @@
 class PostingList_Direct :  public PostingListService {
     private:
         typedef std::unordered_map<int, Posting> PostingStore;
-        typedef std::unordered_map<int, FlashAddress> PostingFlashStore;
+        typedef std::unordered_map<int, Store_Segment> PostingFlashStore;
 
         Term term_;                             // term this posting list belongs to
         PostingStore posting_store_;            // for in-mem QQ, storing real postings
