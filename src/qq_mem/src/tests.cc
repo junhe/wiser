@@ -20,6 +20,11 @@
 
 #include "lrucache.h"
 
+// cereal
+#include <cereal/archives/binary.hpp>
+#include <sstream>
+
+
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
 }
@@ -442,9 +447,9 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     std::vector<std::string> items;
     linedoc.GetRow(items);   // 884B
     linedoc.GetRow(items);   // 15KB
-    //linedoc.GetRow(items);   // 177KB
-    //linedoc.GetRow(items);   // 1MB
-    //linedoc.GetRow(items); // 8KB
+    linedoc.GetRow(items);   // 177KB
+    linedoc.GetRow(items);   // 1MB
+    linedoc.GetRow(items); // 8KB
     
     // adddocument
     engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
@@ -453,10 +458,10 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
 
     //start highlighter
     //Query query = {"park"}; // attack build knife zoo
-    Query query = {"rule"}; // we doctor incorrect problem
+    //Query query = {"rule"}; // we doctor incorrect problem
     //Query query = {"author"}; // similar life accord code
     //Query query = {"mondai"}; // support student report telephon
-    //Query query = {"polic"};  // bulletin inform law system
+    Query query = {"polic"};  // bulletin inform law system
     
     // terms
     //Query query = {"park", "attack", "build", "knife", "zoo"};
@@ -700,4 +705,59 @@ TEST_CASE("String to char *, back to string works", "[String_To_Char*]") {
 
     std::string str(buffer);
     REQUIRE(test_str.compare(str) == 0 );
+}
+
+
+
+TEST_CASE("Cereal serialization works", "[Cereal_Serialization]") {
+    if (!FLAG_SNIPPETS_PRECOMPUTE)
+        return;
+    Offsets positions = {std::make_tuple(1,3), std::make_tuple(4,5), std::make_tuple(6,8), std::make_tuple(-1,-1),
+                         std::make_tuple(1,1234567), std::make_tuple(0,2), std::make_tuple(3,8323232), std::make_tuple(2,1)};
+    Posting new_posting(5, 0, positions);
+    
+    // serialize using cereal
+    /*Store_Segment store_position = Global_Posting_Store->append(new_posting.dump());
+    
+    std::string serialized = Global_Posting_Store->read(store_position);
+
+    // deserialize
+    posting_message::Posting_Precomputed_4_Snippets p_message;
+    p_message.ParseFromString(serialized);
+    */
+
+
+    std::stringstream ss; // any stream can be used
+
+   {
+    cereal::BinaryOutputArchive oarchive(ss); // Create an output archive
+
+    //int m1, m2, m3;
+    //m1 = 1; m2 = 2; m3 = 3;
+    oarchive(new_posting); // Write the data to the archive
+   } // archive goes out of scope, ensuring all contents are flushed
+
+   {
+    cereal::BinaryInputArchive iarchive(ss); // Create an input archive
+
+    Posting tmp_posting;
+    iarchive(tmp_posting); // Read the data from the archive
+    /*std::cout << tmp_posting.docID_ << std::endl;
+    std::cout << tmp_posting.term_frequency_ << std::endl;
+    std::cout << tmp_posting.positions_.size() << std::endl;
+    std::cout << tmp_posting.positions_.size() << ": " 
+              << std::get<0>(tmp_posting.positions_[0]) << "," <<  std::get<1>(tmp_posting.positions_[0]) << ";"
+              << std::get<0>(tmp_posting.positions_[1]) << "," <<  std::get<1>(tmp_posting.positions_[1]) << ";"
+              << std::get<0>(tmp_posting.positions_[2]) << "," <<  std::get<1>(tmp_posting.positions_[2]) << ";"
+              << std::endl;
+    std::cout << tmp_posting.passage_scores_.size() << ": " 
+              << tmp_posting.passage_scores_[0].first << "," <<  tmp_posting.passage_scores_[0].second << ";"
+              << tmp_posting.passage_scores_[1].first << "," <<  tmp_posting.passage_scores_[1].second << ";"
+              << std::endl;
+    std::cout << tmp_posting.passage_splits_.size() << ": " 
+              << tmp_posting.passage_splits_[1].first << "," <<  tmp_posting.passage_splits_[1].second << ";"
+              << tmp_posting.passage_splits_[3].first << "," <<  tmp_posting.passage_splits_[3].second << ";"
+              << std::endl;
+    */
+   } 
 }

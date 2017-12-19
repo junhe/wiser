@@ -100,12 +100,28 @@ const Posting & InvertedIndex::GetPosting(const Term & term, const int & doc_id)
         // get postion
         const Store_Segment stored_position = (index_.find(term)->second).GetPostingStorePosition(doc_id);
         // read, parse -> add to cache
-        _postings_cache_.put(this_key, parse_protobuf_string_to_posting(Global_Posting_Store->read(stored_position)));
+        if (POSTING_SERIALIZATION == "protobuf")
+            _postings_cache_.put(this_key, parse_protobuf_string_to_posting(Global_Posting_Store->read(stored_position)));
+        if (POSTING_SERIALIZATION == "cereal")
+            _postings_cache_.put(this_key, parse_cereal_string_to_posting(Global_Posting_Store->read(stored_position)));
+           
         // return posting        TODO Lock Problems(should not kick out a posting from cache while still using it)
         return _postings_cache_.get(this_key);
     } else {
         return (index_.find(term)->second).GetPosting(doc_id);
     }
+}
+
+const Posting InvertedIndex::parse_cereal_string_to_posting(const std::string & serialized) {
+    std::stringstream ss; // any stream can be used
+    ss.str(serialized);
+
+    cereal::BinaryInputArchive iarchive(ss); // Create an input archive
+
+    Posting new_posting;
+    iarchive(new_posting); // Read the data from the archive
+    
+    return new_posting;
 }
 
 const Posting InvertedIndex::parse_protobuf_string_to_posting(const std::string & serialized) {

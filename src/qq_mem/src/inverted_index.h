@@ -6,6 +6,8 @@
 #include "engine_services.h"
 #include "posting_list_direct.h"
 #include "lrucache.h"
+#include <cereal/archives/binary.hpp>
+#include <sstream>
 
 typedef std::unordered_map<Term, PostingList_Direct> IndexStore;
 
@@ -28,6 +30,7 @@ class InvertedIndex: public InvertedIndexService {
     private:
         std::string construct_key(const Term & term, const int & docID); // helper function for _postings_cache_
         const Posting parse_protobuf_string_to_posting(const std::string & serialized);
+        const Posting parse_cereal_string_to_posting(const std::string & serialized);
 };
 
 #endif

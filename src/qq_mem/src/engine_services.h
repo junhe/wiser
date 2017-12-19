@@ -7,6 +7,10 @@
 #include <map>
 #include <tuple>
 
+//enum Posting_Serailization_Type { protobuf, cereal};
+
+#define POSTING_SERIALIZATION "cereal"
+
 // for direct IO
 #define PAGE_SIZE 512
 

@@ -3,6 +3,12 @@
 
 #include "engine_services.h"
 #include <unordered_map>
+#include <cereal/types/vector.hpp>
+#include <cereal/types/tuple.hpp>
+#include <cereal/types/utility.hpp>
+#include <cereal/types/unordered_map.hpp>
+#include <cereal/archives/binary.hpp>
+#include <sstream>
 
 // TODO will delete them
 typedef int Position;
@@ -23,6 +29,12 @@ class Posting : public PostingService {
                 Offsets * offsets_in, Passage_Scores * passage_scores, std::unordered_map<int, Passage_Split> * passage_splits);
         std::string dump();
 
+        // This method lets cereal know which data members to serialize
+        template<class Archive>
+        void serialize(Archive & archive)
+        {
+            archive( docID_, term_frequency_, positions_, passage_scores_, passage_splits_); // serialize things by passing them to the archive
+        }
         // TODO Posting * next;
 };
 
