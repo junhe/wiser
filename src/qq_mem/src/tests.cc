@@ -24,6 +24,7 @@ unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
 }
 
+
 TEST_CASE( "Factorials are computed", "[factorial]" ) {
     REQUIRE( Factorial(1) == 1 );
     REQUIRE( Factorial(2) == 2 );
@@ -434,8 +435,6 @@ TEST_CASE( "Passage of Unified Highlighter essential operations are OK", "[passa
 }
 
 TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
-    if (FLAG_POSTINGS_ON_FLASH)
-        return;
     QQSearchEngine engine;
     
     // read in the linedoc
@@ -443,9 +442,9 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     std::vector<std::string> items;
     linedoc.GetRow(items);   // 884B
     linedoc.GetRow(items);   // 15KB
-    linedoc.GetRow(items);   // 177KB
-    linedoc.GetRow(items);   // 1MB
-    linedoc.GetRow(items); // 8KB
+    //linedoc.GetRow(items);   // 177KB
+    //linedoc.GetRow(items);   // 1MB
+    //linedoc.GetRow(items); // 8KB
     
     // adddocument
     engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
@@ -454,10 +453,10 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
 
     //start highlighter
     //Query query = {"park"}; // attack build knife zoo
-    //Query query = {"rule"}; // we doctor incorrect problem
+    Query query = {"rule"}; // we doctor incorrect problem
     //Query query = {"author"}; // similar life accord code
     //Query query = {"mondai"}; // support student report telephon
-    Query query = {"polic"};  // bulletin inform law system
+    //Query query = {"polic"};  // bulletin inform law system
     
     // terms
     //Query query = {"park", "attack", "build", "knife", "zoo"};
@@ -477,7 +476,7 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
    
     // warm up
     //test_highlighter.highlight({"support"}, topDocs, maxPassages);
- 
+
     struct timeval t1,t2;
     double timeuse;
     /*gettimeofday(&t1,NULL);
@@ -488,6 +487,11 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     */
     std::vector<std::string> res;
     for (int i = 0; i < 4; i++) { 
+        if (FLAG_POSTINGS_ON_FLASH) {
+            // clear the cache
+            engine.inverted_index_.clear_posting_cache();
+        }
+        flag_posting = false;
         gettimeofday(&t1,NULL);
         //TopDocs topDocs = engine.Search(query, SearchOperator::AND);
         res = test_highlighter.highlight(query, topDocs, maxPassages);
@@ -497,14 +501,16 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
         REQUIRE(res.size() == topDocs.size());
         std::cout << res[0] <<std::endl;
     }
-
+    
 }
 // TODO test case for repcompute score:
 
 
 TEST_CASE( "ScoreEnums of Pre-computation based Unified Highlighter essential operations are OK", "[scoresenums_precompute_unified_highlighter]" ) {
-    if (FLAG_SNIPPETS_PRECOMPUTE || FLAG_POSTINGS_ON_FLASH)
+    if (!FLAG_SNIPPETS_PRECOMPUTE)
         return;
+    if (FLAG_POSTINGS_ON_FLASH)
+        return;   //TODO
     QQSearchEngine engine;
     
     // read in the linedoc
@@ -652,14 +658,13 @@ TEST_CASE("Serialization tools essential operations work", "[Serialization_Tools
     Offsets positions = {std::make_tuple(1,3), std::make_tuple(4,5), std::make_tuple(6,8), std::make_tuple(-1,-1),
                          std::make_tuple(1,1234567), std::make_tuple(0,2), std::make_tuple(3,8323232), std::make_tuple(2,1)};
     Posting new_posting(5, 0, positions);
-    std::cout << new_posting.docID_ << std::endl;
+/*    std::cout << new_posting.docID_ << std::endl;
     std::cout << new_posting.term_frequency_ << std::endl;
     std::cout << new_posting.passage_scores_.size() << ": " << new_posting.passage_scores_[0].first << "," <<  new_posting.passage_scores_[0].second << ";" << new_posting.passage_scores_[1].first <<","<< new_posting.passage_scores_[1].second << ";"<< std::endl;
     std::cout << new_posting.passage_splits_.size() << ": " << new_posting.passage_splits_[1].first <<"," << new_posting.passage_splits_[1].second << ";" << new_posting.passage_splits_[3].first << "," << new_posting.passage_splits_[3].second << ";" << std::endl;
-
+*/
     // serialize using protobuf 
     Store_Segment store_position = Global_Posting_Store->append(new_posting.dump());
-    std::cout << "stored at: " << store_position.first << ", " << store_position.second << std::endl;
     
     std::string serialized = Global_Posting_Store->read(store_position);
 
@@ -667,7 +672,7 @@ TEST_CASE("Serialization tools essential operations work", "[Serialization_Tools
     posting_message::Posting_Precomputed_4_Snippets p_message;
     p_message.ParseFromString(serialized);
 
-    std::cout << p_message.docid() << std::endl;
+ /*   std::cout << p_message.docid() << std::endl;
     std::cout << p_message.term_frequency() << std::endl;
     std::cout << p_message.offsets_size() << ": "
               << p_message.offsets(0).start_offset() << "," << p_message.offsets(0).end_offset() << ";"
@@ -682,7 +687,17 @@ TEST_CASE("Serialization tools essential operations work", "[Serialization_Tools
               << p_message.passage_splits().at(1).start_offset() << "," << p_message.passage_splits().at(1).len() << ";"
               << p_message.passage_splits().at(3).start_offset() << "," << p_message.passage_splits().at(3).len() << ";"
               << std::endl;
-    
+  */ 
 }
 
+TEST_CASE("String to char *, back to string works", "[String_To_Char*]") {
+    std::string test_str= "hello world";
+    char * buffer;
+    int ret = posix_memalign((void **)&buffer, PAGE_SIZE, PAGE_SIZE);
+    
+    std::copy(test_str.begin(), test_str.end(), buffer);
+    buffer[test_str.size()] = '\0';
 
+    std::string str(buffer);
+    REQUIRE(test_str.compare(str) == 0 );
+}

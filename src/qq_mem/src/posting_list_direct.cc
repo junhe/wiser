@@ -1,5 +1,6 @@
 #include "posting_list_direct.h"
 #include <iostream>
+#include "posting_list_protobuf.h"
 
 // Init with a term string, when creating index
 PostingList_Direct::PostingList_Direct(std::string term_in): 
@@ -16,11 +17,10 @@ void PostingList_Direct::AddPosting(int docID, int term_frequency, const Offsets
     if (!FLAG_POSTINGS_ON_FLASH) {
         Posting new_posting(docID, term_frequency, positions);
         posting_store_[docID] = new_posting;
-    } else {
-        // TODO if stored in flash
+    } else { // if stored in flash
         Posting new_posting(docID, term_frequency, positions);
         // write out to flash
-        Store_Segment store_position = Global_Posting_Store->append(new_posting.dump()); 
+        Store_Segment store_position = Global_Posting_Store->append(new_posting.dump());
         // store address in posting_flash_store_
         posting_flash_store_[docID] = store_position;
     }
@@ -44,4 +44,7 @@ Posting & PostingList_Direct::GetPosting(const int & docID) {
 }
 
 
-// TODO get posting position
+// Get posting stored position on flash
+Store_Segment & PostingList_Direct::GetPostingStorePosition(const int & docID) {
+    return (posting_flash_store_.find(docID))->second;
+}

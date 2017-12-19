@@ -6,6 +6,8 @@
 
 
 FlashReader * Global_Posting_Store; //defined in qq_engine.h
+UnifiedHighlighter tmp_highlighter;   // for scoring 
+bool flag_posting = true;
 
 // For precomputation, insert splits into offsets(with fake offset)
 void QQSearchEngine::precompute_insert_splits(Passage_Segements & splits, Offsets & offsets_in) {
@@ -35,7 +37,6 @@ void QQSearchEngine::precompute_insert_splits(Passage_Segements & splits, Offset
         // calculate the score
         int len = end_one - start_one + 1;
         if (len > 0) {
-             UnifiedHighlighter tmp_highlighter;   // for scoring 
             // store the score
             int passage_length = splits[i].second;
             int score = (int)(tmp_highlighter.passage_norm(splits[i].first)*tmp_highlighter.tf_norm(len, passage_length)*100000000);
@@ -54,7 +55,6 @@ void QQSearchEngine::AddDocument(const std::string &title, const std::string &ur
     // Tokenize the document(already pre-processed using scripts)
     // get terms
     std::vector<std::string> terms = utils::explode(tokens, ' ');
-    std::cout << "Here has " << terms.size() << " terms" << std::endl;
     std::vector<Offsets> offsets_parsed = utils::parse_offsets(offsets);
     // construct term with offset objects
     assert(terms.size() == offsets_parsed.size());

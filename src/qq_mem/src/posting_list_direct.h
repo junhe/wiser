@@ -40,6 +40,7 @@ class PostingList_Direct :  public PostingListService {
         Posting ExtractPosting(const_iterator it);
         // Find a posting according to docID
         Posting & GetPosting(const int & docID);
+        Store_Segment & GetPostingStorePosition(const int & docID);
         // Serialize
         std::string Serialize();
 };

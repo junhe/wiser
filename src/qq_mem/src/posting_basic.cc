@@ -5,7 +5,7 @@
 #include <iostream>
 
 //Posting
-Posting::Posting(int docID, int term_frequency, const Offsets offsets_in)
+Posting::Posting(const int & docID, const int & term_frequency, const Offsets & offsets_in)
     :docID_(docID), positions_(offsets_in), term_frequency_(term_frequency)
 { // TODO next?
   // get precomputed passage scores
@@ -58,6 +58,16 @@ Posting::Posting(int docID, int term_frequency, const Offsets offsets_in)
 Posting::Posting()
     :docID_(0), term_frequency_(0)
 {}
+
+Posting::Posting(const int & docID, const int & term_frequency, 
+                 Offsets * offsets_in, Passage_Scores * passage_scores, 
+                 std::unordered_map<int, Passage_Split> * passage_splits)
+    :docID_(docID), term_frequency_(term_frequency)
+{   // you need to set those varaiables by yourself, pass-by pointer prevents one copy
+    offsets_in = &positions_;
+    passage_scores = &passage_scores_;
+    passage_splits = &passage_splits_;
+}
 
 
 std::string Posting::dump() {    // serialize function

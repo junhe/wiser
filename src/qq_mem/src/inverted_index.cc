@@ -1,7 +1,12 @@
 #include "inverted_index.h"
+#include "posting_list_protobuf.h"
 
 #include <set>
 #include <iostream>
+
+void InvertedIndex::clear_posting_cache() { 
+    _postings_cache_.clear();
+}
 
 void InvertedIndex::AddDocument(const int &doc_id, const TermWithOffsetList &termlist) {
     for (const auto &term_with_offset : termlist) {
@@ -84,20 +89,50 @@ const Posting & InvertedIndex::GetPosting(const Term & term, const int & doc_id)
     // TODO check whether has this term
     if (FLAG_POSTINGS_ON_FLASH) {
         // Check whether this Posting is in cache
-        std::string this_key = construct_key({term}, doc_id);
-        std::cout << "key: " << this_key << std::endl;
-        if (_postings_cache_.exists(this_key)) {
-           return _postings_cache_.get(this_key);
+        std::string this_key = construct_key(term, doc_id);
+        if (_postings_cache_.exists(this_key) && flag_posting) {
+        //    std::cout << "Posting hit in cache " << _postings_cache_.size() << std::endl;
+            return _postings_cache_.get(this_key);
         }
+        flag_posting = true;
+        //std::cout << "Fetch a posting from flash" << std::endl;
         // Not in cache, read from flash
         // get postion
-        // read, parse 
-        // add to cache
+        const Store_Segment stored_position = (index_.find(term)->second).GetPostingStorePosition(doc_id);
+        // read, parse -> add to cache
+        _postings_cache_.put(this_key, parse_protobuf_string_to_posting(Global_Posting_Store->read(stored_position)));
         // return posting        TODO Lock Problems(should not kick out a posting from cache while still using it)
-
+        return _postings_cache_.get(this_key);
     } else {
         return (index_.find(term)->second).GetPosting(doc_id);
     }
+}
+
+const Posting InvertedIndex::parse_protobuf_string_to_posting(const std::string & serialized) {
+    // parse string to protobuf message
+    posting_message::Posting_Precomputed_4_Snippets p_message;
+    p_message.ParseFromString(serialized);
+    
+    // copy the message to data strucutre Posting
+    Posting new_posting;
+    new_posting.docID_ = p_message.docid();
+    new_posting.term_frequency_ = p_message.term_frequency();
+
+      // offsets
+    for (int i = 0; i < p_message.offsets_size(); i++) {
+        new_posting.positions_.push_back(Offset(p_message.offsets(i).start_offset(), p_message.offsets(i).end_offset()));
+    }
+      // passage scores
+    for (int i = 0; i < p_message.passage_scores_size(); i++) {
+        new_posting.passage_scores_.push_back(Passage_Score(p_message.passage_scores(i).passage_id(), p_message.passage_scores(i).score()));
+    } 
+
+      // passage splits
+    for (auto split = p_message.passage_splits().begin(); split != p_message.passage_splits().end(); split++) {
+        int key = split->first;
+        new_posting.passage_splits_.insert({key, Passage_Split(split->second.start_offset(), split->second.len())});
+    }
+    return new_posting;
 }
 
 std::string InvertedIndex::construct_key(const Term & term, const int & docID) {

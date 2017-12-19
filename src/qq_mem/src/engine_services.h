@@ -22,7 +22,7 @@
 #define SNIPPETS_CACHE_SIZE 100
 #define FLAG_SNIPPETS_CACHE false
 #define SNIPPETS_CACHE_ON_FLASH_SIZE 100
-#define FLAG_SNIPPETS_CACHE_ON_FLASH true
+#define FLAG_SNIPPETS_CACHE_ON_FLASH false
 #define SNIPPETS_CACHE_ON_FLASH_FILE "/mnt/ssd/snippets_store.cache"
 
 class DocumentStoreService {
@@ -114,4 +114,5 @@ class FlashReader {
 // TODO: this design is not good!
 extern FlashReader * Global_Posting_Store; //defined in qq_engine.cc
 
+extern bool flag_posting;
 #endif

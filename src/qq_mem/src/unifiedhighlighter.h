@@ -113,7 +113,8 @@ class UnifiedHighlighter {
         // cache for snippets ( docID+query -> string )
         cache::lru_cache<std::string, std::string> _snippets_cache_ {cache::lru_cache<std::string, std::string>(SNIPPETS_CACHE_SIZE)};
         // cache for on-flash snippets (docID+query -> position(int) of _snippets_store_)
-        cache::lru_flash_cache<std::string, std::string> _snippets_cache_flash_ {cache::lru_flash_cache<std::string, std::string>(SNIPPETS_CACHE_ON_FLASH_SIZE, SNIPPETS_CACHE_ON_FLASH_FILE) };
+        cache::lru_flash_cache<std::string, std::string> _snippets_cache_flash_ 
+                {cache::lru_flash_cache<std::string, std::string>(SNIPPETS_CACHE_ON_FLASH_SIZE, SNIPPETS_CACHE_ON_FLASH_FILE)};
 
         // passage normalization parameters for scoring
         float pivot = 87;  // hard-coded average length of passage(according to Lucene)
