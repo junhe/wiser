@@ -3,17 +3,17 @@
 
 #include <string>
 
-#include "qq_client.h"
+#include "grpc_client_impl.h"
 
 // This class reads original documents and make RPC calls to index them
 class IndexCreator {
     private:
         std::string line_doc_path_;
-        QQEngineClient &client_;
+        QQEngineSyncClient &client_;
 
     public:
-        IndexCreator(const std::string &line_doc_path, QQEngineClient &client);
-        void DoIndex();
+        IndexCreator(const std::string &line_doc_path, QQEngineSyncClient &client);
+        void DoIndex(int n_rows = -1);
 };
 
 #endif

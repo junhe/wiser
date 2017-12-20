@@ -1,68 +1,52 @@
-#include "qq_client.h"
+#include <chrono>
+#include <thread>
+
+#include "grpc_client_impl.h"
+#include "index_creator.h"
 
 
-std::string QQEngineClient::AddDocument(const std::string &title, 
-        const std::string &url, const std::string &body) {
-    AddDocumentRequest request;
-    request.mutable_document()->set_title(title);
-    request.mutable_document()->set_url(url);
-    request.mutable_document()->set_body(body);
+void make_queries(int n_queries) {
+    std::string reply;
 
-    request.mutable_options()->set_save(true);
+    auto qqengine = CreateSyncClient("localhost:50051");
 
-    StatusReply reply;
 
-    ClientContext context;
-
-    // Here we can the stub's newly available method we just added.
-    Status status = stub_->AddDocument(&context, request,  &reply);
-    if (status.ok()) {
-        return reply.message();
-    } else {
-        std::cout << status.error_code() << ": " << status.error_message()
-            << std::endl;
-        return "RPC failed";
+    for (int i = 0; i < n_queries; i++) {
+        std::vector<int> doc_ids;
+        qqengine->Search("hello", doc_ids);
     }
+
 }
 
 
-std::string QQEngineClient::Search(const std::string &term) {
-    SearchRequest request;
-    SearchReply reply;
-    ClientContext context;
 
-    request.set_term(term);
 
-    // Here we can the stub's newly available method we just added.
-    Status status = stub_->Search(&context, request,  &reply);
-    if (status.ok()) {
-        // std::cout << "Search result: ";
-        // for (auto id : reply.doc_ids()) {
-            // std::cout << id << " ";
-        // }
-        return "OK";
-    } else {
-        std::cout << status.error_code() << ": " << status.error_message()
-            << std::endl;
-        return "RPC failed";
-    }
-}
+int main(int argc, char** argv) {
+  // Create index on server side
+  // IndexCreator index_creator(
+        // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", *client);
+        // "src/testdata/enwiki-abstract_tokenized.linedoc.sample", *client);
+  // index_creator.DoIndex(100000);
 
-std::string QQEngineClient::Echo(const std::string &msg) {
-    EchoData request;
-    EchoData reply;
-    ClientContext context;
+  // Search synchroniously
+  auto client = CreateSyncClient("localhost:50051");
+  std::vector<int> doc_ids;
+  bool ret;
+  ret = client->Search("multicellular", doc_ids);
+  assert(ret == true);
+  assert(doc_ids.size() >= 1);
 
-    request.set_message(msg);
+  utils::sleep(1);
 
-    Status status = stub_->Echo(&context, request,  &reply);
-    if (status.ok()) {
-        return "OK";
-    } else {
-        std::cout << status.error_code() 
-            << ": " << status.error_message()
-            << std::endl;
-        return "RPC failed";
-    }
+  auto async_client = CreateAsyncClient("localhost:50051", 
+      64,  // n channels
+      100,  // rpcs per channel
+      100000,  // messages per rpc
+      16,  // n threads
+      1,  // thread per cq
+      30); // duration (seconds)
+  async_client->Wait();
+  async_client->ShowStats();
+  return 0;
 }
 
