@@ -4,10 +4,6 @@
 #include <set>
 #include <iostream>
 
-void InvertedIndex::clear_posting_cache() { 
-    _postings_cache_.clear();
-}
-
 void InvertedIndex::AddDocument(const int &doc_id, const TermWithOffsetList &termlist) {
     for (const auto &term_with_offset : termlist) {
         Term term = term_with_offset.term_;

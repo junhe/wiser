@@ -5,12 +5,13 @@
 #include <assert.h>
 
 
-FlashReader * Global_Posting_Store; //defined in qq_engine.h
+FlashReader * Global_Posting_Store;   // defined in qq_engine.h
+FlashReader * Global_Document_Store;  // store both documents and document passage segements 
 UnifiedHighlighter tmp_highlighter;   // for scoring 
 bool flag_posting = true;
 
 // For precomputation, insert splits into offsets(with fake offset)
-void QQSearchEngine::precompute_insert_splits(Passage_Segements & splits, Offsets & offsets_in) {
+void QQSearchEngine::precompute_insert_splits(const Passage_Segments & splits, Offsets & offsets_in) {
     // insert split (after split, there are offset ranges for each split)
     int num_offsets = offsets_in.size();
     if (num_offsets > 0)
@@ -83,7 +84,7 @@ void QQSearchEngine::AddDocument(const std::string &title, const std::string &ur
     inverted_index_.AddDocument(doc_id, terms);
 }
 
-std::string & QQSearchEngine::GetDocument(const int &doc_id) {
+const std::string & QQSearchEngine::GetDocument(const int &doc_id) {
     return doc_store_.Get(doc_id);
 }
 
@@ -96,6 +97,6 @@ std::vector<int> QQSearchEngine::Search(const TermList &terms, const SearchOpera
     return inverted_index_.Search(terms, op); 
 }
 
-Passage_Segements & QQSearchEngine::GetDocumentPassages(const int &doc_id) {
+const Passage_Segments & QQSearchEngine::GetDocumentPassages(const int &doc_id) {
     return doc_store_.GetPassages(doc_id);
 }

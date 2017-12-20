@@ -27,7 +27,6 @@ std::vector<std::string> UnifiedHighlighter::highlight(const Query & query, cons
 
 std::string UnifiedHighlighter::highlightForDoc(const Query & query, const int & docID, const int &maxPassages) {
     // check cache
-
     std::string this_key = "";
     if (FLAG_SNIPPETS_CACHE) { 
         this_key = construct_key(query, docID);
@@ -86,6 +85,7 @@ std::vector<int> UnifiedHighlighter::get_top_passages(const ScoresEnums & scores
     std::vector<int> res = {};
 
     if (FLAG_PAAT) {
+        std::cout << "Get here 1" << std::endl;
         // priority queue for passage_score iterators, holding the first passage IDs
         auto comp_passage_id = [] ( PassageScore_Iterator &a, PassageScore_Iterator &b ) -> bool { return a.cur_passage_id_ > b.cur_passage_id_; };
         std::priority_queue<PassageScore_Iterator, std::vector<PassageScore_Iterator>, decltype(comp_passage_id)> scores_iterator_queue(comp_passage_id);
@@ -100,35 +100,36 @@ std::vector<int> UnifiedHighlighter::get_top_passages(const ScoresEnums & scores
         // merge
         std::pair<int, float> passage(-1, 0);  // current passage (id, score)
         while (!scores_iterator_queue.empty()) {
-           PassageScore_Iterator cur_iter = scores_iterator_queue.top();
-           scores_iterator_queue.pop();  // push_back
+            PassageScore_Iterator cur_iter = scores_iterator_queue.top();
+            scores_iterator_queue.pop();  // push_back
            
-           int next_passage_id = cur_iter.cur_passage_id_;
-           if (next_passage_id == -1)
-               continue;
+            int next_passage_id = cur_iter.cur_passage_id_;
+            if (next_passage_id == -1)
+                continue;
 
-           // if not same with cur_passage
-           if (next_passage_id != passage.first) {
-               if (passage.first != -1) {
-                   if (passage_queue.size() == maxPassages && passage.second <= passage_queue.top().second) {
-                       passage.first = -1; passage.second = 0;
-                   } else {
-                       passage_queue.push(passage);
-                       if (passage_queue.size() > maxPassages) {
-                           passage = passage_queue.top();
-                           passage_queue.pop();
-                       } 
-                       passage.first = -1; passage.second = 0;
-                   }
-               }
-               // advance to next passage
-               passage.first = next_passage_id;
-           }
-           passage.second = passage.second + cur_iter.weight * cur_iter.score_;
-           // push back this scores iterator
-           cur_iter.next_passage();
-           scores_iterator_queue.push(cur_iter);
+            // if not same with cur_passage
+            if (next_passage_id != passage.first) {
+                if (passage.first != -1) {
+                    if (passage_queue.size() == maxPassages && passage.second <= passage_queue.top().second) {
+                        passage.first = -1; passage.second = 0;
+                    } else {
+                        passage_queue.push(passage);
+                        if (passage_queue.size() > maxPassages) {
+                            passage = passage_queue.top();
+                            passage_queue.pop();
+                        } 
+                        passage.first = -1; passage.second = 0;
+                    }
+                }
+                // advance to next passage
+                passage.first = next_passage_id;
+            }
+            passage.second = passage.second + cur_iter.weight * cur_iter.score_;
+            // push back this scores iterator
+            cur_iter.next_passage();
+            scores_iterator_queue.push(cur_iter);
         }
+        std::cout << "Get here 2" << std::endl;
 
         // Add the last passage
         if (passage_queue.size() < maxPassages && passage.second > 0) {
@@ -156,13 +157,16 @@ std::vector<int> UnifiedHighlighter::get_top_passages(const ScoresEnums & scores
 
 ScoresEnums UnifiedHighlighter::get_passages_scoresEnums(const Query & query, const int & docID) {
     ScoresEnums res = {};
+        std::cout << "Get here 3" << std::endl;
 
     // get passage_scores from postings
     for (auto term:query) {
         // Posting
         const Posting & result = engine_.inverted_index_.GetPosting(term, docID);
+        std::cout << "Get here 4" << std::endl;
         // Offsets
         res.push_back(PassageScore_Iterator(result.passage_scores_));
+        std::cout << "Get here 5" << std::endl;
     }
     return res;
     
@@ -173,7 +177,7 @@ std::string UnifiedHighlighter::highlight_passages(const Query & query, const in
     Passage cur_passage;
     std::string res = "";
     std::vector<int> passages = top_passages;
-    std::sort(passages.begin(), passages.end()); 
+    std::sort(passages.begin(), passages.end());
     for (auto passage_id : passages) {
         cur_passage.reset();
         // add matches for highlighting
@@ -204,8 +208,10 @@ std::string UnifiedHighlighter::highlightQuickForDoc(const Query & query, const 
            1. top-maxPassages scores of those passages for (query, docID)
     */
     // Get top passages
+    std::cout << "Get here in get_top_passages" << std::endl;
     std::vector<int> top_passages = get_top_passages(get_passages_scoresEnums(query, docID), maxPassages);
     // Highlight words
+    std::cout << "Get here in highlight_passages" << std::endl;
     std::string res = highlight_passages(query, docID, top_passages);
     return res;
 }
@@ -378,7 +384,7 @@ void Offset_Iterator::next_position() {  // go to next offset position
 
 
 // Passage Functions 
-std::string Passage::to_string(std::string * doc_string) {
+std::string Passage::to_string(const std::string * doc_string) {
     std::string res= "";
     res += doc_string->substr(startoffset, endoffset - startoffset + 1) + "\n";
     // highlight
@@ -402,7 +408,7 @@ void Passage::addMatch(const int & startoffset, const int & endoffset) {
 
 
 // BreakIterator Functions
-SentenceBreakIterator::SentenceBreakIterator(std::string & content) {
+SentenceBreakIterator::SentenceBreakIterator(const std::string & content) {
     startoffset = endoffset = -1;
     content_ = & content;
     // start boost boundary analysis

@@ -55,20 +55,20 @@ class Passage {
 
         void addMatch(const int & startoffset, const int & endoffset);
         Offsets matches = {};
-        std::string to_string(std::string * doc_string);
+        std::string to_string(const std::string * doc_string);
 };
 
 
 class SentenceBreakIterator {
 
     public:
-        SentenceBreakIterator(std::string & content);
+        SentenceBreakIterator(const std::string & content);
 
         int getStartOffset();  // get current sentence's start offset
         int getEndOffset();    // get current sentence's end offset
         int next();            // get next sentence
         int next(int offset);  // get next sentence where offset is within it
-        std::string * content_;
+        const std::string * content_;
     
     private:
         boost::locale::generator gen;

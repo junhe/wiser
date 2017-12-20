@@ -7,17 +7,19 @@
 #include <map>
 #include <tuple>
 
-//enum Posting_Serailization_Type { protobuf, cereal};
-
-#define POSTING_SERIALIZATION "cereal"
-
 // for direct IO
 #define PAGE_SIZE 512
+
+// for flash based documents
+#define FLAG_DOCUMENTS_ON_FLASH true
+#define DOCUMENTS_CACHE_SIZE 100
+#define DOCUMENTS_ON_FLASH_FILE "/mnt/ssd/documents_store"
 
 // for flash based postings
 #define FLAG_POSTINGS_ON_FLASH true
 #define POSTINGS_CACHE_SIZE 100
 #define POSTINGS_ON_FLASH_FILE "/mnt/ssd/postings_store"
+#define POSTING_SERIALIZATION "cereal"    // cereal or protobuf
 
 // for precomputing of snippets generating
 #define FLAG_SNIPPETS_PRECOMPUTE true
@@ -33,7 +35,7 @@ class DocumentStoreService {
     public:
         virtual void Add(int id, std::string document) = 0;
         virtual void Remove(int id) = 0;
-        virtual std::string & Get(int id) = 0;
+        virtual const std::string & Get(int id) = 0;
         virtual bool Has(int id) = 0;
         virtual void Clear() = 0;
         virtual int Size() = 0;
@@ -97,8 +99,8 @@ typedef std::pair<int, float> Passage_Score; // passage->score
 typedef std::vector<Passage_Score> Passage_Scores;
 typedef std::pair<int, int> Passage_Split; // start offset in offsets, len
 // for each doc
-typedef std::pair<int, int> Passage_Segement; // startoffset, length
-typedef std::vector<Passage_Segement> Passage_Segements;
+typedef std::pair<int, int> Passage_Segment; // startoffset, length
+typedef std::vector<Passage_Segment> Passage_Segments;
 
 // File Reader (TODO become a abstract class?)
 typedef std::pair<int, int> Store_Segment;    // startoffset, length on flash based file
@@ -117,6 +119,7 @@ class FlashReader {
 
 // TODO: this design is not good!
 extern FlashReader * Global_Posting_Store; //defined in qq_engine.cc
+extern FlashReader * Global_Document_Store; //defined in qq_engine.cc
 
 extern bool flag_posting;
 #endif

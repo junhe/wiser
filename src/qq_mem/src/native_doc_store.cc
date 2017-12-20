@@ -5,12 +5,18 @@
 #include "unifiedhighlighter.h"  // To change the API
 
 void NativeDocStore::Add(int id, std::string document) {
-    store_[id] = document;
-
-    // TODO split into passages
+    if (FLAG_DOCUMENTS_ON_FLASH) {
+        // write out to flash
+        Store_Segment store_position = Global_Document_Store->append(document);
+        // store address in _document_flash_store_
+        _document_flash_store_[id] = store_position;
+    } else {
+        store_[id] = document;
+    }
+    
+    // split into passages
     if (FLAG_SNIPPETS_PRECOMPUTE) {
-        Passage_Segements res;
-        typedef std::vector<Passage_Segement> Passage_Segements;
+        Passage_Segments res;
         
         SentenceBreakIterator breakiterator(document);
 
@@ -19,11 +25,25 @@ void NativeDocStore::Add(int id, std::string document) {
         while ( breakiterator.next() > 0 ) {
             int start_offset = breakiterator.getStartOffset();
             int end_offset = breakiterator.getEndOffset();
-            res.push_back(Passage_Segement(start_offset, end_offset-start_offset+1));
+            res.push_back(Passage_Segment(start_offset, end_offset-start_offset+1));
         }
 
-        
-        passages_store_[id] = res; 
+        if (FLAG_DOCUMENTS_ON_FLASH) {
+            // serialize
+            std::stringstream ss; // any stream can be used
+
+            {
+              cereal::BinaryOutputArchive oarchive(ss); // Create an output archive
+              oarchive(res);
+            } // archive goes out of scope, ensuring all contents are flushed
+
+            // write out to flash
+            Store_Segment store_position = Global_Document_Store->append(ss.str());
+            // store address in _document_flash_store_
+            _passage_segments_flash_store_[id] = store_position;
+        } else {
+            passages_store_[id] = res;
+        }
     }
 }
 
@@ -35,13 +55,51 @@ bool NativeDocStore::Has(int id) {
     return store_.count(id) == 1;
 }
 
-std::string & NativeDocStore::Get(int id) {
+const std::string & NativeDocStore::Get(int id) {
+    if (FLAG_DOCUMENTS_ON_FLASH) {
+        if (_document_cache_.exists(id)) {
+            std::cout << "document hit in cache" << std::endl;
+            return _document_cache_.get(id);
+        }
+        std::cout << "fetch document from flash" << std::endl;
+        // get postion
+        const Store_Segment stored_position = _document_flash_store_[id];
+        // read -> add to cache
+        _document_cache_.put(id, Global_Document_Store->read(stored_position));
+        // return document        TODO Lock Problems(should not kick out a document from cache while still using it)
+        return _document_cache_.get(id);
+    }
     return store_[id];
 }
 
 // for precompute
-Passage_Segements & NativeDocStore::GetPassages(int id) {
+const Passage_Segments & NativeDocStore::GetPassages(int id) {
+    if (FLAG_DOCUMENTS_ON_FLASH) {
+        if (_passage_segments_cache_.exists(id)) {
+            std::cout << "passage segment hit in cache" << std::endl;
+            return _passage_segments_cache_.get(id);
+        }
+        std::cout << "fetch passage segment from flash" << std::endl;
+        // get postion
+        const Store_Segment stored_position = _passage_segments_flash_store_[id];
+        // read -> add to cache
+        _passage_segments_cache_.put(id, parse_cereal_string_to_passage_segments(Global_Document_Store->read(stored_position)));
+        // return passage segments        TODO Lock Problems(should not kick out a document from cache while still using it)
+        return _passage_segments_cache_.get(id);
+    }
     return passages_store_[id];
+}
+
+const Passage_Segments NativeDocStore::parse_cereal_string_to_passage_segments(const std::string & serialized) {
+    std::stringstream ss;
+    ss.str(serialized);
+
+    cereal::BinaryInputArchive iarchive(ss); // Create an input archive
+
+    Passage_Segments new_passage_segments;
+    iarchive(new_passage_segments); // Read the data from the archive
+    
+    return new_passage_segments;
 }
 
 void NativeDocStore::Clear() {

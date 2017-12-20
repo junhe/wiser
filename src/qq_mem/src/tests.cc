@@ -38,6 +38,10 @@ TEST_CASE( "Factorials are computed", "[factorial]" ) {
 }
 
 TEST_CASE( "Document store implemented by C++ map", "[docstore]" ) {
+    if (FLAG_DOCUMENTS_ON_FLASH) 
+        //TODO: support has etc.? 
+        return;
+ 
     NativeDocStore store;
     int doc_id = 88;
     std::string doc = "it is a doc";
@@ -441,6 +445,7 @@ TEST_CASE( "Passage of Unified Highlighter essential operations are OK", "[passa
 
 TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
     QQSearchEngine engine;
+    UnifiedHighlighter test_highlighter(engine);
     
     // read in the linedoc
     utils::LineDoc linedoc("src/testdata/line_doc_offset");
@@ -453,8 +458,6 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     
     // adddocument
     engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
-    //engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
-    UnifiedHighlighter test_highlighter(engine);
 
     //start highlighter
     //Query query = {"park"}; // attack build knife zoo
@@ -484,18 +487,12 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
 
     struct timeval t1,t2;
     double timeuse;
-    /*gettimeofday(&t1,NULL);
-    for (int i = 0; i< 1000000000; i++) {
-    }
-    gettimeofday(&t2,NULL);
-    timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
-    */
     std::vector<std::string> res;
     for (int i = 0; i < 4; i++) { 
-        if (FLAG_POSTINGS_ON_FLASH) {
-            // clear the cache
-            engine.inverted_index_.clear_posting_cache();
-        }
+        // clear the cache
+        engine.inverted_index_.clear_posting_cache();
+        engine.doc_store_.clear_caches();
+
         flag_posting = false;
         gettimeofday(&t1,NULL);
         //TopDocs topDocs = engine.Search(query, SearchOperator::AND);
@@ -504,6 +501,7 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
         timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
         printf("Use Time:%fms\n",timeuse*1000);
         REQUIRE(res.size() == topDocs.size());
+        std::cout << "Get there!" << std::endl;
         std::cout << res[0] <<std::endl;
     }
     
@@ -635,7 +633,7 @@ TEST_CASE( "UnifiedHighlighter snippets cache key constructor  essential opearti
     REQUIRE(res == "3:hello,world,");
 }
 
-TEST_CASE("Precompute and store document sentence segements successfully", "[Precompute_StorePassages]") {
+TEST_CASE("Precompute and store document sentence segments successfully", "[Precompute_StorePassages]") {
     NativeDocStore store;
     int doc_id = 88;
     std::string doc = "it is a doc. We are the second sentence. I'm the third sentence! ";
@@ -647,9 +645,9 @@ TEST_CASE("Precompute and store document sentence segements successfully", "[Pre
         REQUIRE(store.Get(doc_id) == doc);
         // check document passages
         REQUIRE(store.GetPassages(doc_id).size() == 3 );
-        REQUIRE(store.GetPassages(doc_id)[0] == Passage_Segement(0,13) );
-        REQUIRE(store.GetPassages(doc_id)[1] == Passage_Segement(13,28) );
-        REQUIRE(store.GetPassages(doc_id)[2] == Passage_Segement(41,24) );
+        REQUIRE(store.GetPassages(doc_id)[0] == Passage_Segment(0,13) );
+        REQUIRE(store.GetPassages(doc_id)[1] == Passage_Segment(13,28) );
+        REQUIRE(store.GetPassages(doc_id)[2] == Passage_Segment(41,24) );
     }
 }
 
