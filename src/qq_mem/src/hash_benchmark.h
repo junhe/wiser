@@ -13,6 +13,7 @@ class HashService {
     virtual std::string Get(const std::string &key) = 0;
     virtual void Put(const std::string &key, const std::string &value ) = 0;
     virtual std::size_t Size() = 0;
+    virtual void Find(const std::string &key) = 0;
 };
 
 class STLHash: public HashService {
@@ -33,6 +34,10 @@ class STLHash: public HashService {
 
     std::size_t Size() {
         return hash_.size();
+    }
+
+    void Find(const std::string &key) {
+      volatile auto it = hash_.find(key);
     }
 };
 
@@ -55,13 +60,15 @@ void build_hash(HashService &hash, std::size_t n, int key_size, int value_size) 
 void query_hash(HashService &hash, std::size_t n, int key_size, int value_size) {
     std::string value;
     std::string good_value = compose_value(value_size);
+    std::string k = encode(88, key_size);
     for (std::size_t i = 0; i < n; i++) {
-        value = hash.Get(encode(i, key_size));
+        // value = hash.Get(encode(i, key_size));
+        hash.Find(k);
 
-        if (i % 100000 == 0) {
-            std::cout << i << "/" << n << std::endl;
-        }
-        assert(value == good_value);
+        // if (i % 100000 == 0) {
+            // std::cout << i << "/" << n << std::endl;
+        // }
+        // assert(value == good_value);
     }
 }
 
