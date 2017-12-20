@@ -21,7 +21,7 @@ server:
 	./build/qq_server 50051 0
 
 client:
-	./build/client
+	./build/qq_client
 
 test:
 	rm -f ./build/testmain

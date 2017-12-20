@@ -66,13 +66,13 @@ target_link_libraries(qq_server
 )
 
 # Building client
-add_executable(client
-    ${CMAKE_CURRENT_SOURCE_DIR}/client.cc
+add_executable(qq_client
+    ${CMAKE_CURRENT_SOURCE_DIR}/qq_client.cc
     ${ENGINE_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
-target_link_libraries(client
+target_link_libraries(qq_client
     gRPC::grpc++_reflection
     protobuf::libprotobuf
     ${BOOST_LIBS}
