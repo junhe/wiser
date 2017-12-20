@@ -1,5 +1,5 @@
-#ifndef QQ_CLIENT_H
-#define QQ_CLIENT_H
+#ifndef GRPC_CLIENT_IMPL_H
+#define GRPC_CLIENT_IMPL_H
 
 #include <iostream>
 #include <memory>

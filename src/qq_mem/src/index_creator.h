@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "qq_client.h"
+#include "grpc_client_impl.h"
 
 // This class reads original documents and make RPC calls to index them
 class IndexCreator {

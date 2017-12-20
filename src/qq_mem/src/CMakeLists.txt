@@ -39,7 +39,7 @@ set(ENGINE_SRCS
     inverted_index.cc
     index_creator.cc
     qq_engine.cc
-    qq_client.cc
+    grpc_client_impl.cc
     utils.cc
     )
 
@@ -86,7 +86,7 @@ target_link_libraries(client
 #######################################
 add_library( CatchMain OBJECT catch_main.cc catch.hpp )
 add_executable( testmain tests.cc 
-    qq_client.cc
+    grpc_client_impl.cc
     ${ENGINE_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
@@ -120,7 +120,7 @@ target_link_libraries(in_proc_engine_bench
 )
 
 add_executable(grpc_benchmark
-    qq_client.cc
+    grpc_client_impl.cc
     ${ENGINE_SRCS}
     grpc_bench.cc
     ${PROTO_SRCS}

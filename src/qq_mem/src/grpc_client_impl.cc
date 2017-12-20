@@ -1,4 +1,4 @@
-#include "qq_client.h"
+#include "grpc_client_impl.h"
 
 
 bool QQEngineSyncClient::AddDocument(const std::string &title, 

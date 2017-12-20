@@ -2,7 +2,7 @@
 #include <thread>
 #include <cassert>
 
-#include "qq_client.h"
+#include "grpc_client_impl.h"
 #include "index_creator.h"
 #include "utils.h"
 

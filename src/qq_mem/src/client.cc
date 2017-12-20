@@ -1,7 +1,7 @@
 #include <chrono>
 #include <thread>
 
-#include "qq_client.h"
+#include "grpc_client_impl.h"
 #include "index_creator.h"
 
 
