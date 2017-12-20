@@ -115,16 +115,11 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
             SearchReply* reply) override {
         Term term = request->term();
 
-        // std::cout << "search term: " << term << std::endl;
-
         auto doc_ids = search_engine_->Search(TermList{term}, SearchOperator::AND);
         
         for (auto id : doc_ids) {
             reply->add_doc_ids(id);
-
-            // std::string doc = search_engine_->GetDocument(id);
-            // std::cout << "Document found: " << doc << std::endl;
-            break;
+            break; // TODO: remove this to be more realistic
         }
         return Status::OK;
     }
@@ -154,7 +149,7 @@ class AsyncServer {
     if (line_doc_path.size() > 0) {
       int n_rows = std::stoi(config.at("n_line_doc_rows"));
       int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows);
-      std::cout << ret << " docs indexed to search engine." << std::endl;
+      // std::cout << ret << " docs indexed to search engine." << std::endl;
     }
 
     ServerBuilder builder;
@@ -236,7 +231,6 @@ class AsyncServer {
     // Wait until work is available or we are shutting down
     bool ok;
     void *got_tag;
-    std::cout << "in ThreadFunc" << std::endl;
     while (srv_cqs_[cq_[thread_idx]]->Next(&got_tag, &ok)) {
       ServerRpcContext *ctx = detag(got_tag);
       
@@ -297,7 +291,6 @@ class AsyncServer {
       bool RunNextState(bool ok) {
         switch(next_state_) {
           case State::REQUEST_DONE:
-            // std::cout << "State REQUEST_DONE" << std::endl;
             if (!ok) {
               return false;
             }
@@ -305,11 +298,9 @@ class AsyncServer {
             stream_.Read(&req_, AsyncServer::tag(this));
             return true;
           case State::READ_DONE:
-            // std::cout << "State READ_DONE" << std::endl;
             if (ok) {
               next_state_ = State::WRITE_DONE;
 
-              // std::cout << "term: " << req_.term() << std::endl;
               // auto doc_ids = search_engine_->Search(
                   // TermList{req_.term()}, SearchOperator::AND);
               volatile auto it = search_engine_->Find(Term("hello"));
@@ -320,7 +311,6 @@ class AsyncServer {
             }
             return true;
           case State::WRITE_DONE:
-            // std::cout << "State WRITE_DONE" << std::endl;
             if (ok) {
               next_state_ = State::READ_DONE;
               stream_.Read(&req_, AsyncServer::tag(this));
@@ -330,7 +320,6 @@ class AsyncServer {
             }
             return true;
           case State::FINISH_DONE:
-            // std::cout << "State FINISH_DONE" << std::endl;
             return false;
           default:
             GPR_ASSERT(false);

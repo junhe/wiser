@@ -71,14 +71,14 @@ struct ChannelInfo {
 
     channel_ = grpc::CreateChannel(target, grpc::InsecureChannelCredentials());
 
-    auto start = utils::now();
-    std::cout << "Waiting for chnnael to be conneted to "
-      << target << std::endl;
+    // auto start = utils::now();
+    // std::cout << "Waiting for chnnael to be conneted to "
+      // << target << std::endl;
     channel_->WaitForConnected(
         gpr_time_add(
           gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(300, GPR_TIMESPAN)));
-    auto end = utils::now();
-    std::cout << "waited for " << utils::duration(start, end) << std::endl;
+    // auto end = utils::now();
+    // std::cout << "waited for " << utils::duration(start, end) << std::endl;
     stub_ = QQEngine::NewStub(channel_);
   }
 
@@ -269,7 +269,6 @@ AsyncClient::AsyncClient(const ConfigType config)
     }
     t = (t + 1) % cli_cqs_.size();
   }
-  std::cout << "cli_cqs_ size: " << cli_cqs_.size() << std::endl;
 
   // create threads and counts
   for(int i = 0; i < num_async_threads; i++)
