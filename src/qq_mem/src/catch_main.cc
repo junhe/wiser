@@ -1,8 +1,15 @@
-// In a Catch project with multiple files, dedicate one file to compile the
-// source code of Catch itself and reuse the resulting object file for linking.
-
-// Let Catch provide main():
-#define CATCH_CONFIG_MAIN
-
+#define CATCH_CONFIG_RUNNER
 #include "catch.hpp"
+
+#include <glog/logging.h>
+
+int main( int argc, char* argv[] ) {
+  // global setup...
+  google::InitGoogleLogging(argv[0]);
+
+  int result = Catch::Session().run( argc, argv );
+
+  // global clean-up...
+  return result;
+}
 

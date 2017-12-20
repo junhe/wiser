@@ -33,3 +33,31 @@ Simply run:
 ./runtest.sh
 ```
 
+## How to use GLOG
+
+Example code: 
+
+```
+#include <glog/logging.h>
+
+int main(int argc, char* argv[]) {
+ // Initialize Google's logging library.
+ google::InitGoogleLogging(argv[0]);
+
+ FLAGS_logtostderr = 1; // print to stderr instead of file
+ FLAGS_stderrthreshold = INFO; // print INFO and other levels above INFO (WARNING, ...)
+
+ LOG(INFO) << "Found " << 4 << " cookies";
+ LOG(WARNING) << "Found " << 4 << " cookies";
+ LOG(ERROR) << "Found " << 4 << " cookies";
+ <!--LOG(FATAL) << "Found " << 4 << " cookies";-->
+}
+```
+
+You may see log files in `/tmp/`.
+
+More info: http://rpg.ifi.uzh.ch/docs/glog.html
+
+
+
+

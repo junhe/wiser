@@ -5,6 +5,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/lambda/lambda.hpp>    
 #include "catch.hpp"
+#include <glog/logging.h>
 
 #include "native_doc_store.h"
 #include "inverted_index.h"
@@ -23,6 +24,11 @@
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
 }
+
+TEST_CASE( "glog can print", "[glog]" ) {
+  LOG(ERROR) << "Found " << 4 << " cookies in GLOG";
+}
+
 
 TEST_CASE( "Factorials are computed", "[factorial]" ) {
     REQUIRE( Factorial(1) == 1 );

@@ -50,6 +50,8 @@ set(BOOST_LIBS
     boost_locale
     )
 
+set(GLOG_LIB glog)
+
 
 #######################################
 # GRPC Client and server
@@ -97,6 +99,7 @@ target_link_libraries(testmain
     gRPC::grpc++_reflection
     protobuf::libprotobuf
     ${BOOST_LIBS}
+    ${GLOG_LIB}
 )
 
 
