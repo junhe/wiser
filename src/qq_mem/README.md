@@ -54,6 +54,15 @@ int main(int argc, char* argv[]) {
 }
 ```
 
+Let's use
+
+- INFO for debugging info
+- WARNING for warning
+- ERROR for error
+- FATAL for fatal error, which will shut down the program
+
+
+
 You may see log files in `/tmp/`.
 
 More info: http://rpg.ifi.uzh.ch/docs/glog.html
