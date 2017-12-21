@@ -41,6 +41,7 @@ set(ENGINE_SRCS
     qq_engine.cc
     grpc_client_impl.cc
     utils.cc
+    intersect.cc
     unifiedhighlighter.cc
     )
 

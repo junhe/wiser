@@ -20,6 +20,8 @@
 #include "posting_list_protobuf.h"
 #include "posting_list_vec.h"
 
+#include "intersect.h"
+
 #include "unifiedhighlighter.h"
 
 unsigned int Factorial( unsigned int number ) {
@@ -536,4 +538,72 @@ TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
 
 }
 
+
+TEST_CASE( "Intersection", "[intersect]" ) {
+  PostingList_Vec<Posting> pl01("hello");   
+  for (int i = 0; i < 10; i++) {
+    pl01.AddPosting(Posting(i, 1, Positions{28}));
+  }
+
+  SECTION("It intersects a subset") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 5; i < 10; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect(lists);
+    REQUIRE(ret == std::vector<DocIdType>{5, 6, 7, 8, 9});
+  }
+
+  SECTION("It intersects an empty posting list") {
+    PostingList_Vec<Posting> pl02("world");   
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect(lists);
+    REQUIRE(ret == std::vector<DocIdType>{});
+  }
+
+  SECTION("It intersects a non-overlapping posting list") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 10; i < 20; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect(lists);
+    REQUIRE(ret == std::vector<DocIdType>{});
+  }
+
+  SECTION("It intersects a partial-overlapping posting list") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 5; i < 15; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect(lists);
+    REQUIRE(ret == std::vector<DocIdType>{5, 6, 7, 8, 9});
+  }
+
+  SECTION("It intersects a super set") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 0; i < 15; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect(lists);
+    REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+  }
+
+  SECTION("It intersects two empty list") {
+    PostingList_Vec<Posting> pl01("hello");   
+    PostingList_Vec<Posting> pl02("world");   
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect(lists);
+    REQUIRE(ret == std::vector<DocIdType>{});
+  }
+}
 

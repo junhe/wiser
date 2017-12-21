@@ -30,8 +30,8 @@ class PostingList_Vec {
     :term_(term) {
   }
 
-  Term GetTerm() {return term_;}
-  std::size_t Size() {return posting_store_.size();}
+  Term GetTerm() const {return term_;}
+  std::size_t Size() const {return posting_store_.size();}
 
   // You must make sure postings are added with increasing doc ID
   void AddPosting(const Posting &posting) {
@@ -43,11 +43,11 @@ class PostingList_Vec {
     posting_store_.push_back(posting);
   }
 
-  const T& GetPosting(const iterator_t &it) {
+  const T& GetPosting(const iterator_t &it) const {
     return posting_store_.at(it);
   }
 
-  const iterator_t SkipForward(const iterator_t &it, const DocIdType &doc_id) {
+  const iterator_t SkipForward(const iterator_t &it, const DocIdType &doc_id) const {
     // return an iterator that has doc ID that is larger or equal to doc_id
     // It returns n (index past the last posting) if we could not find such a doc ID
     iterator_t i = it;
