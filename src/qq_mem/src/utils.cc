@@ -51,6 +51,13 @@ const std::vector<std::string> explode_strict(const std::string &line, const cha
     return vec;
 }
 
+void sleep(int n_secs) {
+  using namespace std::this_thread; // sleep_for, sleep_until
+  using namespace std::chrono; // nanoseconds, system_clock, seconds
+
+  sleep_for(seconds(n_secs));
+}
+
 const std::chrono::time_point<std::chrono::system_clock> now() {
     return std::chrono::system_clock::now();
 }
@@ -72,6 +79,51 @@ const std::string fill_zeros(const std::string &s, std::size_t width) {
     }
 }
 
+// Parse offsets from string
+void handle_positions(const std::string& s, Offset& this_position) {
+    std::size_t pos_split = s.find(",");
+    this_position = std::make_tuple(std::stoi(s.substr(0, pos_split)), std::stoi(s.substr(pos_split+1)));
+    // construct position
+    return;
+}
+
+void handle_term_offsets(const std::string& s, Offsets& this_term) {
+    std::string buff{""};
+
+    for(auto n:s) {
+        // split by ;
+        if(n != ';') buff+=n; else
+        if(n == ';' && buff != "") {
+            Offset this_position;
+            // split by ,
+            handle_positions(buff, this_position);
+            this_term.push_back(this_position);
+            buff = "";
+        }
+    }
+
+    return;
+}
+
+const std::vector<Offsets> parse_offsets(const std::string& s) {
+    std::vector<Offsets> res;
+    
+    std::string buff{""};
+
+    for(auto n:s)
+    {
+    // split by .
+        if(n != '.') buff+=n; else
+        if(n == '.' && buff != "") {
+            Offsets this_term;
+            handle_term_offsets(buff, this_term);
+            res.push_back(this_term);
+            buff = "";
+        }
+    }
+    return res;
+}
+
 ///////////////////////////////////////////////
 // LineDoc
 ///////////////////////////////////////////////
@@ -86,7 +138,6 @@ LineDoc::LineDoc(std::string path) {
     std::string line; 
     std::getline(infile_, line);
     std::vector<std::string> items = explode(line, '#');
-    
     // TODO: bad! this may halt the program when nothing is in line
     items = explode_by_non_letter(items.back()); 
     col_names_ = items;

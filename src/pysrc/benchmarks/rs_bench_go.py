@@ -7,7 +7,7 @@ from pyreuse import helpers
 
 from utils.utils import LineDocPool, QueryPool
 from utils.expbase import Experiment
-from .es_bench import ElasticSearchClient
+from .Clients import ElasticSearchClient
 
 
 
@@ -60,10 +60,10 @@ class ExperimentRsbenchGo(Experiment):
         self.paras = helpers.parameter_combinations({
                     'worker_count': [1, 16, 32, 64, 128],
                     'query': ['hello', 'barack obama'],
-                    'engine': ['redis'],
+                    'engine': ['elastic'],
                     'n_shards': [1],
                     'n_hosts': [1],
-                    'rebuild_index': [False]
+                    'rebuild_index': [True]
                     })
         self._n_treatments = 1#len(self.paras)
 
@@ -92,6 +92,7 @@ class ExperimentRsbenchGo(Experiment):
     def beforeEach(self, conf):
         if conf['subexp_index'] == 0 and conf['rebuild_index'] is True:
             build_index(conf['n_shards'], conf['n_hosts'], conf['engine'], conf['start_port'], conf['host'])
+	exit(1)
 
     def treatment(self, conf):
         helpers.shcmd("{bench_exe} -engine {engine} -shards {n_shards} " \

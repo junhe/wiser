@@ -6,6 +6,7 @@
 #include <fstream>
 #include <chrono>
 
+#include "engine_services.h"
 
 namespace utils {
 
@@ -16,6 +17,8 @@ const std::chrono::time_point<std::chrono::system_clock> now();
 const double duration(std::chrono::time_point<std::chrono::system_clock> t1, 
     std::chrono::time_point<std::chrono::system_clock> t2);
 const std::string fill_zeros(const std::string &s, std::size_t width);
+
+const std::vector<Offsets> parse_offsets(const std::string& s);
 
 class LineDoc {
     private:

@@ -1,6 +1,8 @@
 import sys
 import requests, json
 import codecs
+import re
+import io
 
 def tokenize(line_doc, output):
 
@@ -62,25 +64,36 @@ def tokenize(line_doc, output):
     doc["analyzer"] = "my_english_analyzer"
     
     header = line_doc.readline()
-    output.write(header.strip('\n') + "\t" + "tokenized\n")
+    #output.write(header.strip('\n') + "\t" + "tokenized\n")
     for line in line_doc:
         items = line.split("\t")
         doc_content = items[1]
         doc["text"] = doc_content
         doc_result = json.dumps(doc)
         r = requests.post(url, doc_result, headers=headers)
-        #print(r.text)
-        output.write(items[0]+'\t' + items[1].strip('\n')+'\t')
+        output.write(unicode(items[0] +'\t' + items[1].strip('\n') +'\t'))
         
-        # unique 
-        dic = {} 
+        # unique and collect offsets
+        dic = {}
         for token in r.json()["tokens"]:
+            # also store offsets
+
             if token["token"].encode('utf8') in dic:
+                tmp = dic[token["token"].encode('utf8')] 
+                tmp += (str(token["start_offset"]) + ',' + str(token["end_offset"]) + ';')
+                dic[token["token"].encode('utf8')] = tmp
                 continue
-            dic[token["token"].encode('utf8')] = 0
-            output.write(token["token"].encode('utf8') + ' ')
-        
-        output.write('\n')
+            dic[token["token"].encode('utf8')] = str(token["start_offset"]) + ',' + str(token["end_offset"]) + ';'
+
+        terms = ""
+        offsets = ""
+        for token in dic:
+            terms += token + ' '
+            offsets += dic[token] + '.'
+            print token, ': ', dic[token]
+        #output.write(token["token"].encode('utf8') + ' ')
+        output.write( unicode(terms + '\t' + offsets) )
+        output.write( unicode('\n') )
 
 if __name__=='__main__':
     # print help
@@ -89,9 +102,9 @@ if __name__=='__main__':
         exit(1)
     
     # do analysis
-    line_doc = open(sys.argv[1])
-    output = open(sys.argv[1] + '_tokenized', 'w')
-    
-    tokenize(line_doc, output)
-    line_doc.close()
+    #line_doc = open(sys.argv[1])
+    output = io.open(sys.argv[1] + '_tokenized', 'w', encoding="utf-8")
+    with io.open(sys.argv[1], "r", encoding="utf-8") as line_doc:
+        tokenize(line_doc, output)
+    #line_doc.close()
     output.close()

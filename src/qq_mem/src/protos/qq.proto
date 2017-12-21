@@ -17,6 +17,8 @@ message AddDocumentRequest {
       string title = 1;
       string url = 2;
       string body = 3;
+      string tokens = 4;
+      string offsets = 5;
     }
 
     message Options {

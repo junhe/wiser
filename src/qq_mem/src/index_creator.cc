@@ -18,7 +18,9 @@ void IndexCreator::DoIndex() {
         has_it = linedoc.GetRow(items);
         if (has_it) {
             // std::cout << "****************" << items.size() <<"****************" << std::endl;
-            client_.AddDocument(items[0], "http://wiki", items[2]);
+            client_.AddDocument(items[0], "http://wiki", items[1], items[2], "");
+            // With offset:
+            //client_.AddDocument(items[0], "http://wiki", items[2], items[3]);
         } else {
             break;
         }

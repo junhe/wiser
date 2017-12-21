@@ -40,9 +40,16 @@ class QQEngineServiceImpl final : public QQEngine::Service {
         // std::cout << "title" << request->document().title() << std::endl;
         // std::cout << "url" << request->document().url() << std::endl;
         // std::cout << "body" << request->document().body() << std::endl;
-
-        search_engine_.AddDocument(request->document().title(),
-                request->document().url(), request->document().body());
+        if (request->document().offsets() == "") {
+            std::cout << "!!!!!!!!!!!!!!!!! NO OFFSET";
+            search_engine_.AddDocument(request->document().title(),
+                    request->document().url(), request->document().body());
+        } else {
+            search_engine_.offsets_flag_ = 1;     // TODO should not be set here
+            search_engine_.AddDocument(request->document().title(),
+                    request->document().url(), request->document().body(), request->document().tokens(), request->document().offsets());
+        
+        }
 
         count++;
 

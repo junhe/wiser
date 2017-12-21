@@ -23,6 +23,7 @@ file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
 include_directories(${PROTO_SRC_DIR})
 include_directories(${Boost_INCLUDE_DIR})
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
 
 
@@ -41,6 +42,7 @@ set(ENGINE_SRCS
     qq_engine.cc
     utils.cc
     unifiedhighlighter.cc
+    flashreader.cc
     )
 
 set(BOOST_LIBS
