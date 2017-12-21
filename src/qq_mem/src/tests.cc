@@ -18,6 +18,7 @@
 #include "posting_list_direct.h"
 #include "posting_list_raw.h"
 #include "posting_list_protobuf.h"
+#include "posting_list_vec.h"
 
 #include "unifiedhighlighter.h"
 
@@ -480,4 +481,10 @@ TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_break
     REQUIRE(breakiterator.getEndOffset() == 39);
     REQUIRE(breakiterator.next(40) == 0);
 }
+
+
+TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
+  
+}
+
 

@@ -36,6 +36,7 @@ set(ENGINE_SRCS
     posting_list_direct.cc
     posting_list_protobuf.cc
     posting_list_raw.cc
+    posting_list_vec.cc
     inverted_index.cc
     index_creator.cc
     qq_engine.cc
