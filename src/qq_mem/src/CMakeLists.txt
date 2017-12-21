@@ -1,7 +1,7 @@
 project(grpc-cmake-example)
 cmake_minimum_required(VERSION 3.2)
 
-add_compile_options(-std=c++11)
+add_compile_options(-std=c++11 -O3)
 
 # GRPC and Protocol Buffers libraries location
 list(APPEND CMAKE_PREFIX_PATH "/opt/grpc" "/opt/protobuf")
@@ -40,6 +40,7 @@ set(ENGINE_SRCS
     inverted_index.cc
     index_creator.cc
     qq_engine.cc
+    grpc_client_impl.cc
     utils.cc
     unifiedhighlighter.cc
     flashreader.cc
@@ -51,11 +52,15 @@ set(BOOST_LIBS
     boost_locale
     )
 
-# Building server
+set(GLOG_LIB glog)
+
+
+#######################################
+# GRPC Client and server
+#######################################
 add_executable(qq_server
+    qq_server.cc
     ${ENGINE_SRCS}
-    qq_client.cc
-    ${CMAKE_CURRENT_SOURCE_DIR}/qq_server.cc
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
@@ -63,26 +68,31 @@ target_link_libraries(qq_server
     gRPC::grpc++_reflection
     protobuf::libprotobuf
     ${BOOST_LIBS}
+    pthread
 )
 
 # Building client
-add_executable(client
-    qq_client.cc
+add_executable(qq_client
+    ${CMAKE_CURRENT_SOURCE_DIR}/qq_client.cc
     ${ENGINE_SRCS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/client.cc
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
-target_link_libraries(client
+target_link_libraries(qq_client
     gRPC::grpc++_reflection
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
 )
 
+
+
+#######################################
+# Catch2 testing framework
+#######################################
 add_library( CatchMain OBJECT catch_main.cc catch.hpp )
 add_executable( testmain tests.cc 
-    qq_client.cc
+    grpc_client_impl.cc
     ${ENGINE_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
@@ -91,24 +101,33 @@ target_link_libraries(testmain
     gRPC::grpc++_reflection
     protobuf::libprotobuf
     ${BOOST_LIBS}
+    ${GLOG_LIB}
 )
 
 
+#######################################
 # For benchmarks
-
+#######################################
 add_executable(hash_benchmark
     hash_benchmark.cc
     utils.cc
 )
-#target_link_libraries(qq_server
-    #gRPC::grpc++_reflection
-    #protobuf::libprotobuf
-    #${BOOST_LIBS}
-#)
 
+add_executable(in_proc_engine_bench
+    in_proc_engine_bench.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(in_proc_engine_bench
+    gRPC::grpc++_reflection
+    protobuf::libprotobuf
+    ${BOOST_LIBS}
+    pthread
+)
 
 add_executable(grpc_benchmark
-    qq_client.cc
+    grpc_client_impl.cc
     ${ENGINE_SRCS}
     grpc_bench.cc
     ${PROTO_SRCS}

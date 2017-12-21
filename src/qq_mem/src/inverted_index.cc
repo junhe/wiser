@@ -149,3 +149,11 @@ std::string InvertedIndex::construct_key(const Term & term, const int & docID) {
     std::string res = term + "_" + std::to_string(docID);
     return res;
 }
+
+IndexStore::const_iterator InvertedIndex::Find(const Term &term) {
+    return index_.find(term);
+}
+
+IndexStore::const_iterator InvertedIndex::ConstEnd() {
+    return index_.cend();
+}

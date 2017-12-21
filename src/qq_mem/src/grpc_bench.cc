@@ -2,20 +2,21 @@
 #include <thread>
 #include <cassert>
 
-#include "qq_client.h"
+#include "grpc_client_impl.h"
 #include "index_creator.h"
 #include "utils.h"
 
 
 void make_queries(int n_queries) {
-    std::string reply;
+    EchoData request, reply;
+    request.set_message("");
 
-    QQEngineClient qqengine(grpc::CreateChannel(
+    QQEngineSyncClient qqengine(grpc::CreateChannel(
                 "localhost:50051", grpc::InsecureChannelCredentials()));
 
     for (int i = 0; i < n_queries; i++) {
         // reply = qqengine.Search("hello");
-        reply = qqengine.Echo("");
+        qqengine.Echo(request, reply);
         // std::cout << reply << std::endl;
         // assert(reply == "OK");
     }

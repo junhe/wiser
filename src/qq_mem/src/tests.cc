@@ -5,6 +5,7 @@
 #include <boost/filesystem.hpp>
 #include <boost/lambda/lambda.hpp>    
 #include "catch.hpp"
+#include <glog/logging.h>
 
 #include "native_doc_store.h"
 #include "inverted_index.h"
@@ -12,6 +13,7 @@
 #include "index_creator.h"
 #include "utils.h"
 #include "hash_benchmark.h"
+#include "grpc_server_impl.h"
 
 #include "posting_list_direct.h"
 #include "posting_list_raw.h"
@@ -28,6 +30,10 @@
 
 unsigned int Factorial( unsigned int number ) {
     return number <= 1 ? number : Factorial(number-1)*number;
+}
+
+TEST_CASE( "glog can print", "[glog]" ) {
+  LOG(ERROR) << "Found " << 4 << " cookies in GLOG";
 }
 
 
@@ -70,6 +76,15 @@ TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
     InvertedIndex index;     
     index.AddDocument(100, TermList{"hello", "world"});
     index.AddDocument(101, TermList{"hello", "earth"});
+
+    // Get just the iterator
+    {
+      IndexStore::const_iterator ci = index.Find(Term("hello"));
+      REQUIRE(index.ConstEnd() != ci);
+
+      ci = index.Find(Term("hellox"));
+      REQUIRE(index.ConstEnd() == ci);
+    }
 
     // Get non-exist
     {
@@ -220,6 +235,20 @@ TEST_CASE( "QQSearchEngine", "[engine]" ) {
     REQUIRE(doc == "my body");
 }
 
+
+TEST_CASE( "QQSearchEngine can Find() a term", "[engine, benchmark]" ) {
+    QQSearchEngine engine;
+
+    engine.AddDocument("my title", "my url", "my body");
+
+    InvertedIndex::const_iterator it = engine.Find(Term("my"));
+
+    // We do not do any assertion here. 
+    // Just want to make sure it runs. 
+}
+
+
+
 TEST_CASE( "Utilities", "[utils]" ) {
     SECTION("Leading space and Two spaces") {
         std::vector<std::string> vec = utils::explode(" hello  world", ' ');
@@ -347,6 +376,94 @@ TEST_CASE( "Hash benchmark", "[benchmark]" ) {
 
 }
 
+TEST_CASE( "GRPC Sync Client and Server", "[grpc]" ) {
+  auto server = CreateServer(std::string("localhost:50051"), 1, 1, 0);
+  utils::sleep(1); // warm up the server
+
+  auto client = CreateSyncClient("localhost:50051");
+
+  SECTION("Echo") {
+    EchoData request;
+    request.set_message("hello");
+    EchoData reply;
+    auto ret = client->Echo(request, reply);
+
+    REQUIRE(ret == true);
+    REQUIRE(reply.message() == "hello");
+    utils::sleep(1);
+
+    // server will automatically destructed here.
+  }
+
+  SECTION("Add documents and search") {
+    std::vector<int> doc_ids;
+    bool ret;
+
+    ret = client->Search("body", doc_ids);
+    REQUIRE(doc_ids.size() == 0);
+    REQUIRE(ret == true);
+
+    client->AddDocument("my title", "my url", "my body");
+    client->AddDocument("my title", "my url", "my spirit");
+
+    doc_ids.clear();
+    client->Search("body", doc_ids);
+    REQUIRE(ret == true);
+    REQUIRE(doc_ids.size() == 1);
+
+    // server will automatically destructed here.
+  }
+
+}
+
+void run_client() {
+  auto client = CreateAsyncClient("localhost:50051", 64, 100, 1000, 8, 1, 8);
+  client->Wait();
+}
+
+TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
+  auto server = CreateServer(std::string("localhost:50051"), 1, 40, 0);
+  utils::sleep(1); // warm up the server
+
+  // Use another thread to create client
+  // std::thread client_thread(run_client);
+  auto client = CreateAsyncClient("localhost:50051", 64, 100, 1000, 8, 1, 2);
+  client->Wait();
+  // client->ShowStats();
+  client.release();
+
+  // client_thread.join();
+}
+
+TEST_CASE( "IndexCreator works over the network", "[grpc]" ) {
+  auto server = CreateServer(std::string("localhost:50051"), 1, 40, 0);
+  utils::sleep(1); // warm up the server
+
+  auto client = CreateSyncClient("localhost:50051");
+
+  IndexCreator index_creator(
+        "src/testdata/enwiki-abstract_tokenized.linedoc.sample", *client);
+  index_creator.DoIndex();
+
+  // Search synchroniously
+  std::vector<int> doc_ids;
+  bool ret;
+  ret = client->Search("multicellular", doc_ids);
+  REQUIRE(ret == true);
+  REQUIRE(doc_ids.size() == 1);
+
+  // client_thread.join();
+}
+
+
+TEST_CASE( "Search engine can load document and index them locally", "[engine]" ) {
+  QQSearchEngine engine;
+  int ret = engine.LoadLocalDocuments("src/testdata/enwiki-abstract_tokenized.linedoc.sample", 90);
+  REQUIRE(ret == 90);
+
+  std::vector<int> doc_ids = engine.Search(TermList{"multicellular"}, SearchOperator::AND);
+  REQUIRE(doc_ids.size() == 1);
+}
 
 TEST_CASE( "Offsets Parser essential operations are OK", "[offsets_parser]" ) {
     std::string offsets = "1,2;.3,4;5,6;.7,8;.";

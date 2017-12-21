@@ -2,6 +2,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <thread>
 #include <iterator>
 #include <cassert>
 #include <stdexcept>

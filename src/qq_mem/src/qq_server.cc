@@ -1,119 +1,79 @@
+#include <signal.h>
+
+#include <algorithm>
+#include <chrono>
+#include <cmath>
 #include <iostream>
 #include <memory>
+#include <thread>
 #include <string>
+#include <cassert>
 
-#include <grpc++/grpc++.h>
+#include <grpc/grpc.h>
+#include <grpc/support/log.h>
+#include <grpc/support/time.h>
+#include <grpc++/server.h>
+#include <grpc++/server_builder.h>
+#include <grpc++/server_context.h>
+#include <grpc++/security/server_credentials.h>
 
 #include "qq.grpc.pb.h"
-#include "qq_engine.h"
-#include "inverted_index.h"
-#include "native_doc_store.h"
+#include "grpc_server_impl.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
+using grpc::ServerReader;
+using grpc::ServerReaderWriter;
+using grpc::ServerWriter;
 using grpc::Status;
 
-// for AddDocument
-using qq::AddDocumentRequest;
-using qq::StatusReply;
-
-// for Search
 using qq::SearchRequest;
 using qq::SearchReply;
-
-// for Echo
-using qq::EchoData;
-
 using qq::QQEngine;
 
+using std::chrono::system_clock;
 
 
-// Logic and data behind the server's behavior.
-class QQEngineServiceImpl final : public QQEngine::Service {
+typedef std::map<std::string, std::string> ConfigType;
 
-  public:
-    int count = 0;
+static bool got_sigint = false;
 
-    Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
-            StatusReply* reply) override {
-        // std::cout << "title" << request->document().title() << std::endl;
-        // std::cout << "url" << request->document().url() << std::endl;
-        // std::cout << "body" << request->document().body() << std::endl;
-        if (request->document().offsets() == "") {
-            std::cout << "!!!!!!!!!!!!!!!!! NO OFFSET";
-            search_engine_.AddDocument(request->document().title(),
-                    request->document().url(), request->document().body());
-        } else {
-            search_engine_.offsets_flag_ = 1;     // TODO should not be set here
-            search_engine_.AddDocument(request->document().title(),
-                    request->document().url(), request->document().body(), request->document().tokens(), request->document().offsets());
-        
-        }
 
-        count++;
-
-        if (count % 10000 == 0) {
-            std::cout << count << std::endl;
-        }
-
-        reply->set_message("Doc added");
-        reply->set_ok(true);
-        return Status::OK;
-    }
-
-    Status Search(ServerContext* context, const SearchRequest* request,
-            SearchReply* reply) override {
-        Term term = request->term();
-
-        // std::cout << "search term: " << term << std::endl;
-
-        auto doc_ids = search_engine_.Search(TermList{term}, SearchOperator::AND);
-        
-        for (auto id : doc_ids) {
-            reply->add_doc_ids(id);
-
-            // std::string doc = search_engine_.GetDocument(id);
-            // std::cout << "Document found: " << doc << std::endl;
-            break;
-        }
-        return Status::OK;
-    }
-
-    Status Echo(ServerContext* context, const EchoData* request,
-            EchoData* reply) override {
-
-        std::string msg = request->message();
-        reply->set_message(msg);
-        
-        return Status::OK;
-    }
-
-    public:
-        QQSearchEngine search_engine_;
-};
-
-void RunServer() {
-    std::string server_address("0.0.0.0:50051");
-    QQEngineServiceImpl service;
-
-    ServerBuilder builder;
-    // Listen on the given address without any authentication mechanism.
-    builder.AddListeningPort(server_address, grpc::InsecureServerCredentials());
-    // Register "service" as the instance through which we'll communicate with
-    // clients. In this case it corresponds to an *synchronous* service.
-    builder.RegisterService(&service);
-    // Finally assemble the server.
-    std::unique_ptr<Server> server(builder.BuildAndStart());
-    std::cout << "Server listening on " << server_address << std::endl;
-
-    // Wait for the server to shutdown. Note that some other thread must be
-    // responsible for shutting down the server for this call to ever return.
-    server->Wait();
+static void sigint_handler(int x) { 
+  std::cout << "Caught SIGINT" << std::endl;
+  got_sigint = true; 
 }
 
 int main(int argc, char** argv) {
-    RunServer();
+  if (argc != 3) {
+    std::cout << "Usage: exefile port secs" << std::endl;
+    exit(1);
+  }
 
-    return 0;
+  signal(SIGINT, sigint_handler);
+
+  std::string port(argv[1]);
+  std::string n_secs(argv[2]);
+
+  auto server = CreateServer(std::string("localhost:") + port, 
+      1, // threads per cq
+      32,  // n threads
+      0, // duration(seconds)
+      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc",
+      9000000
+      // 500000
+  );
+
+  if (std::stoi(n_secs) == 0) {
+    while (!got_sigint) {
+      gpr_sleep_until(gpr_time_add(gpr_now(GPR_CLOCK_REALTIME),
+                                   gpr_time_from_seconds(5, GPR_TIMESPAN)));
+    }
+  } else {
+    server->Wait();
+  }
+
+  std::cout << "Server about to be destruct" << std::endl;
+  return 0;
 }

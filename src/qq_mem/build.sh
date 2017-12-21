@@ -1,4 +1,4 @@
 mkdir -p build
 cd build
 cmake ../src/
-make
+make -j32
