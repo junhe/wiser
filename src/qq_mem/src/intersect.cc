@@ -5,6 +5,7 @@
 
 
 // lists is a vector of pointers, pointing to posting lists
+// TODO: This function is too long, refactor it.
 std::vector<DocIdType> intersect(
     const std::vector<const PostingList_Vec<Posting>*> lists) {
   const int n_lists = lists.size();
@@ -32,7 +33,7 @@ std::vector<DocIdType> intersect(
         max_doc_id = cur_doc_id; 
       }
     }
-    LOG(INFO) << "max_doc_id: " << max_doc_id << std::endl;
+    DLOG(INFO) << "max_doc_id: " << max_doc_id << std::endl;
 
     if (finished == true) {
       break;
@@ -58,7 +59,7 @@ std::vector<DocIdType> intersect(
 
       if (list_i == n_lists - 1) {
         // all posting lists are at max_doc_id 
-        LOG(INFO) << "We found one in intersection: " << max_doc_id << std::endl;
+        DLOG(INFO) << "We found one in intersection: " << max_doc_id << std::endl;
         ret_vec.push_back(max_doc_id);
       }
     }
