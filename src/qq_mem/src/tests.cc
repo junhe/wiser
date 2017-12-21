@@ -484,7 +484,20 @@ TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_break
 
 
 TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
-  
+  SECTION("New postings can be added and retrieved") {
+    PostingList_Vec<Posting> pl("hello");   
+
+    REQUIRE(pl.Size() == 0);
+    pl.AddPosting(Posting(10, 88, Positions{28}));
+    REQUIRE(pl.Size() == 1);
+    REQUIRE(pl.GetPosting(0).GetDocID() == 10);
+    REQUIRE(pl.GetPosting(0).GetTermFreq() == 88);
+    REQUIRE(pl.GetPosting(0).GetPositions() == Positions{28});
+
+    pl.AddPosting(Posting(11, 889, Positions{28, 230}));
+    REQUIRE(pl.Size() == 2);
+  }
+
 }
 
 

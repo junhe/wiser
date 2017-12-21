@@ -68,6 +68,7 @@ target_link_libraries(qq_server
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
+    ${GLOG_LIB}
 )
 
 # Building client
@@ -82,6 +83,7 @@ target_link_libraries(qq_client
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
+    ${GLOG_LIB}
 )
 
 
@@ -123,6 +125,7 @@ target_link_libraries(in_proc_engine_bench
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
+    ${GLOG_LIB}
 )
 
 add_executable(grpc_benchmark
@@ -137,11 +140,7 @@ target_link_libraries(grpc_benchmark
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
+    ${GLOG_LIB}
 )
-
-
-
-
-
 
 
