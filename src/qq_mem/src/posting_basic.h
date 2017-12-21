@@ -15,7 +15,7 @@ class Posting : public PostingService {
         Posting();
         Posting(int docID, int term_frequency, Positions positions);
         std::string dump();
-        const int GetDocID() const {return docID_;}
+        const int GetDocId() const {return docID_;}
         const int GetTermFreq() const {return term_frequency_;}
         const Positions GetPositions() const {return positions_;}
 

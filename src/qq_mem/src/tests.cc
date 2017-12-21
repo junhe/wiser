@@ -490,12 +490,48 @@ TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
     REQUIRE(pl.Size() == 0);
     pl.AddPosting(Posting(10, 88, Positions{28}));
     REQUIRE(pl.Size() == 1);
-    REQUIRE(pl.GetPosting(0).GetDocID() == 10);
+    REQUIRE(pl.GetPosting(0).GetDocId() == 10);
     REQUIRE(pl.GetPosting(0).GetTermFreq() == 88);
     REQUIRE(pl.GetPosting(0).GetPositions() == Positions{28});
 
     pl.AddPosting(Posting(11, 889, Positions{28, 230}));
     REQUIRE(pl.Size() == 2);
+    REQUIRE(pl.GetPosting(1).GetDocId() == 11);
+    REQUIRE(pl.GetPosting(1).GetTermFreq() == 889);
+    REQUIRE(pl.GetPosting(1).GetPositions() == Positions{28, 230});
+  }
+
+
+  SECTION("Skipping works") {
+    PostingList_Vec<Posting> pl("hello");   
+    for (int i = 0; i < 100; i++) {
+      pl.AddPosting(Posting(i, 1, Positions{28}));
+    }
+    REQUIRE(pl.Size() == 100);
+
+    SECTION("It can stay at starting it") {
+      PostingList_Vec<Posting>::iterator_t it;
+      it = pl.SkipForward(0, 0);
+      REQUIRE(it == 0);
+
+      it = pl.SkipForward(8, 8);
+      REQUIRE(it == 8);
+    }
+
+    SECTION("It can skip multiple postings") {
+      PostingList_Vec<Posting>::iterator_t it;
+      it = pl.SkipForward(0, 8);
+      REQUIRE(it == 8);
+
+      it = pl.SkipForward(0, 99);
+      REQUIRE(it == 99);
+    }
+
+    SECTION("It returns pl.Size() when we cannot find doc id") {
+      PostingList_Vec<Posting>::iterator_t it;
+      it = pl.SkipForward(0, 1000);
+      REQUIRE(it == pl.Size());
+    }
   }
 
 }

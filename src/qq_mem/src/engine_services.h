@@ -17,6 +17,7 @@ class DocumentStoreService {
 };
 
 
+typedef int DocIdType;
 typedef std::string Term;
 typedef std::vector<Term> TermList;
 enum class SearchOperator {AND, OR};

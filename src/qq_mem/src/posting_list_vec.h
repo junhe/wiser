@@ -22,6 +22,10 @@ class PostingList_Vec {
   PostingStore posting_store_;         
 
  public:
+  // Note that this is not the same as STL iterators
+  typedef int iterator_t;
+
+
   PostingList_Vec(const std::string &term)
     :term_(term) {
   }
@@ -32,15 +36,31 @@ class PostingList_Vec {
   // You must make sure postings are added with increasing doc ID
   void AddPosting(const Posting &posting) {
     if (posting_store_.size() > 0 && 
-        posting_store_.back().GetDocID() >= posting.GetDocID()) {
+        posting_store_.back().GetDocId() >= posting.GetDocId()) {
       throw std::runtime_error(
           "New posting doc ID must be larger than the last existing one.");
     }
     posting_store_.push_back(posting);
   }
 
-  const T& GetPosting(const int &index) {
-    return posting_store_.at(index);
+  const T& GetPosting(const iterator_t &it) {
+    return posting_store_.at(it);
+  }
+
+  const iterator_t SkipForward(const iterator_t &it, const DocIdType &doc_id) {
+    // return an iterator that has doc ID that is larger or equal to doc_id
+    // It returns n (index past the last posting) if we could not find such a doc ID
+    iterator_t i = it;
+    const std::size_t n = posting_store_.size();
+
+    while (GetPosting(i).GetDocId() < doc_id) {
+      i++;
+      if ( i >= n ) {
+        return n;
+      }
+    }
+
+    return i;
   }
 
 };
