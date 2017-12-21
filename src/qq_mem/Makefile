@@ -4,6 +4,10 @@ hash_benchmark:
 	./build.sh
 	./build/hash_benchmark
 
+intersect_benchmark:
+	./build.sh
+	./build/intersect_bench
+
 grpc_benchmark:
 	./build.sh
 	python ./tools/run_client_server.py ./build/grpc_benchmark ./build/qq_server

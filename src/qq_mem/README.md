@@ -45,7 +45,7 @@ int main(int argc, char* argv[]) {
  google::InitGoogleLogging(argv[0]);
 
  FLAGS_logtostderr = 1; // print to stderr instead of file
- FLAGS_stderrthreshold = INFO; // print INFO and other levels above INFO (WARNING, ...)
+ FLAGS_stderrthreshold = 2; // print INFO and other levels above INFO (WARNING, ...)
 
  LOG(INFO) << "Found " << 4 << " cookies";
  LOG(WARNING) << "Found " << 4 << " cookies";

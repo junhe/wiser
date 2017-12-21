@@ -1,3 +1,5 @@
+#define NDEBUG
+
 #include "intersect.h"
 
 #include <glog/logging.h>

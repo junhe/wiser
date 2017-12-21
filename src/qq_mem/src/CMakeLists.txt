@@ -143,4 +143,18 @@ target_link_libraries(grpc_benchmark
     ${GLOG_LIB}
 )
 
+add_executable(intersect_bench
+    intersect_bench.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(intersect_bench
+    gRPC::grpc++_reflection
+    protobuf::libprotobuf
+    ${BOOST_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
+
 

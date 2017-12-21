@@ -597,6 +597,28 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
   }
 
+  SECTION("It intersects a single list") {
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01};
+    std::vector<DocIdType> ret = intersect(lists);
+    REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+  }
+
+  SECTION("It intersects three lists") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 0; i < 5; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    PostingList_Vec<Posting> pl03("more");   
+    for (int i = 0; i < 2; i++) {
+      pl03.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02, &pl03};
+    std::vector<DocIdType> ret = intersect(lists);
+    REQUIRE(ret == std::vector<DocIdType>{0, 1});
+  }
+
   SECTION("It intersects two empty list") {
     PostingList_Vec<Posting> pl01("hello");   
     PostingList_Vec<Posting> pl02("world");   
