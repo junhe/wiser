@@ -120,6 +120,4 @@ class FlashReader {
 // TODO: this design is not good!
 extern FlashReader * Global_Posting_Store; //defined in qq_engine.cc
 extern FlashReader * Global_Document_Store; //defined in qq_engine.cc
-
-extern bool flag_posting;
 #endif

@@ -8,7 +8,6 @@
 FlashReader * Global_Posting_Store;   // defined in qq_engine.h
 FlashReader * Global_Document_Store;  // store both documents and document passage segements 
 UnifiedHighlighter tmp_highlighter;   // for scoring 
-bool flag_posting = true;
 
 // For precomputation, insert splits into offsets(with fake offset)
 void QQSearchEngine::precompute_insert_splits(const Passage_Segments & splits, Offsets & offsets_in) {

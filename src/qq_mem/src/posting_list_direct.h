@@ -16,11 +16,11 @@ class PostingList_Direct :  public PostingListService {
         typedef std::unordered_map<int, Posting> PostingStore;
         typedef std::unordered_map<int, Store_Segment> PostingFlashStore;
 
-        Term term_;                             // term this posting list belongs to
         PostingStore posting_store_;            // for in-mem QQ, storing real postings
         PostingFlashStore posting_flash_store_; // for flash-based QQ, storing address of the postings on flash
 
     public:
+        Term term_;                             // term this posting list belongs to
 
         // Implement iterators, so multiple threads can iterate differently
         // Iterators should not be used directly. They should be passed to 

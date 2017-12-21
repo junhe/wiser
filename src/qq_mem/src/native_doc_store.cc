@@ -58,10 +58,9 @@ bool NativeDocStore::Has(int id) {
 const std::string & NativeDocStore::Get(int id) {
     if (FLAG_DOCUMENTS_ON_FLASH) {
         if (_document_cache_.exists(id)) {
-            std::cout << "document hit in cache" << std::endl;
             return _document_cache_.get(id);
         }
-        std::cout << "fetch document from flash" << std::endl;
+        //std::cout << "--IO-- fetch document from flash" << std::endl;
         // get postion
         const Store_Segment stored_position = _document_flash_store_[id];
         // read -> add to cache
@@ -76,10 +75,9 @@ const std::string & NativeDocStore::Get(int id) {
 const Passage_Segments & NativeDocStore::GetPassages(int id) {
     if (FLAG_DOCUMENTS_ON_FLASH) {
         if (_passage_segments_cache_.exists(id)) {
-            std::cout << "passage segment hit in cache" << std::endl;
             return _passage_segments_cache_.get(id);
         }
-        std::cout << "fetch passage segment from flash" << std::endl;
+        //std::cout << "--IO-- fetch passage segment from flash" << std::endl;
         // get postion
         const Store_Segment stored_position = _passage_segments_flash_store_[id];
         // read -> add to cache

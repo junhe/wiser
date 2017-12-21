@@ -83,7 +83,7 @@ class SentenceBreakIterator {
 class UnifiedHighlighter {
 
     public: 
-        QQSearchEngine engine_;   // TODO get reference not object
+        QQSearchEngine * engine_;   // TODO get reference not object
          
         UnifiedHighlighter();
         UnifiedHighlighter(QQSearchEngine & engine_);

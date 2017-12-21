@@ -445,7 +445,6 @@ TEST_CASE( "Passage of Unified Highlighter essential operations are OK", "[passa
 
 TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
     QQSearchEngine engine;
-    UnifiedHighlighter test_highlighter(engine);
     
     // read in the linedoc
     utils::LineDoc linedoc("src/testdata/line_doc_offset");
@@ -454,7 +453,7 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     linedoc.GetRow(items);   // 15KB
     linedoc.GetRow(items);   // 177KB
     linedoc.GetRow(items);   // 1MB
-    linedoc.GetRow(items); // 8KB
+    //linedoc.GetRow(items); // 8KB
     
     // adddocument
     engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
@@ -463,8 +462,8 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     //Query query = {"park"}; // attack build knife zoo
     //Query query = {"rule"}; // we doctor incorrect problem
     //Query query = {"author"}; // similar life accord code
-    //Query query = {"mondai"}; // support student report telephon
-    Query query = {"polic"};  // bulletin inform law system
+    Query query = {"mondai"}; // support student report telephon
+    //Query query = {"polic"};  // bulletin inform law system
     
     // terms
     //Query query = {"park", "attack", "build", "knife", "zoo"};
@@ -473,6 +472,7 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     //Query query = {"mondai", "support", "student", "report", "telephon"};
     //Query query = {"polic", "bulletin", "inform", "law", "system"};  // bulletin
     TopDocs topDocs = {0}; 
+    UnifiedHighlighter test_highlighter(engine);
     
 
     int maxPassages = 5;
@@ -488,12 +488,12 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
     struct timeval t1,t2;
     double timeuse;
     std::vector<std::string> res;
+    
     for (int i = 0; i < 4; i++) { 
         // clear the cache
         engine.inverted_index_.clear_posting_cache();
         engine.doc_store_.clear_caches();
 
-        flag_posting = false;
         gettimeofday(&t1,NULL);
         //TopDocs topDocs = engine.Search(query, SearchOperator::AND);
         res = test_highlighter.highlight(query, topDocs, maxPassages);
@@ -501,7 +501,6 @@ TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highligh
         timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
         printf("Use Time:%fms\n",timeuse*1000);
         REQUIRE(res.size() == topDocs.size());
-        std::cout << "Get there!" << std::endl;
         std::cout << res[0] <<std::endl;
     }
     

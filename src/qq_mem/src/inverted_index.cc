@@ -86,15 +86,13 @@ const Posting & InvertedIndex::GetPosting(const Term & term, const int & doc_id)
     if (FLAG_POSTINGS_ON_FLASH) {
         // Check whether this Posting is in cache
         std::string this_key = construct_key(term, doc_id);
-        if (_postings_cache_.exists(this_key) && flag_posting) {
-        //    std::cout << "Posting hit in cache " << _postings_cache_.size() << std::endl;
+        if (_postings_cache_.exists(this_key)) {
             return _postings_cache_.get(this_key);
         }
-        flag_posting = true;
-        //std::cout << "Fetch a posting from flash" << std::endl;
         // Not in cache, read from flash
         // get postion
         const Store_Segment stored_position = (index_.find(term)->second).GetPostingStorePosition(doc_id);
+        //std::cout << "--IO-- load Posting From flash" << std::endl;
         // read, parse -> add to cache
         if (POSTING_SERIALIZATION == "protobuf")
             _postings_cache_.put(this_key, parse_protobuf_string_to_posting(Global_Posting_Store->read(stored_position)));

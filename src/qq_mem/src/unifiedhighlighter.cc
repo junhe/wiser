@@ -6,7 +6,7 @@
 
 // UnifiedHighlighter Functions
 UnifiedHighlighter::UnifiedHighlighter(QQSearchEngine & engine) {
-    engine_ = engine;
+    engine_ = & engine;
     //_snippets_on_flash_.open("snippets_cache");
 }
 
@@ -72,7 +72,7 @@ OffsetsEnums UnifiedHighlighter::getOffsetsEnums(const Query & query, const int 
     // get offsets from postings
     for (auto term:query) {
         // Posting
-        const Posting & result = engine_.inverted_index_.GetPosting(term, docID);
+        const Posting & result = engine_->inverted_index_.GetPosting(term, docID);
         // Offsets
         res.push_back(Offset_Iterator(result.positions_));
         // TODO check whether empty?
@@ -85,7 +85,6 @@ std::vector<int> UnifiedHighlighter::get_top_passages(const ScoresEnums & scores
     std::vector<int> res = {};
 
     if (FLAG_PAAT) {
-        std::cout << "Get here 1" << std::endl;
         // priority queue for passage_score iterators, holding the first passage IDs
         auto comp_passage_id = [] ( PassageScore_Iterator &a, PassageScore_Iterator &b ) -> bool { return a.cur_passage_id_ > b.cur_passage_id_; };
         std::priority_queue<PassageScore_Iterator, std::vector<PassageScore_Iterator>, decltype(comp_passage_id)> scores_iterator_queue(comp_passage_id);
@@ -129,7 +128,6 @@ std::vector<int> UnifiedHighlighter::get_top_passages(const ScoresEnums & scores
             cur_iter.next_passage();
             scores_iterator_queue.push(cur_iter);
         }
-        std::cout << "Get here 2" << std::endl;
 
         // Add the last passage
         if (passage_queue.size() < maxPassages && passage.second > 0) {
@@ -157,16 +155,13 @@ std::vector<int> UnifiedHighlighter::get_top_passages(const ScoresEnums & scores
 
 ScoresEnums UnifiedHighlighter::get_passages_scoresEnums(const Query & query, const int & docID) {
     ScoresEnums res = {};
-        std::cout << "Get here 3" << std::endl;
 
     // get passage_scores from postings
     for (auto term:query) {
         // Posting
-        const Posting & result = engine_.inverted_index_.GetPosting(term, docID);
-        std::cout << "Get here 4" << std::endl;
+        const Posting & result = engine_->inverted_index_.GetPosting(term, docID);
         // Offsets
         res.push_back(PassageScore_Iterator(result.passage_scores_));
-        std::cout << "Get here 5" << std::endl;
     }
     return res;
     
@@ -182,7 +177,7 @@ std::string UnifiedHighlighter::highlight_passages(const Query & query, const in
         cur_passage.reset();
         // add matches for highlighting
         for (auto term:query) {
-            const Posting & cur_posting = engine_.inverted_index_.GetPosting(term, docID);
+            const Posting & cur_posting = engine_->inverted_index_.GetPosting(term, docID);
             int startoffset = cur_posting.passage_splits_.at(passage_id).first;
             int len = cur_posting.passage_splits_.at(passage_id).second;
             for (int i = 0; i < len; i++) {
@@ -191,10 +186,10 @@ std::string UnifiedHighlighter::highlight_passages(const Query & query, const in
         }
         // get the string of this passage
         // get offsets
-        cur_passage.startoffset = engine_.doc_store_.GetPassages(docID)[passage_id].first;
-        cur_passage.endoffset = cur_passage.startoffset - 1 + engine_.doc_store_.GetPassages(docID)[passage_id].second;
+        cur_passage.startoffset = engine_->doc_store_.GetPassages(docID)[passage_id].first;
+        cur_passage.endoffset = cur_passage.startoffset - 1 + engine_->doc_store_.GetPassages(docID)[passage_id].second;
         // get passage
-        res += cur_passage.to_string(&engine_.doc_store_.Get(docID));
+        res += cur_passage.to_string(&engine_->doc_store_.Get(docID));
     }
     return res;
 }
@@ -208,17 +203,15 @@ std::string UnifiedHighlighter::highlightQuickForDoc(const Query & query, const 
            1. top-maxPassages scores of those passages for (query, docID)
     */
     // Get top passages
-    std::cout << "Get here in get_top_passages" << std::endl;
     std::vector<int> top_passages = get_top_passages(get_passages_scoresEnums(query, docID), maxPassages);
     // Highlight words
-    std::cout << "Get here in highlight_passages" << std::endl;
     std::string res = highlight_passages(query, docID, top_passages);
     return res;
 }
 
 std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, const int & docID, const int & maxPassages) {
     // break the document according to sentence
-    SentenceBreakIterator breakiterator(engine_.GetDocument(docID));
+    SentenceBreakIterator breakiterator(engine_->GetDocument(docID));
     
     // "merge sorting" to calculate all sentence's score
     
