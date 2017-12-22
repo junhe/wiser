@@ -1,5 +1,6 @@
 // #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include <iostream>
+#include <iomanip>
 #include <set>
 
 #include <boost/filesystem.hpp>
@@ -21,6 +22,7 @@
 #include "posting_list_vec.h"
 
 #include "intersect.h"
+#include "ranking.h"
 
 #include "unifiedhighlighter.h"
 
@@ -628,4 +630,29 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     REQUIRE(ret == std::vector<DocIdType>{});
   }
 }
+
+
+TEST_CASE( "Scoring", "[intersect]" ) {
+  SECTION("TF is correct") {
+    REQUIRE(calc_tf(4) == 2.0);
+    REQUIRE(calc_tf(100) == 10.0);
+
+    std::ostringstream out;
+    out << std::setprecision(3) << calc_tf(2);
+    REQUIRE(out.str() == "1.41");
+  }
+
+  SECTION("IDF is correct") {
+    REQUIRE(calc_idf(100, 0) == 3);
+
+    std::ostringstream out;
+    out << std::setprecision(3) << calc_idf(90, 10);
+    REQUIRE(out.str() == "1.91");
+  }
+
+  SECTION("Field length norm is correct") {
+    REQUIRE(calc_field_len_norm(4) == 0.5);
+  }
+}
+
 

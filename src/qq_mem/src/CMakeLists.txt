@@ -42,6 +42,7 @@ set(ENGINE_SRCS
     grpc_client_impl.cc
     utils.cc
     intersect.cc
+    ranking.cc
     unifiedhighlighter.cc
     )
 
