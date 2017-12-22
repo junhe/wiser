@@ -37,7 +37,8 @@ FlashReader::FlashReader(const std::string & based_file) {
     _file_name_ = based_file;
     _last_offset_ = 0; 
     // open cache file
-    _fd_ = open(based_file.c_str(), O_RDWR|O_CREAT|O_DIRECT);
+    _fd_ = open(based_file.c_str(), O_RDWR|O_CREAT|O_DIRECT,0600);
+    //_fd_ = open(based_file.c_str(), O_RDWR|O_DIRECT);
     if ( _fd_ < 0 ) {
         std::string erro_str= "open file failed " + std::to_string(errno);
         throw std::runtime_error(erro_str);

@@ -76,7 +76,6 @@ void QQSearchEngine::AddDocument(const std::string &title, const std::string &ur
         const std::string &body) {
     int doc_id = NextDocId();
     doc_store_.Add(doc_id, body);
-
     // Tokenize the document(already pre-processed using scripts)
     std::vector<std::string> terms = utils::explode(body, ' ');
     

@@ -40,6 +40,7 @@ void InvertedIndex::AddDocument(const int &doc_id, const TermList &termlist) {
 
         PostingList_Direct &postinglist = it->second;        
         postinglist.AddPosting(doc_id, 0, Offsets{});
+        std::cout << "Get there!!!!";
     }
 }
 

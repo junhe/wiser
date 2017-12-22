@@ -31,10 +31,10 @@ class QQSearchEngine {
         int NextDocId();
         std::vector<int> Search(const TermList &terms, const SearchOperator &op);
 
-    private:
-        void precompute_insert_splits(const Passage_Segments & splits, Offsets & offsets_in);
         int LoadLocalDocuments(const std::string &line_doc_path, int n_rows);
         InvertedIndex::const_iterator Find(const Term &term);
+    private:
+        void precompute_insert_splits(const Passage_Segments & splits, Offsets & offsets_in);
 };
 
 #endif

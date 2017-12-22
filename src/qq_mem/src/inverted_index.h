@@ -28,12 +28,13 @@ class InvertedIndex: public InvertedIndexService {
         std::vector<int> Search(const TermList &terms, const SearchOperator &op);
         const Posting & GetPosting(const Term & term, const int & doc_id);
         void clear_posting_cache() {_postings_cache_.clear();}
+        IndexStore::const_iterator Find(const Term &term);
+        IndexStore::const_iterator ConstEnd();
+    
     private:
         std::string construct_key(const Term & term, const int & docID); // helper function for _postings_cache_
         const Posting parse_protobuf_string_to_posting(const std::string & serialized);
         const Posting parse_cereal_string_to_posting(const std::string & serialized);
-        IndexStore::const_iterator Find(const Term &term);
-        IndexStore::const_iterator ConstEnd();
 };
 
 #endif
