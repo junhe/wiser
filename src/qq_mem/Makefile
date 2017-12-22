@@ -1,4 +1,5 @@
 # This Makefile is for organizing frequently used commands, not for compilation.
+.ONESHELL:
 
 hash_benchmark:
 	./build.sh
@@ -29,12 +30,18 @@ client:
 
 test:
 	rm -f ./build/testmain
-	./build.sh
-	./build/testmain
+	mkdir -p ./build
+	cd build
+	cmake ../src/
+	make -j32 testmain
+	./testmain ${args}
 
 test_args:
 	rm -f ./build/testmain
-	./build.sh
-	./build/testmain ${args}
+	mkdir -p ./build
+	cd build
+	cmake ../src/
+	make -j32 testmain
+	./testmain ${args}
 
 
