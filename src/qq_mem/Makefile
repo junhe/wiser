@@ -34,7 +34,8 @@ test:
 	cd build
 	cmake ../src/
 	make -j32 testmain
-	./testmain ${args}
+	cd ..
+	./build/testmain ${args}
 
 test_args:
 	rm -f ./build/testmain
@@ -42,6 +43,7 @@ test_args:
 	cd build
 	cmake ../src/
 	make -j32 testmain
-	./testmain ${args}
+	cd ..
+	./build/testmain ${args}
 
 
