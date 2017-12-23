@@ -21,6 +21,10 @@ class TermWithOffset {
 
 		TermWithOffset(Term term_in, Offsets offsets_in) 
 			: term_(term_in), offsets_(offsets_in) {} 
+
+    const int CalcTermFreq() const {
+      return offsets_.size();  
+    }
 };
 typedef std::vector<TermWithOffset> TermWithOffsetList;
 
@@ -28,16 +32,27 @@ class RankingPosting {
   public:
     int doc_id_;
     int term_frequency_;
-    int field_length_;
 
     RankingPosting(){};
-    RankingPosting(int doc_id, int term_frequency, int field_length)
-      :doc_id_(doc_id), term_frequency_(term_frequency), field_length_(field_length) 
+    RankingPosting(int doc_id, int term_frequency)
+      :doc_id_(doc_id), term_frequency_(term_frequency)
     {
     }
     const int GetDocId() const {return doc_id_;}
     const int GetTermFreq() const {return term_frequency_;}
-    const int GetFieldLength() const {return field_length_;}
+};
+
+class FieldLengthStore {
+ public:
+  std::unordered_map<DocIdType, int> store_;
+
+  void SetLength(DocIdType doc_id, int len) {
+    store_[doc_id] = len;
+  }
+
+  int GetLength(DocIdType doc_id) {
+    return store_[doc_id];
+  }
 };
 
 
@@ -112,6 +127,41 @@ TermWithOffsetList parse_doc(const std::vector<std::string> &items) {
 }
 
 
+int calc_total_terms(const TermWithOffsetList &termlist) {
+  int total = 0;
+  for (const auto &term_with_offset : termlist) {
+    total += term_with_offset.CalcTermFreq(); 
+  }
+  return total;
+}
+
+typedef std::unordered_map<Term, int> CountMapType;
+CountMapType count_tokens(const std::string &token_text) {
+  CountMapType counts;
+  auto tokens = utils::explode(token_text, ' ');
+
+  for (auto token : tokens) {
+    auto it = counts.find(token);
+    if (it == counts.end()) {
+      counts[token] = 1;
+    } else {
+      it->second++;
+    }
+  }
+  return counts;
+}
+
+// It returns the number of terms in field
+int calc_terms(const std::string field) {
+  return utils::explode(field, ' ').size();
+}
+
+void print_counts(CountMapType counts) {
+  for (auto it = counts.begin(); it != counts.end(); it++) {
+    std::cout << it->first << ":" << it->second << std::endl;
+  }
+}
+
 class InvertedIndexQqMem {
  private:
   typedef PostingList_Vec<RankingPosting> PostingListType;
@@ -121,22 +171,29 @@ class InvertedIndexQqMem {
  public:
   typedef IndexStore::const_iterator const_iterator;
 
-  void AddDocument(const int &doc_id, const TermWithOffsetList &termlist) {
-     for (const auto &term_info : termlist) {
-        IndexStore::iterator it;
-        auto term = term_info.term_;
-        it = index_.find(term);
+  void AddDocument(const int &doc_id, const std::string &body, 
+      const std::string &tokens) {
+    TermList token_vec = utils::explode(tokens, ' ');
+    CountMapType token_counts = count_tokens(tokens);
 
-        if (it == index_.cend()) {
-            // term does not exist
-            std::pair<IndexStore::iterator, bool> ret;
-            ret = index_.insert( std::make_pair(term, PostingListType(term)) );
-            it = ret.first;
-        } 
+    for (auto token_it = token_counts.begin(); token_it != token_counts.end(); 
+        token_it++) {
+      IndexStore::iterator it;
+      auto term = token_it->first;
+      it = index_.find(term);
 
-        PostingListType &postinglist = it->second;        
-        postinglist.AddPosting(RankingPosting(doc_id, 100, 1000));
+      if (it == index_.cend()) {
+        // term does not exist
+        std::pair<IndexStore::iterator, bool> ret;
+        ret = index_.insert( std::make_pair(term, PostingListType(term)) );
+        it = ret.first;
+      } 
+
+      PostingListType &postinglist = it->second;        
+      postinglist.AddPosting(RankingPosting(doc_id, token_it->second));
     }
+    int total_terms = calc_terms(tokens);
+    std::cout << "field length(total terms): " << total_terms << std::endl;
   }
 
   std::vector<int> Search(const TermList &terms, const SearchOperator &op) {
@@ -159,6 +216,27 @@ void print_vec(T vec) {
   std::cout << std::endl;
 }
 
+void test() {
+  {
+    CountMapType counts = count_tokens("hello hello you");
+    assert(counts["hello"] == 2);
+    assert(counts["you"] == 1);
+    assert(counts.size() == 2);
+  }
+
+  {
+    assert(calc_terms("hello world") == 2);
+  }
+
+  {
+    FieldLengthStore store;
+    store.SetLength(3, 20);
+    store.SetLength(4, 21);
+    assert(store.GetLength(3) == 20);
+    assert(store.GetLength(4) == 21);
+  }
+}
+
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
@@ -166,18 +244,24 @@ int main(int argc, char** argv) {
   FLAGS_stderrthreshold = 0; 
   FLAGS_minloglevel = 0; 
 
+  test();
+
   InvertedIndexQqMem inverted_index;
+  FieldLengthStore field_lengths;
 
-  utils::LineDoc linedoc("./src/testdata/line_doc_offset_untracked");
+  utils::LineDoc linedoc("./src/testdata/tiny-line-doc");
 
-  for (int i = 0; i < 5; i++) {
+  for (int i = 0; i < 2; i++) {
     // Process a document
     std::cout << i << std::endl;
     std::vector<std::string> items;
     linedoc.GetRow(items);
-    auto terms_with_offset = parse_doc(items);
 
-    inverted_index.AddDocument(i, terms_with_offset);
+    std::cout << "body: " << items[0] << std::endl;
+    std::cout << "tokens: " << items[1] << std::endl;
+
+    inverted_index.AddDocument(i, items[0], items[1]);
+    field_lengths.SetLength(i, calc_terms(items[1]));
 	}
 
   inverted_index.ShowStats();
