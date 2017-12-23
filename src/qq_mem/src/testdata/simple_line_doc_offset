@@ -1,0 +1,11 @@
+FIELDS_HEADER_INDICATOR###	doctitle	body	tokenized	offsets
+doc_1	Props to her to keeping calm during the whole thing. I would have started laughing way before punchline.	laugh would her start i dure keep thing befor wai calm have punchlin prop whole 	74,82;.55,60;.9,12;.66,73;.53,54;.29,35;.16,23;.46,51;.87,93;.83,86;.24,28;.61,65;.94,103;.0,5;.40,45;.
+doc_2	Props to her to keeping calm during the whole thing.	her dure keep thing calm prop whole 	9,12;.29,35;.16,23;.46,51;.24,28;.0,5;.40,45;.
+doc_3	I would have started laughing way before punchline.	would have wai befor i start laugh punchlin 	2,7;.8,12;.30,33;.34,40;.0,1;.13,20;.21,29;.41,50;.
+doc_4	That was an emotional rollercoaster! Holy crap what a good prank!	what good crap rollercoast emot holi prank 	47,51;.54,58;.42,46;.22,35;.12,21;.37,41;.59,64;.
+doc_5	That was an emotional rollercoaster! 	rollercoast emot 	22,35;.12,21;.
+doc_6	Holy crap what a good prank! Holy crap what a good prank!	what good crap holi prank 	10,14;39,43;.17,21;46,50;.5,9;34,38;.0,4;29,33;.22,27;51,56;.
+doc_7	That's a good teacher right there. A red teacher. But a good teacher none-the-less.	none good less right teacher red 	69,73;.9,13;56,60;.78,82;.22,27;.14,21;41,48;61,68;.37,40;.
+doc_8	That's a good teacher right there.	good right teacher 	9,13;.22,27;.14,21;.
+doc_9	A red teacher.	teacher red 	6,13;.2,5;.
+doc_10	But a good teacher none-the-less.	none good teacher less 	19,23;.6,10;.11,18;.28,32;.
