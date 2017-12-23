@@ -141,6 +141,13 @@ class InvertedIndexQqMem {
   std::vector<int> Search(const TermList &terms, const SearchOperator &op) {
 
   }
+
+  void ShowStats() {
+    LOG(INFO) << "num of terms: " << index_.size() << std::endl;
+    for (auto it = index_.begin(); it != index_.end(); it++) {
+      // LOG(INFO) << it->second.Size();
+    }
+  }
 };
 
 template <class T>
@@ -175,8 +182,9 @@ int main(int argc, char** argv) {
     auto offsets = items[3];
 
     TermList terms = utils::explode(tokens, ' ');
-    print_vec<TermList>(terms);
     inverted_index.AddDocument(i, terms);
 	}
+
+  inverted_index.ShowStats();
 }
 
