@@ -11,8 +11,8 @@
 #include "posting_basic.h"
 
 
-// Not inherit any class yet... Need to re-think the interface
-// after I get more info.
+// Requirements for class T:
+//  - class T must have member function const DocIdType T::GetDocId() const
 template <class T>
 class PostingList_Vec {
  private:
@@ -34,7 +34,7 @@ class PostingList_Vec {
   std::size_t Size() const {return posting_store_.size();}
 
   // You must make sure postings are added with increasing doc ID
-  void AddPosting(const Posting &posting) {
+  void AddPosting(const T &posting) {
     if (posting_store_.size() > 0 && 
         posting_store_.back().GetDocId() >= posting.GetDocId()) {
       throw std::runtime_error(
