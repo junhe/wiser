@@ -5,6 +5,16 @@ hash_benchmark:
 	./build.sh
 	./build/hash_benchmark
 
+ranking_benchmark:
+	rm -f ./build/ranking_bench
+	mkdir -p ./build
+	cd build
+	cmake ../src/
+	make -j32 ranking_bench
+	
+	cd ..
+	./build/ranking_bench
+
 intersect_benchmark:
 	./build.sh
 	./build/intersect_bench
