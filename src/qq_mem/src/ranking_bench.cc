@@ -1,11 +1,13 @@
 #include <iostream>
 #include <cassert>
+#include <unordered_map>
 
 #include <glog/logging.h>
 
 #include "intersect.h"
 #include "ranking.h"
 #include "utils.h"
+#include "posting_list_vec.h"
 
 
 typedef std::vector<int> TopDocs;
@@ -109,19 +111,72 @@ TermWithOffsetList parse_doc(const std::vector<std::string> &items) {
 	return terms_with_offset;
 }
 
+
+class InvertedIndexQqMem {
+ private:
+  typedef PostingList_Vec<RankingPosting> PostingListType;
+  typedef std::unordered_map<Term, PostingListType> IndexStore;
+  IndexStore index_;
+
+ public:
+  typedef IndexStore::const_iterator const_iterator;
+
+  void AddDocument(const int &doc_id, const TermList &termlist) {
+     for (const auto &term : termlist) {
+        IndexStore::iterator it;
+        it = index_.find(term);
+
+        if (it == index_.cend()) {
+            // term does not exist
+            std::pair<IndexStore::iterator, bool> ret;
+            ret = index_.insert( std::make_pair(term, PostingListType(term)) );
+            it = ret.first;
+        } 
+
+        PostingListType &postinglist = it->second;        
+        postinglist.AddPosting(RankingPosting(doc_id, 100, 1000));
+    }
+  }
+
+  std::vector<int> Search(const TermList &terms, const SearchOperator &op) {
+
+  }
+};
+
+template <class T>
+void print_vec(T vec) {
+  for (auto e : vec) {
+    std::cout << e << "|";
+  }
+  std::cout << std::endl;
+}
+
+
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   // FLAGS_logtostderr = 1; // print to stderr instead of file
   FLAGS_stderrthreshold = 0; 
   FLAGS_minloglevel = 0; 
 
+  InvertedIndexQqMem inverted_index;
+
   utils::LineDoc linedoc("./src/testdata/line_doc_offset_untracked");
 
   for (int i = 0; i < 5; i++) {
     // Process a document
+    std::cout << i << std::endl;
     std::vector<std::string> items;
     linedoc.GetRow(items);
     auto terms_with_offset = parse_doc(items);
+
+    auto title = items[0];
+    auto body = items[1];
+    auto tokens = items[2];
+    auto offsets = items[3];
+
+    TermList terms = utils::explode(tokens, ' ');
+    print_vec<TermList>(terms);
+    inverted_index.AddDocument(i, terms);
 	}
 }
 
