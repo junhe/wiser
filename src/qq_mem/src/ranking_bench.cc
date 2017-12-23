@@ -21,6 +21,22 @@ class TermWithOffset {
 			: term_(term_in), offsets_(offsets_in) {} 
 };
 
+class RankingPosting {
+  public:
+    int doc_id_;
+    int term_frequency_;
+    int field_length_;
+
+    RankingPosting(){};
+    RankingPosting(int doc_id, int term_frequency, int field_length)
+      :doc_id_(doc_id), term_frequency_(term_frequency), field_length_(field_length) 
+    {
+    }
+    const int GetDocId() const {return doc_id_;}
+    const int GetTermFreq() const {return term_frequency_;}
+    const int GetFieldLength() const {return field_length_;}
+};
+
 typedef std::vector<TermWithOffset> TermWithOffsetList;
 
 
@@ -70,6 +86,10 @@ const std::vector<Offsets> parse_offsets(const std::string& s) {
     return res;
 }
 
+// return:
+//   term1: offsets
+//   term2: offsets
+//   ...
 TermWithOffsetList parse_doc(const std::vector<std::string> &items) {
 	auto title = items[0];
 	auto body = items[1];
@@ -98,8 +118,10 @@ int main(int argc, char** argv) {
   utils::LineDoc linedoc("./src/testdata/line_doc_offset_untracked");
 
   for (int i = 0; i < 5; i++) {
+    // Process a document
     std::vector<std::string> items;
     linedoc.GetRow(items);
     auto terms_with_offset = parse_doc(items);
 	}
 }
+
