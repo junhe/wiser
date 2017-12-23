@@ -22,6 +22,7 @@ class TermWithOffset {
 		TermWithOffset(Term term_in, Offsets offsets_in) 
 			: term_(term_in), offsets_(offsets_in) {} 
 };
+typedef std::vector<TermWithOffset> TermWithOffsetList;
 
 class RankingPosting {
   public:
@@ -39,7 +40,6 @@ class RankingPosting {
     const int GetFieldLength() const {return field_length_;}
 };
 
-typedef std::vector<TermWithOffset> TermWithOffsetList;
 
 
 // Parse offsets from string
@@ -121,9 +121,10 @@ class InvertedIndexQqMem {
  public:
   typedef IndexStore::const_iterator const_iterator;
 
-  void AddDocument(const int &doc_id, const TermList &termlist) {
-     for (const auto &term : termlist) {
+  void AddDocument(const int &doc_id, const TermWithOffsetList &termlist) {
+     for (const auto &term_info : termlist) {
         IndexStore::iterator it;
+        auto term = term_info.term_;
         it = index_.find(term);
 
         if (it == index_.cend()) {
@@ -176,13 +177,7 @@ int main(int argc, char** argv) {
     linedoc.GetRow(items);
     auto terms_with_offset = parse_doc(items);
 
-    auto title = items[0];
-    auto body = items[1];
-    auto tokens = items[2];
-    auto offsets = items[3];
-
-    TermList terms = utils::explode(tokens, ' ');
-    inverted_index.AddDocument(i, terms);
+    inverted_index.AddDocument(i, terms_with_offset);
 	}
 
   inverted_index.ShowStats();
