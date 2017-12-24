@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
   std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
 
   auto start = utils::now();
-  std::vector<DocIdType> ret = intersect(lists);
+  std::vector<DocIdType> ret = intersect<Posting>(lists);
 
   // for (auto d : ret) {
     // std::cout << d << ",";

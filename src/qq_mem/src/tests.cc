@@ -554,7 +554,7 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     }
 
     std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect(lists);
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
     REQUIRE(ret == std::vector<DocIdType>{5, 6, 7, 8, 9});
   }
 
@@ -562,7 +562,7 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     PostingList_Vec<Posting> pl02("world");   
 
     std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect(lists);
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
     REQUIRE(ret == std::vector<DocIdType>{});
   }
 
@@ -573,7 +573,7 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     }
 
     std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect(lists);
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
     REQUIRE(ret == std::vector<DocIdType>{});
   }
 
@@ -584,7 +584,7 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     }
 
     std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect(lists);
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
     REQUIRE(ret == std::vector<DocIdType>{5, 6, 7, 8, 9});
   }
 
@@ -595,13 +595,13 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     }
 
     std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect(lists);
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
     REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
   }
 
   SECTION("It intersects a single list") {
     std::vector<const PostingList_Vec<Posting>*> lists{&pl01};
-    std::vector<DocIdType> ret = intersect(lists);
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
     REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
   }
 
@@ -617,7 +617,7 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     }
 
     std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02, &pl03};
-    std::vector<DocIdType> ret = intersect(lists);
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
     REQUIRE(ret == std::vector<DocIdType>{0, 1});
   }
 
