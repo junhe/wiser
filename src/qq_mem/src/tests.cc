@@ -626,13 +626,13 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     PostingList_Vec<Posting> pl02("world");   
 
     std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect(lists);
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
     REQUIRE(ret == std::vector<DocIdType>{});
   }
 }
 
 
-TEST_CASE( "Scoring", "[intersect]" ) {
+TEST_CASE( "Scoring", "[ranking]" ) {
   SECTION("TF is correct") {
     REQUIRE(calc_tf(4) == 2.0);
     REQUIRE(calc_tf(100) == 10.0);
