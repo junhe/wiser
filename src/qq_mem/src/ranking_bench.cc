@@ -279,7 +279,8 @@ int main(int argc, char** argv) {
   test();
 
   InvertedIndexQqMem inverted_index;
-  FieldLengthStore field_lengths;
+  // This could be put to doc store in the future
+  FieldLengthStore field_lengths; 
 
   utils::LineDoc linedoc("./src/testdata/tiny-line-doc");
 
