@@ -196,8 +196,24 @@ class InvertedIndexQqMem {
     std::cout << "field length(total terms): " << total_terms << std::endl;
   }
 
-  std::vector<int> Search(const TermList &terms, const SearchOperator &op) {
+  std::vector<DocIdType> Search(const TermList &terms, const SearchOperator &op) {
+    if (op != SearchOperator::AND) {
+        throw std::runtime_error("NotImplementedError");
+    }
 
+    std::vector<const PostingList_Vec<RankingPosting>*> postinglist_pointers;
+
+    for (auto term : terms) {
+      auto it = index_.find(term);
+      if (it == index_.end()) {
+        std::cout << "No match at all" << std::endl;
+        return std::vector<DocIdType>{};
+      }
+
+      postinglist_pointers.push_back(&it->second);
+    }
+
+    return intersect<RankingPosting>(postinglist_pointers);
   }
 
   void ShowStats() {
@@ -235,6 +251,22 @@ void test() {
     assert(store.GetLength(3) == 20);
     assert(store.GetLength(4) == 21);
   }
+
+  std::cout << "_____________________" << std::endl;
+  {
+    InvertedIndexQqMem inverted_index;
+    utils::LineDoc linedoc("./src/testdata/tiny-line-doc");
+
+    for (int i = 0; i < 2; i++) {
+      std::vector<std::string> items;
+      linedoc.GetRow(items);
+      inverted_index.AddDocument(i, items[0], items[1]);
+    }
+    // inverted_index.Search(TermList{"you"}, SearchOperator::AND);
+    auto result = inverted_index.Search(TermList{"have"}, SearchOperator::AND);
+    print_vec(result);
+  }
+  std::cout << "_____________________" << std::endl;
 }
 
 
