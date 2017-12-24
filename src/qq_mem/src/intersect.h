@@ -21,15 +21,16 @@ std::vector<DocIdType> intersect(
   const int n_lists = lists.size();
   std::vector<typename PostingList_Vec<T>::iterator_t> posting_iters(n_lists);
   std::vector<DocIdType> ret_vec{};
+  bool finished = false;
+  DocIdType max_doc_id = -1;
   
   for (int list_i = 0; list_i < n_lists; list_i++) {
     posting_iters[list_i] = 0;
   }
 
-  bool finished = false;
   while (finished == false) {
     // find max doc id
-    DocIdType max_doc_id = -1;
+    max_doc_id = -1;
     for (int list_i = 0; list_i < n_lists; list_i++) {
       const PostingList_Vec<T> *postinglist = lists[list_i];
       typename PostingList_Vec<T>::iterator_t it = posting_iters[list_i];
@@ -77,8 +78,6 @@ std::vector<DocIdType> intersect(
 
   return ret_vec;
 }
-
-
 
 
 #endif
