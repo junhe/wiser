@@ -656,3 +656,26 @@ TEST_CASE( "Scoring", "[ranking]" ) {
 }
 
 
+
+TEST_CASE( "TfIdfTable works", "[TfIdfTable]" ) {
+  TfIdfTable table;
+
+  SECTION("It sets and gets IDF") {
+    table.SetIdf("term1", 1.1);
+    REQUIRE(table.GetIdf("term1") == 1.1);
+  }
+
+  SECTION("It sets and gets TF") {
+    table.SetTf("term1", 100, 2.2);
+    REQUIRE(table.GetTf("term1", 100) == 2.2);
+  }
+}
+
+
+
+
+
+
+
+
+
