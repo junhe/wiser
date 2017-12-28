@@ -629,6 +629,21 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     std::vector<DocIdType> ret = intersect<Posting>(lists);
     REQUIRE(ret == std::vector<DocIdType>{});
   }
+
+  SECTION("It returns doc counts of each term") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 0; i < 15; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    TfIdfStore tfidf_store;
+
+    std::vector<DocIdType> ret = intersect<Posting>(lists, &tfidf_store);
+    REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+    REQUIRE(tfidf_store.GetDocCount("hello") == 10);
+    REQUIRE(tfidf_store.GetDocCount("world") == 15);
+  }
 }
 
 

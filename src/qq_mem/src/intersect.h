@@ -59,7 +59,7 @@ class TfIdfStore {
 //    This is the requirement imposed by PostingList_Vec.
 template <class T>
 std::vector<DocIdType> intersect(
-    const std::vector<const PostingList_Vec<T>*> lists) {
+    const std::vector<const PostingList_Vec<T>*> lists, TfIdfStore *res = nullptr) {
   const int n_lists = lists.size();
   std::vector<typename PostingList_Vec<T>::iterator_t> posting_iters(n_lists);
   std::vector<DocIdType> ret_vec{};
@@ -117,6 +117,14 @@ std::vector<DocIdType> intersect(
       }
     }
   } // while
+
+  // set doc count of each term
+  if (res != nullptr) {
+    for (int list_i = 0; list_i < n_lists; list_i++) {
+      const PostingList_Vec<T> *postinglist = lists[list_i];
+      res->SetDocCount(postinglist->GetTerm(), postinglist->Size());
+    }
+  }
 
   return ret_vec;
 }
