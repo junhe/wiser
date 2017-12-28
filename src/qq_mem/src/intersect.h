@@ -21,31 +21,31 @@
 // term1   x
 // term2   x
 // term3   x
-class TfIdfTable {
+class TfIdfStore {
  private:
-  typedef std::map<DocIdType, double> tf_dict_t;
-  typedef std::map<Term, tf_dict_t> tf_table_t;
+  typedef std::map<Term, double> tf_dict_t;
+  typedef std::map<DocIdType, tf_dict_t> tf_table_t;
 
-  typedef std::map<Term, double> idf_dict_t;
+  typedef std::map<Term, int> doc_cnt_dict_t;
 
   tf_table_t tf_table_;
-  idf_dict_t idf_dict_;
+  doc_cnt_dict_t doc_cnt_;
  
  public:
-  void SetIdf(const Term &term, const double &value) {
-    idf_dict_[term] = value;
+  void SetTf(const DocIdType &doc_id, const Term &term, const double &value) {
+    tf_table_[doc_id][term] = value; 
   }
 
-  double GetIdf(const Term &term) {
-    return idf_dict_[term];
+  double GetTf(const DocIdType &doc_id, const Term &term) {
+    return tf_table_[doc_id][term];
   }
 
-  void SetTf(const Term &term, const DocIdType &doc_id, const double &value) {
-    tf_table_[term][doc_id] = value; 
+  void SetDocCount(const Term &term, const double &value) {
+    doc_cnt_[term] = value;
   }
 
-  double GetTf(const Term &term, const DocIdType &doc_id) {
-    return tf_table_[term][doc_id];
+  int GetDocCount(const Term &term) {
+    return doc_cnt_[term];
   }
 };
 

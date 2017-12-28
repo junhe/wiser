@@ -657,17 +657,17 @@ TEST_CASE( "Scoring", "[ranking]" ) {
 
 
 
-TEST_CASE( "TfIdfTable works", "[TfIdfTable]" ) {
-  TfIdfTable table;
+TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
+  TfIdfStore table;
 
   SECTION("It sets and gets IDF") {
-    table.SetIdf("term1", 1.1);
-    REQUIRE(table.GetIdf("term1") == 1.1);
+    table.SetDocCount("term1", 10);
+    REQUIRE(table.GetDocCount("term1") == 10);
   }
 
   SECTION("It sets and gets TF") {
-    table.SetTf("term1", 100, 2.2);
-    REQUIRE(table.GetTf("term1", 100) == 2.2);
+    table.SetTf(100, "term1", 2.2);
+    REQUIRE(table.GetTf(100, "term1") == 2.2);
   }
 }
 
