@@ -93,7 +93,8 @@ std::vector<DocIdType> intersect(
     }
 
     // Try to reach max_doc_id in all posting lists
-    for (int list_i = 0; list_i < n_lists; list_i++) {
+    int list_i;
+    for (list_i = 0; list_i < n_lists; list_i++) {
       const PostingList_Vec<T> *postinglist = lists[list_i];
       typename PostingList_Vec<T>::iterator_t *p_it = &posting_iters[list_i];
 
@@ -104,18 +105,22 @@ std::vector<DocIdType> intersect(
       }
 
       const DocIdType cur_doc_id = postinglist->GetPosting(*p_it).GetDocId(); 
-      (*p_it)++;
+      // (*p_it)++;
       
       if (cur_doc_id != max_doc_id) {
         break;
       }
+    }
+    
+    if (list_i == n_lists) {
+      // all posting lists are at max_doc_id 
+      ret_vec.push_back(max_doc_id);
 
-      if (list_i == n_lists - 1) {
-        // all posting lists are at max_doc_id 
-        DLOG(INFO) << "We found one in intersection: " << max_doc_id << std::endl;
-        ret_vec.push_back(max_doc_id);
+      for (int i = 0; i < n_lists; i++) {
+        posting_iters[i]++;
       }
     }
+
   } // while
 
   // set doc count of each term

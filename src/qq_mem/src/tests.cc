@@ -630,6 +630,22 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     REQUIRE(ret == std::vector<DocIdType>{});
   }
 
+  SECTION("It handles a previous bug") {
+    PostingList_Vec<Posting> pl01("hello");   
+    pl01.AddPosting(Posting(8, 1, Positions{28}));
+    pl01.AddPosting(Posting(10, 1, Positions{28}));
+
+    PostingList_Vec<Posting> pl02("world");   
+    pl02.AddPosting(Posting(7, 1, Positions{28}));
+    pl02.AddPosting(Posting(10, 1, Positions{28}));
+    pl02.AddPosting(Posting(15, 1, Positions{28}));
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    REQUIRE(ret == std::vector<DocIdType>{10});
+  }
+
+
   SECTION("It returns doc counts of each term") {
     PostingList_Vec<Posting> pl02("world");   
     for (int i = 0; i < 15; i++) {
