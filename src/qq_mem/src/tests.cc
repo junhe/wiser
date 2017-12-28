@@ -660,6 +660,27 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     REQUIRE(tfidf_store.GetDocCount("hello") == 10);
     REQUIRE(tfidf_store.GetDocCount("world") == 15);
   }
+
+  SECTION("It returns term freqs") {
+    PostingList_Vec<RankingPosting> pl01("hello");   
+    pl01.AddPosting(RankingPosting(8, 1));
+    pl01.AddPosting(RankingPosting(10, 2));
+
+    PostingList_Vec<RankingPosting> pl02("world");   
+    pl02.AddPosting(RankingPosting(7, 1));
+    pl02.AddPosting(RankingPosting(10, 8));
+    pl02.AddPosting(RankingPosting(15, 1));
+
+    std::vector<const PostingList_Vec<RankingPosting>*> lists{&pl01, &pl02};
+    TfIdfStore tfidf_store;
+
+    std::vector<DocIdType> ret = intersect<RankingPosting>(lists, &tfidf_store);
+
+    REQUIRE(ret == std::vector<DocIdType>{10});
+    REQUIRE(tfidf_store.GetTf(10, "hello") == 2);
+    REQUIRE(tfidf_store.GetTf(10, "world") == 8);
+  }
+
 }
 
 
@@ -697,8 +718,8 @@ TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
   }
 
   SECTION("It sets and gets TF") {
-    table.SetTf(100, "term1", 2.2);
-    REQUIRE(table.GetTf(100, "term1") == 2.2);
+    table.SetTf(100, "term1", 2);
+    REQUIRE(table.GetTf(100, "term1") == 2);
   }
 }
 

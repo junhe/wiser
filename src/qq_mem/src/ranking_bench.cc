@@ -28,20 +28,6 @@ class TermWithOffset {
 };
 typedef std::vector<TermWithOffset> TermWithOffsetList;
 
-class RankingPosting {
-  public:
-    int doc_id_;
-    int term_frequency_;
-
-    RankingPosting(){};
-    RankingPosting(int doc_id, int term_frequency)
-      :doc_id_(doc_id), term_frequency_(term_frequency)
-    {
-    }
-    const int GetDocId() const {return doc_id_;}
-    const int GetTermFreq() const {return term_frequency_;}
-};
-
 class FieldLengthStore {
  public:
   std::unordered_map<DocIdType, int> store_;

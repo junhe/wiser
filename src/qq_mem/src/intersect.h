@@ -23,7 +23,7 @@
 // term3   x
 class TfIdfStore {
  private:
-  typedef std::map<Term, double> tf_dict_t;
+  typedef std::map<Term, int> tf_dict_t;
   typedef std::map<DocIdType, tf_dict_t> tf_table_t;
 
   typedef std::map<Term, int> doc_cnt_dict_t;
@@ -32,15 +32,15 @@ class TfIdfStore {
   doc_cnt_dict_t doc_cnt_;
  
  public:
-  void SetTf(const DocIdType &doc_id, const Term &term, const double &value) {
+  void SetTf(const DocIdType &doc_id, const Term &term, const int &value) {
     tf_table_[doc_id][term] = value; 
   }
 
-  double GetTf(const DocIdType &doc_id, const Term &term) {
+  int GetTf(const DocIdType &doc_id, const Term &term) {
     return tf_table_[doc_id][term];
   }
 
-  void SetDocCount(const Term &term, const double &value) {
+  void SetDocCount(const Term &term, const int &value) {
     doc_cnt_[term] = value;
   }
 
@@ -57,6 +57,7 @@ class TfIdfStore {
 // Requirements for template class T:
 //  - class T must have member function const DocIdType T::GetDocId() const.
 //    This is the requirement imposed by PostingList_Vec.
+//  - If res != nullptr, T must has T::GetTermFreq() const
 template <class T>
 std::vector<DocIdType> intersect(
     const std::vector<const PostingList_Vec<T>*> lists, TfIdfStore *res = nullptr) {
@@ -116,6 +117,17 @@ std::vector<DocIdType> intersect(
       // all posting lists are at max_doc_id 
       ret_vec.push_back(max_doc_id);
 
+      // Get all term frequencies for doc 'max_doc_id'
+      if (res != nullptr) {
+        for (int i = 0; i < n_lists; i++) {
+          const PostingList_Vec<T> *postinglist = lists[i];
+          typename PostingList_Vec<T>::iterator_t *p_it = &posting_iters[i];
+          const int freq = postinglist->GetPosting(*p_it).GetTermFreq(); 
+          res->SetTf(max_doc_id, postinglist->GetTerm(), freq);
+        }
+      }
+
+      // Advance iterators
       for (int i = 0; i < n_lists; i++) {
         posting_iters[i]++;
       }
