@@ -775,9 +775,11 @@ TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
 }
 
 
+TEST_CASE( "We can get score for each document", "[ranking]" ) {
+  SECTION("It calculates score") {
 
-
-
+  }
+}
 
 
 
