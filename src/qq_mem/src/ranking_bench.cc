@@ -8,6 +8,7 @@
 #include "ranking.h"
 #include "utils.h"
 #include "posting_list_vec.h"
+#include "qq_mem_uncompressed_engine.h"
 
 
 typedef std::vector<int> TopDocs;
@@ -26,6 +27,7 @@ class TermWithOffset {
       return offsets_.size();  
     }
 };
+
 typedef std::vector<TermWithOffset> TermWithOffsetList;
 
 class FieldLengthStore {
@@ -121,96 +123,13 @@ int calc_total_terms(const TermWithOffsetList &termlist) {
   return total;
 }
 
-typedef std::unordered_map<Term, int> CountMapType;
-CountMapType count_tokens(const std::string &token_text) {
-  CountMapType counts;
-  auto tokens = utils::explode(token_text, ' ');
-
-  for (auto token : tokens) {
-    auto it = counts.find(token);
-    if (it == counts.end()) {
-      counts[token] = 1;
-    } else {
-      it->second++;
-    }
-  }
-  return counts;
-}
-
-// It returns the number of terms in field
-int calc_terms(const std::string field) {
-  return utils::explode(field, ' ').size();
-}
-
 void print_counts(CountMapType counts) {
   for (auto it = counts.begin(); it != counts.end(); it++) {
     std::cout << it->first << ":" << it->second << std::endl;
   }
 }
 
-class InvertedIndexQqMem {
- private:
-  typedef PostingList_Vec<RankingPosting> PostingListType;
-  typedef std::unordered_map<Term, PostingListType> IndexStore;
-  IndexStore index_;
 
- public:
-  typedef IndexStore::const_iterator const_iterator;
-
-  void AddDocument(const int &doc_id, const std::string &body, 
-      const std::string &tokens) {
-    TermList token_vec = utils::explode(tokens, ' ');
-    CountMapType token_counts = count_tokens(tokens);
-
-    for (auto token_it = token_counts.begin(); token_it != token_counts.end(); 
-        token_it++) {
-      IndexStore::iterator it;
-      auto term = token_it->first;
-      it = index_.find(term);
-
-      if (it == index_.cend()) {
-        // term does not exist
-        std::pair<IndexStore::iterator, bool> ret;
-        ret = index_.insert( std::make_pair(term, PostingListType(term)) );
-        it = ret.first;
-      } 
-
-      PostingListType &postinglist = it->second;        
-      postinglist.AddPosting(RankingPosting(doc_id, token_it->second));
-    }
-    int total_terms = calc_terms(tokens);
-    std::cout << "field length(total terms): " << total_terms << std::endl;
-  }
-
-  std::vector<DocIdType> Search(const TermList &terms, const SearchOperator &op) {
-    if (op != SearchOperator::AND) {
-        throw std::runtime_error("NotImplementedError");
-    }
-
-    std::vector<const PostingList_Vec<RankingPosting>*> postinglist_pointers;
-
-    for (auto term : terms) {
-      auto it = index_.find(term);
-      if (it == index_.end()) {
-        std::cout << "No match at all" << std::endl;
-        return std::vector<DocIdType>{};
-      }
-
-      postinglist_pointers.push_back(&it->second);
-    }
-
-    TfIdfStore tfidf_store;
-
-    return intersect<RankingPosting>(postinglist_pointers, &tfidf_store);
-  }
-
-  void ShowStats() {
-    LOG(INFO) << "num of terms: " << index_.size() << std::endl;
-    for (auto it = index_.begin(); it != index_.end(); it++) {
-      // LOG(INFO) << it->second.Size();
-    }
-  }
-};
 
 template <class T>
 void print_vec(T vec) {
@@ -240,7 +159,6 @@ void test() {
     assert(store.GetLength(4) == 21);
   }
 
-  std::cout << "_____________________" << std::endl;
   {
     InvertedIndexQqMem inverted_index;
     utils::LineDoc linedoc("./src/testdata/tiny-line-doc");
@@ -252,10 +170,10 @@ void test() {
     }
     // inverted_index.Search(TermList{"you"}, SearchOperator::AND);
     // auto result = inverted_index.SearchAndRank(TermList{"have"}, SearchOperator::AND);
-    TfIdfStore tfidf_store = inverted_index.RetrieveTfIdf(TermList{"have"});
-    print_vec(result);
   }
-  std::cout << "_____________________" << std::endl;
+
+  {
+  }
 }
 
 

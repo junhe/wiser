@@ -4,6 +4,7 @@
 #include <vector>
 #include <glog/logging.h>
 #include <cassert>
+#include <unordered_map>
 
 #include "engine_services.h"
 #include "posting_list_vec.h"
