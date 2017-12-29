@@ -776,9 +776,45 @@ TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
 
 
 TEST_CASE( "We can get score for each document", "[ranking]" ) {
-  SECTION("It calculates score") {
+  SECTION("It gets the same score as ES, for one term") {
+    TfIdfStore table;
+    table.SetTf(0, "term1", 1);
 
+    table.SetDocCount("term1", 1);
+
+    TfIdfStore::row_iterator it = table.row_cbegin();
+
+    TermScoreMap term_scores = score_terms_in_doc(table, it, 3, 3, 1);
+
+    std::ostringstream out;
+    out << std::setprecision(3) << term_scores["term1"];
+    REQUIRE(out.str() == "0.288"); // From an ES run
   }
+
+  SECTION("It gets the same score as ES, for two terms") {
+    TfIdfStore table;
+    table.SetTf(0, "term1", 1);
+    table.SetTf(0, "term2", 1);
+
+    table.SetDocCount("term1", 1);
+    table.SetDocCount("term2", 1);
+
+    TfIdfStore::row_iterator it = table.row_cbegin();
+
+    TermScoreMap term_scores = score_terms_in_doc(table, it, 7, 7, 1);
+
+    {
+    std::ostringstream out;
+    out << std::setprecision(3) << term_scores["term1"];
+    REQUIRE(out.str() == "0.288"); // From an ES run
+    }
+    {
+    std::ostringstream out;
+    out << std::setprecision(3) << term_scores["term2"];
+    REQUIRE(out.str() == "0.288"); // From an ES run
+    }
+  }
+
 }
 
 

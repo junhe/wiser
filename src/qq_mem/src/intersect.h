@@ -119,6 +119,45 @@ class DocLengthStore {
 typedef std::map<DocIdType, double> DocScoreMap;
 typedef std::map<Term, double> TermScoreMap;
 
+TermScoreMap score_terms_in_doc(const TfIdfStore &tfidf_store, 
+    TfIdfStore::row_iterator row_it,
+    const int &avg_doc_length, 
+    const int &doc_length,
+    const int &total_docs)
+{
+  TfIdfStore::col_iterator col_it; 
+  TermScoreMap term_scores;
+
+  for (col_it = TfIdfStore::col_cbegin(row_it);
+       col_it != TfIdfStore::col_cend(row_it);
+       col_it++) 
+  {
+    // each column contains a term.
+    Term cur_term = TfIdfStore::GetCurTerm(col_it);
+    int cur_term_freq = TfIdfStore::GetCurTermFreq(col_it);
+    int doc_freq = tfidf_store.GetDocCount(cur_term);
+
+    double idf = calc_es_idf(total_docs, doc_freq);
+    double tfnorm = calc_es_tfnorm(cur_term_freq, doc_length, avg_doc_length);
+
+    // ES 6.1 uses tfnorm * idf 
+    double term_doc_score = idf * tfnorm;
+    term_scores[cur_term] = term_doc_score;
+  }
+
+  return term_scores;
+}
+
+double aggregate_term_score(const TermScoreMap &term_scores) {
+  double doc_score = 0;
+  for (TermScoreMap::const_iterator it = term_scores.cbegin();
+       it != term_scores.cend(); it++) 
+  {
+    doc_score += it->second; 
+  }
+  return doc_score;
+}
+
 DocScoreMap score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_lengths) {
   TfIdfStore::row_iterator row_it; 
   TfIdfStore::col_iterator col_it; 
@@ -135,32 +174,10 @@ DocScoreMap score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_
     DocIdType cur_doc_id = TfIdfStore::GetCurDocId(row_it);
     int doc_length = doc_lengths.GetLength(cur_doc_id);
 
-    TermScoreMap term_scores;
+    TermScoreMap term_scores = score_terms_in_doc(tfidf_store, row_it, 
+        avg_doc_length, total_docs, doc_length);
 
-    for (col_it = tfidf_store.col_cbegin(row_it);
-         col_it != tfidf_store.col_cend(row_it);
-         col_it++) 
-    {
-      // each column contains a term.
-      Term cur_term = TfIdfStore::GetCurTerm(col_it);
-      int cur_term_freq = TfIdfStore::GetCurTermFreq(col_it);
-      int doc_freq = tfidf_store.GetDocCount(cur_term);
-
-      double idf = calc_es_idf(total_docs, doc_freq);
-      double tfnorm = calc_es_tfnorm(cur_term_freq, doc_length, avg_doc_length);
-
-      // ES 6.1 uses tfnorm * idf 
-      double term_doc_score = idf * tfnorm;
-      term_scores[cur_term] = term_doc_score;
-    }
-
-    double doc_score = 0;
-    for (TermScoreMap::const_iterator it = term_scores.cbegin();
-         it != term_scores.cend(); it++) 
-    {
-      doc_score += it->second; 
-    }
-    doc_scores[cur_doc_id] = doc_score;
+    doc_scores[cur_doc_id] = aggregate_term_score(term_scores);
   }
 
   return doc_scores;
