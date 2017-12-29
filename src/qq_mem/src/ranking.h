@@ -10,4 +10,6 @@ double calc_score(const int &term_freq, const int &total_docs,
 double calc_es_idf(const int &doc_count, const int &doc_freq);
 double calc_es_tfnorm(const int &freq, const int &field_length, const int &avg_field_length);
 
+
+
 #endif

@@ -32,6 +32,37 @@ class TfIdfStore {
   doc_cnt_dict_t doc_cnt_;
  
  public:
+  typedef tf_table_t::const_iterator doc_iterator;
+  typedef tf_dict_t::const_iterator term_iterator;
+
+  DocIdType GetCurDocId(doc_iterator &it) {
+    return it->first;
+  }
+
+  doc_iterator cbegin() {
+    return tf_table_.cbegin();
+  }
+
+  doc_iterator cend() {
+    return tf_table_.cend();
+  }
+
+  Term GetCurTerm(term_iterator &it) {
+    return it->first;
+  }
+
+  int GetCurTermFreq(term_iterator &it) {
+    return it->second;
+  }
+
+  term_iterator term_cbegin(doc_iterator &it) {
+    return it->second.cbegin(); 
+  }
+
+  term_iterator term_cend(doc_iterator &it) {
+    return it->second.cend(); 
+  }
+  
   void SetTf(const DocIdType &doc_id, const Term &term, const int &value) {
     tf_table_[doc_id][term] = value; 
   }
@@ -82,7 +113,10 @@ class DocLengthStore {
 };
 
 
+// This function iterates the documents in tfidf_sotre and calculate their scores
+void score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_lengths) {
 
+}
 
 
 

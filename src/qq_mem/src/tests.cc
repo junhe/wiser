@@ -686,9 +686,9 @@ TEST_CASE( "Intersection", "[intersect]" ) {
 TEST_CASE( "DocLengthStore", "[ranking]" ) {
   SECTION("It can add some lengths.") {
     DocLengthStore store;
-    store.AddLength(1, 8);
+    store.AddLength(1, 7);
     store.AddLength(2, 8);
-    store.AddLength(3, 8);
+    store.AddLength(3, 9);
 
     REQUIRE(store.Size() == 3);
     REQUIRE(store.GetAvgLength() == 8);
@@ -743,6 +743,35 @@ TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
   SECTION("It sets and gets TF") {
     table.SetTf(100, "term1", 2);
     REQUIRE(table.GetTf(100, "term1") == 2);
+  }
+
+  SECTION("Iterator works") {
+    table.SetTf(10, "term1", 2);
+    table.SetTf(10, "term2", 3);
+    table.SetTf(20, "term1", 8);
+    table.SetTf(20, "term2", 8);
+
+    SECTION("Doc iterators work") {
+      TfIdfStore::doc_iterator it = table.cbegin();
+      REQUIRE(table.GetCurDocId(it) == 10);
+      it++;
+      REQUIRE(table.GetCurDocId(it) == 20);
+      it++;
+      REQUIRE(it == table.cend());
+    }
+
+    SECTION("Term iterators work") {
+      TfIdfStore::doc_iterator it = table.cbegin();
+      TfIdfStore::term_iterator term_it = table.term_cbegin(it);
+      REQUIRE(table.GetCurTerm(term_it) == "term1");
+      REQUIRE(table.GetCurTermFreq(term_it) == 2);
+      term_it++;
+      REQUIRE(table.GetCurTerm(term_it) == "term2");
+      REQUIRE(table.GetCurTermFreq(term_it) == 3);
+      term_it++;
+      REQUIRE(term_it == table.term_cend(it));
+
+    }
   }
 }
 
