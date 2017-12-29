@@ -752,25 +752,24 @@ TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
     table.SetTf(20, "term2", 8);
 
     SECTION("Doc iterators work") {
-      TfIdfStore::doc_iterator it = table.cbegin();
+      TfIdfStore::row_iterator it = table.row_cbegin();
       REQUIRE(table.GetCurDocId(it) == 10);
       it++;
       REQUIRE(table.GetCurDocId(it) == 20);
       it++;
-      REQUIRE(it == table.cend());
+      REQUIRE(it == table.row_cend());
     }
 
     SECTION("Term iterators work") {
-      TfIdfStore::doc_iterator it = table.cbegin();
-      TfIdfStore::term_iterator term_it = table.term_cbegin(it);
+      TfIdfStore::row_iterator it = table.row_cbegin();
+      TfIdfStore::col_iterator term_it = table.col_cbegin(it);
       REQUIRE(table.GetCurTerm(term_it) == "term1");
       REQUIRE(table.GetCurTermFreq(term_it) == 2);
       term_it++;
       REQUIRE(table.GetCurTerm(term_it) == "term2");
       REQUIRE(table.GetCurTermFreq(term_it) == 3);
       term_it++;
-      REQUIRE(term_it == table.term_cend(it));
-
+      REQUIRE(term_it == table.col_cend(it));
     }
   }
 }

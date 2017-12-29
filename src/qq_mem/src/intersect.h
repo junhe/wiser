@@ -32,34 +32,34 @@ class TfIdfStore {
   doc_cnt_dict_t doc_cnt_;
  
  public:
-  typedef tf_table_t::const_iterator doc_iterator;
-  typedef tf_dict_t::const_iterator term_iterator;
+  typedef tf_table_t::const_iterator row_iterator;
+  typedef tf_dict_t::const_iterator col_iterator;
 
-  DocIdType GetCurDocId(doc_iterator &it) {
+  DocIdType GetCurDocId(row_iterator &it) {
     return it->first;
   }
 
-  doc_iterator cbegin() {
+  row_iterator row_cbegin() {
     return tf_table_.cbegin();
   }
 
-  doc_iterator cend() {
+  row_iterator row_cend() {
     return tf_table_.cend();
   }
 
-  Term GetCurTerm(term_iterator &it) {
+  Term GetCurTerm(col_iterator &it) {
     return it->first;
   }
 
-  int GetCurTermFreq(term_iterator &it) {
+  int GetCurTermFreq(col_iterator &it) {
     return it->second;
   }
 
-  term_iterator term_cbegin(doc_iterator &it) {
+  col_iterator col_cbegin(row_iterator &it) {
     return it->second.cbegin(); 
   }
 
-  term_iterator term_cend(doc_iterator &it) {
+  col_iterator col_cend(row_iterator &it) {
     return it->second.cend(); 
   }
   
