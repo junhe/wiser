@@ -51,6 +51,10 @@ class TfIdfStore {
 
 
 
+
+
+
+
 // lists is a vector of pointers, pointing to posting lists
 // TODO: This function is too long, refactor it.
 //

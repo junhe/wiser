@@ -686,6 +686,7 @@ TEST_CASE( "Intersection", "[intersect]" ) {
 
 TEST_CASE( "Scoring", "[ranking]" ) {
   SECTION("TF is correct") {
+    REQUIRE(calc_tf(1) == 1.0); // sample in ES document
     REQUIRE(calc_tf(4) == 2.0);
     REQUIRE(calc_tf(100) == 10.0);
 
@@ -694,16 +695,25 @@ TEST_CASE( "Scoring", "[ranking]" ) {
     REQUIRE(out.str() == "1.41");
   }
 
-  SECTION("IDF is correct") {
-    REQUIRE(calc_idf(100, 0) == 3);
-
+  SECTION("IDF is correct (sample score in ES document)") {
     std::ostringstream out;
-    out << std::setprecision(3) << calc_idf(90, 10);
-    REQUIRE(out.str() == "1.91");
+    out << std::setprecision(3) << calc_idf(1, 1);
+    REQUIRE(out.str() == "0.307");
   }
+
 
   SECTION("Field length norm is correct") {
     REQUIRE(calc_field_len_norm(4) == 0.5);
+  }
+
+  SECTION("ElasticSearch IDF") {
+    std::ostringstream out;
+    out << std::setprecision(3) << calc_es_idf(1, 1);
+    REQUIRE(out.str() == "0.288");
+  }
+
+  SECTION("ElasticSearch TF NORM") {
+    REQUIRE(calc_es_tfnorm(1, 3, 3) == 1.0);
   }
 }
 
@@ -722,7 +732,6 @@ TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
     REQUIRE(table.GetTf(100, "term1") == 2);
   }
 }
-
 
 
 

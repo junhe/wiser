@@ -199,7 +199,9 @@ class InvertedIndexQqMem {
       postinglist_pointers.push_back(&it->second);
     }
 
-    return intersect<RankingPosting>(postinglist_pointers);
+    TfIdfStore tfidf_store;
+
+    return intersect<RankingPosting>(postinglist_pointers, &tfidf_store);
   }
 
   void ShowStats() {
@@ -249,7 +251,8 @@ void test() {
       inverted_index.AddDocument(i, items[0], items[1]);
     }
     // inverted_index.Search(TermList{"you"}, SearchOperator::AND);
-    auto result = inverted_index.Search(TermList{"have"}, SearchOperator::AND);
+    // auto result = inverted_index.SearchAndRank(TermList{"have"}, SearchOperator::AND);
+    TfIdfStore tfidf_store = inverted_index.RetrieveTfIdf(TermList{"have"});
     print_vec(result);
   }
   std::cout << "_____________________" << std::endl;
