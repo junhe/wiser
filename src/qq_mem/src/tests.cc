@@ -683,6 +683,18 @@ TEST_CASE( "Intersection", "[intersect]" ) {
 
 }
 
+TEST_CASE( "DocLengthStore", "[ranking]" ) {
+  SECTION("It can add some lengths.") {
+    DocLengthStore store;
+    store.AddLength(1, 8);
+    store.AddLength(2, 8);
+    store.AddLength(3, 8);
+
+    REQUIRE(store.Size() == 3);
+    REQUIRE(store.GetAvgLength() == 8);
+  }
+}
+
 
 TEST_CASE( "Scoring", "[ranking]" ) {
   SECTION("TF is correct") {
@@ -709,11 +721,12 @@ TEST_CASE( "Scoring", "[ranking]" ) {
   SECTION("ElasticSearch IDF") {
     std::ostringstream out;
     out << std::setprecision(3) << calc_es_idf(1, 1);
-    REQUIRE(out.str() == "0.288");
+    REQUIRE(out.str() == "0.288"); // From an ES run
   }
 
   SECTION("ElasticSearch TF NORM") {
-    REQUIRE(calc_es_tfnorm(1, 3, 3) == 1.0);
+    REQUIRE(calc_es_tfnorm(1, 3, 3) == 1.0); // From an ES run
+    REQUIRE(calc_es_tfnorm(1, 7, 7) == 1.0); // From an ES run
   }
 }
 

@@ -10,10 +10,10 @@
 
 
 // TF table
-//        doc1  doc2  doc3  doc4
-// term1  x     x     x     x
-// term2  x     x     x     x
-// term3  x     x     x     x
+//        term1  term2  term3  term4
+// doc1  x     x     x     x
+// doc2  x     x     x     x
+// doc3  x     x     x     x
 //
 // IDF dict
 //
@@ -49,6 +49,37 @@ class TfIdfStore {
   }
 };
 
+
+class DocLengthStore {
+ private:
+  typedef std::unordered_map<DocIdType, int> length_store_t;
+
+  length_store_t length_dict_;
+  double avg_length_ = 0;
+
+ public:
+  void AddLength(const DocIdType &doc_id, const int &length) {
+    if (length_dict_.find(doc_id) != length_dict_.end()) {
+      throw std::runtime_error("The requested doc id already exists. "
+          "We do not support update.");
+    }
+
+    avg_length_ = avg_length_ + (length - avg_length_) / (length_dict_.size() + 1);
+    length_dict_[doc_id] = length;
+  }
+
+  int GetLength(const DocIdType &doc_id) {
+    return length_dict_.at(doc_id);  
+  }
+
+  double GetAvgLength() {
+    return avg_length_;
+  }
+
+  std::size_t Size() {
+    return length_dict_.size();
+  }
+};
 
 
 
