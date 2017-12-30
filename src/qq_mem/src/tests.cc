@@ -15,6 +15,7 @@
 #include "utils.h"
 #include "hash_benchmark.h"
 #include "grpc_server_impl.h"
+#include "qq_mem_uncompressed_engine.h"
 
 #include "posting_list_direct.h"
 #include "posting_list_raw.h"
@@ -814,6 +815,22 @@ TEST_CASE( "We can get score for each document", "[ranking]" ) {
     REQUIRE(out.str() == "0.288"); // From an ES run
     }
   }
+}
+
+TEST_CASE( "Utilities work", "[utils]" ) {
+  SECTION("Count terms") {
+    REQUIRE(count_terms("hello world") == 2);
+  }
+
+  SECTION("Count tokens") {
+    CountMapType counts = count_tokens("hello hello you");
+    assert(counts["hello"] == 2);
+    assert(counts["you"] == 1);
+    assert(counts.size() == 2);
+  }
+}
+
+TEST_CASE( "QQ Mem Uncompressed Engine", "[engine]" ) {
 
 }
 

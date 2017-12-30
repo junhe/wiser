@@ -141,25 +141,6 @@ void print_vec(T vec) {
 
 void test() {
   {
-    CountMapType counts = count_tokens("hello hello you");
-    assert(counts["hello"] == 2);
-    assert(counts["you"] == 1);
-    assert(counts.size() == 2);
-  }
-
-  {
-    assert(count_terms("hello world") == 2);
-  }
-
-  {
-    FieldLengthStore store;
-    store.SetLength(3, 20);
-    store.SetLength(4, 21);
-    assert(store.GetLength(3) == 20);
-    assert(store.GetLength(4) == 21);
-  }
-
-  {
     InvertedIndexQqMem inverted_index;
     utils::LineDoc linedoc("./src/testdata/tiny-line-doc");
 
@@ -170,9 +151,6 @@ void test() {
     }
     // inverted_index.Search(TermList{"you"}, SearchOperator::AND);
     // auto result = inverted_index.SearchAndRank(TermList{"have"}, SearchOperator::AND);
-  }
-
-  {
   }
 }
 
