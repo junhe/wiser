@@ -895,6 +895,18 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     DocScoreMap doc_scores = engine.Score(tfidf_store);
     REQUIRE(doc_scores.size() == 2);
   }
+
+  SECTION("The engine can server two-term queries") {
+    TfIdfStore tfidf_store = engine.Query(TermList{"hello", "world"}); 
+    REQUIRE(tfidf_store.Size() == 2);
+    auto it = tfidf_store.row_cbegin();
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 0);
+    it++;
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 2);
+
+    DocScoreMap doc_scores = engine.Score(tfidf_store);
+    REQUIRE(doc_scores.size() == 2);
+  }
 }
 
 
