@@ -32,11 +32,32 @@ class InvertedIndexQqMem {
  private:
   typedef PostingList_Vec<RankingPosting> PostingListType;
   typedef std::unordered_map<Term, PostingListType> IndexStore;
+  typedef std::vector<const PostingList_Vec<RankingPosting>*> PlPointers;
   IndexStore index_;
+
+  PlPointers FindPostinglists(const TermList &terms) {
+    PlPointers postinglist_pointers;
+
+    for (auto term : terms) {
+      auto it = index_.find(term);
+      if (it == index_.end()) {
+        break;
+      }
+
+      postinglist_pointers.push_back(&it->second);
+    }
+
+    return postinglist_pointers;
+  }
+
+  TfIdfStore IntersectPostinglists(const PlPointers &postinglist_pointers) {
+    TfIdfStore tfidf_store;
+    intersect<RankingPosting>(postinglist_pointers, &tfidf_store);
+    return tfidf_store;
+  }
 
  public:
   typedef IndexStore::const_iterator const_iterator;
-  typedef std::vector<const PostingList_Vec<RankingPosting>*> PlPointers;
 
   void AddDocument(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
@@ -63,19 +84,19 @@ class InvertedIndexQqMem {
     std::cout << "field length(total terms): " << total_terms << std::endl;
   }
 
-  PlPointers FindPostinglists(const TermList &terms) {
-    PlPointers postinglist_pointers;
-
-    for (auto term : terms) {
-      auto it = index_.find(term);
-      if (it == index_.end()) {
-        break;
-      }
-
-      postinglist_pointers.push_back(&it->second);
+  // This function returns True if we find documents in the intersection.
+  // If it returns True, tfidf_store will be set.
+  //
+  // terms must have unique terms.
+  TfIdfStore FindIntersection(const TermList &terms) {
+    PlPointers postinglist_pointers = FindPostinglists(terms);
+    TfIdfStore tfidf_store;
+    if (postinglist_pointers.size() < terms.size()) {
+      return tfidf_store; // return an empty one
     }
 
-    return postinglist_pointers;
+    intersect<RankingPosting>(postinglist_pointers, &tfidf_store);
+    return tfidf_store;
   }
 
   std::vector<DocIdType> Search(const TermList &terms, const SearchOperator &op) {
@@ -84,23 +105,18 @@ class InvertedIndexQqMem {
     }
 
     std::vector<DocIdType> doc_ids;
-    TfIdfStore tfidf_store;
-
     PlPointers postinglist_pointers = FindPostinglists(terms);
 
-    return intersect<RankingPosting>(postinglist_pointers, &tfidf_store);
+    return intersect<RankingPosting>(postinglist_pointers, nullptr);
   }
 
-  void ShowStats() {
-    LOG(INFO) << "num of terms: " << index_.size() << std::endl;
-    for (auto it = index_.begin(); it != index_.end(); it++) {
-      // LOG(INFO) << it->second.Size();
-    }
+  // Return number of posting lists
+  std::size_t Size() {
+    return index_.size();
   }
 };
 
 
-// Also, it is easier to test since it does not involve gRPC.
 class QqMemUncompressedEngine {
  private:
   int next_doc_id_ = 0;
@@ -113,12 +129,31 @@ class QqMemUncompressedEngine {
   }
 
  public:
-  void AddDocument(const std::string &body, const std::string &tokens) {
+  DocIdType AddDocument(const std::string &body, const std::string &tokens) {
     int doc_id = NextDocId();
 
     doc_store_.Add(doc_id, body);
     inverted_index_.AddDocument(doc_id, body, tokens);
     doc_lengths_.AddLength(doc_id, count_terms(body));
+    return doc_id;
+  }
+
+  std::string GetDocument(const DocIdType &doc_id) {
+    return doc_store_.Get(doc_id);
+  }
+
+  std::size_t TermCount() {
+    return inverted_index_.Size();
+  }
+
+  int GetDocLength(const DocIdType &doc_id) {
+    return doc_lengths_.GetLength(doc_id);
+  }
+
+  std::vector<DocIdType> Search(const TermList &terms) {
+    TfIdfStore inverted_index_.FindIntersection(terms);
+    
+    return std::vector<DocIdType>{};
   }
 };
 
