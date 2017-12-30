@@ -4,6 +4,7 @@
 #include <string>
 #include <string.h>
 #include "engine_services.h"
+#include "types.h"
 #include "posting_basic.h"
 
 // Posting_List Class

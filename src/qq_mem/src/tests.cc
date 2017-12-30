@@ -8,6 +8,7 @@
 #include "native_doc_store.h"
 #include "inverted_index.h"
 #include "qq_engine.h"
+#include "qq_mem_direct_search_engine.h"
 #include "index_creator.h"
 #include "utils.h"
 #include "hash_benchmark.h"
@@ -905,4 +906,19 @@ TEST_CASE("Cereal serialization works", "[Cereal_Serialization]") {
               << std::endl;
     */
    } 
+}
+
+TEST_CASE("QQMemDirectSearchEngine works", "[QQMemDirectSearchEngine]") {
+/*    QQMemDirectSearchEngine engine;
+
+    REQUIRE(engine.NextDocId() == 0);
+
+    engine.AddDocument("my title", "my url", "my body");
+
+    std::vector<int> doc_ids = engine.Search(TermList{"my"}, SearchOperator::AND);
+    REQUIRE(doc_ids.size() == 1);
+
+    std::string doc = engine.GetDocument(doc_ids[0]);
+    REQUIRE(doc == "my body");
+*/
 }

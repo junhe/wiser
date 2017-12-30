@@ -4,6 +4,7 @@
 #include <unordered_map>
 
 #include "engine_services.h"
+#include "types.h"
 #include "posting_list_direct.h"
 #include "lrucache.h"
 #include <cereal/archives/binary.hpp>

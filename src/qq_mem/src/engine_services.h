@@ -6,30 +6,32 @@
 #include <vector>
 #include <map>
 #include <tuple>
+#include "types.h"
 
-// for direct IO
-#define PAGE_SIZE 512
-
-// for flash based documents
-#define FLAG_DOCUMENTS_ON_FLASH true
-#define DOCUMENTS_CACHE_SIZE 100
-#define DOCUMENTS_ON_FLASH_FILE "/mnt/ssd/documents_store"
-
-// for flash based postings
-#define FLAG_POSTINGS_ON_FLASH true
-#define POSTINGS_CACHE_SIZE 100
-#define POSTINGS_ON_FLASH_FILE "/mnt/ssd/postings_store"
-#define POSTING_SERIALIZATION "cereal"    // cereal or protobuf
-
-// for precomputing of snippets generating
-#define FLAG_SNIPPETS_PRECOMPUTE true
-
-// size of snippets cache of highlighter
-#define SNIPPETS_CACHE_SIZE 100
-#define FLAG_SNIPPETS_CACHE false
-#define SNIPPETS_CACHE_ON_FLASH_SIZE 100
-#define FLAG_SNIPPETS_CACHE_ON_FLASH false
-#define SNIPPETS_CACHE_ON_FLASH_FILE "/mnt/ssd/snippets_store.cache"
+// This class is the basic abstract class for
+// different kinds of search engine implementations:
+//   1. QQMemDirectSearchEngine: all contents directly(no serialization) stored in memory
+//   2.
+class SearchEngineService {
+ public:
+  // Generate unique id for each document
+  int NextDocId();
+  // Add one more document into this search engine document base
+  void AddDocument(const std::string &title, const std::string &url, 
+                   const std::string &body){}
+  void AddDocument(const std::string &title, const std::string &url, 
+                   const std::string &body, const std::string &tokens,
+                   const std::string &offsets){} // with analyzed info(tokens, offsets) about this doc
+  // Get document content according to unique doc_id
+  const std::string & GetDocument(const int &doc_id){}
+  // Search a query, get top-related document ids 
+  std::vector<int> Search(const TermList &terms, const SearchOperator &op){}
+  // Batch-load local documents into this search engine document base
+  int LoadLocalDocuments(const std::string &line_doc_path, int n_rows){}
+  
+ private:
+  int next_doc_id_ = 0;
+};
 
 class DocumentStoreService {
     public:
@@ -40,12 +42,6 @@ class DocumentStoreService {
         virtual void Clear() = 0;
         virtual int Size() = 0;
 };
-
-
-typedef std::string Term;
-typedef std::vector<Term> TermList;
-typedef TermList Query;
-enum class SearchOperator {AND, OR};
 
 class InvertedIndexService {
     public:
@@ -75,35 +71,6 @@ class PostingListService {
 
 };
 
-
-// for highlighter
-typedef std::vector<int> TopDocs;
-typedef std::tuple<int, int> Offset;  //startoffset, endoffset
-
-// for add_document
-typedef std::vector<Offset> Offsets;
-
-// class Term_With_Offset
-class TermWithOffset {
-    public:
-        Term term_;
-        Offsets offsets_;
-
-        TermWithOffset(Term term_in, Offsets offsets_in) : term_(term_in), offsets_(offsets_in) {} 
-};
-typedef std::vector<TermWithOffset> TermWithOffsetList;
-
-// for precompute (score of each passage of each term)
-// for (term, doc)
-typedef std::pair<int, float> Passage_Score; // passage->score
-typedef std::vector<Passage_Score> Passage_Scores;
-typedef std::pair<int, int> Passage_Split; // start offset in offsets, len
-// for each doc
-typedef std::pair<int, int> Passage_Segment; // startoffset, length
-typedef std::vector<Passage_Segment> Passage_Segments;
-
-// File Reader (TODO become a abstract class?)
-typedef std::pair<int, int> Store_Segment;    // startoffset, length on flash based file
 class FlashReader {
     public:
         FlashReader(const std::string & based_file);

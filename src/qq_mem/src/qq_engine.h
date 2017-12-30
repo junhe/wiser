@@ -6,6 +6,7 @@
 
 #include "inverted_index.h"
 #include "native_doc_store.h"
+#include "types.h"
 
 
 // This class is used by server side QQEngineServiceImpl.

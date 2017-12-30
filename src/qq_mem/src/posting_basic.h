@@ -2,6 +2,7 @@
 #define POSTING_BASIC_H
 
 #include "engine_services.h"
+#include "types.h"
 #include <unordered_map>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/tuple.hpp>

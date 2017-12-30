@@ -8,6 +8,7 @@
 #include "lrucache.h"
 
 #include "engine_services.h"
+#include "types.h"
 
 class NativeDocStore: public DocumentStoreService {
     private:

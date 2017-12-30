@@ -40,6 +40,8 @@ set(ENGINE_SRCS
     inverted_index.cc
     index_creator.cc
     qq_engine.cc
+    search_engine_service.cc
+    qq_mem_direct_search_engine.cc
     grpc_client_impl.cc
     utils.cc
     unifiedhighlighter.cc

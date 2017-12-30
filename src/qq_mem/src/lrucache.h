@@ -6,6 +6,7 @@
 #include <cstddef>
 #include <stdexcept>
 #include "engine_services.h"
+#include "types.h"
 #include <iostream>
 #include <execinfo.h>
 namespace cache {

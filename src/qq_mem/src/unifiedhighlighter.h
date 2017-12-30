@@ -1,6 +1,7 @@
 #ifndef UNIFIEDHIGHLIGHTER_H
 #define UNIFIEDHIGHLIGHTER_H
 #include "engine_services.h"
+#include "types.h"
 #include "qq_engine.h"
 #include "lrucache.h"
 #include <boost/locale.hpp>
