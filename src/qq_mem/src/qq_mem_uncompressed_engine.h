@@ -36,6 +36,7 @@ class InvertedIndexQqMem {
 
  public:
   typedef IndexStore::const_iterator const_iterator;
+  typedef std::vector<const PostingList_Vec<RankingPosting>*> PlPointers;
 
   void AddDocument(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
@@ -62,24 +63,30 @@ class InvertedIndexQqMem {
     std::cout << "field length(total terms): " << total_terms << std::endl;
   }
 
-  std::vector<DocIdType> Search(const TermList &terms, const SearchOperator &op) {
-    if (op != SearchOperator::AND) {
-        throw std::runtime_error("NotImplementedError");
-    }
-
-    std::vector<const PostingList_Vec<RankingPosting>*> postinglist_pointers;
+  PlPointers FindPostinglists(const TermList &terms) {
+    PlPointers postinglist_pointers;
 
     for (auto term : terms) {
       auto it = index_.find(term);
       if (it == index_.end()) {
-        std::cout << "No match at all" << std::endl;
-        return std::vector<DocIdType>{};
+        break;
       }
 
       postinglist_pointers.push_back(&it->second);
     }
 
+    return postinglist_pointers;
+  }
+
+  std::vector<DocIdType> Search(const TermList &terms, const SearchOperator &op) {
+    if (op != SearchOperator::AND) {
+        throw std::runtime_error("NotImplementedError");
+    }
+
+    std::vector<DocIdType> doc_ids;
     TfIdfStore tfidf_store;
+
+    PlPointers postinglist_pointers = FindPostinglists(terms);
 
     return intersect<RankingPosting>(postinglist_pointers, &tfidf_store);
   }
