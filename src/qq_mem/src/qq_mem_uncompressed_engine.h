@@ -80,8 +80,6 @@ class InvertedIndexQqMem {
       PostingListType &postinglist = it->second;        
       postinglist.AddPosting(RankingPosting(doc_id, token_it->second));
     }
-    int total_terms = count_terms(tokens);
-    std::cout << "field length(total terms): " << total_terms << std::endl;
   }
 
   // This function returns True if we find documents in the intersection.
@@ -151,10 +149,13 @@ class QqMemUncompressedEngine {
   }
 
   std::vector<DocIdType> Search(const TermList &terms) {
-    TfIdfStore inverted_index_.FindIntersection(terms);
+    TfIdfStore tfidf_store = inverted_index_.FindIntersection(terms);
+
+    std::cout << "n docs: " << tfidf_store.Size() << std::endl;
     
     return std::vector<DocIdType>{};
   }
+
 };
 
 

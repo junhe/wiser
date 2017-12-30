@@ -833,7 +833,32 @@ TEST_CASE( "Utilities work", "[utils]" ) {
   }
 }
 
-TEST_CASE( "QQ Mem Uncompressed Engine", "[engine]" ) {
+TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
+  InvertedIndexQqMem inverted_index;
+
+  inverted_index.AddDocument(0, "hello world", "hello world");
+  inverted_index.AddDocument(1, "hello wisconsin", "hello wisconsin");
+  REQUIRE(inverted_index.Size() == 3);
+
+  SECTION("It can find an intersection for single-term queries") {
+    TfIdfStore store = inverted_index.FindIntersection(TermList{"hello"});
+    REQUIRE(store.Size() == 2);
+    auto it = store.row_cbegin();
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 0);
+    it++;
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 1);
+  }
+
+  SECTION("It can find an intersection for two-term queries") {
+    TfIdfStore store = inverted_index.FindIntersection(TermList{"hello", "world"});
+    REQUIRE(store.Size() == 1);
+    auto it = store.row_cbegin();
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 0);
+  }
+}
+
+
+TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
   QqMemUncompressedEngine engine;
 
   auto doc_id = engine.AddDocument("hello world", "hello world");
