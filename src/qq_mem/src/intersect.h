@@ -80,6 +80,11 @@ class TfIdfStore {
   int GetDocCount(const Term &term) const {
     return doc_cnt_.at(term);
   }
+
+  // Number of rows (i.e., documents)
+  std::size_t Size() {
+    return tf_table_.size();
+  }
 };
 
 

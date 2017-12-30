@@ -744,6 +744,7 @@ TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
   SECTION("It sets and gets TF") {
     table.SetTf(100, "term1", 2);
     REQUIRE(table.GetTf(100, "term1") == 2);
+    REQUIRE(table.Size() == 1);
   }
 
   SECTION("Iterator works") {
@@ -751,6 +752,8 @@ TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
     table.SetTf(10, "term2", 3);
     table.SetTf(20, "term1", 8);
     table.SetTf(20, "term2", 8);
+
+    REQUIRE(table.Size() == 2);
 
     SECTION("Doc iterators work") {
       TfIdfStore::row_iterator it = table.row_cbegin();
