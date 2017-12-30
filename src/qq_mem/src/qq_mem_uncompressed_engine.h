@@ -154,11 +154,6 @@ class QqMemUncompressedEngine {
 
   DocScoreMap Score(const TfIdfStore &tfidf_store) {
     return score_docs(tfidf_store, doc_lengths_);
-    // for (auto it : doc_scores) {
-      // std::cout << "doc id:" << it.first << " (" << it.second << ")" << std::endl;
-    // }
-    
-    // return std::vector<DocIdType>{};
   }
 
 };
