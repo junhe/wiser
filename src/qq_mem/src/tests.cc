@@ -877,7 +877,23 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
   REQUIRE(engine.TermCount() == 4);
 
   SECTION("The engine can serve single-term queries") {
-    auto doc_ids = engine.Search(TermList{"wisconsin"}); 
+    TfIdfStore tfidf_store = engine.Query(TermList{"wisconsin"}); 
+    REQUIRE(tfidf_store.Size() == 1);
+
+    DocScoreMap doc_scores = engine.Score(tfidf_store);
+    REQUIRE(doc_scores.size() == 1);
+  }
+
+  SECTION("The engine can serve single-term queries with multiple results") {
+    TfIdfStore tfidf_store = engine.Query(TermList{"world"}); 
+    REQUIRE(tfidf_store.Size() == 2);
+    auto it = tfidf_store.row_cbegin();
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 0);
+    it++;
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 2);
+
+    DocScoreMap doc_scores = engine.Score(tfidf_store);
+    REQUIRE(doc_scores.size() == 2);
   }
 }
 

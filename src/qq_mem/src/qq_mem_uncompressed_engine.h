@@ -109,7 +109,7 @@ class InvertedIndexQqMem {
   }
 
   // Return number of posting lists
-  std::size_t Size() {
+  std::size_t Size() const {
     return index_.size();
   }
 };
@@ -148,12 +148,17 @@ class QqMemUncompressedEngine {
     return doc_lengths_.GetLength(doc_id);
   }
 
-  std::vector<DocIdType> Search(const TermList &terms) {
-    TfIdfStore tfidf_store = inverted_index_.FindIntersection(terms);
+  TfIdfStore Query(const TermList &terms) {
+    return inverted_index_.FindIntersection(terms);
+  }
 
-    std::cout << "n docs: " << tfidf_store.Size() << std::endl;
+  DocScoreMap Score(const TfIdfStore &tfidf_store) {
+    return score_docs(tfidf_store, doc_lengths_);
+    // for (auto it : doc_scores) {
+      // std::cout << "doc id:" << it.first << " (" << it.second << ")" << std::endl;
+    // }
     
-    return std::vector<DocIdType>{};
+    // return std::vector<DocIdType>{};
   }
 
 };
