@@ -152,12 +152,15 @@ class QqMemUncompressedEngine {
     return inverted_index_.FindIntersection(terms);
   }
 
-  DocScoreMap Score(const TfIdfStore &tfidf_store) {
+  DocScoreVec Score(const TfIdfStore &tfidf_store) {
     return score_docs(tfidf_store, doc_lengths_);
   }
 
-};
+  std::vector<DocIdType> FindTopK(int k) {
 
+
+  }
+};
 
 
 #endif

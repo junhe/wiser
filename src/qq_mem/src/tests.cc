@@ -880,7 +880,7 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     TfIdfStore tfidf_store = engine.Query(TermList{"wisconsin"}); 
     REQUIRE(tfidf_store.Size() == 1);
 
-    DocScoreMap doc_scores = engine.Score(tfidf_store);
+    DocScoreVec doc_scores = engine.Score(tfidf_store);
     REQUIRE(doc_scores.size() == 1);
   }
 
@@ -892,7 +892,7 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     it++;
     REQUIRE(TfIdfStore::GetCurDocId(it) == 2);
 
-    DocScoreMap doc_scores = engine.Score(tfidf_store);
+    DocScoreVec doc_scores = engine.Score(tfidf_store);
     REQUIRE(doc_scores.size() == 2);
   }
 
@@ -904,7 +904,7 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     it++;
     REQUIRE(TfIdfStore::GetCurDocId(it) == 2);
 
-    DocScoreMap doc_scores = engine.Score(tfidf_store);
+    DocScoreVec doc_scores = engine.Score(tfidf_store);
     REQUIRE(doc_scores.size() == 2);
   }
 }

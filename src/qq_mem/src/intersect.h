@@ -122,7 +122,21 @@ class DocLengthStore {
 
 // This function iterates the documents in tfidf_sotre and calculate their scores
 // You will get one score per document
-typedef std::map<DocIdType, double> DocScoreMap;
+
+struct DocScore {
+  DocIdType doc_id;
+  double score;
+
+  DocScore(const DocIdType &doc_id_in, const double &score_in)
+    :doc_id(doc_id_in), score(score_in) {}
+
+  friend bool operator<(DocScore a, DocScore b)
+  {
+    return a.score < b.score;
+  }
+};
+
+typedef std::vector<DocScore> DocScoreVec;
 typedef std::map<Term, double> TermScoreMap;
 
 TermScoreMap score_terms_in_doc(const TfIdfStore &tfidf_store, 
@@ -164,14 +178,14 @@ double aggregate_term_score(const TermScoreMap &term_scores) {
   return doc_score;
 }
 
-DocScoreMap score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_lengths) {
+DocScoreVec score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_lengths) {
   TfIdfStore::row_iterator row_it; 
   TfIdfStore::col_iterator col_it; 
 
   int avg_doc_length = doc_lengths.GetAvgLength();
   int total_docs = doc_lengths.Size();
 
-  DocScoreMap doc_scores;
+  DocScoreVec doc_scores;
   for (row_it = tfidf_store.row_cbegin(); 
        row_it != tfidf_store.row_cend(); 
        row_it++) 
@@ -183,7 +197,8 @@ DocScoreMap score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_
     TermScoreMap term_scores = score_terms_in_doc(tfidf_store, row_it, 
         avg_doc_length, total_docs, doc_length);
 
-    doc_scores[cur_doc_id] = aggregate_term_score(term_scores);
+    // doc_scores[cur_doc_id] = aggregate_term_score(term_scores);
+    doc_scores.emplace_back(cur_doc_id, aggregate_term_score(term_scores));
   }
 
   return doc_scores;
