@@ -703,15 +703,11 @@ TEST_CASE( "Scoring", "[ranking]" ) {
     REQUIRE(calc_tf(4) == 2.0);
     REQUIRE(calc_tf(100) == 10.0);
 
-    std::ostringstream out;
-    out << std::setprecision(3) << calc_tf(2);
-    REQUIRE(out.str() == "1.41");
+    REQUIRE(utils::format_double(calc_tf(2), 3) == "1.41");
   }
 
   SECTION("IDF is correct (sample score in ES document)") {
-    std::ostringstream out;
-    out << std::setprecision(3) << calc_idf(1, 1);
-    REQUIRE(out.str() == "0.307");
+    REQUIRE(utils::format_double(calc_idf(1, 1), 3) == "0.307");
   }
 
 
@@ -720,25 +716,17 @@ TEST_CASE( "Scoring", "[ranking]" ) {
   }
 
   SECTION("ElasticSearch IDF") {
-    std::ostringstream out;
-    out << std::setprecision(3) << calc_es_idf(1, 1);
-    REQUIRE(out.str() == "0.288"); // From an ES run
+    REQUIRE(utils::format_double(calc_es_idf(1, 1), 3) == "0.288"); // From an ES run
   }
 
   SECTION("ElasticSearch IDF 2") {
-    std::ostringstream out;
-    out << std::setprecision(3) << calc_es_idf(3, 1);
-    REQUIRE(out.str() == "0.981"); // From an ES run
+    REQUIRE(utils::format_double(calc_es_idf(3, 1), 3)== "0.981"); // From an ES run
   }
 
   SECTION("ElasticSearch TF NORM") {
     REQUIRE(calc_es_tfnorm(1, 3, 3.0) == 1.0); // From an ES run
     REQUIRE(calc_es_tfnorm(1, 7, 7.0) == 1.0); // From an ES run
-    {
-      std::ostringstream out;
-      out << std::setprecision(3) << calc_es_tfnorm(1, 2, 8/3.0);
-      REQUIRE( out.str() == "1.11"); // From an ES run
-    }
+    REQUIRE( utils::format_double(calc_es_tfnorm(1, 2, 8/3.0), 3) == "1.11"); // From an ES run
   }
 }
 
@@ -756,6 +744,8 @@ TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
     table.SetTf(100, "term1", 2);
     REQUIRE(table.GetTf(100, "term1") == 2);
     REQUIRE(table.Size() == 1);
+
+    table.SetDocCount("wisconsin", 1);
 
     SECTION("ToStr() works") {
       auto str = table.ToStr();
@@ -806,9 +796,7 @@ TEST_CASE( "We can get score for each document", "[ranking]" ) {
 
     TermScoreMap term_scores = score_terms_in_doc(table, it, 3, 3, 1);
 
-    std::ostringstream out;
-    out << std::setprecision(3) << term_scores["term1"];
-    REQUIRE(out.str() == "0.288"); // From an ES run
+    REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
   }
 
   SECTION("It gets the same score as ES, for two terms") {
@@ -823,16 +811,8 @@ TEST_CASE( "We can get score for each document", "[ranking]" ) {
 
     TermScoreMap term_scores = score_terms_in_doc(table, it, 7, 7, 1);
 
-    {
-    std::ostringstream out;
-    out << std::setprecision(3) << term_scores["term1"];
-    REQUIRE(out.str() == "0.288"); // From an ES run
-    }
-    {
-    std::ostringstream out;
-    out << std::setprecision(3) << term_scores["term2"];
-    REQUIRE(out.str() == "0.288"); // From an ES run
-    }
+    REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
+    REQUIRE(utils::format_double(term_scores["term2"], 3) == "0.288"); // From an ES run
   }
 }
 
@@ -900,11 +880,7 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     DocScoreVec doc_scores = engine.Score(tfidf_store);
     REQUIRE(doc_scores.size() == 1);
     REQUIRE(doc_scores[0].doc_id == 1);
-    {
-      std::ostringstream out;
-      out << std::setprecision(3) << doc_scores[0].score;
-      REQUIRE(out.str() == "1.09");
-    }
+    REQUIRE(utils::format_double(doc_scores[0].score, 3) == "1.09");
   }
 
   SECTION("The engine can serve single-term queries with multiple results") {
