@@ -95,6 +95,6 @@ if __name__=='__main__':
     # es.explain(['hello'], 3)
     # es.explain(['hello'], 2)
     # es.explain(['wisconsin'], 3)
-    es.search(['hello'])
+    es.search(['hello', 'world'])
 
 

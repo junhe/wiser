@@ -910,6 +910,17 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     DocScoreVec doc_scores = engine.Score(tfidf_store);
     REQUIRE(doc_scores.size() == 2);
 
+    for (auto score : doc_scores) {
+      std::cout << score.ToStr() ;
+    }
+
+    // The scores below are produced by ../tools/es_index_docs.py in this
+    // same git commit
+    // You can reproduce the elasticsearch scores by checking out this
+    // commit and run `python tools/es_index_docs.py`.
+    REQUIRE(utils::format_double(doc_scores[0].score, 3) == "0.672");
+    REQUIRE(utils::format_double(doc_scores[1].score, 3) == "0.677");
+
     std::vector<DocIdType> doc_ids = engine.FindTopK(doc_scores, 10);
     REQUIRE(doc_ids.size() == 2);
   }
