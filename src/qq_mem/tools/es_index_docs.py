@@ -92,9 +92,9 @@ if __name__=='__main__':
     # es.search(['wisconsin'])
     # es.explain(['wisconsin'], 1)
     # es.explain(['wisconsin'], 2)
-    es.explain(['hello'], 3)
+    # es.explain(['hello'], 3)
     # es.explain(['hello'], 2)
     # es.explain(['wisconsin'], 3)
-    # es.search(['hello'])
+    es.search(['hello'])
 
 
