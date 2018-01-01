@@ -745,6 +745,11 @@ TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
     table.SetTf(100, "term1", 2);
     REQUIRE(table.GetTf(100, "term1") == 2);
     REQUIRE(table.Size() == 1);
+
+    SECTION("ToStr() works") {
+      auto str = table.ToStr();
+      REQUIRE(str == "DocId (100) : term1(2)\nDocument count for a term\nwisconsin(1)\n");
+    }
   }
 
   SECTION("Iterator works") {

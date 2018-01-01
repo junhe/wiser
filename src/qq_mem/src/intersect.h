@@ -87,6 +87,29 @@ class TfIdfStore {
   std::size_t Size() {
     return tf_table_.size();
   }
+
+  std::string ToStr() {
+    std::string str;
+
+    for (row_iterator row_it = row_cbegin(); row_it != row_cend(); row_it++) {
+      auto doc_id = GetCurDocId(row_it);
+      str += "DocId (" + std::to_string(doc_id) + ") : ";
+      for (col_iterator col_it = col_cbegin(row_it); 
+          col_it != col_cend(row_it); col_it++) {
+        auto term = GetCurTerm(col_it);
+        auto term_freq = GetCurTermFreq(col_it);
+        str += term + "(" + std::to_string(term_freq) + ")";
+      }
+      str += "\n";
+    }
+
+    str += "Document count for a term\n";
+    for (auto it : doc_cnt_) {
+      str += it.first + "(" + std::to_string(it.second) + ")\n";
+    }
+
+    return str;
+  }
 };
 
 
@@ -118,6 +141,16 @@ class DocLengthStore {
 
   std::size_t Size() const {
     return length_dict_.size();
+  }
+
+  std::string ToStr() const {
+    std::string str;
+    str += "Average doc length: " + std::to_string(avg_length_) + "\n";
+    for (auto it : length_dict_) {
+      str += std::to_string(it.first) + ": " + std::to_string(it.second) + "\n";
+    }
+
+    return str;
   }
 };
 
@@ -163,11 +196,20 @@ TermScoreMap score_terms_in_doc(const TfIdfStore &tfidf_store,
     int cur_term_freq = TfIdfStore::GetCurTermFreq(col_it);
     int doc_freq = tfidf_store.GetDocCount(cur_term);
 
+    DLOG(INFO) << "cur_term: " << cur_term;
+    DLOG(INFO) << "cur_term_freq: " << cur_term_freq;
+    DLOG(INFO) << "doc_freq: " << doc_freq;
+
     double idf = calc_es_idf(total_docs, doc_freq);
     double tfnorm = calc_es_tfnorm(cur_term_freq, doc_length, avg_doc_length);
 
     // ES 6.1 uses tfnorm * idf 
     double term_doc_score = idf * tfnorm;
+
+    DLOG(INFO) << "idf: " << idf;
+    DLOG(INFO) << "tfnorm: " << tfnorm;
+    DLOG(INFO) << "term_doc_score: " << term_doc_score;
+
     term_scores[cur_term] = term_doc_score;
   }
 
@@ -191,6 +233,11 @@ DocScoreVec score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_
   int avg_doc_length = doc_lengths.GetAvgLength();
   int total_docs = doc_lengths.Size();
 
+  DLOG(INFO) << "--------------------- New Scoring -----------------------";
+  DLOG(INFO) << doc_lengths.ToStr();
+  DLOG(INFO) << "avg_doc_length: " << avg_doc_length;
+  DLOG(INFO) << "total_docs: " << total_docs;
+
   DocScoreVec doc_scores;
   for (row_it = tfidf_store.row_cbegin(); 
        row_it != tfidf_store.row_cend(); 
@@ -199,6 +246,9 @@ DocScoreVec score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_
     // each row contains a document.
     DocIdType cur_doc_id = TfIdfStore::GetCurDocId(row_it);
     int doc_length = doc_lengths.GetLength(cur_doc_id);
+
+    DLOG(INFO) << "cur_doc_id: " << cur_doc_id;
+    DLOG(INFO) << "doc_length: " << doc_length;
 
     TermScoreMap term_scores = score_terms_in_doc(tfidf_store, row_it, 
         avg_doc_length, total_docs, doc_length);
