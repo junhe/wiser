@@ -1,6 +1,7 @@
 #include "utils.h"
 
 #include <iostream>
+#include <iomanip>
 #include <sstream>
 #include <thread>
 #include <iterator>
@@ -78,6 +79,12 @@ const std::string fill_zeros(const std::string &s, std::size_t width) {
     } else {
         return s;
     }
+}
+
+const std::string format_double(const double &x, const int &precision) {
+  std::ostringstream out;
+  out << std::setprecision(precision) << x;
+  return out.str();
 }
 
 ///////////////////////////////////////////////

@@ -18,6 +18,8 @@ const double duration(std::chrono::time_point<std::chrono::system_clock> t1,
     std::chrono::time_point<std::chrono::system_clock> t2);
 const std::string fill_zeros(const std::string &s, std::size_t width);
 
+const std::string format_double(const double &x, const int &precision);
+
 class LineDoc {
     private:
         std::ifstream infile_;
