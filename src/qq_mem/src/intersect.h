@@ -2,9 +2,11 @@
 #define INTERSECT_H
 
 #include <vector>
-#include <glog/logging.h>
 #include <cassert>
 #include <unordered_map>
+#include <queue>
+
+#include <glog/logging.h>
 
 #include "engine_services.h"
 #include "posting_list_vec.h"
@@ -133,6 +135,10 @@ struct DocScore {
   friend bool operator<(DocScore a, DocScore b)
   {
     return a.score < b.score;
+  }
+
+  std::string ToStr() {
+    return std::to_string(doc_id) + " (" + std::to_string(score) + ")";
   }
 };
 

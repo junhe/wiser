@@ -906,23 +906,11 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
 
     DocScoreVec doc_scores = engine.Score(tfidf_store);
     REQUIRE(doc_scores.size() == 2);
+
+    std::vector<DocIdType> doc_ids = engine.FindTopK(doc_scores, 10);
+    REQUIRE(doc_ids.size() == 2);
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 

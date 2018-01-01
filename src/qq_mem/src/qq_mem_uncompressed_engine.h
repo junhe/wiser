@@ -156,9 +156,17 @@ class QqMemUncompressedEngine {
     return score_docs(tfidf_store, doc_lengths_);
   }
 
-  std::vector<DocIdType> FindTopK(int k) {
+  std::vector<DocIdType> FindTopK(const DocScoreVec &doc_scores, int k) {
+    std::priority_queue<DocScore> queue(std::less<DocScore>(), doc_scores);
+    std::vector<DocIdType> ret;
+    
+    while (k > 0 && !queue.empty()) {
+      ret.push_back(queue.top().doc_id);
+      queue.pop();
+      k--;
+    }
 
-
+    return ret;
   }
 };
 
