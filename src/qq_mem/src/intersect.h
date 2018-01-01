@@ -180,7 +180,7 @@ typedef std::map<Term, double> TermScoreMap;
 
 TermScoreMap score_terms_in_doc(const TfIdfStore &tfidf_store, 
     TfIdfStore::row_iterator row_it,
-    const int &avg_doc_length, 
+    const double &avg_doc_length, 
     const int &doc_length,
     const int &total_docs)
 {
@@ -230,7 +230,7 @@ DocScoreVec score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_
   TfIdfStore::row_iterator row_it; 
   TfIdfStore::col_iterator col_it; 
 
-  int avg_doc_length = doc_lengths.GetAvgLength();
+  double avg_doc_length = doc_lengths.GetAvgLength();
   int total_docs = doc_lengths.Size();
 
   DLOG(INFO) << "--------------------- New Scoring -----------------------";
@@ -251,7 +251,7 @@ DocScoreVec score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_
     DLOG(INFO) << "doc_length: " << doc_length;
 
     TermScoreMap term_scores = score_terms_in_doc(tfidf_store, row_it, 
-        avg_doc_length, total_docs, doc_length);
+        avg_doc_length, doc_length, total_docs);
 
     // doc_scores[cur_doc_id] = aggregate_term_score(term_scores);
     doc_scores.emplace_back(cur_doc_id, aggregate_term_score(term_scores));

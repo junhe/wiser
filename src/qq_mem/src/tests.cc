@@ -725,9 +725,20 @@ TEST_CASE( "Scoring", "[ranking]" ) {
     REQUIRE(out.str() == "0.288"); // From an ES run
   }
 
+  SECTION("ElasticSearch IDF 2") {
+    std::ostringstream out;
+    out << std::setprecision(3) << calc_es_idf(3, 1);
+    REQUIRE(out.str() == "0.981"); // From an ES run
+  }
+
   SECTION("ElasticSearch TF NORM") {
-    REQUIRE(calc_es_tfnorm(1, 3, 3) == 1.0); // From an ES run
-    REQUIRE(calc_es_tfnorm(1, 7, 7) == 1.0); // From an ES run
+    REQUIRE(calc_es_tfnorm(1, 3, 3.0) == 1.0); // From an ES run
+    REQUIRE(calc_es_tfnorm(1, 7, 7.0) == 1.0); // From an ES run
+    {
+      std::ostringstream out;
+      out << std::setprecision(3) << calc_es_tfnorm(1, 2, 8/3.0);
+      REQUIRE( out.str() == "1.11"); // From an ES run
+    }
   }
 }
 
@@ -876,17 +887,25 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
   REQUIRE(engine.GetDocLength(doc_id) == 2);
   REQUIRE(engine.TermCount() == 3);
 
-  doc_id = engine.AddDocument("hello world. big world", "hello world big world");
-  REQUIRE(engine.GetDocument(doc_id) == "hello world. big world");
+  doc_id = engine.AddDocument("hello world big world", "hello world big world");
+  REQUIRE(engine.GetDocument(doc_id) == "hello world big world");
   REQUIRE(engine.GetDocLength(doc_id) == 4);
   REQUIRE(engine.TermCount() == 4);
 
   SECTION("The engine can serve single-term queries") {
+    DLOG(INFO) << "WWWWWWWWWWWIIIIIIIIIIIIISSSSSSSSSSSSSCCCCCCCCCCCC";
     TfIdfStore tfidf_store = engine.Query(TermList{"wisconsin"}); 
     REQUIRE(tfidf_store.Size() == 1);
+    std::cout << tfidf_store.ToStr();
 
     DocScoreVec doc_scores = engine.Score(tfidf_store);
     REQUIRE(doc_scores.size() == 1);
+    REQUIRE(doc_scores[0].doc_id == 1);
+    {
+      std::ostringstream out;
+      out << std::setprecision(3) << doc_scores[0].score;
+      REQUIRE(out.str() == "1.09");
+    }
   }
 
   SECTION("The engine can serve single-term queries with multiple results") {

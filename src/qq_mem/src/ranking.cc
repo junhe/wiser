@@ -13,7 +13,7 @@ double calc_es_idf(const int &doc_count, const int &doc_freq) {
 
 double calc_es_tfnorm(const int &freq, 
     const int &field_length, 
-    const int &avg_field_length) {
+    const double &avg_field_length) {
   // tfNorm, computed as 
   // (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * fieldLength / avgFieldLength))
   const double k1 = 1.2;
