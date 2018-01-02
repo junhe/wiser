@@ -2,6 +2,8 @@
 #include <cassert>
 #include <unordered_map>
 
+#define NDEBUG
+
 #include <glog/logging.h>
 
 #include "intersect.h"
@@ -154,15 +156,44 @@ void test() {
   }
 }
 
+typedef std::map<std::string, std::string> result_row_t;
 
-int main(int argc, char** argv) {
-  google::InitGoogleLogging(argv[0]);
-  // FLAGS_logtostderr = 1; // print to stderr instead of file
-  FLAGS_stderrthreshold = 0; 
-  FLAGS_minloglevel = 0; 
+result_row_t score_bench(const int &n_terms, const int &n_docs) {
+  result_row_t result;
 
-  test();
+  TfIdfStore tfidf_store;
 
+  for (int doc_id = 0; doc_id < n_docs; doc_id++) {
+    for (int term_id = 0; term_id < n_terms; term_id++) {
+      tfidf_store.SetTf(doc_id, std::to_string(term_id), 3);
+    }
+  }
+
+  for (int term_id = 0; term_id < n_terms; term_id++) {
+    tfidf_store.SetDocCount(std::to_string(term_id), 10);
+  }
+
+  DocLengthStore lengths_store;
+  for (int doc_id = 0; doc_id < n_docs; doc_id++) {
+    lengths_store.AddLength(doc_id, 100);
+  }
+
+  auto start = utils::now();
+  auto scores = score_docs(tfidf_store, lengths_store);
+  auto end = utils::now();
+  auto dur = utils::duration(start, end);
+
+  assert(scores.size() == n_docs);
+  std::cout << "score_bench duration: " << dur << std::endl;
+
+  result["n_terms"] = std::to_string(n_terms);
+  result["n_docs"] = std::to_string(n_docs);
+  result["duration"] = std::to_string(dur);
+
+  return result;
+}
+
+void temp() {
   InvertedIndexQqMem inverted_index;
   // This could be put to doc store in the future
   FieldLengthStore field_lengths; 
@@ -181,5 +212,45 @@ int main(int argc, char** argv) {
     inverted_index.AddDocument(i, items[0], items[1]);
     field_lengths.SetLength(i, count_terms(items[1]));
 	}
+}
+
+void print_result_table(std::vector<result_row_t> result_table) {
+  if (result_table.size() == 0) {
+    return;
+  }
+
+  // print header
+  for (auto it : result_table[0]) {
+    std::cout << it.first << "\t\t";
+  }
+  std::cout << std::endl;
+
+  for (auto row : result_table) {
+    for (auto col : row) {
+      std::cout << col.second << "\t\t";
+    }
+    std::cout << std::endl;
+  }
+}
+
+int main(int argc, char** argv) {
+  google::InitGoogleLogging(argv[0]);
+  // FLAGS_logtostderr = 1; // print to stderr instead of file
+  FLAGS_stderrthreshold = 0; 
+  FLAGS_minloglevel = 0; 
+
+  // test();
+  std::vector<result_row_t> result_table;
+  result_table.push_back(score_bench(1, 1000));
+  result_table.push_back(score_bench(1, 10000));
+  result_table.push_back(score_bench(1, 100000));
+  result_table.push_back(score_bench(1, 1000000));
+
+  result_table.push_back(score_bench(1, 1000000));
+  result_table.push_back(score_bench(2, 1000000));
+  result_table.push_back(score_bench(4, 1000000));
+  result_table.push_back(score_bench(8, 1000000));
+
+  print_result_table(result_table);
 }
 
