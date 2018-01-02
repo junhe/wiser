@@ -157,16 +157,7 @@ class QqMemUncompressedEngine {
   }
 
   std::vector<DocIdType> FindTopK(const DocScoreVec &doc_scores, int k) {
-    std::priority_queue<DocScore> queue(std::less<DocScore>(), doc_scores);
-    std::vector<DocIdType> ret;
-    
-    while (k > 0 && !queue.empty()) {
-      ret.push_back(queue.top().doc_id);
-      queue.pop();
-      k--;
-    }
-
-    return ret;
+    return utils::find_top_k(doc_scores, k);
   }
 };
 

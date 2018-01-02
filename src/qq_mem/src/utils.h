@@ -7,6 +7,7 @@
 #include <string>
 #include <vector>
 
+#include "engine_services.h"
 
 namespace utils {
 
@@ -24,6 +25,7 @@ const std::string format_double(const double &x, const int &precision);
 typedef std::map<std::string, std::string> ResultRow;
 typedef std::vector<ResultRow> ResultTable;
 std::string dump_result_table(ResultTable result_table);
+std::vector<DocIdType> find_top_k(const DocScoreVec &doc_scores, int k);
 
 class LineDoc {
     private:

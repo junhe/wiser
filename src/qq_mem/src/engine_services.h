@@ -6,6 +6,11 @@
 #include <vector>
 #include <map>
 
+typedef int DocIdType;
+typedef std::string Term;
+typedef std::vector<Term> TermList;
+enum class SearchOperator {AND, OR};
+
 class DocumentStoreService {
     public:
         virtual void Add(int id, std::string document) = 0;
@@ -16,11 +21,27 @@ class DocumentStoreService {
         virtual int Size() = 0;
 };
 
+struct DocScore {
+  DocIdType doc_id;
+  double score;
 
-typedef int DocIdType;
-typedef std::string Term;
-typedef std::vector<Term> TermList;
-enum class SearchOperator {AND, OR};
+  DocScore(const DocIdType &doc_id_in, const double &score_in)
+    :doc_id(doc_id_in), score(score_in) {}
+
+  friend bool operator<(DocScore a, DocScore b)
+  {
+    return a.score < b.score;
+  }
+
+  std::string ToStr() {
+    return std::to_string(doc_id) + " (" + std::to_string(score) + ")\n";
+  }
+};
+
+typedef std::vector<DocScore> DocScoreVec;
+typedef std::map<Term, double> TermScoreMap;
+
+
 
 class InvertedIndexService {
     public:

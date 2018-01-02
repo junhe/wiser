@@ -155,29 +155,6 @@ class DocLengthStore {
 };
 
 
-// This function iterates the documents in tfidf_sotre and calculate their scores
-// You will get one score per document
-
-struct DocScore {
-  DocIdType doc_id;
-  double score;
-
-  DocScore(const DocIdType &doc_id_in, const double &score_in)
-    :doc_id(doc_id_in), score(score_in) {}
-
-  friend bool operator<(DocScore a, DocScore b)
-  {
-    return a.score < b.score;
-  }
-
-  std::string ToStr() {
-    return std::to_string(doc_id) + " (" + std::to_string(score) + ")\n";
-  }
-};
-
-typedef std::vector<DocScore> DocScoreVec;
-typedef std::map<Term, double> TermScoreMap;
-
 TermScoreMap score_terms_in_doc(const TfIdfStore &tfidf_store, 
     TfIdfStore::row_iterator row_it,
     const double &avg_doc_length, 
