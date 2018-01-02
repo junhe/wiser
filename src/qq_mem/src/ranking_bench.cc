@@ -181,7 +181,5 @@ int main(int argc, char** argv) {
     inverted_index.AddDocument(i, items[0], items[1]);
     field_lengths.SetLength(i, count_terms(items[1]));
 	}
-
-  inverted_index.ShowStats();
 }
 
