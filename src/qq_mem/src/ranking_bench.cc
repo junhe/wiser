@@ -1,6 +1,7 @@
 #include <iostream>
 #include <cassert>
 #include <unordered_map>
+#include <sstream>
 
 #define NDEBUG
 
@@ -156,10 +157,8 @@ void test() {
   }
 }
 
-typedef std::map<std::string, std::string> result_row_t;
-
-result_row_t score_bench(const int &n_terms, const int &n_docs) {
-  result_row_t result;
+utils::ResultRow score_bench(const int &n_terms, const int &n_docs) {
+  utils::ResultRow result;
 
   TfIdfStore tfidf_store;
 
@@ -214,25 +213,6 @@ void temp() {
 	}
 }
 
-void print_result_table(std::vector<result_row_t> result_table) {
-  if (result_table.size() == 0) {
-    return;
-  }
-
-  // print header
-  for (auto it : result_table[0]) {
-    std::cout << it.first << "\t\t";
-  }
-  std::cout << std::endl;
-
-  for (auto row : result_table) {
-    for (auto col : row) {
-      std::cout << col.second << "\t\t";
-    }
-    std::cout << std::endl;
-  }
-}
-
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   // FLAGS_logtostderr = 1; // print to stderr instead of file
@@ -240,7 +220,7 @@ int main(int argc, char** argv) {
   FLAGS_minloglevel = 0; 
 
   // test();
-  std::vector<result_row_t> result_table;
+  utils::ResultTable result_table;
   result_table.push_back(score_bench(1, 1000));
   result_table.push_back(score_bench(1, 10000));
   result_table.push_back(score_bench(1, 100000));
@@ -251,6 +231,6 @@ int main(int argc, char** argv) {
   result_table.push_back(score_bench(4, 1000000));
   result_table.push_back(score_bench(8, 1000000));
 
-  print_result_table(result_table);
+  std::cout << utils::dump_result_table(result_table);
 }
 

@@ -87,6 +87,33 @@ const std::string format_double(const double &x, const int &precision) {
   return out.str();
 }
 
+
+std::string dump_result_table(ResultTable result_table) {
+  if (result_table.size() == 0) {
+    return "";
+  }
+
+  std::ostringstream oss;
+
+  // print header
+  for (auto it : result_table[0]) {
+    oss << it.first << "\t\t";
+  }
+  oss << std::endl;
+
+  for (auto row : result_table) {
+    for (auto col : row) {
+      oss << col.second << "\t\t";
+    }
+    oss << std::endl;
+  }
+
+  return oss.str();
+}
+
+
+
+
 ///////////////////////////////////////////////
 // LineDoc
 ///////////////////////////////////////////////

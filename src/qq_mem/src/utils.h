@@ -1,10 +1,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <chrono>
+#include <fstream>
+#include <map>
 #include <string>
 #include <vector>
-#include <fstream>
-#include <chrono>
 
 
 namespace utils {
@@ -19,6 +20,10 @@ const double duration(std::chrono::time_point<std::chrono::system_clock> t1,
 const std::string fill_zeros(const std::string &s, std::size_t width);
 
 const std::string format_double(const double &x, const int &precision);
+
+typedef std::map<std::string, std::string> ResultRow;
+typedef std::vector<ResultRow> ResultTable;
+std::string dump_result_table(ResultTable result_table);
 
 class LineDoc {
     private:
