@@ -192,6 +192,21 @@ utils::ResultRow score_bench(const int &n_terms, const int &n_docs) {
   return result;
 }
 
+void score_bench_suite() {
+  utils::ResultTable result_table;
+  result_table.push_back(score_bench(1, 1000));
+  result_table.push_back(score_bench(1, 10000));
+  result_table.push_back(score_bench(1, 100000));
+  result_table.push_back(score_bench(1, 1000000));
+
+  result_table.push_back(score_bench(1, 1000000));
+  result_table.push_back(score_bench(2, 1000000));
+  result_table.push_back(score_bench(4, 1000000));
+  result_table.push_back(score_bench(8, 1000000));
+
+  std::cout << utils::dump_result_table(result_table);
+}
+
 void temp() {
   InvertedIndexQqMem inverted_index;
   // This could be put to doc store in the future
@@ -213,6 +228,39 @@ void temp() {
 	}
 }
 
+utils::ResultRow sorting_bench(const int &n_docs, const int &k) {
+  utils::ResultRow result;
+
+  DocScoreVec scores;
+  for (int doc_id = 0; doc_id < n_docs; doc_id++) {
+    scores.emplace_back(doc_id, (doc_id % 10) / 10.0);
+  }
+
+  auto start = utils::now();
+  std::vector<DocIdType> ret = utils::find_top_k(scores, k);
+  auto end = utils::now();
+  auto dur = utils::duration(start, end);
+
+  std::cout << "Duration: " << dur << std::endl;
+  result["duration"] = std::to_string(dur);
+  result["n_docs"] = std::to_string(n_docs);
+  result["k"] = std::to_string(k);
+
+  return result;
+}
+
+void sorting_bench_suite() {
+  utils::ResultTable table;
+  table.push_back(sorting_bench(1000, 10));
+  table.push_back(sorting_bench(10000, 10));
+  table.push_back(sorting_bench(100000, 10));
+  table.push_back(sorting_bench(1000000, 10));
+  table.push_back(sorting_bench(1000000, 100));
+  table.push_back(sorting_bench(1000000, 1000));
+
+  std::cout << utils::dump_result_table(table);
+}
+
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
@@ -221,17 +269,7 @@ int main(int argc, char** argv) {
   FLAGS_minloglevel = 0; 
 
   // test();
-  utils::ResultTable result_table;
-  result_table.push_back(score_bench(1, 1000));
-  result_table.push_back(score_bench(1, 10000));
-  result_table.push_back(score_bench(1, 100000));
-  result_table.push_back(score_bench(1, 1000000));
-
-  result_table.push_back(score_bench(1, 1000000));
-  result_table.push_back(score_bench(2, 1000000));
-  result_table.push_back(score_bench(4, 1000000));
-  result_table.push_back(score_bench(8, 1000000));
-
-  std::cout << utils::dump_result_table(result_table);
+  // score_bench_suite();
+  sorting_bench_suite();
 }
 
