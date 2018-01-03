@@ -88,6 +88,7 @@ class Staircase {
   const int n_steps_;
   const int max_layer_;
   int cur_layer_;
+  std::string layer_string_;
  
  public:
   // step_height and n_steps_ must be at least 1
@@ -102,16 +103,21 @@ class Staircase {
     const int step = cur_layer_ / step_height_;
     const int width = (step + 1) * step_width_;
 
-    std::string str;
-    for (int col = 0; col < width; col++) {
-      str += std::to_string(col);
-      if (col != width - 1) {
-        str += " ";
+    if (cur_layer_ % step_height_ == 0) {
+      if (cur_layer_ != 0) {
+        layer_string_ += " ";
+      }
+      int end = (step + 1) * step_width_;
+      for (int col = step * step_width_; col < end; col++) {
+        layer_string_ += std::to_string(col);
+        if (col < end - 1) {
+          layer_string_ += " ";
+        }
       }
     }
 
     cur_layer_++;
-    return str;
+    return layer_string_;
   }
 
   int MaxWidth() {
