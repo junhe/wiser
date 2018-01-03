@@ -89,6 +89,20 @@ const std::string format_double(const double &x, const int &precision) {
 }
 
 
+std::vector<DocIdType> find_top_k(const DocScoreVec &doc_scores, int k) {
+  std::priority_queue<DocScore> queue(std::less<DocScore>(), doc_scores);
+  std::vector<DocIdType> ret;
+  
+  while (k > 0 && !queue.empty()) {
+    ret.push_back(queue.top().doc_id);
+    queue.pop();
+    k--;
+  }
+
+  return ret;
+}
+
+
 ///////////////////////////////////////////////
 // LineDoc
 ///////////////////////////////////////////////
