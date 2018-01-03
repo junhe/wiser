@@ -59,29 +59,70 @@ void old_engine_bench() {
 
 
 std::unique_ptr<QqMemUncompressedEngine> create_engine(const int &step_height, 
-    const int &n_steps) {
+    const int &step_width, const int &n_steps) {
   std::unique_ptr<QqMemUncompressedEngine> engine(new QqMemUncompressedEngine);
 
-  utils::Staircase staircase(step_height, n_steps);
+  utils::Staircase staircase(step_height, step_width, n_steps);
 
   std::string doc;
+  int cnt = 0;
   while ( (doc = staircase.NextLayer()) != "" ) {
-    std::cout << doc << std::endl;
+    // std::cout << doc << std::endl;
     engine->AddDocument(doc, doc);
+    cnt++;
+
+    if (cnt % 1000 == 0) {
+      std::cout << cnt << std::endl;
+    }
   }
 
   return engine;
 }
 
-void qq_uncompressed_bench() {
-  auto engine = create_engine(2, 2);
+utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) {
+  const int n_repeats = 10;
+  utils::ResultRow row;
 
-  std::cout << "Result" << std::endl;
-  auto doc_ids = engine->SearchWithoutSnippet(TermList{"0", "1"});
-  for (auto doc_id : doc_ids) {
-    std::cout << doc_id << " ";
+  auto start = utils::now();
+  for (int i = 0; i < n_repeats; i++) {
+    auto doc_ids = engine->SearchWithoutSnippet(terms);
   }
-  std::cout << std::endl;
+  auto end = utils::now();
+  auto dur = utils::duration(start, end);
+
+  row["duration"] = std::to_string(dur / n_repeats); 
+
+  std::string query;
+  for (int i = 0; i < terms.size(); i++) {
+    query += terms[i];
+    if (i != terms.size() - 1) {
+      query += "+";
+    }
+  }
+  row["query"] = query;
+
+  return row;
+}
+
+
+void qq_uncompressed_bench() {
+  utils::ResultTable table;
+  auto engine = create_engine(100, 1, 1000);
+
+  table.Append(search(engine.get(), TermList{"0"}));
+  table.Append(search(engine.get(), TermList{"100"}));
+  table.Append(search(engine.get(), TermList{"500"}));
+  table.Append(search(engine.get(), TermList{"980"}));
+  table.Append(search(engine.get(), TermList{"990"}));
+  table.Append(search(engine.get(), TermList{"995"})); // 500 docs
+  table.Append(search(engine.get(), TermList{"999"}));
+
+  table.Append(search(engine.get(), TermList{"0", "1"}));
+  table.Append(search(engine.get(), TermList{"500", "501"}));
+  table.Append(search(engine.get(), TermList{"994", "995"}));
+  table.Append(search(engine.get(), TermList{"998", "999"}));
+
+  std::cout << table.ToStr();
 }
 
 
