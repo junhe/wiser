@@ -2,6 +2,7 @@
 #include <cassert>
 #include <unordered_map>
 #include <sstream>
+#include <cstdlib>
 
 #define NDEBUG
 
@@ -233,7 +234,7 @@ utils::ResultRow sorting_bench(const int &n_docs, const int &k) {
 
   DocScoreVec scores;
   for (int doc_id = 0; doc_id < n_docs; doc_id++) {
-    scores.emplace_back(doc_id, (doc_id % 10) / 10.0);
+    scores.emplace_back(doc_id, std::rand() / 1000.0);
   }
 
   auto start = utils::now();
@@ -250,6 +251,8 @@ utils::ResultRow sorting_bench(const int &n_docs, const int &k) {
 }
 
 void sorting_bench_suite() {
+  std::srand(1);
+
   utils::ResultTable table;
   table.push_back(sorting_bench(1000, 10));
   table.push_back(sorting_bench(10000, 10));
