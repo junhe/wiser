@@ -112,18 +112,12 @@ class Staircase {
     cur_layer_++;
     return str;
   }
+
+  int MaxWidth() {
+    // the total number of steps is equal to the max width
+    return n_steps_;
+  }
 };
-
-
-
-
-
-
-
-
-
-
-
 
 } // namespace util
 #endif

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <iostream>
 #include <string>
+#include <memory>
 #include <thread>
 #include <vector>
 #include <climits>
@@ -57,20 +58,26 @@ void old_engine_bench() {
 }
 
 
-void qq_uncompressed_bench() {
-  QqMemUncompressedEngine engine;
-  
-  utils::Staircase staircase(2, 2);
-  // auto doc = staircase.NextLayer();
+std::unique_ptr<QqMemUncompressedEngine> create_engine(const int &step_height, 
+    const int &n_steps) {
+  std::unique_ptr<QqMemUncompressedEngine> engine(new QqMemUncompressedEngine);
+
+  utils::Staircase staircase(step_height, n_steps);
 
   std::string doc;
   while ( (doc = staircase.NextLayer()) != "" ) {
     std::cout << doc << std::endl;
-    engine.AddDocument(doc, doc);
+    engine->AddDocument(doc, doc);
   }
 
+  return engine;
+}
+
+void qq_uncompressed_bench() {
+  auto engine = create_engine(2, 2);
+
   std::cout << "Result" << std::endl;
-  auto doc_ids = engine.SearchWithoutSnippet(TermList{"0", "1"});
+  auto doc_ids = engine->SearchWithoutSnippet(TermList{"0", "1"});
   for (auto doc_id : doc_ids) {
     std::cout << doc_id << " ";
   }
