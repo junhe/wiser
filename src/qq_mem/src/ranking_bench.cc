@@ -160,6 +160,7 @@ void test() {
 
 utils::ResultRow score_bench(const int &n_terms, const int &n_docs) {
   utils::ResultRow result;
+  const int n_repeats = 100;
 
   TfIdfStore tfidf_store;
 
@@ -179,16 +180,17 @@ utils::ResultRow score_bench(const int &n_terms, const int &n_docs) {
   }
 
   auto start = utils::now();
-  auto scores = score_docs(tfidf_store, lengths_store);
+  for (int i = 0; i < n_repeats; i++) {
+    auto scores = score_docs(tfidf_store, lengths_store);
+  }
   auto end = utils::now();
   auto dur = utils::duration(start, end);
 
   assert(scores.size() == n_docs);
-  std::cout << "score_bench duration: " << dur << std::endl;
 
   result["n_terms"] = std::to_string(n_terms);
   result["n_docs"] = std::to_string(n_docs);
-  result["duration"] = std::to_string(dur);
+  result["duration"] = std::to_string(dur / n_repeats);
 
   return result;
 }
@@ -231,6 +233,7 @@ void temp() {
 
 utils::ResultRow sorting_bench(const int &n_docs, const int &k) {
   utils::ResultRow result;
+  const int n_repeats = 100;
 
   DocScoreVec scores;
   for (int doc_id = 0; doc_id < n_docs; doc_id++) {
@@ -238,12 +241,14 @@ utils::ResultRow sorting_bench(const int &n_docs, const int &k) {
   }
 
   auto start = utils::now();
-  std::vector<DocIdType> ret = utils::find_top_k(scores, k);
+  for (int i = 0; i < n_repeats; i++) {
+    std::vector<DocIdType> ret = utils::find_top_k(scores, k);
+  }
   auto end = utils::now();
   auto dur = utils::duration(start, end);
 
   std::cout << "Duration: " << dur << std::endl;
-  result["duration"] = std::to_string(dur);
+  result["duration"] = std::to_string(dur / n_repeats);
   result["n_docs"] = std::to_string(n_docs);
   result["k"] = std::to_string(k);
 
@@ -272,7 +277,7 @@ int main(int argc, char** argv) {
   FLAGS_minloglevel = 0; 
 
   // test();
-  // score_bench_suite();
+  score_bench_suite();
   sorting_bench_suite();
 }
 
