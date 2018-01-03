@@ -927,6 +927,28 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
 }
 
 
+TEST_CASE( "Sorting document works", "[ranking]" ) {
+  SECTION("A regular case") {
+    DocScoreVec scores{{0, 0.8}, {1, 3.0}, {2, 2.1}};    
+    REQUIRE(utils::find_top_k(scores, 4) == std::vector<DocIdType>{1, 2, 0});
+    REQUIRE(utils::find_top_k(scores, 3) == std::vector<DocIdType>{1, 2, 0});
+    REQUIRE(utils::find_top_k(scores, 2) == std::vector<DocIdType>{1, 2});
+    REQUIRE(utils::find_top_k(scores, 1) == std::vector<DocIdType>{1});
+    REQUIRE(utils::find_top_k(scores, 0) == std::vector<DocIdType>{});
+  }
+
+  SECTION("Empty scores") {
+    DocScoreVec scores{};    
+    REQUIRE(utils::find_top_k(scores, 4) == std::vector<DocIdType>{});
+  }
+
+  SECTION("Identical scores") {
+    DocScoreVec scores{{0, 0.8}, {1, 0.8}, {2, 2.1}};    
+    REQUIRE(utils::find_top_k(scores, 1) == std::vector<DocIdType>{2});
+  }
+}
+
+
 
 
 
