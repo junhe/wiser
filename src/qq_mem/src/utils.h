@@ -84,14 +84,15 @@ class ResultTable {
 class Staircase {
  private:
   const int step_height_;
+  const int step_width_;
   const int n_steps_;
   const int max_layer_;
   int cur_layer_;
  
  public:
   // step_height and n_steps_ must be at least 1
-  Staircase(const int &step_height, const int &n_steps)
-    :step_height_(step_height), n_steps_(n_steps), cur_layer_(0), 
+  Staircase(const int &step_height, const int &step_width, const int &n_steps)
+    :step_height_(step_height), step_width_(step_width), n_steps_(n_steps), cur_layer_(0), 
     max_layer_(step_height * n_steps) {}
 
   std::string NextLayer() {
@@ -99,7 +100,7 @@ class Staircase {
       return "";
 
     const int step = cur_layer_ / step_height_;
-    const int width = step + 1;
+    const int width = (step + 1) * step_width_;
 
     std::string str;
     for (int col = 0; col < width; col++) {
@@ -114,8 +115,7 @@ class Staircase {
   }
 
   int MaxWidth() {
-    // the total number of steps is equal to the max width
-    return n_steps_;
+    return n_steps_ * step_width_;
   }
 };
 
