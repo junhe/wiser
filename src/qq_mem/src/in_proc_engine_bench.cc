@@ -5,7 +5,11 @@
 #include <vector>
 #include <climits>
 
+#define NDEBUG
+#include <glog/logging.h>
+
 #include "qq_engine.h"
+#include "qq_mem_uncompressed_engine.h"
 #include "utils.h"
 
 const int K = 1000;
@@ -55,11 +59,32 @@ void old_engine_bench() {
 
 void qq_uncompressed_bench() {
   QqMemUncompressedEngine engine;
+  
+  utils::Staircase staircase(2, 2);
+  // auto doc = staircase.NextLayer();
+
+  std::string doc;
+  while ( (doc = staircase.NextLayer()) != "" ) {
+    std::cout << doc << std::endl;
+    engine.AddDocument(doc, doc);
+  }
+
+  std::cout << "Result" << std::endl;
+  auto doc_ids = engine.SearchWithoutSnippet(TermList{"0", "1"});
+  for (auto doc_id : doc_ids) {
+    std::cout << doc_id << " ";
+  }
+  std::cout << std::endl;
 }
 
 
 int main(int argc, char **argv) {
+  google::InitGoogleLogging(argv[0]);
+  // FLAGS_logtostderr = 1; // print to stderr instead of file
+  FLAGS_stderrthreshold = 0; 
+  FLAGS_minloglevel = 0; 
 
+  qq_uncompressed_bench();
 }
 
 

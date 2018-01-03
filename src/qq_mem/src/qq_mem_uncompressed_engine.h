@@ -2,6 +2,7 @@
 #define QQ_MEM_UNCOMPRESSED_ENGINE_H
 
 #include "intersect.h"
+#include "utils.h"
 #include "native_doc_store.h"
 
 // It returns the number of terms in field
@@ -158,6 +159,12 @@ class QqMemUncompressedEngine {
 
   std::vector<DocIdType> FindTopK(const DocScoreVec &doc_scores, int k) {
     return utils::find_top_k(doc_scores, k);
+  }
+
+  std::vector<DocIdType> SearchWithoutSnippet(const TermList &terms) {
+    auto tfidf_store = Query(terms);
+    auto scores = Score(tfidf_store);
+    return FindTopK(scores, 10);
   }
 };
 
