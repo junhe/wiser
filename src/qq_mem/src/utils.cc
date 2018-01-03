@@ -2,7 +2,6 @@
 
 #include <iostream>
 #include <iomanip>
-#include <sstream>
 #include <thread>
 #include <iterator>
 #include <cassert>
@@ -87,43 +86,6 @@ const std::string format_double(const double &x, const int &precision) {
   std::ostringstream out;
   out << std::setprecision(precision) << x;
   return out.str();
-}
-
-
-std::string dump_result_table(ResultTable result_table) {
-  if (result_table.size() == 0) {
-    return "";
-  }
-
-  std::ostringstream oss;
-
-  // print header
-  for (auto it : result_table[0]) {
-    oss << it.first << "\t\t";
-  }
-  oss << std::endl;
-
-  for (auto row : result_table) {
-    for (auto col : row) {
-      oss << col.second << "\t\t";
-    }
-    oss << std::endl;
-  }
-
-  return oss.str();
-}
-
-std::vector<DocIdType> find_top_k(const DocScoreVec &doc_scores, int k) {
-  std::priority_queue<DocScore> queue(std::less<DocScore>(), doc_scores);
-  std::vector<DocIdType> ret;
-  
-  while (k > 0 && !queue.empty()) {
-    ret.push_back(queue.top().doc_id);
-    queue.pop();
-    k--;
-  }
-
-  return ret;
 }
 
 

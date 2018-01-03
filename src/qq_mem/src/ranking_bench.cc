@@ -197,17 +197,17 @@ utils::ResultRow score_bench(const int &n_terms, const int &n_docs) {
 
 void score_bench_suite() {
   utils::ResultTable result_table;
-  result_table.push_back(score_bench(1, 1000));
-  result_table.push_back(score_bench(1, 10000));
-  result_table.push_back(score_bench(1, 100000));
-  result_table.push_back(score_bench(1, 1000000));
+  result_table.Append(score_bench(1, 1000));
+  result_table.Append(score_bench(1, 10000));
+  result_table.Append(score_bench(1, 100000));
+  result_table.Append(score_bench(1, 1000000));
 
-  result_table.push_back(score_bench(1, 1000000));
-  result_table.push_back(score_bench(2, 1000000));
-  result_table.push_back(score_bench(4, 1000000));
-  result_table.push_back(score_bench(8, 1000000));
+  result_table.Append(score_bench(1, 1000000));
+  result_table.Append(score_bench(2, 1000000));
+  result_table.Append(score_bench(4, 1000000));
+  result_table.Append(score_bench(8, 1000000));
 
-  std::cout << utils::dump_result_table(result_table);
+  std::cout << result_table.ToStr();
 }
 
 void temp() {
@@ -259,14 +259,14 @@ void sorting_bench_suite() {
   std::srand(1);
 
   utils::ResultTable table;
-  table.push_back(sorting_bench(1000, 10));
-  table.push_back(sorting_bench(10000, 10));
-  table.push_back(sorting_bench(100000, 10));
-  table.push_back(sorting_bench(1000000, 10));
-  table.push_back(sorting_bench(1000000, 100));
-  table.push_back(sorting_bench(1000000, 1000));
+  table.Append(sorting_bench(1000, 10));
+  table.Append(sorting_bench(10000, 10));
+  table.Append(sorting_bench(100000, 10));
+  table.Append(sorting_bench(1000000, 10));
+  table.Append(sorting_bench(1000000, 100));
+  table.Append(sorting_bench(1000000, 1000));
 
-  std::cout << utils::dump_result_table(table);
+  std::cout << table.ToStr();
 }
 
 

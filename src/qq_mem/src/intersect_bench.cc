@@ -65,12 +65,12 @@ utils::ResultRow qq_mem_bench(const int &n_postings) {
 
 void qq_mem_bench_suite() {
   utils::ResultTable table;
-  table.push_back(qq_mem_bench(1000));
-  table.push_back(qq_mem_bench(10000));
-  table.push_back(qq_mem_bench(100000));
-  table.push_back(qq_mem_bench(1000000));
+  table.Append(qq_mem_bench(1000));
+  table.Append(qq_mem_bench(10000));
+  table.Append(qq_mem_bench(100000));
+  table.Append(qq_mem_bench(1000000));
 
-  std::cout << utils::dump_result_table(table);
+  std::cout << table.ToStr();
 }
 
 utils::ResultRow leetcode_bench(const int &n_postings) {
@@ -100,12 +100,12 @@ utils::ResultRow leetcode_bench(const int &n_postings) {
 
 void leetcode_bench_suite() {
   utils::ResultTable table;
-  table.push_back(leetcode_bench(1000));
-  table.push_back(leetcode_bench(10000));
-  table.push_back(leetcode_bench(100000));
-  table.push_back(leetcode_bench(1000000));
+  table.Append(leetcode_bench(1000));
+  table.Append(leetcode_bench(10000));
+  table.Append(leetcode_bench(100000));
+  table.Append(leetcode_bench(1000000));
 
-  std::cout << utils::dump_result_table(table);
+  std::cout << table.ToStr();
 }
 
 int main(int argc, char** argv) {

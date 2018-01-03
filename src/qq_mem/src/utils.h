@@ -3,6 +3,7 @@
 
 #include <chrono>
 #include <fstream>
+#include <sstream>
 #include <map>
 #include <string>
 #include <vector>
@@ -22,11 +23,9 @@ const std::string fill_zeros(const std::string &s, std::size_t width);
 
 const std::string format_double(const double &x, const int &precision);
 
-typedef std::map<std::string, std::string> ResultRow;
-typedef std::vector<ResultRow> ResultTable;
-std::string dump_result_table(ResultTable result_table);
 std::vector<DocIdType> find_top_k(const DocScoreVec &doc_scores, int k);
 
+typedef std::map<std::string, std::string> ResultRow;
 class LineDoc {
     private:
         std::ifstream infile_;
@@ -36,6 +35,39 @@ class LineDoc {
         LineDoc(std::string path);
         bool GetRow(std::vector<std::string> &items);
 };
+
+class ResultTable {
+ public:
+  std::vector<ResultRow> table_;
+
+  void Append(const ResultRow &row) {
+    table_.push_back(row);
+  }
+
+  std::string ToStr() {
+    if (table_.size() == 0) {
+      return "";
+    }
+
+    std::ostringstream oss;
+
+    // print header
+    for (auto it : table_[0]) {
+      oss << it.first << "\t\t";
+    }
+    oss << std::endl;
+
+    for (auto row : table_) {
+      for (auto col : row) {
+        oss << col.second << "\t\t";
+      }
+      oss << std::endl;
+    }
+
+    return oss.str();
+  }
+};
+
 
 
 } // namespace util
