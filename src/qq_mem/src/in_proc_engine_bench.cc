@@ -24,8 +24,7 @@ void make_queries(QQSearchEngine *engine, int n_millions) {
   }
 }
 
-
-int main(int argc, char **argv) {
+void old_engine_bench() {
   const int n_millions_queries_per_thread = 1;
   const int n_threads = 32;
   const int n_rows = 1 * M;
@@ -51,6 +50,16 @@ int main(int argc, char **argv) {
     << "n_queries: " << total_queries << std::endl
     << "duration: " << duration << std::endl
     << "QPS (millions/sec): " << total_queries / duration << std::endl;
+}
+
+
+void qq_uncompressed_bench() {
+  QqMemUncompressedEngine engine;
+}
+
+
+int main(int argc, char **argv) {
+
 }
 
 

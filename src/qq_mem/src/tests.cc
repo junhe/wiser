@@ -949,6 +949,23 @@ TEST_CASE( "Sorting document works", "[ranking]" ) {
 }
 
 
+TEST_CASE( "Class Staircase can generate staircase strings", "[utils]" ) {
+  SECTION("Simple case") {
+    utils::Staircase staircase(1, 2);
+    REQUIRE(staircase.NextLayer() == "0");
+    REQUIRE(staircase.NextLayer() == "0 1");
+    REQUIRE(staircase.NextLayer() == "");
+  }
+
+  SECTION("Simple case 2") {
+    utils::Staircase staircase(2, 2);
+    REQUIRE(staircase.NextLayer() == "0");
+    REQUIRE(staircase.NextLayer() == "0");
+    REQUIRE(staircase.NextLayer() == "0 1");
+    REQUIRE(staircase.NextLayer() == "0 1");
+    REQUIRE(staircase.NextLayer() == "");
+  }
+}
 
 
 

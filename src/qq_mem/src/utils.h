@@ -68,6 +68,61 @@ class ResultTable {
   }
 };
 
+// Stair:
+// 1           -----
+// 1
+// ...         step height = number of layers in this step
+// 1           -----
+// 1 2
+// 1 2
+// ...
+// 1 2
+// 1 2 3
+// ...
+//
+// 1 2 3 .. max_width
+class Staircase {
+ private:
+  const int step_height_;
+  const int max_width_;
+  const int max_layer_;
+  int cur_layer_;
+ 
+ public:
+  // step_height and max_width must be at least 1
+  Staircase(const int &step_height, const int &max_width)
+    :step_height_(step_height), max_width_(max_width), cur_layer_(0), 
+    max_layer_(step_height * max_width) {}
+
+  std::string NextLayer() {
+    if (cur_layer_ >= max_layer_) 
+      return "";
+
+    const int step = cur_layer_ / step_height_;
+    const int width = step + 1;
+
+    std::string str;
+    for (int col = 0; col < width; col++) {
+      str += std::to_string(col);
+      if (col != width - 1) {
+        str += " ";
+      }
+    }
+
+    cur_layer_++;
+    return str;
+  }
+};
+
+
+
+
+
+
+
+
+
+
 
 
 } // namespace util
