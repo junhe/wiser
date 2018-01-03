@@ -79,6 +79,14 @@ std::unique_ptr<QqMemUncompressedEngine> create_engine(const int &step_height,
   return engine;
 }
 
+
+std::unique_ptr<QqMemUncompressedEngine> create_engine_from_file() {
+  std::unique_ptr<QqMemUncompressedEngine> engine(new QqMemUncompressedEngine);
+  engine->LoadLocalDocuments("/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", 10000000);
+  std::cout << "Term Count: " << engine->TermCount() << std::endl;
+  return engine;
+}
+
 utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) {
   const int n_repeats = 10;
   utils::ResultRow row;
@@ -126,13 +134,23 @@ void qq_uncompressed_bench() {
 }
 
 
+void qq_uncompressed_bench_wiki() {
+  utils::ResultTable table;
+  auto engine = create_engine_from_file();
+
+  table.Append(search(engine.get(), TermList{"hello"}));
+  std::cout << table.ToStr();
+}
+
+
 int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
   // FLAGS_logtostderr = 1; // print to stderr instead of file
   FLAGS_stderrthreshold = 0; 
   FLAGS_minloglevel = 0; 
 
-  qq_uncompressed_bench();
+  // qq_uncompressed_bench();
+  qq_uncompressed_bench_wiki();
 }
 
 

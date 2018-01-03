@@ -128,6 +128,29 @@ class QqMemUncompressedEngine {
   }
 
  public:
+  int LoadLocalDocuments(const std::string &line_doc_path, int n_rows) {
+    utils::LineDoc linedoc(line_doc_path);
+    std::vector<std::string> items;
+    bool has_it;
+
+    int count = 0;
+    for (int i = 0; i < n_rows; i++) {
+      has_it = linedoc.GetRow(items);
+      if (has_it) {
+        AddDocument(items[2], items[2]);
+        count++;
+      } else {
+        break;
+      }
+
+      if (count % 10000 == 0) {
+        std::cout << "Indexed " << count << " documents" << std::endl;
+      }
+    }
+
+    return count;
+  }
+
   DocIdType AddDocument(const std::string &body, const std::string &tokens) {
     int doc_id = NextDocId();
 
