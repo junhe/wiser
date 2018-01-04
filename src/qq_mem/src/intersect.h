@@ -118,7 +118,7 @@ class DocLengthStore {
   typedef std::unordered_map<DocIdType, int> length_store_t;
 
   length_store_t length_dict_;
-  double avg_length_ = 0;
+  qq_float avg_length_ = 0;
 
  public:
   void AddLength(const DocIdType &doc_id, const int &length) {
@@ -135,7 +135,7 @@ class DocLengthStore {
     return length_dict_.at(doc_id);  
   }
 
-  double GetAvgLength() const {
+  qq_float GetAvgLength() const {
     return avg_length_;
   }
 
@@ -157,7 +157,7 @@ class DocLengthStore {
 
 TermScoreMap score_terms_in_doc(const TfIdfStore &tfidf_store, 
     TfIdfStore::row_iterator row_it,
-    const double &avg_doc_length, 
+    const qq_float &avg_doc_length, 
     const int &doc_length,
     const int &total_docs)
 {
@@ -177,11 +177,11 @@ TermScoreMap score_terms_in_doc(const TfIdfStore &tfidf_store,
     DLOG(INFO) << "cur_term_freq: " << cur_term_freq;
     DLOG(INFO) << "doc_freq: " << doc_freq;
 
-    double idf = calc_es_idf(total_docs, doc_freq);
-    double tfnorm = calc_es_tfnorm(cur_term_freq, doc_length, avg_doc_length);
+    qq_float idf = calc_es_idf(total_docs, doc_freq);
+    qq_float tfnorm = calc_es_tfnorm(cur_term_freq, doc_length, avg_doc_length);
 
     // ES 6.1 uses tfnorm * idf 
-    double term_doc_score = idf * tfnorm;
+    qq_float term_doc_score = idf * tfnorm;
 
     DLOG(INFO) << "idf: " << idf;
     DLOG(INFO) << "tfnorm: " << tfnorm;
@@ -193,8 +193,8 @@ TermScoreMap score_terms_in_doc(const TfIdfStore &tfidf_store,
   return term_scores;
 }
 
-double aggregate_term_score(const TermScoreMap &term_scores) {
-  double doc_score = 0;
+qq_float aggregate_term_score(const TermScoreMap &term_scores) {
+  qq_float doc_score = 0;
   for (TermScoreMap::const_iterator it = term_scores.cbegin();
        it != term_scores.cend(); it++) 
   {
@@ -207,7 +207,7 @@ DocScoreVec score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_
   TfIdfStore::row_iterator row_it; 
   TfIdfStore::col_iterator col_it; 
 
-  double avg_doc_length = doc_lengths.GetAvgLength();
+  qq_float avg_doc_length = doc_lengths.GetAvgLength();
   int total_docs = doc_lengths.Size();
 
   DLOG(INFO) << "--------------------- New Scoring -----------------------";

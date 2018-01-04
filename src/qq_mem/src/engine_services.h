@@ -10,6 +10,8 @@ typedef int DocIdType;
 typedef std::string Term;
 typedef std::vector<Term> TermList;
 enum class SearchOperator {AND, OR};
+// typedef float qq_float;
+typedef double qq_float;
 
 class DocumentStoreService {
     public:
@@ -23,9 +25,9 @@ class DocumentStoreService {
 
 struct DocScore {
   DocIdType doc_id;
-  double score;
+  qq_float score;
 
-  DocScore(const DocIdType &doc_id_in, const double &score_in)
+  DocScore(const DocIdType &doc_id_in, const qq_float &score_in)
     :doc_id(doc_id_in), score(score_in) {}
 
   friend bool operator<(DocScore a, DocScore b)
@@ -39,7 +41,7 @@ struct DocScore {
 };
 
 typedef std::vector<DocScore> DocScoreVec;
-typedef std::map<Term, double> TermScoreMap;
+typedef std::map<Term, qq_float> TermScoreMap;
 
 
 
