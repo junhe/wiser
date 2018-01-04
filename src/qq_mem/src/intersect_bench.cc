@@ -5,6 +5,7 @@
 
 #include <glog/logging.h>
 
+#include "posting_basic.h"
 #include "intersect.h"
 #include "utils.h"
 
@@ -37,21 +38,21 @@ utils::ResultRow qq_mem_bench(const int &n_postings) {
   const int n_repeats = 100;
   utils::ResultRow row;
 
-  PostingList_Vec<Posting> pl01("hello");   
+  PostingList_Vec<PostingSimple> pl01("hello");   
   for (int i = 0; i < n_postings; i++) {
-    pl01.AddPosting(Posting(i, 1, Positions{28}));
+    pl01.AddPosting(PostingSimple(i, 1, Positions{28}));
   }
 
-  PostingList_Vec<Posting> pl02("world");   
+  PostingList_Vec<PostingSimple> pl02("world");   
   for (int i = 0; i < n_postings; i++) {
-    pl02.AddPosting(Posting(i, 1, Positions{28}));
+    pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
   }
 
-  std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+  std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
 
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
-    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
   }
   auto end = utils::now();
   auto dur = utils::duration(start, end);

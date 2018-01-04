@@ -934,16 +934,16 @@ TEST_CASE("QQMemDirectSearchEngine works", "[QQMemDirectSearchEngine]") {
 
 TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
   SECTION("New postings can be added and retrieved") {
-    PostingList_Vec<Posting> pl("hello");   
+    PostingList_Vec<PostingSimple> pl("hello");   
 
     REQUIRE(pl.Size() == 0);
-    pl.AddPosting(Posting(10, 88, Positions{28}));
+    pl.AddPosting(PostingSimple(10, 88, Positions{28}));
     REQUIRE(pl.Size() == 1);
     REQUIRE(pl.GetPosting(0).GetDocId() == 10);
     REQUIRE(pl.GetPosting(0).GetTermFreq() == 88);
     REQUIRE(pl.GetPosting(0).GetPositions() == Positions{28});
 
-    pl.AddPosting(Posting(11, 889, Positions{28, 230}));
+    pl.AddPosting(PostingSimple(11, 889, Positions{28, 230}));
     REQUIRE(pl.Size() == 2);
     REQUIRE(pl.GetPosting(1).GetDocId() == 11);
     REQUIRE(pl.GetPosting(1).GetTermFreq() == 889);
@@ -952,14 +952,14 @@ TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
 
 
   SECTION("Skipping works") {
-    PostingList_Vec<Posting> pl("hello");   
+    PostingList_Vec<PostingSimple> pl("hello");   
     for (int i = 0; i < 100; i++) {
-      pl.AddPosting(Posting(i, 1, Positions{28}));
+      pl.AddPosting(PostingSimple(i, 1, Positions{28}));
     }
     REQUIRE(pl.Size() == 100);
 
     SECTION("It can stay at starting it") {
-      PostingList_Vec<Posting>::iterator_t it;
+      PostingList_Vec<PostingSimple>::iterator_t it;
       it = pl.SkipForward(0, 0);
       REQUIRE(it == 0);
 
@@ -968,7 +968,7 @@ TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
     }
 
     SECTION("It can skip multiple postings") {
-      PostingList_Vec<Posting>::iterator_t it;
+      PostingList_Vec<PostingSimple>::iterator_t it;
       it = pl.SkipForward(0, 8);
       REQUIRE(it == 8);
 
@@ -977,7 +977,7 @@ TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
     }
 
     SECTION("It returns pl.Size() when we cannot find doc id") {
-      PostingList_Vec<Posting>::iterator_t it;
+      PostingList_Vec<PostingSimple>::iterator_t it;
       it = pl.SkipForward(0, 1000);
       REQUIRE(it == pl.Size());
     }
@@ -987,120 +987,120 @@ TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
 
 
 TEST_CASE( "Intersection", "[intersect]" ) {
-  PostingList_Vec<Posting> pl01("hello");   
+  PostingList_Vec<PostingSimple> pl01("hello");   
   for (int i = 0; i < 10; i++) {
-    pl01.AddPosting(Posting(i, 1, Positions{28}));
+    pl01.AddPosting(PostingSimple(i, 1, Positions{28}));
   }
 
   SECTION("It intersects a subset") {
-    PostingList_Vec<Posting> pl02("world");   
+    PostingList_Vec<PostingSimple> pl02("world");   
     for (int i = 5; i < 10; i++) {
-      pl02.AddPosting(Posting(i, 1, Positions{28}));
+      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
     }
 
-    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
     REQUIRE(ret == std::vector<DocIdType>{5, 6, 7, 8, 9});
   }
 
   SECTION("It intersects an empty posting list") {
-    PostingList_Vec<Posting> pl02("world");   
+    PostingList_Vec<PostingSimple> pl02("world");   
 
-    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
     REQUIRE(ret == std::vector<DocIdType>{});
   }
 
   SECTION("It intersects a non-overlapping posting list") {
-    PostingList_Vec<Posting> pl02("world");   
+    PostingList_Vec<PostingSimple> pl02("world");   
     for (int i = 10; i < 20; i++) {
-      pl02.AddPosting(Posting(i, 1, Positions{28}));
+      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
     }
 
-    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
     REQUIRE(ret == std::vector<DocIdType>{});
   }
 
   SECTION("It intersects a partial-overlapping posting list") {
-    PostingList_Vec<Posting> pl02("world");   
+    PostingList_Vec<PostingSimple> pl02("world");   
     for (int i = 5; i < 15; i++) {
-      pl02.AddPosting(Posting(i, 1, Positions{28}));
+      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
     }
 
-    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
     REQUIRE(ret == std::vector<DocIdType>{5, 6, 7, 8, 9});
   }
 
   SECTION("It intersects a super set") {
-    PostingList_Vec<Posting> pl02("world");   
+    PostingList_Vec<PostingSimple> pl02("world");   
     for (int i = 0; i < 15; i++) {
-      pl02.AddPosting(Posting(i, 1, Positions{28}));
+      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
     }
 
-    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
     REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
   }
 
   SECTION("It intersects a single list") {
-    std::vector<const PostingList_Vec<Posting>*> lists{&pl01};
-    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01};
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
     REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
   }
 
   SECTION("It intersects three lists") {
-    PostingList_Vec<Posting> pl02("world");   
+    PostingList_Vec<PostingSimple> pl02("world");   
     for (int i = 0; i < 5; i++) {
-      pl02.AddPosting(Posting(i, 1, Positions{28}));
+      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
     }
 
-    PostingList_Vec<Posting> pl03("more");   
+    PostingList_Vec<PostingSimple> pl03("more");   
     for (int i = 0; i < 2; i++) {
-      pl03.AddPosting(Posting(i, 1, Positions{28}));
+      pl03.AddPosting(PostingSimple(i, 1, Positions{28}));
     }
 
-    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02, &pl03};
-    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02, &pl03};
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
     REQUIRE(ret == std::vector<DocIdType>{0, 1});
   }
 
   SECTION("It intersects two empty list") {
-    PostingList_Vec<Posting> pl01("hello");   
-    PostingList_Vec<Posting> pl02("world");   
+    PostingList_Vec<PostingSimple> pl01("hello");   
+    PostingList_Vec<PostingSimple> pl02("world");   
 
-    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
     REQUIRE(ret == std::vector<DocIdType>{});
   }
 
   SECTION("It handles a previous bug") {
-    PostingList_Vec<Posting> pl01("hello");   
-    pl01.AddPosting(Posting(8, 1, Positions{28}));
-    pl01.AddPosting(Posting(10, 1, Positions{28}));
+    PostingList_Vec<PostingSimple> pl01("hello");   
+    pl01.AddPosting(PostingSimple(8, 1, Positions{28}));
+    pl01.AddPosting(PostingSimple(10, 1, Positions{28}));
 
-    PostingList_Vec<Posting> pl02("world");   
-    pl02.AddPosting(Posting(7, 1, Positions{28}));
-    pl02.AddPosting(Posting(10, 1, Positions{28}));
-    pl02.AddPosting(Posting(15, 1, Positions{28}));
+    PostingList_Vec<PostingSimple> pl02("world");   
+    pl02.AddPosting(PostingSimple(7, 1, Positions{28}));
+    pl02.AddPosting(PostingSimple(10, 1, Positions{28}));
+    pl02.AddPosting(PostingSimple(15, 1, Positions{28}));
 
-    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
     REQUIRE(ret == std::vector<DocIdType>{10});
   }
 
 
   SECTION("It returns doc counts of each term") {
-    PostingList_Vec<Posting> pl02("world");   
+    PostingList_Vec<PostingSimple> pl02("world");   
     for (int i = 0; i < 15; i++) {
-      pl02.AddPosting(Posting(i, 1, Positions{28}));
+      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
     }
 
-    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
     TfIdfStore tfidf_store;
 
-    std::vector<DocIdType> ret = intersect<Posting>(lists, &tfidf_store);
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists, &tfidf_store);
     REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
     REQUIRE(tfidf_store.GetDocCount("hello") == 10);
     REQUIRE(tfidf_store.GetDocCount("world") == 15);

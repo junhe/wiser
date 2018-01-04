@@ -34,10 +34,6 @@ class SearchEngineService {
 };
 
 typedef int DocIdType;
-typedef std::string Term;
-typedef std::vector<Term> TermList;
-enum class SearchOperator {AND, OR};
-// typedef float qq_float;
 typedef double qq_float;
 
 class DocumentStoreService {

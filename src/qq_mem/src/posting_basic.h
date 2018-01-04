@@ -15,6 +15,7 @@
 typedef int Position;
 typedef std::vector<Position> Positions;
 
+
 class Posting : public PostingService {
     public:
         int docID_ = 0;
@@ -29,9 +30,6 @@ class Posting : public PostingService {
         Posting(const int & docID, const int & term_frequency, 
                 Offsets * offsets_in, Passage_Scores * passage_scores, std::unordered_map<int, Passage_Split> * passage_splits);
         std::string dump();
-        const int GetDocId() const {return docID_;}
-        const int GetTermFreq() const {return term_frequency_;}
-        const Positions GetPositions() const {return positions_;}
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
@@ -40,6 +38,24 @@ class Posting : public PostingService {
             archive( docID_, term_frequency_, positions_, passage_scores_, passage_splits_); // serialize things by passing them to the archive
         }
         // TODO Posting * next;
+};
+
+
+class PostingSimple : public PostingService {
+ public:
+  int docID_;
+  int term_frequency_;
+  Positions positions_;
+
+  PostingSimple() :docID_(0), term_frequency_(0) {}
+  PostingSimple(int docID, int term_frequency, const Positions positions)
+        :docID_(docID), term_frequency_(term_frequency), positions_(positions)
+  {}
+
+  const int GetDocId() const {return docID_;}
+  const int GetTermFreq() const {return term_frequency_;}
+  const Positions GetPositions() const {return positions_;}
+  std::string dump() {return "";}
 };
 
 
