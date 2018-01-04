@@ -17,7 +17,7 @@
 
 utils::ResultRow score_bench(const int &n_terms, const int &n_docs) {
   utils::ResultRow result;
-  const int n_repeats = 100;
+  const int n_repeats = 100000;
 
   TfIdfStore tfidf_store;
 
@@ -55,15 +55,15 @@ utils::ResultRow score_bench(const int &n_terms, const int &n_docs) {
 
 void score_bench_suite() {
   utils::ResultTable result_table;
-  result_table.Append(score_bench(1, 1000));
-  result_table.Append(score_bench(1, 10000));
-  result_table.Append(score_bench(1, 100000));
-  result_table.Append(score_bench(1, 1000000));
+  result_table.Append(score_bench(1, 100));
+  // result_table.Append(score_bench(1, 10000));
+  // result_table.Append(score_bench(1, 100000));
+  // result_table.Append(score_bench(1, 1000000));
 
-  result_table.Append(score_bench(1, 1000000));
-  result_table.Append(score_bench(2, 1000000));
-  result_table.Append(score_bench(4, 1000000));
-  result_table.Append(score_bench(8, 1000000));
+  // result_table.Append(score_bench(1, 1000000));
+  // result_table.Append(score_bench(2, 1000000));
+  // result_table.Append(score_bench(4, 1000000));
+  // result_table.Append(score_bench(8, 1000000));
 
   std::cout << result_table.ToStr();
 }
@@ -92,22 +92,6 @@ utils::ResultRow sorting_bench(const int &n_docs, const int &k) {
 
   return result;
 }
-
-
-void sorting_bench_suite() {
-  std::srand(1);
-
-  utils::ResultTable table;
-  table.Append(sorting_bench(1000, 10));
-  table.Append(sorting_bench(10000, 10));
-  table.Append(sorting_bench(100000, 10));
-  table.Append(sorting_bench(1000000, 10));
-  table.Append(sorting_bench(1000000, 100));
-  table.Append(sorting_bench(1000000, 1000));
-
-  std::cout << table.ToStr();
-}
-
 
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
