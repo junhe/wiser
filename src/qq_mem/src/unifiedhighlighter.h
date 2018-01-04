@@ -9,20 +9,33 @@
 #include <fstream>
 
 class PassageScore_Iterator {
+ public:
+   PassageScore_Iterator(const Passage_Scores & passage_scores_in) {
+     _passage_scores_ = &passage_scores_in;
+     _cur_passage_ = passage_scores_in.begin(); 
+     cur_passage_id_ = (*_cur_passage_).first;
+     score_ = (*_cur_passage_).second; 
+   }
 
-    public:
-        PassageScore_Iterator(const Passage_Scores & passage_scores_in);
-        void next_passage();
-        
-        int cur_passage_id_;       // -1 means end
-        int weight = 1;            // weight of this term
-        float score_ = 0;          // score of this passage for this term
-    private:
-        const Passage_Scores * _passage_scores_;
-        Passage_Scores::const_iterator _cur_passage_;
-
+   void next_passage() {  // go to next passage
+     _cur_passage_++;
+     if (_cur_passage_ == _passage_scores_->end()) {
+       cur_passage_id_ = -1;
+       return ;
+     } 
+     cur_passage_id_ = (*_cur_passage_).first;
+     score_ = (*_cur_passage_).second;
+     return;
+   }
+  
+  int cur_passage_id_;       // -1 means end
+  int weight = 1;            // weight of this term
+  float score_ = 0;          // score of this passage for this term
+ private:
+  const Passage_Scores * _passage_scores_;
+  Passage_Scores::const_iterator _cur_passage_;
 };
-typedef std::vector<PassageScore_Iterator> ScoresEnums;
+
 
 class Offset_Iterator {
  public:
@@ -52,7 +65,10 @@ class Offset_Iterator {
   Offsets::const_iterator cur_position;
 };
 
+
+typedef std::vector<PassageScore_Iterator> ScoresEnums;
 typedef std::vector<Offset_Iterator> OffsetsEnums;
+
 
 class Passage {
   public:
@@ -91,24 +107,71 @@ class Passage {
 
 
 class SentenceBreakIterator {
+ public:
+  SentenceBreakIterator(const std::string & content) {
+    startoffset = endoffset = -1;
+    content_ = & content;
+    // start boost boundary analysis
+    boost::locale::boundary::sboundary_point_index tmp(boost::locale::boundary::sentence, content_->begin(), content_->end(),gen("en_US.UTF-8"));
+    map = tmp;
+    map.rule(boost::locale::boundary::sentence_term);
 
-    public:
-        SentenceBreakIterator(const std::string & content);
+    current = map.begin();
+    last = map.end();
+    last_offset = content.size()-1;
 
-        int getStartOffset();  // get current sentence's start offset
-        int getEndOffset();    // get current sentence's end offset
-        int next();            // get next sentence
-        int next(int offset);  // get next sentence where offset is within it
-        const std::string * content_;
-    
-    private:
-        boost::locale::generator gen;
-        boost::locale::boundary::sboundary_point_index map;    //TODO extra copy operation
-        boost::locale::boundary::sboundary_point_index::iterator current; 
-        boost::locale::boundary::sboundary_point_index::iterator last; 
-        int startoffset;
-        int endoffset;
-        int last_offset;
+    return;
+  }
+
+  // get current sentence's start offset
+  int getStartOffset() {
+      return startoffset;
+  }
+
+  // get current sentence's end offset
+  int getEndOffset() {
+    return endoffset;
+  }
+
+  // get to the next 'passage' (next sentence)
+  int next() {
+      if (endoffset >= last_offset) {
+          return 0;
+      }
+      ++current;
+      std::string::const_iterator this_offset = *current;
+
+      startoffset = endoffset + 1;
+      endoffset = this_offset - content_->begin() - 1;
+      return 1; // Success
+  }
+
+  // get to the next 'passage' contains offset
+  int SentenceBreakIterator::next(int offset) {
+      if (offset >=last_offset) {
+          return 0;
+      }
+      current = map.find(content_->begin() + offset);
+      std::string::const_iterator this_offset = *current;
+      
+      endoffset = this_offset - content_->begin() - 1;
+      current--;
+      std::string::const_iterator tmp_offset = *current;
+      startoffset = tmp_offset - content_->begin() - 1 + 1;
+      current++;
+      return 1; // Success
+  }
+
+  const std::string * content_;
+
+ private:
+  boost::locale::generator gen;
+  boost::locale::boundary::sboundary_point_index map;    //TODO extra copy operation
+  boost::locale::boundary::sboundary_point_index::iterator current; 
+  boost::locale::boundary::sboundary_point_index::iterator last; 
+  int startoffset;
+  int endoffset;
+  int last_offset;
 };
 
 class UnifiedHighlighter {
