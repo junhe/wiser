@@ -147,7 +147,7 @@ class SentenceBreakIterator {
   }
 
   // get to the next 'passage' contains offset
-  int SentenceBreakIterator::next(int offset) {
+  int next(int offset) {
       if (offset >=last_offset) {
           return 0;
       }
