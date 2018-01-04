@@ -33,6 +33,13 @@ class SearchEngineService {
   int next_doc_id_ = 0;
 };
 
+typedef int DocIdType;
+typedef std::string Term;
+typedef std::vector<Term> TermList;
+enum class SearchOperator {AND, OR};
+// typedef float qq_float;
+typedef double qq_float;
+
 class DocumentStoreService {
     public:
         virtual void Add(int id, std::string document) = 0;
@@ -42,6 +49,28 @@ class DocumentStoreService {
         virtual void Clear() = 0;
         virtual int Size() = 0;
 };
+
+struct DocScore {
+  DocIdType doc_id;
+  qq_float score;
+
+  DocScore(const DocIdType &doc_id_in, const qq_float &score_in)
+    :doc_id(doc_id_in), score(score_in) {}
+
+  friend bool operator<(DocScore a, DocScore b)
+  {
+    return a.score < b.score;
+  }
+
+  std::string ToStr() {
+    return std::to_string(doc_id) + " (" + std::to_string(score) + ")\n";
+  }
+};
+
+typedef std::vector<DocScore> DocScoreVec;
+typedef std::map<Term, qq_float> TermScoreMap;
+
+
 
 class InvertedIndexService {
     public:

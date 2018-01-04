@@ -44,6 +44,7 @@ set(ENGINE_SRCS
     qq_mem_direct_search_engine.cc
     grpc_client_impl.cc
     utils.cc
+    ranking.cc
     unifiedhighlighter.cc
     flashreader.cc
     )
@@ -71,6 +72,7 @@ target_link_libraries(qq_server
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
+    ${GLOG_LIB}
 )
 
 # Building client
@@ -85,6 +87,7 @@ target_link_libraries(qq_client
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
+    ${GLOG_LIB}
 )
 
 
@@ -126,6 +129,7 @@ target_link_libraries(in_proc_engine_bench
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
+    ${GLOG_LIB}
 )
 
 add_executable(grpc_benchmark
@@ -140,11 +144,49 @@ target_link_libraries(grpc_benchmark
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
+    ${GLOG_LIB}
 )
 
+add_executable(intersect_bench
+    intersect_bench.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(intersect_bench
+    gRPC::grpc++_reflection
+    protobuf::libprotobuf
+    ${BOOST_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
 
+add_executable(scoring_bench
+    scoring_bench.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(scoring_bench
+    gRPC::grpc++_reflection
+    protobuf::libprotobuf
+    ${BOOST_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
 
-
-
+add_executable(sorting_bench
+    sorting_bench.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(sorting_bench
+    gRPC::grpc++_reflection
+    protobuf::libprotobuf
+    ${BOOST_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
 
 

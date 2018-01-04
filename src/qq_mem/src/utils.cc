@@ -1,12 +1,14 @@
 #include "utils.h"
 
 #include <iostream>
-#include <sstream>
+#include <iomanip>
 #include <thread>
 #include <iterator>
 #include <cassert>
 #include <stdexcept>
 #include <thread>
+#include <queue>
+
 
 namespace utils {
 
@@ -126,6 +128,27 @@ const std::vector<Offsets> parse_offsets(const std::string& s) {
     return res;
 }
 
+const std::string format_double(const double &x, const int &precision) {
+  std::ostringstream out;
+  out << std::setprecision(precision) << x;
+  return out.str();
+}
+
+
+std::vector<DocIdType> find_top_k(const DocScoreVec &doc_scores, int k) {
+  std::priority_queue<DocScore> queue(std::less<DocScore>(), doc_scores);
+  std::vector<DocIdType> ret;
+  
+  while (k > 0 && !queue.empty()) {
+    ret.push_back(queue.top().doc_id);
+    queue.pop();
+    k--;
+  }
+
+  return ret;
+}
+
+
 ///////////////////////////////////////////////
 // LineDoc
 ///////////////////////////////////////////////
@@ -156,9 +179,5 @@ bool LineDoc::GetRow(std::vector<std::string> &items) {
         return false;
     }
 }
-
-
-
-
 
 } // namespace util

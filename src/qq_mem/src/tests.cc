@@ -1,5 +1,9 @@
 // #define CATCH_CONFIG_MAIN  // This tells Catch to provide a main() - only do this in one cpp file
 #include <sys/time.h>
+#include <iostream>
+#include <iomanip>
+#include <set>
+
 #include <boost/filesystem.hpp>
 #include <boost/lambda/lambda.hpp>    
 #include "catch.hpp"
@@ -13,10 +17,15 @@
 #include "utils.h"
 #include "hash_benchmark.h"
 #include "grpc_server_impl.h"
+#include "qq_mem_uncompressed_engine.h"
 
 #include "posting_list_direct.h"
 #include "posting_list_raw.h"
 #include "posting_list_protobuf.h"
+#include "posting_list_vec.h"
+
+#include "intersect.h"
+#include "ranking.h"
 
 #include "unifiedhighlighter.h"
 
@@ -922,3 +931,503 @@ TEST_CASE("QQMemDirectSearchEngine works", "[QQMemDirectSearchEngine]") {
     REQUIRE(doc == "my body");
 */
 }
+
+TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
+  SECTION("New postings can be added and retrieved") {
+    PostingList_Vec<Posting> pl("hello");   
+
+    REQUIRE(pl.Size() == 0);
+    pl.AddPosting(Posting(10, 88, Positions{28}));
+    REQUIRE(pl.Size() == 1);
+    REQUIRE(pl.GetPosting(0).GetDocId() == 10);
+    REQUIRE(pl.GetPosting(0).GetTermFreq() == 88);
+    REQUIRE(pl.GetPosting(0).GetPositions() == Positions{28});
+
+    pl.AddPosting(Posting(11, 889, Positions{28, 230}));
+    REQUIRE(pl.Size() == 2);
+    REQUIRE(pl.GetPosting(1).GetDocId() == 11);
+    REQUIRE(pl.GetPosting(1).GetTermFreq() == 889);
+    REQUIRE(pl.GetPosting(1).GetPositions() == Positions{28, 230});
+  }
+
+
+  SECTION("Skipping works") {
+    PostingList_Vec<Posting> pl("hello");   
+    for (int i = 0; i < 100; i++) {
+      pl.AddPosting(Posting(i, 1, Positions{28}));
+    }
+    REQUIRE(pl.Size() == 100);
+
+    SECTION("It can stay at starting it") {
+      PostingList_Vec<Posting>::iterator_t it;
+      it = pl.SkipForward(0, 0);
+      REQUIRE(it == 0);
+
+      it = pl.SkipForward(8, 8);
+      REQUIRE(it == 8);
+    }
+
+    SECTION("It can skip multiple postings") {
+      PostingList_Vec<Posting>::iterator_t it;
+      it = pl.SkipForward(0, 8);
+      REQUIRE(it == 8);
+
+      it = pl.SkipForward(0, 99);
+      REQUIRE(it == 99);
+    }
+
+    SECTION("It returns pl.Size() when we cannot find doc id") {
+      PostingList_Vec<Posting>::iterator_t it;
+      it = pl.SkipForward(0, 1000);
+      REQUIRE(it == pl.Size());
+    }
+  }
+
+}
+
+
+TEST_CASE( "Intersection", "[intersect]" ) {
+  PostingList_Vec<Posting> pl01("hello");   
+  for (int i = 0; i < 10; i++) {
+    pl01.AddPosting(Posting(i, 1, Positions{28}));
+  }
+
+  SECTION("It intersects a subset") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 5; i < 10; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    REQUIRE(ret == std::vector<DocIdType>{5, 6, 7, 8, 9});
+  }
+
+  SECTION("It intersects an empty posting list") {
+    PostingList_Vec<Posting> pl02("world");   
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    REQUIRE(ret == std::vector<DocIdType>{});
+  }
+
+  SECTION("It intersects a non-overlapping posting list") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 10; i < 20; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    REQUIRE(ret == std::vector<DocIdType>{});
+  }
+
+  SECTION("It intersects a partial-overlapping posting list") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 5; i < 15; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    REQUIRE(ret == std::vector<DocIdType>{5, 6, 7, 8, 9});
+  }
+
+  SECTION("It intersects a super set") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 0; i < 15; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+  }
+
+  SECTION("It intersects a single list") {
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01};
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+  }
+
+  SECTION("It intersects three lists") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 0; i < 5; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    PostingList_Vec<Posting> pl03("more");   
+    for (int i = 0; i < 2; i++) {
+      pl03.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02, &pl03};
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    REQUIRE(ret == std::vector<DocIdType>{0, 1});
+  }
+
+  SECTION("It intersects two empty list") {
+    PostingList_Vec<Posting> pl01("hello");   
+    PostingList_Vec<Posting> pl02("world");   
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    REQUIRE(ret == std::vector<DocIdType>{});
+  }
+
+  SECTION("It handles a previous bug") {
+    PostingList_Vec<Posting> pl01("hello");   
+    pl01.AddPosting(Posting(8, 1, Positions{28}));
+    pl01.AddPosting(Posting(10, 1, Positions{28}));
+
+    PostingList_Vec<Posting> pl02("world");   
+    pl02.AddPosting(Posting(7, 1, Positions{28}));
+    pl02.AddPosting(Posting(10, 1, Positions{28}));
+    pl02.AddPosting(Posting(15, 1, Positions{28}));
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    std::vector<DocIdType> ret = intersect<Posting>(lists);
+    REQUIRE(ret == std::vector<DocIdType>{10});
+  }
+
+
+  SECTION("It returns doc counts of each term") {
+    PostingList_Vec<Posting> pl02("world");   
+    for (int i = 0; i < 15; i++) {
+      pl02.AddPosting(Posting(i, 1, Positions{28}));
+    }
+
+    std::vector<const PostingList_Vec<Posting>*> lists{&pl01, &pl02};
+    TfIdfStore tfidf_store;
+
+    std::vector<DocIdType> ret = intersect<Posting>(lists, &tfidf_store);
+    REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
+    REQUIRE(tfidf_store.GetDocCount("hello") == 10);
+    REQUIRE(tfidf_store.GetDocCount("world") == 15);
+  }
+
+  SECTION("It returns term freqs") {
+    PostingList_Vec<RankingPosting> pl01("hello");   
+    pl01.AddPosting(RankingPosting(8, 1));
+    pl01.AddPosting(RankingPosting(10, 2));
+
+    PostingList_Vec<RankingPosting> pl02("world");   
+    pl02.AddPosting(RankingPosting(7, 1));
+    pl02.AddPosting(RankingPosting(10, 8));
+    pl02.AddPosting(RankingPosting(15, 1));
+
+    std::vector<const PostingList_Vec<RankingPosting>*> lists{&pl01, &pl02};
+    TfIdfStore tfidf_store;
+
+    std::vector<DocIdType> ret = intersect<RankingPosting>(lists, &tfidf_store);
+
+    REQUIRE(ret == std::vector<DocIdType>{10});
+    REQUIRE(tfidf_store.GetTf(10, "hello") == 2);
+    REQUIRE(tfidf_store.GetTf(10, "world") == 8);
+  }
+
+}
+
+TEST_CASE( "DocLengthStore", "[ranking]" ) {
+  SECTION("It can add some lengths.") {
+    DocLengthStore store;
+    store.AddLength(1, 7);
+    store.AddLength(2, 8);
+    store.AddLength(3, 9);
+
+    REQUIRE(store.Size() == 3);
+    REQUIRE(store.GetAvgLength() == 8);
+  }
+}
+
+
+TEST_CASE( "Scoring", "[ranking]" ) {
+  SECTION("TF is correct") {
+    REQUIRE(calc_tf(1) == 1.0); // sample in ES document
+    REQUIRE(calc_tf(4) == 2.0);
+    REQUIRE(calc_tf(100) == 10.0);
+
+    REQUIRE(utils::format_double(calc_tf(2), 3) == "1.41");
+  }
+
+  SECTION("IDF is correct (sample score in ES document)") {
+    REQUIRE(utils::format_double(calc_idf(1, 1), 3) == "0.307");
+  }
+
+
+  SECTION("Field length norm is correct") {
+    REQUIRE(calc_field_len_norm(4) == 0.5);
+  }
+
+  SECTION("ElasticSearch IDF") {
+    REQUIRE(utils::format_double(calc_es_idf(1, 1), 3) == "0.288"); // From an ES run
+  }
+
+  SECTION("ElasticSearch IDF 2") {
+    REQUIRE(utils::format_double(calc_es_idf(3, 1), 3)== "0.981"); // From an ES run
+  }
+
+  SECTION("ElasticSearch TF NORM") {
+    REQUIRE(calc_es_tfnorm(1, 3, 3.0) == 1.0); // From an ES run
+    REQUIRE(calc_es_tfnorm(1, 7, 7.0) == 1.0); // From an ES run
+    REQUIRE( utils::format_double(calc_es_tfnorm(1, 2, 8/3.0), 3) == "1.11"); // From an ES run
+  }
+}
+
+
+
+TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
+  TfIdfStore table;
+
+  SECTION("It sets and gets IDF") {
+    table.SetDocCount("term1", 10);
+    REQUIRE(table.GetDocCount("term1") == 10);
+  }
+
+  SECTION("It sets and gets TF") {
+    table.SetTf(100, "term1", 2);
+    REQUIRE(table.GetTf(100, "term1") == 2);
+    REQUIRE(table.Size() == 1);
+
+    table.SetDocCount("wisconsin", 1);
+
+    SECTION("ToStr() works") {
+      auto str = table.ToStr();
+      REQUIRE(str == "DocId (100) : term1(2)\nDocument count for a term\nwisconsin(1)\n");
+    }
+  }
+
+  SECTION("Iterator works") {
+    table.SetTf(10, "term1", 2);
+    table.SetTf(10, "term2", 3);
+    table.SetTf(20, "term1", 8);
+    table.SetTf(20, "term2", 8);
+
+    REQUIRE(table.Size() == 2);
+
+    SECTION("Doc iterators work") {
+      TfIdfStore::row_iterator it = table.row_cbegin();
+      REQUIRE(table.GetCurDocId(it) == 10);
+      it++;
+      REQUIRE(table.GetCurDocId(it) == 20);
+      it++;
+      REQUIRE(it == table.row_cend());
+    }
+
+    SECTION("Term iterators work") {
+      TfIdfStore::row_iterator it = table.row_cbegin();
+      TfIdfStore::col_iterator term_it = table.col_cbegin(it);
+      REQUIRE(table.GetCurTerm(term_it) == "term1");
+      REQUIRE(table.GetCurTermFreq(term_it) == 2);
+      term_it++;
+      REQUIRE(table.GetCurTerm(term_it) == "term2");
+      REQUIRE(table.GetCurTermFreq(term_it) == 3);
+      term_it++;
+      REQUIRE(term_it == table.col_cend(it));
+    }
+  }
+}
+
+
+TEST_CASE( "We can get score for each document", "[ranking]" ) {
+  SECTION("It gets the same score as ES, for one term") {
+    TfIdfStore table;
+    table.SetTf(0, "term1", 1);
+
+    table.SetDocCount("term1", 1);
+
+    TfIdfStore::row_iterator it = table.row_cbegin();
+
+    TermScoreMap term_scores = score_terms_in_doc(table, it, 3, 3, 1);
+
+    REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
+  }
+
+  SECTION("It gets the same score as ES, for two terms") {
+    TfIdfStore table;
+    table.SetTf(0, "term1", 1);
+    table.SetTf(0, "term2", 1);
+
+    table.SetDocCount("term1", 1);
+    table.SetDocCount("term2", 1);
+
+    TfIdfStore::row_iterator it = table.row_cbegin();
+
+    TermScoreMap term_scores = score_terms_in_doc(table, it, 7, 7, 1);
+
+    REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
+    REQUIRE(utils::format_double(term_scores["term2"], 3) == "0.288"); // From an ES run
+  }
+}
+
+TEST_CASE( "Utilities work", "[utils]" ) {
+  SECTION("Count terms") {
+    REQUIRE(count_terms("hello world") == 2);
+  }
+
+  SECTION("Count tokens") {
+    CountMapType counts = count_tokens("hello hello you");
+    assert(counts["hello"] == 2);
+    assert(counts["you"] == 1);
+    assert(counts.size() == 2);
+  }
+}
+
+TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
+  InvertedIndexQqMem inverted_index;
+
+  inverted_index.AddDocument(0, "hello world", "hello world");
+  inverted_index.AddDocument(1, "hello wisconsin", "hello wisconsin");
+  REQUIRE(inverted_index.Size() == 3);
+
+  SECTION("It can find an intersection for single-term queries") {
+    TfIdfStore store = inverted_index.FindIntersection(TermList{"hello"});
+    REQUIRE(store.Size() == 2);
+    auto it = store.row_cbegin();
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 0);
+    it++;
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 1);
+  }
+
+  SECTION("It can find an intersection for two-term queries") {
+    TfIdfStore store = inverted_index.FindIntersection(TermList{"hello", "world"});
+    REQUIRE(store.Size() == 1);
+    auto it = store.row_cbegin();
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 0);
+  }
+}
+
+
+TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
+  QqMemUncompressedEngine engine;
+
+  auto doc_id = engine.AddDocument("hello world", "hello world");
+  REQUIRE(engine.GetDocument(doc_id) == "hello world");
+  REQUIRE(engine.GetDocLength(doc_id) == 2);
+  REQUIRE(engine.TermCount() == 2);
+
+  doc_id = engine.AddDocument("hello wisconsin", "hello wisconsin");
+  REQUIRE(engine.GetDocument(doc_id) == "hello wisconsin");
+  REQUIRE(engine.GetDocLength(doc_id) == 2);
+  REQUIRE(engine.TermCount() == 3);
+
+  doc_id = engine.AddDocument("hello world big world", "hello world big world");
+  REQUIRE(engine.GetDocument(doc_id) == "hello world big world");
+  REQUIRE(engine.GetDocLength(doc_id) == 4);
+  REQUIRE(engine.TermCount() == 4);
+
+  SECTION("The engine can serve single-term queries") {
+    TfIdfStore tfidf_store = engine.Query(TermList{"wisconsin"}); 
+    REQUIRE(tfidf_store.Size() == 1);
+    std::cout << tfidf_store.ToStr();
+
+    DocScoreVec doc_scores = engine.Score(tfidf_store);
+    REQUIRE(doc_scores.size() == 1);
+    REQUIRE(doc_scores[0].doc_id == 1);
+    REQUIRE(utils::format_double(doc_scores[0].score, 3) == "1.09");
+  }
+
+  SECTION("The engine can serve single-term queries with multiple results") {
+    TfIdfStore tfidf_store = engine.Query(TermList{"hello"}); 
+    REQUIRE(tfidf_store.Size() == 3);
+
+    DocScoreVec doc_scores = engine.Score(tfidf_store);
+    REQUIRE(doc_scores.size() == 3);
+
+    // The score below is produced by ../tools/es_index_docs.py in this
+    // same git commit
+    // You can reproduce the elasticsearch score by checking out this
+    // commit and run `python tools/es_index_docs.py`.
+    REQUIRE(utils::format_double(doc_scores[0].score, 3) == "0.149");
+    REQUIRE(utils::format_double(doc_scores[1].score, 3) == "0.149");
+    REQUIRE(utils::format_double(doc_scores[2].score, 3) == "0.111");
+  }
+
+  SECTION("The engine can server two-term queries") {
+    TfIdfStore tfidf_store = engine.Query(TermList{"hello", "world"}); 
+    REQUIRE(tfidf_store.Size() == 2);
+    auto it = tfidf_store.row_cbegin();
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 0);
+    it++;
+    REQUIRE(TfIdfStore::GetCurDocId(it) == 2);
+
+    DocScoreVec doc_scores = engine.Score(tfidf_store);
+    REQUIRE(doc_scores.size() == 2);
+
+    for (auto score : doc_scores) {
+      std::cout << score.ToStr() ;
+    }
+
+    // The scores below are produced by ../tools/es_index_docs.py in this
+    // same git commit
+    // You can reproduce the elasticsearch scores by checking out this
+    // commit and run `python tools/es_index_docs.py`.
+    REQUIRE(utils::format_double(doc_scores[0].score, 3) == "0.672");
+    REQUIRE(utils::format_double(doc_scores[1].score, 3) == "0.677");
+
+    std::vector<DocIdType> doc_ids = engine.FindTopK(doc_scores, 10);
+    REQUIRE(doc_ids.size() == 2);
+  }
+}
+
+
+TEST_CASE( "Sorting document works", "[ranking]" ) {
+  SECTION("A regular case") {
+    DocScoreVec scores{{0, 0.8}, {1, 3.0}, {2, 2.1}};    
+    REQUIRE(utils::find_top_k(scores, 4) == std::vector<DocIdType>{1, 2, 0});
+    REQUIRE(utils::find_top_k(scores, 3) == std::vector<DocIdType>{1, 2, 0});
+    REQUIRE(utils::find_top_k(scores, 2) == std::vector<DocIdType>{1, 2});
+    REQUIRE(utils::find_top_k(scores, 1) == std::vector<DocIdType>{1});
+    REQUIRE(utils::find_top_k(scores, 0) == std::vector<DocIdType>{});
+  }
+
+  SECTION("Empty scores") {
+    DocScoreVec scores{};    
+    REQUIRE(utils::find_top_k(scores, 4) == std::vector<DocIdType>{});
+  }
+
+  SECTION("Identical scores") {
+    DocScoreVec scores{{0, 0.8}, {1, 0.8}, {2, 2.1}};    
+    REQUIRE(utils::find_top_k(scores, 1) == std::vector<DocIdType>{2});
+  }
+}
+
+
+TEST_CASE( "Class Staircase can generate staircase strings", "[utils]" ) {
+  SECTION("Simple case") {
+    utils::Staircase staircase(1, 1, 2);
+    
+    REQUIRE(staircase.MaxWidth() == 2);
+
+    REQUIRE(staircase.NextLayer() == "0");
+    REQUIRE(staircase.NextLayer() == "0 1");
+    REQUIRE(staircase.NextLayer() == "");
+  }
+
+  SECTION("Simple case 2") {
+    utils::Staircase staircase(2, 1, 2);
+
+    REQUIRE(staircase.MaxWidth() == 2);
+
+    REQUIRE(staircase.NextLayer() == "0");
+    REQUIRE(staircase.NextLayer() == "0");
+    REQUIRE(staircase.NextLayer() == "0 1");
+    REQUIRE(staircase.NextLayer() == "0 1");
+    REQUIRE(staircase.NextLayer() == "");
+  }
+
+  SECTION("Wide steps") {
+    utils::Staircase staircase(2, 3, 2);
+
+    REQUIRE(staircase.MaxWidth() == 6);
+
+    REQUIRE(staircase.NextLayer() == "0 1 2");
+    REQUIRE(staircase.NextLayer() == "0 1 2");
+    REQUIRE(staircase.NextLayer() == "0 1 2 3 4 5");
+    REQUIRE(staircase.NextLayer() == "0 1 2 3 4 5");
+    REQUIRE(staircase.NextLayer() == "");
+  }
+
+}
+
+

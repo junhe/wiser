@@ -29,6 +29,9 @@ class Posting : public PostingService {
         Posting(const int & docID, const int & term_frequency, 
                 Offsets * offsets_in, Passage_Scores * passage_scores, std::unordered_map<int, Passage_Split> * passage_splits);
         std::string dump();
+        const int GetDocId() const {return docID_;}
+        const int GetTermFreq() const {return term_frequency_;}
+        const Positions GetPositions() const {return positions_;}
 
         // This method lets cereal know which data members to serialize
         template<class Archive>
@@ -38,5 +41,21 @@ class Posting : public PostingService {
         }
         // TODO Posting * next;
 };
+
+
+class RankingPosting {
+  public:
+    int doc_id_;
+    int term_frequency_;
+
+    RankingPosting(){};
+    RankingPosting(int doc_id, int term_frequency)
+      :doc_id_(doc_id), term_frequency_(term_frequency)
+    {
+    }
+    const int GetDocId() const {return doc_id_;}
+    const int GetTermFreq() const {return term_frequency_;}
+};
+
 
 #endif
