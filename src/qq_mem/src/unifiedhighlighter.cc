@@ -356,47 +356,6 @@ void PassageScore_Iterator::next_passage() {  // go to next passage
 }
 
 
-// Offset_Iterator Functions
-Offset_Iterator::Offset_Iterator(const std::vector<Offset> & offsets_in) {
-    offsets = &offsets_in;
-    cur_position = offsets_in.begin(); 
-    startoffset = std::get<0>(*cur_position);
-    endoffset = std::get<1>(*cur_position);
-}
-
-void Offset_Iterator::next_position() {  // go to next offset position
-    cur_position++;
-    if (cur_position == offsets->end()) {
-        startoffset = endoffset = -1;
-        return ;
-    } 
-    startoffset = std::get<0>(*cur_position);
-    endoffset = std::get<1>(*cur_position);
-    return;
-}
-
-
-// Passage Functions 
-std::string Passage::to_string(const std::string * doc_string) {
-    std::string res= "";
-    res += doc_string->substr(startoffset, endoffset - startoffset + 1) + "\n";
-    // highlight
- 
-    auto cmp_terms = [] (Offset & a, Offset & b) -> bool { return (std::get<0>(a) > std::get<0>(b));};
-    std::sort(matches.begin(), matches.end(), cmp_terms);
-
-    for (auto it = matches.begin(); it != matches.end(); it++) {
-        res.insert(std::get<1>(*it)-startoffset+1, "<\\b>");
-        res.insert(std::get<0>(*it)-startoffset, "<b>");
-    }
-    //std::cout << std::endl << res;
-    return res;
-}
-
-void Passage::addMatch(const int & startoffset, const int & endoffset) {
-   matches.push_back(std::make_tuple(startoffset, endoffset)); 
-   return ;
-} 
 
 
 
