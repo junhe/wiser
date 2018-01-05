@@ -169,37 +169,4 @@ CountMapType count_tokens(const std::string &token_text) {
 }
 
 
-
-
-///////////////////////////////////////////////
-// LineDoc
-///////////////////////////////////////////////
-
-LineDoc::LineDoc(std::string path) {
-    infile_.open(path);
-
-    if (infile_.good() == false) {
-        throw std::runtime_error("File may not exist");
-    }
-
-    std::string line; 
-    std::getline(infile_, line);
-    std::vector<std::string> items = explode(line, '#');
-    // TODO: bad! this may halt the program when nothing is in line
-    items = explode_by_non_letter(items.back()); 
-    col_names_ = items;
-}
-
-bool LineDoc::GetRow(std::vector<std::string> &items) {
-    std::string line;
-    auto &ret = std::getline(infile_, line);
-
-    if (ret) {
-        items = explode_strict(line, '\t');
-        return true;
-    } else {
-        return false;
-    }
-}
-
 } // namespace util
