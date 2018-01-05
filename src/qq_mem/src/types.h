@@ -42,7 +42,10 @@ typedef double qq_float;
 // Basic types for highlighter
 typedef std::vector<int> TopDocs;
 typedef std::tuple<int, int> Offset;  // (startoffset, endoffset)
+typedef Offset OffsetPair; // Alias for Offset, more intuitive
 typedef std::vector<Offset> Offsets;
+typedef Offsets OffsetPairs; // Alias for Offsets, more intuitive
+
 class TermWithOffset { // class Term_With_Offset
     public:
         Term term_;

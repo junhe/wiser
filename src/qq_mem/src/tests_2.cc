@@ -31,6 +31,3 @@ TEST_CASE( "SimpleHighlighter works", "[highlighter]" ) {
   }
 }
 
-
-
-

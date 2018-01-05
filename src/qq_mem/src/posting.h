@@ -60,18 +60,34 @@ class PostingSimple : public PostingService {
 
 
 class RankingPosting {
-  public:
-    int doc_id_;
-    int term_frequency_;
+ protected:
+  int doc_id_;
+  int term_frequency_;
 
-    RankingPosting(){};
-    RankingPosting(int doc_id, int term_frequency)
-      :doc_id_(doc_id), term_frequency_(term_frequency)
-    {
-    }
-    const int GetDocId() const {return doc_id_;}
-    const int GetTermFreq() const {return term_frequency_;}
+ public:
+  RankingPosting(){};
+  RankingPosting(int doc_id, int term_frequency)
+    :doc_id_(doc_id), term_frequency_(term_frequency)
+  {}
+  const int GetDocId() const {return doc_id_;}
+  const int GetTermFreq() const {return term_frequency_;}
 };
 
+
+// This is class is created because I do not want to modify 
+// RankingPosting, which would incur changes in many places.
+class RankingPostingWithOffsets: RankingPosting {
+ protected:
+  OffsetPairs offset_pairs_;
+
+ public:
+  RankingPostingWithOffsets(const int &doc_id, 
+                 const int &term_frequency, 
+                 const OffsetPairs &offset_pairs)
+    :RankingPosting(doc_id, term_frequency), offset_pairs_(offset_pairs)
+  {}
+
+  const OffsetPairs *GetOffsetPairs() const {return &offset_pairs_;}
+};
 
 #endif
