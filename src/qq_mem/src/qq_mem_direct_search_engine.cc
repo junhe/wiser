@@ -29,6 +29,7 @@ void QQMemDirectSearchEngine::AddDocument(const std::string &title, const std::s
                                  const std::string &body) {
     int doc_id = NextDocId();
     doc_store_.Add(doc_id, body);
+    std::cout << "Get there!" << std::endl;
     // Tokenize the document(already pre-processed using scripts)
     std::vector<std::string> terms = utils::explode(body, ' ');
     
