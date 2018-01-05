@@ -33,8 +33,6 @@ class SearchEngineService {
   int next_doc_id_ = 0;
 };
 
-typedef int DocIdType;
-typedef double qq_float;
 
 class DocumentStoreService {
     public:

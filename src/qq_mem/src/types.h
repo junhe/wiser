@@ -36,6 +36,8 @@ typedef std::string Term;
 typedef std::vector<Term> TermList;
 typedef TermList Query;
 enum class SearchOperator {AND, OR};
+typedef int DocIdType;
+typedef double qq_float;
 
 // Basic types for highlighter
 typedef std::vector<int> TopDocs;

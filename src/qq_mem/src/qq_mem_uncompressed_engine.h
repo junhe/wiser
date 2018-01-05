@@ -1,6 +1,7 @@
 #ifndef QQ_MEM_UNCOMPRESSED_ENGINE_H
 #define QQ_MEM_UNCOMPRESSED_ENGINE_H
 
+#include "doc_length_store.h"
 #include "intersect.h"
 #include "utils.h"
 #include "native_doc_store.h"

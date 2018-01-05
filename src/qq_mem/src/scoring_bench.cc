@@ -8,6 +8,7 @@
 
 #include <glog/logging.h>
 
+#include "doc_length_store.h"
 #include "intersect.h"
 #include "ranking.h"
 #include "utils.h"
