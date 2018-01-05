@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <map>
+#include <unordered_map>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,9 @@ const std::vector<Offsets> parse_offsets(const std::string& s);
 const std::string format_double(const double &x, const int &precision);
 
 std::vector<DocIdType> find_top_k(const DocScoreVec &doc_scores, int k);
+int count_terms(const std::string field);
+typedef std::unordered_map<Term, int> CountMapType;
+CountMapType count_tokens(const std::string &token_text);
 
 typedef std::map<std::string, std::string> ResultRow;
 

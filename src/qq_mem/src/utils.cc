@@ -148,6 +148,28 @@ std::vector<DocIdType> find_top_k(const DocScoreVec &doc_scores, int k) {
   return ret;
 }
 
+// It returns the number of terms in field
+int count_terms(const std::string field) {
+  return utils::explode(field, ' ').size();
+}
+
+CountMapType count_tokens(const std::string &token_text) {
+  CountMapType counts;
+  auto tokens = utils::explode(token_text, ' ');
+
+  for (auto token : tokens) {
+    auto it = counts.find(token);
+    if (it == counts.end()) {
+      counts[token] = 1;
+    } else {
+      it->second++;
+    }
+  }
+  return counts;
+}
+
+
+
 
 ///////////////////////////////////////////////
 // LineDoc

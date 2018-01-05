@@ -1262,11 +1262,11 @@ TEST_CASE( "We can get score for each document", "[ranking]" ) {
 
 TEST_CASE( "Utilities work", "[utils]" ) {
   SECTION("Count terms") {
-    REQUIRE(count_terms("hello world") == 2);
+    REQUIRE(utils::count_terms("hello world") == 2);
   }
 
   SECTION("Count tokens") {
-    CountMapType counts = count_tokens("hello hello you");
+    utils::CountMapType counts = utils::count_tokens("hello hello you");
     assert(counts["hello"] == 2);
     assert(counts["you"] == 1);
     assert(counts.size() == 2);

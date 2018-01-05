@@ -5,30 +5,6 @@
 #include "utils.h"
 #include "native_doc_store.h"
 
-// It returns the number of terms in field
-int count_terms(const std::string field) {
-  return utils::explode(field, ' ').size();
-}
-
-
-typedef std::unordered_map<Term, int> CountMapType;
-CountMapType count_tokens(const std::string &token_text) {
-  CountMapType counts;
-  auto tokens = utils::explode(token_text, ' ');
-
-  for (auto token : tokens) {
-    auto it = counts.find(token);
-    if (it == counts.end()) {
-      counts[token] = 1;
-    } else {
-      it->second++;
-    }
-  }
-  return counts;
-}
-
-
-
 class InvertedIndexQqMem {
  private:
   typedef PostingList_Vec<RankingPosting> PostingListType;
@@ -63,7 +39,7 @@ class InvertedIndexQqMem {
   void AddDocument(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
     TermList token_vec = utils::explode(tokens, ' ');
-    CountMapType token_counts = count_tokens(tokens);
+    utils::CountMapType token_counts = utils::count_tokens(tokens);
 
     for (auto token_it = token_counts.begin(); token_it != token_counts.end(); 
         token_it++) {
@@ -156,7 +132,7 @@ class QqMemUncompressedEngine {
 
     doc_store_.Add(doc_id, body);
     inverted_index_.AddDocument(doc_id, body, tokens);
-    doc_lengths_.AddLength(doc_id, count_terms(body));
+    doc_lengths_.AddLength(doc_id, utils::count_terms(body));
     return doc_id;
   }
 
