@@ -96,7 +96,9 @@ target_link_libraries(qq_client
 # Catch2 testing framework
 #######################################
 add_library( CatchMain OBJECT catch_main.cc catch.hpp )
-add_executable( testmain tests.cc 
+add_executable( testmain 
+    tests.cc 
+    tests_2.cc
     grpc_client_impl.cc
     ${ENGINE_SRCS}
     ${PROTO_SRCS}

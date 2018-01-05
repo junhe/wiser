@@ -3,6 +3,7 @@
 #include <iostream>
 #include <iomanip>
 #include <set>
+#include <sstream>
 
 #include <boost/filesystem.hpp>
 #include <boost/lambda/lambda.hpp>    
@@ -33,7 +34,6 @@
 
 // cereal
 #include <cereal/archives/binary.hpp>
-#include <sstream>
 
 
 unsigned int Factorial( unsigned int number ) {
@@ -1427,7 +1427,6 @@ TEST_CASE( "Class Staircase can generate staircase strings", "[utils]" ) {
     REQUIRE(staircase.NextLayer() == "0 1 2 3 4 5");
     REQUIRE(staircase.NextLayer() == "");
   }
-
 }
 
 
