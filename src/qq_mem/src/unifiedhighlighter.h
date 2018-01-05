@@ -1,12 +1,16 @@
 #ifndef UNIFIEDHIGHLIGHTER_H
 #define UNIFIEDHIGHLIGHTER_H
+
+#include <queue>
+#include <math.h> 
+#include <fstream>
+
+#include <boost/locale.hpp>
+
 #include "engine_services.h"
 #include "types.h"
 #include "qq_engine.h"
 #include "lrucache.h"
-#include <boost/locale.hpp>
-#include <math.h> 
-#include <fstream>
 
 class PassageScore_Iterator {
  public:
@@ -239,6 +243,139 @@ class UnifiedHighlighter {
         //float passage_norm(int & start_offset);
         //float tf_norm(int freq, int passageLen);
 }; 
+
+
+class SimpleHighlighter {
+ public:
+  std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, 
+                                    const int & docID, 
+                                    const int & maxPassages, 
+                                    const std::string &doc_str) {
+    // break the document according to sentence
+    SentenceBreakIterator breakiterator(doc_str);
+
+    // "merge sorting" to calculate all sentence's score
+
+    // priority queue for Offset_Iterator TODO extra copy
+    auto comp_offset = [] (Offset_Iterator &a, Offset_Iterator &b) -> bool { return a.startoffset > b.startoffset; };
+    std::priority_queue<Offset_Iterator, std::vector<Offset_Iterator>, decltype(comp_offset)> offsets_queue(comp_offset);
+    for (auto it = offsetsEnums.begin(); it != offsetsEnums.end(); it++ ) {
+      offsets_queue.push(*it);
+    }
+    // priority queue for passages
+    auto comp_passage = [] (Passage * & a, Passage * & b) -> bool { return a->score > b->score; };
+    std::priority_queue<Passage *, std::vector<Passage*>, decltype(comp_passage)> passage_queue(comp_passage);
+
+    // start caculate score for passage
+
+    Passage * passage = new Passage();  // current passage
+    while (!offsets_queue.empty()) {
+      // analyze current passage
+      Offset_Iterator cur_iter = offsets_queue.top();
+      offsets_queue.pop();
+
+      int cur_start = cur_iter.startoffset;
+      int cur_end = cur_iter.endoffset;
+      // judge whether this iterator is over
+      if (cur_start == -1)
+        continue;
+
+      // judge whether this iterator's offset is beyond current passage
+      if (cur_start >= passage->endoffset) {
+        // if this passage is not empty, then wrap up it and push it to the priority queue
+        if (passage->startoffset >= 0) {
+          passage->score = passage->score * passage_norm(passage->startoffset); //normalize according to passage's startoffset
+          if (passage_queue.size() == maxPassages && passage->score <= passage_queue.top()->score) {
+            passage->reset();
+          } else {
+            passage_queue.push(passage);
+            if (passage_queue.size() > maxPassages) {
+              passage = passage_queue.top();
+              passage_queue.pop();
+              passage->reset();
+            } else {
+              passage = new Passage();
+            }
+          }
+        }
+        // advance to next passage
+        if (breakiterator.next(cur_start+1) <= 0)
+          break;
+        passage->startoffset = breakiterator.getStartOffset();
+        passage->endoffset = breakiterator.getEndOffset();
+      }
+
+      // Add this term's appearance to current passage until out of this passage
+      int tf = 0;
+      while (1) {
+        tf++;
+        passage->addMatch(cur_start, cur_end); 
+        cur_iter.next_position();
+        if (cur_iter.startoffset == -1) {
+          break;
+        }
+        cur_start = cur_iter.startoffset;
+        cur_end = cur_iter.endoffset;
+        if (cur_start >= passage->endoffset) {
+          offsets_queue.push(cur_iter);
+          break;
+        }
+      }
+      // Add the score from this term to this passage
+      passage->score = passage->score + cur_iter.weight * tf_norm(tf, passage->endoffset-passage->startoffset+1);   //scoring
+    }
+
+    // Add the last passage
+    passage->score = passage->score * passage_norm(passage->startoffset);
+    if (passage_queue.size() < maxPassages && passage->score > 0) {
+      passage_queue.push(passage);
+    } else {
+      if (passage->score > passage_queue.top()->score) {
+        Passage * tmp = passage_queue.top();
+        passage_queue.pop();
+        delete tmp;
+        passage_queue.push(passage);
+      }
+    }
+
+    // format it into a string to return
+    std::vector<Passage *> passage_vector;
+    while (!passage_queue.empty()) {
+      passage_vector.push_back(passage_queue.top());
+      passage_queue.pop();
+    }
+    // sort array according to startoffset
+    auto comp_passage_offset = [] (Passage * & a, Passage * & b) -> bool { return a->startoffset < b->startoffset; };
+    std::sort(passage_vector.begin(), passage_vector.end(), comp_passage_offset);
+
+
+    // format the final string
+    std::string res = "";
+    for (auto it = passage_vector.begin(); it != passage_vector.end(); it++) {
+      res += (*it)->to_string(breakiterator.content_);   // highlight appeared terms
+      //std::cout <<  "("  << (*it)->score << ") " << breakiterator.content_->substr((*it)->startoffset, (*it)->endoffset - (*it)->startoffset+1) << std::endl;
+      delete (*it);
+    }
+
+    return res;
+  }
+
+  float passage_norm(const int & start_offset) {
+      return 1 + 1/(float) log((float)(pivot + start_offset));
+  }
+
+  float tf_norm(const int & freq, const int & passageLen) {
+      float norm = k1 * ((1 - b) + b * (passageLen / pivot));
+      return freq / (freq + norm);
+  }
+
+
+ protected:
+  float pivot = 87;  // hard-coded average length of passage(according to Lucene)
+  float k1 = 1.2;    // BM25 parameters
+  float b = 0.75;    // BM25 parameters
+};
+
 
 
 #endif

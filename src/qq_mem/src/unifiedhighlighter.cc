@@ -1,7 +1,6 @@
 #include "unifiedhighlighter.h"
 #include "posting.h"
 #include <iostream>
-#include <queue>
 #include <algorithm>
 
 // UnifiedHighlighter Functions
