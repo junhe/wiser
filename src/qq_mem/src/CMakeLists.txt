@@ -33,7 +33,7 @@ grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 
 set(ENGINE_SRCS 
     native_doc_store.cc
-    posting_basic.cc
+    posting.cc
     posting_list_direct.cc
     posting_list_protobuf.cc
     posting_list_raw.cc

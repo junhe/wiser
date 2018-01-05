@@ -1,5 +1,5 @@
-#ifndef POSTING_BASIC_H
-#define POSTING_BASIC_H
+#ifndef POSTING_H
+#define POSTING_H
 
 #include "engine_services.h"
 #include "types.h"

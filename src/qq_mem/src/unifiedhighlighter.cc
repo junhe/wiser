@@ -1,5 +1,5 @@
 #include "unifiedhighlighter.h"
-#include "posting_basic.h"
+#include "posting.h"
 #include <iostream>
 #include <queue>
 #include <algorithm>
@@ -198,7 +198,7 @@ std::string UnifiedHighlighter::highlight_passages(const Query & query, const in
 std::string UnifiedHighlighter::highlightQuickForDoc(const Query & query, const int & docID, const int &maxPassages) {
     /* precomputed:
            1. passage sentence splits in DocumentStoreService.passages_store_
-           2. each item, each posting: every passage score for this document in posting_basic.passage_scores_
+           2. each item, each posting: every passage score for this document in posting.passage_scores_
        to compute:
            1. top-maxPassages scores of those passages for (query, docID)
     */

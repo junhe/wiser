@@ -1,4 +1,4 @@
-#include "posting_basic.h"
+#include "posting.h"
 #include "posting_list_protobuf.h"
 
 #include <string.h>

@@ -5,7 +5,7 @@
 
 #include <glog/logging.h>
 
-#include "posting_basic.h"
+#include "posting.h"
 #include "intersect.h"
 #include "utils.h"
 

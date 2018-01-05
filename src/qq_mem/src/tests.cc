@@ -812,7 +812,7 @@ TEST_CASE("Precompute and store document sentence segments successfully", "[Prec
 // TODO: test cases for precomputed based snippet generating
 
 TEST_CASE("Serialization tools essential operations work", "[Serialization_Tools]") {
-    // protobuf, using posting_basic
+    // protobuf, using posting
   
     if (!FLAG_SNIPPETS_PRECOMPUTE)
         return;

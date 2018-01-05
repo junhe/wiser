@@ -5,7 +5,7 @@
 #include <string.h>
 #include "engine_services.h"
 #include "types.h"
-#include "posting_basic.h"
+#include "posting.h"
 
 // Posting_List Class
 class PostingList_Raw :  public PostingListService {

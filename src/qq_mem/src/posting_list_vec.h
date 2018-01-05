@@ -8,7 +8,7 @@
 #include <glog/logging.h>
 
 #include "engine_services.h"
-#include "posting_basic.h"
+#include "posting.h"
 
 
 // Requirements for class T:
