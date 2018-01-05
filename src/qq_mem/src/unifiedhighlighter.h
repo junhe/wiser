@@ -248,7 +248,6 @@ class UnifiedHighlighter {
 class SimpleHighlighter {
  public:
   std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, 
-                                    const int & docID, 
                                     const int & maxPassages, 
                                     const std::string &doc_str) {
     // break the document according to sentence
