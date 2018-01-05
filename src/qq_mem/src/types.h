@@ -22,7 +22,7 @@
 #define POSTING_SERIALIZATION "cereal"    // cereal or protobuf
 
 // for precomputing of snippets generating
-#define FLAG_SNIPPETS_PRECOMPUTE true
+#define FLAG_SNIPPETS_PRECOMPUTE false
 
 // size of snippets cache of highlighter
 #define SNIPPETS_CACHE_SIZE 100

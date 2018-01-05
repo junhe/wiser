@@ -40,7 +40,6 @@ void InvertedIndex::AddDocument(const int &doc_id, const TermList &termlist) {
 
         PostingList_Direct &postinglist = it->second;        
         postinglist.AddPosting(doc_id, 0, Offsets{});
-        std::cout << "Get there!!!!";
     }
 }
 
@@ -71,6 +70,7 @@ std::vector<int> InvertedIndex::Search(const TermList &terms, const SearchOperat
         throw "NotImplementedError";
     }
 
+    std::cout << "==== Get in search" << std::endl;
     std::vector<int> doc_ids;
     for (auto &term : terms) {
         auto tmp_doc_ids = GetDocumentIds(term);
@@ -78,6 +78,7 @@ std::vector<int> InvertedIndex::Search(const TermList &terms, const SearchOperat
     }
 
     std::set<int> id_set(doc_ids.begin(), doc_ids.end());
+    std::cout << "size of results: " << *id_set.begin() << std::endl;
     return std::vector<int> (id_set.begin(), id_set.end());
 }
 

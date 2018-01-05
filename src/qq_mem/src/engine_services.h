@@ -8,7 +8,7 @@
 #include <tuple>
 #include "types.h"
 
-// This class is the basic abstract class for
+// This class is the basic abstract for
 // different kinds of search engine implementations:
 //   1. QQMemDirectSearchEngine: all contents directly(no serialization) stored in memory
 //   2.
