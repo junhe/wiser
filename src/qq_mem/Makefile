@@ -47,6 +47,15 @@ test:
 	cd ..
 	./build/testmain ${args}
 
+test_fast:
+	rm -f ./build/testmain
+	mkdir -p ./build
+	cd build
+	cmake ../src/
+	make -j32 testmain
+	cd ..
+	./build/testmain '~[grpc]'
+
 test_args:
 	rm -f ./build/testmain
 	mkdir -p ./build
