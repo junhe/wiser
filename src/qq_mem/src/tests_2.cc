@@ -1,6 +1,7 @@
 #include "catch.hpp"
 
 #include "unifiedhighlighter.h"
+#include "intersect.h"
 
 TEST_CASE( "SimpleHighlighter works", "[highlighter]" ) {
   std::string doc_str = "hello world";
@@ -30,4 +31,19 @@ TEST_CASE( "SimpleHighlighter works", "[highlighter]" ) {
     REQUIRE(s == "<b>hello<\\b> <b>world<\\b>\n");
   }
 }
+
+TEST_CASE( "IntersectionResult works", "[intersection]" ) {
+  IntersectionResult res;
+
+  SECTION("Doc count works") {
+    res.SetDocCount("term1", 8);
+    REQUIRE(res.GetDocCount("term1") == 8);
+  }
+
+  SECTION("Basic Posting setting and getting work") {
+
+  }
+}
+
+
 

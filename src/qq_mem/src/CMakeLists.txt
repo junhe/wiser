@@ -38,6 +38,7 @@ set(ENGINE_SRCS
     posting_list_protobuf.cc
     posting_list_raw.cc
     inverted_index.cc
+    intersect.cc
     index_creator.cc
     qq_engine.cc
     search_engine_service.cc
