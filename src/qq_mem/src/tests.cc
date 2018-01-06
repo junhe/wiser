@@ -1100,7 +1100,7 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
     IntersectionResult result;
 
-    std::vector<DocIdType> ret = intersect_temp<PostingSimple>(lists, &result);
+    std::vector<DocIdType> ret = intersect<PostingSimple>(lists, &result);
     REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
     REQUIRE(result.GetDocCount("hello") == 10);
     REQUIRE(result.GetDocCount("world") == 15);
@@ -1119,7 +1119,7 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     std::vector<const PostingList_Vec<RankingPosting>*> lists{&pl01, &pl02};
     IntersectionResult result;
 
-    std::vector<DocIdType> ret = intersect_temp<RankingPosting>(lists, &result);
+    std::vector<DocIdType> ret = intersect<RankingPosting>(lists, &result);
 
     REQUIRE(ret == std::vector<DocIdType>{10});
     REQUIRE(result.GetPosting(10, "hello")->GetTermFreq() == 2);
@@ -1139,7 +1139,7 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     std::vector<const PostingList_Vec<RankingPosting>*> lists{&pl01, &pl02};
     IntersectionResult result;
 
-    std::vector<DocIdType> ret = intersect_temp<RankingPosting>(lists, &result);
+    std::vector<DocIdType> ret = intersect<RankingPosting>(lists, &result);
 
     REQUIRE(ret == std::vector<DocIdType>{10});
     REQUIRE(result.GetPosting(10, "hello")->GetTermFreq() == 2);

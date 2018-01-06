@@ -62,7 +62,7 @@ class InvertedIndexQqMem {
       return result; // return an empty one
     }
 
-    intersect_temp<RankingPosting>(postinglist_pointers, &result);
+    intersect<RankingPosting>(postinglist_pointers, &result);
     return result;
   }
 
