@@ -46,6 +46,10 @@ class IntersectionResult {
     return table_.cend();
   }
 
+  static Term GetCurTerm(col_iterator &it) {
+    return it->first;
+  }
+
   static const RankingPosting *GetPosting(col_iterator &it) {
     return it->second;
   }
@@ -172,6 +176,11 @@ class TfIdfStore {
 
 TermScoreMap score_terms_in_doc(const TfIdfStore &tfidf_store, 
     TfIdfStore::row_iterator row_it,
+    const qq_float &avg_doc_length, 
+    const int &doc_length,
+    const int &total_docs);
+TermScoreMap score_terms_in_doc(const IntersectionResult &intersection_result, 
+    IntersectionResult::row_iterator row_it,
     const qq_float &avg_doc_length, 
     const int &doc_length,
     const int &total_docs);

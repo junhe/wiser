@@ -1243,6 +1243,20 @@ TEST_CASE( "We can get score for each document", "[ranking]" ) {
     REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
   }
 
+  SECTION("It gets the same score as ES, for one term") {
+    IntersectionResult result;
+    RankingPosting posting(0, 1); // id=0, term_freq=1
+
+    result.SetPosting(0, "term1", &posting);
+    result.SetDocCount("term1", 1);
+
+    IntersectionResult::row_iterator it = result.row_cbegin();
+
+    TermScoreMap term_scores = score_terms_in_doc(result, it, 3, 3, 1);
+
+    REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
+  }
+
   SECTION("It gets the same score as ES, for two terms") {
     TfIdfStore table;
     table.SetTf(0, "term1", 1);
