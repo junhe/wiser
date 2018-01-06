@@ -75,7 +75,7 @@ class RankingPosting {
 
 
 // This is class is created because I do not want to modify 
-// RankingPosting, which would incur changes in many places.
+// RankingPosting. The modifications would incur changes in many other places.
 class RankingPostingWithOffsets: RankingPosting {
  protected:
   OffsetPairs offset_pairs_;
