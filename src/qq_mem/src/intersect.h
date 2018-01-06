@@ -46,8 +46,13 @@ class IntersectionResult {
     return table_.cend();
   }
 
+
   static Term GetCurTerm(col_iterator &it) {
     return it->first;
+  }
+
+  const RankingPosting *GetPosting(const DocIdType &doc_id, const Term &term) {
+    return table_[doc_id][term]; 
   }
 
   static const RankingPosting *GetPosting(col_iterator &it) {
@@ -357,7 +362,7 @@ std::vector<DocIdType> intersect_temp(
         for (int i = 0; i < n_lists; i++) {
           const PostingList_Vec<T> *postinglist = lists[i];
           typename PostingList_Vec<T>::iterator_t *p_it = &posting_iters[i];
-          const RankingPosting *posting = postinglist->GetPosting(*p_it); 
+          const RankingPosting *posting = &postinglist->GetPosting(*p_it); 
           res->SetPosting(max_doc_id, postinglist->GetTerm(), posting);
         }
       }

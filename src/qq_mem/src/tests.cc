@@ -1126,6 +1126,26 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     REQUIRE(tfidf_store.GetTf(10, "world") == 8);
   }
 
+  SECTION("It returns term freqs (new)") {
+    PostingList_Vec<RankingPosting> pl01("hello");   
+    pl01.AddPosting(RankingPosting(8, 1));
+    pl01.AddPosting(RankingPosting(10, 2));
+
+    PostingList_Vec<RankingPosting> pl02("world");   
+    pl02.AddPosting(RankingPosting(7, 1));
+    pl02.AddPosting(RankingPosting(10, 8));
+    pl02.AddPosting(RankingPosting(15, 1));
+
+    std::vector<const PostingList_Vec<RankingPosting>*> lists{&pl01, &pl02};
+    IntersectionResult result;
+
+    std::vector<DocIdType> ret = intersect_temp<RankingPosting>(lists, &result);
+
+    REQUIRE(ret == std::vector<DocIdType>{10});
+    REQUIRE(result.GetPosting(10, "hello")->GetTermFreq() == 2);
+    REQUIRE(result.GetPosting(10, "world")->GetTermFreq() == 8);
+  }
+
 }
 
 TEST_CASE( "DocLengthStore", "[ranking]" ) {
