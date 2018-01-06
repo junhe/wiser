@@ -41,7 +41,34 @@ TEST_CASE( "IntersectionResult works", "[intersection]" ) {
   }
 
   SECTION("Basic Posting setting and getting work") {
+    RankingPosting *p0, *p1, *p2;
+    const RankingPosting *p;
 
+    res.SetPosting(0, "term1", p0);
+    res.SetPosting(1, "term1", p1);
+    res.SetPosting(2, "term1", p2);
+
+    auto row_it = res.row_cbegin();
+    auto col_it = IntersectionResult::col_cbegin(row_it);
+    p = IntersectionResult::GetPosting(col_it);
+    REQUIRE(IntersectionResult::GetCurDocId(row_it) == 0);
+    REQUIRE(p == p0);
+
+    col_it++;
+    REQUIRE(col_it == IntersectionResult::col_cend(row_it));
+
+
+    row_it++;
+    col_it = IntersectionResult::col_cbegin(row_it);
+    p = IntersectionResult::GetPosting(col_it);
+    REQUIRE(IntersectionResult::GetCurDocId(row_it) == 1);
+    REQUIRE(p == p1);
+
+    row_it++;
+    col_it = IntersectionResult::col_cbegin(row_it);
+    p = IntersectionResult::GetPosting(col_it);
+    REQUIRE(IntersectionResult::GetCurDocId(row_it) == 2);
+    REQUIRE(p == p2);
   }
 }
 
