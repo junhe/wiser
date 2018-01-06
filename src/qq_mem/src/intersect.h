@@ -16,7 +16,7 @@
 
 class IntersectionResult {
  private: 
-  typedef std::map<Term, const RankingPosting *> row_dict_t; 
+  typedef std::map<Term, const QqMemPostingService *> row_dict_t; 
   typedef std::map<DocIdType, row_dict_t> table_dict_t;
 
   typedef std::map<Term, int> doc_cnt_dict_t;
@@ -30,7 +30,7 @@ class IntersectionResult {
 
   void SetPosting(const DocIdType &doc_id, 
                   const Term &term, 
-                  const RankingPosting* posting) {
+                  const QqMemPostingService* posting) {
     table_[doc_id][term] = posting;
   }
 
@@ -51,11 +51,11 @@ class IntersectionResult {
     return it->first;
   }
 
-  const RankingPosting *GetPosting(const DocIdType &doc_id, const Term &term) {
+  const QqMemPostingService *GetPosting(const DocIdType &doc_id, const Term &term) {
     return table_[doc_id][term]; 
   }
 
-  static const RankingPosting *GetPosting(col_iterator &it) {
+  static const QqMemPostingService *GetPosting(col_iterator &it) {
     return it->second;
   }
 
@@ -368,7 +368,7 @@ std::vector<DocIdType> intersect_temp(
         for (int i = 0; i < n_lists; i++) {
           const PostingList_Vec<T> *postinglist = lists[i];
           typename PostingList_Vec<T>::iterator_t *p_it = &posting_iters[i];
-          const RankingPosting *posting = &postinglist->GetPosting(*p_it); 
+          const QqMemPostingService *posting = &postinglist->GetPosting(*p_it); 
           res->SetPosting(max_doc_id, postinglist->GetTerm(), posting);
         }
       }

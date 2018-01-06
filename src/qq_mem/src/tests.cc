@@ -1098,12 +1098,12 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     }
 
     std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-    TfIdfStore tfidf_store;
+    IntersectionResult result;
 
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists, &tfidf_store);
+    std::vector<DocIdType> ret = intersect_temp<PostingSimple>(lists, &result);
     REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
-    REQUIRE(tfidf_store.GetDocCount("hello") == 10);
-    REQUIRE(tfidf_store.GetDocCount("world") == 15);
+    REQUIRE(result.GetDocCount("hello") == 10);
+    REQUIRE(result.GetDocCount("world") == 15);
   }
 
   SECTION("It returns term freqs") {

@@ -74,8 +74,12 @@ class InvertedIndexService {
 };
 
 class PostingService {
-    public:
-        virtual std::string dump() = 0;
+};
+
+class QqMemPostingService {
+ public:
+  virtual const int GetDocId() const = 0;
+  virtual const int GetTermFreq() const = 0;
 };
 
 

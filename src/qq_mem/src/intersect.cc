@@ -55,7 +55,7 @@ TermScoreMap score_terms_in_doc(const IntersectionResult &intersection_result,
   {
     // each column contains a term.
     Term cur_term = IntersectionResult::GetCurTerm(col_it);
-    const RankingPosting *posting = IntersectionResult::GetPosting(col_it);
+    const QqMemPostingService *posting = IntersectionResult::GetPosting(col_it);
     int cur_term_freq = posting->GetTermFreq();
     int doc_freq = intersection_result.GetDocCount(cur_term);
 

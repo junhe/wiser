@@ -41,7 +41,7 @@ class Posting : public PostingService {
 };
 
 
-class PostingSimple : public PostingService {
+class PostingSimple : public QqMemPostingService {
  public:
   int docID_;
   int term_frequency_;
@@ -59,7 +59,7 @@ class PostingSimple : public PostingService {
 };
 
 
-class RankingPosting {
+class RankingPosting : public QqMemPostingService {
  protected:
   int doc_id_;
   int term_frequency_;
@@ -76,7 +76,7 @@ class RankingPosting {
 
 // This is class is created because I do not want to modify 
 // RankingPosting. The modifications would incur changes in many other places.
-class RankingPostingWithOffsets: RankingPosting {
+class RankingPostingWithOffsets: public RankingPosting {
  protected:
   OffsetPairs offset_pairs_;
 

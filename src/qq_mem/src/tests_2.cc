@@ -42,7 +42,7 @@ TEST_CASE( "IntersectionResult works", "[intersection]" ) {
 
   SECTION("Basic Posting setting and getting work") {
     RankingPosting *p0, *p1, *p2;
-    const RankingPosting *p;
+    const QqMemPostingService *p;
 
     res.SetPosting(0, "term1", p0);
     res.SetPosting(1, "term1", p1);
