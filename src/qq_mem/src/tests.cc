@@ -1315,19 +1315,19 @@ TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
   REQUIRE(inverted_index.Size() == 3);
 
   SECTION("It can find an intersection for single-term queries") {
-    TfIdfStore store = inverted_index.FindIntersection(TermList{"hello"});
+    IntersectionResult store = inverted_index.FindIntersection(TermList{"hello"});
     REQUIRE(store.Size() == 2);
     auto it = store.row_cbegin();
-    REQUIRE(TfIdfStore::GetCurDocId(it) == 0);
+    REQUIRE(IntersectionResult::GetCurDocId(it) == 0);
     it++;
-    REQUIRE(TfIdfStore::GetCurDocId(it) == 1);
+    REQUIRE(IntersectionResult::GetCurDocId(it) == 1);
   }
 
   SECTION("It can find an intersection for two-term queries") {
-    TfIdfStore store = inverted_index.FindIntersection(TermList{"hello", "world"});
+    IntersectionResult store = inverted_index.FindIntersection(TermList{"hello", "world"});
     REQUIRE(store.Size() == 1);
     auto it = store.row_cbegin();
-    REQUIRE(TfIdfStore::GetCurDocId(it) == 0);
+    REQUIRE(IntersectionResult::GetCurDocId(it) == 0);
   }
 }
 
@@ -1351,21 +1351,20 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
   REQUIRE(engine.TermCount() == 4);
 
   SECTION("The engine can serve single-term queries") {
-    TfIdfStore tfidf_store = engine.Query(TermList{"wisconsin"}); 
-    REQUIRE(tfidf_store.Size() == 1);
-    std::cout << tfidf_store.ToStr();
+    IntersectionResult result = engine.Query(TermList{"wisconsin"}); 
+    REQUIRE(result.Size() == 1);
 
-    DocScoreVec doc_scores = engine.Score(tfidf_store);
+    DocScoreVec doc_scores = engine.Score(result);
     REQUIRE(doc_scores.size() == 1);
     REQUIRE(doc_scores[0].doc_id == 1);
     REQUIRE(utils::format_double(doc_scores[0].score, 3) == "1.09");
   }
 
   SECTION("The engine can serve single-term queries with multiple results") {
-    TfIdfStore tfidf_store = engine.Query(TermList{"hello"}); 
-    REQUIRE(tfidf_store.Size() == 3);
+    IntersectionResult result = engine.Query(TermList{"hello"}); 
+    REQUIRE(result.Size() == 3);
 
-    DocScoreVec doc_scores = engine.Score(tfidf_store);
+    DocScoreVec doc_scores = engine.Score(result);
     REQUIRE(doc_scores.size() == 3);
 
     // The score below is produced by ../tools/es_index_docs.py in this
@@ -1378,14 +1377,14 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
   }
 
   SECTION("The engine can server two-term queries") {
-    TfIdfStore tfidf_store = engine.Query(TermList{"hello", "world"}); 
-    REQUIRE(tfidf_store.Size() == 2);
-    auto it = tfidf_store.row_cbegin();
-    REQUIRE(TfIdfStore::GetCurDocId(it) == 0);
+    IntersectionResult result = engine.Query(TermList{"hello", "world"}); 
+    REQUIRE(result.Size() == 2);
+    auto it = result.row_cbegin();
+    REQUIRE(IntersectionResult::GetCurDocId(it) == 0);
     it++;
-    REQUIRE(TfIdfStore::GetCurDocId(it) == 2);
+    REQUIRE(IntersectionResult::GetCurDocId(it) == 2);
 
-    DocScoreVec doc_scores = engine.Score(tfidf_store);
+    DocScoreVec doc_scores = engine.Score(result);
     REQUIRE(doc_scores.size() == 2);
 
     for (auto score : doc_scores) {

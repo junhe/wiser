@@ -28,12 +28,6 @@ class InvertedIndexQqMem {
     return postinglist_pointers;
   }
 
-  TfIdfStore IntersectPostinglists(const PlPointers &postinglist_pointers) {
-    TfIdfStore tfidf_store;
-    intersect<RankingPosting>(postinglist_pointers, &tfidf_store);
-    return tfidf_store;
-  }
-
  public:
   typedef IndexStore::const_iterator const_iterator;
 
@@ -60,19 +54,16 @@ class InvertedIndexQqMem {
     }
   }
 
-  // This function returns True if we find documents in the intersection.
-  // If it returns True, tfidf_store will be set.
-  //
   // terms must have unique terms.
-  TfIdfStore FindIntersection(const TermList &terms) {
+  IntersectionResult FindIntersection(const TermList &terms) {
     PlPointers postinglist_pointers = FindPostinglists(terms);
-    TfIdfStore tfidf_store;
+    IntersectionResult result;
     if (postinglist_pointers.size() < terms.size()) {
-      return tfidf_store; // return an empty one
+      return result; // return an empty one
     }
 
-    intersect<RankingPosting>(postinglist_pointers, &tfidf_store);
-    return tfidf_store;
+    intersect_temp<RankingPosting>(postinglist_pointers, &result);
+    return result;
   }
 
   std::vector<DocIdType> Search(const TermList &terms, const SearchOperator &op) {
@@ -149,12 +140,12 @@ class QqMemUncompressedEngine {
     return doc_lengths_.GetLength(doc_id);
   }
 
-  TfIdfStore Query(const TermList &terms) {
+  IntersectionResult Query(const TermList &terms) {
     return inverted_index_.FindIntersection(terms);
   }
 
-  DocScoreVec Score(const TfIdfStore &tfidf_store) {
-    return score_docs(tfidf_store, doc_lengths_);
+  DocScoreVec Score(const IntersectionResult &result) {
+    return score_docs(result, doc_lengths_);
   }
 
   std::vector<DocIdType> FindTopK(const DocScoreVec &doc_scores, int k) {
@@ -162,8 +153,8 @@ class QqMemUncompressedEngine {
   }
 
   std::vector<DocIdType> SearchWithoutSnippet(const TermList &terms) {
-    auto tfidf_store = Query(terms);
-    auto scores = Score(tfidf_store);
+    auto intersection_result = Query(terms);
+    auto scores = Score(intersection_result);
     return FindTopK(scores, 10);
   }
 };

@@ -74,6 +74,10 @@ class IntersectionResult {
   int GetDocCount(const Term &term) const {
     return doc_cnt_.at(term);
   }
+
+  std::size_t Size() {
+    return table_.size();
+  }
 };
 
 
@@ -193,6 +197,8 @@ TermScoreMap score_terms_in_doc(const IntersectionResult &intersection_result,
 qq_float aggregate_term_score(const TermScoreMap &term_scores);
 
 DocScoreVec score_docs(const TfIdfStore &tfidf_store, const DocLengthStore &doc_lengths);
+DocScoreVec score_docs(const IntersectionResult &intersection_result, 
+                       const DocLengthStore &doc_lengths);
 
 
 // lists is a vector of pointers, pointing to posting lists
