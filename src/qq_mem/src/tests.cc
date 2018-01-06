@@ -1117,13 +1117,13 @@ TEST_CASE( "Intersection", "[intersect]" ) {
     pl02.AddPosting(RankingPosting(15, 1));
 
     std::vector<const PostingList_Vec<RankingPosting>*> lists{&pl01, &pl02};
-    TfIdfStore tfidf_store;
+    IntersectionResult result;
 
-    std::vector<DocIdType> ret = intersect<RankingPosting>(lists, &tfidf_store);
+    std::vector<DocIdType> ret = intersect_temp<RankingPosting>(lists, &result);
 
     REQUIRE(ret == std::vector<DocIdType>{10});
-    REQUIRE(tfidf_store.GetTf(10, "hello") == 2);
-    REQUIRE(tfidf_store.GetTf(10, "world") == 8);
+    REQUIRE(result.GetPosting(10, "hello")->GetTermFreq() == 2);
+    REQUIRE(result.GetPosting(10, "world")->GetTermFreq() == 8);
   }
 
   SECTION("It returns term freqs (new)") {
@@ -1196,73 +1196,7 @@ TEST_CASE( "Scoring", "[ranking]" ) {
 
 
 
-TEST_CASE( "TfIdfStore works", "[TfIdfStore]" ) {
-  TfIdfStore table;
-
-  SECTION("It sets and gets IDF") {
-    table.SetDocCount("term1", 10);
-    REQUIRE(table.GetDocCount("term1") == 10);
-  }
-
-  SECTION("It sets and gets TF") {
-    table.SetTf(100, "term1", 2);
-    REQUIRE(table.GetTf(100, "term1") == 2);
-    REQUIRE(table.Size() == 1);
-
-    table.SetDocCount("wisconsin", 1);
-
-    SECTION("ToStr() works") {
-      auto str = table.ToStr();
-      REQUIRE(str == "DocId (100) : term1(2)\nDocument count for a term\nwisconsin(1)\n");
-    }
-  }
-
-  SECTION("Iterator works") {
-    table.SetTf(10, "term1", 2);
-    table.SetTf(10, "term2", 3);
-    table.SetTf(20, "term1", 8);
-    table.SetTf(20, "term2", 8);
-
-    REQUIRE(table.Size() == 2);
-
-    SECTION("Doc iterators work") {
-      TfIdfStore::row_iterator it = table.row_cbegin();
-      REQUIRE(table.GetCurDocId(it) == 10);
-      it++;
-      REQUIRE(table.GetCurDocId(it) == 20);
-      it++;
-      REQUIRE(it == table.row_cend());
-    }
-
-    SECTION("Term iterators work") {
-      TfIdfStore::row_iterator it = table.row_cbegin();
-      TfIdfStore::col_iterator term_it = table.col_cbegin(it);
-      REQUIRE(table.GetCurTerm(term_it) == "term1");
-      REQUIRE(table.GetCurTermFreq(term_it) == 2);
-      term_it++;
-      REQUIRE(table.GetCurTerm(term_it) == "term2");
-      REQUIRE(table.GetCurTermFreq(term_it) == 3);
-      term_it++;
-      REQUIRE(term_it == table.col_cend(it));
-    }
-  }
-}
-
-
 TEST_CASE( "We can get score for each document", "[ranking]" ) {
-  SECTION("It gets the same score as ES, for one term") {
-    TfIdfStore table;
-    table.SetTf(0, "term1", 1);
-
-    table.SetDocCount("term1", 1);
-
-    TfIdfStore::row_iterator it = table.row_cbegin();
-
-    TermScoreMap term_scores = score_terms_in_doc(table, it, 3, 3, 1);
-
-    REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
-  }
-
   SECTION("It gets the same score as ES, for one term") {
     IntersectionResult result;
     RankingPosting posting(0, 1); // id=0, term_freq=1
@@ -1278,20 +1212,23 @@ TEST_CASE( "We can get score for each document", "[ranking]" ) {
   }
 
   SECTION("It gets the same score as ES, for two terms") {
-    TfIdfStore table;
-    table.SetTf(0, "term1", 1);
-    table.SetTf(0, "term2", 1);
+    RankingPosting p0(0, 1), p1(0, 1);
+    IntersectionResult result;
 
-    table.SetDocCount("term1", 1);
-    table.SetDocCount("term2", 1);
+    result.SetPosting(0, "term1", &p0);
+    result.SetPosting(0, "term2", &p1);
 
-    TfIdfStore::row_iterator it = table.row_cbegin();
+    result.SetDocCount("term1", 1);
+    result.SetDocCount("term2", 1);
 
-    TermScoreMap term_scores = score_terms_in_doc(table, it, 7, 7, 1);
+    IntersectionResult::row_iterator it = result.row_cbegin();
+
+    TermScoreMap term_scores = score_terms_in_doc(result, it, 7, 7, 1);
 
     REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
     REQUIRE(utils::format_double(term_scores["term2"], 3) == "0.288"); // From an ES run
   }
+
 }
 
 TEST_CASE( "Utilities work", "[utils]" ) {
