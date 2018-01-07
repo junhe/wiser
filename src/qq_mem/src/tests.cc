@@ -1361,6 +1361,14 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     REQUIRE(snippets[1] == "<b>hello<\\b> world\n");
     REQUIRE(snippets[2] == "<b>hello<\\b> world big world\n");
   }
+
+  SECTION("It can generate snippets for two-term query") {
+    auto snippets = engine.SearchWithSnippet(TermList{"hello", "world"});
+    REQUIRE(snippets.size() == 2);
+
+    REQUIRE(snippets[0] == "<b>hello<\\b> <b>world<\\b> big <b>world<\\b>\n");
+    REQUIRE(snippets[1] == "<b>hello<\\b> <b>world<\\b>\n");
+  }
 }
 
 
