@@ -37,4 +37,38 @@ class NativeDocStore: public DocumentStoreService {
         int Size();
 };
 
+
+
+class SimpleDocStore: public DocumentStoreService {
+ private:
+	std::map<int,std::string> store_;  
+
+ public:
+	SimpleDocStore() {}
+
+	void Add(int id, std::string document) {
+		store_[id] = document;
+	}
+
+	void Remove(int id) {
+		store_.erase(id);
+	}
+
+	bool Has(int id) {
+		return store_.count(id) == 1;
+	}
+
+	const std::string &Get(int id) {
+		return store_[id];
+	}
+
+	void Clear() {
+		store_.clear();
+	}
+
+	int Size() {
+		return store_.size();
+	}
+};
+
 #endif

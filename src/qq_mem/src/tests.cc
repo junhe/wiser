@@ -53,11 +53,7 @@ TEST_CASE( "Factorials are computed", "[factorial]" ) {
 }
 
 TEST_CASE( "Document store implemented by C++ map", "[docstore]" ) {
-    if (FLAG_DOCUMENTS_ON_FLASH) 
-        //TODO: support has etc.? 
-        return;
- 
-    NativeDocStore store;
+    SimpleDocStore store;
     int doc_id = 88;
     std::string doc = "it is a doc";
 
