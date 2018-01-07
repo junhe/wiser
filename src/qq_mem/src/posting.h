@@ -82,10 +82,13 @@ class RankingPostingWithOffsets: public RankingPosting {
 
  public:
   RankingPostingWithOffsets(const int &doc_id, 
+                 const int &term_frequency)
+    :RankingPosting(doc_id, term_frequency) {}
+
+  RankingPostingWithOffsets(const int &doc_id, 
                  const int &term_frequency, 
                  const OffsetPairs &offset_pairs)
-    :RankingPosting(doc_id, term_frequency), offset_pairs_(offset_pairs)
-  {}
+    :RankingPosting(doc_id, term_frequency), offset_pairs_(offset_pairs) {}
 
   const OffsetPairs *GetOffsetPairs() const {return &offset_pairs_;}
 };

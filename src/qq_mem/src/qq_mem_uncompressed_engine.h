@@ -8,9 +8,9 @@
 
 class InvertedIndexQqMem {
  private:
-  typedef PostingList_Vec<RankingPosting> PostingListType;
+  typedef PostingList_Vec<RankingPostingWithOffsets> PostingListType;
   typedef std::unordered_map<Term, PostingListType> IndexStore;
-  typedef std::vector<const PostingList_Vec<RankingPosting>*> PlPointers;
+  typedef std::vector<const PostingList_Vec<RankingPostingWithOffsets>*> PlPointers;
   IndexStore index_;
 
   PlPointers FindPostinglists(const TermList &terms) {
@@ -50,7 +50,7 @@ class InvertedIndexQqMem {
       } 
 
       PostingListType &postinglist = it->second;        
-      postinglist.AddPosting(RankingPosting(doc_id, token_it->second));
+      postinglist.AddPosting(RankingPostingWithOffsets(doc_id, token_it->second));
     }
   }
 
@@ -62,7 +62,7 @@ class InvertedIndexQqMem {
       return result; // return an empty one
     }
 
-    intersect<RankingPosting>(postinglist_pointers, &result);
+    intersect<RankingPostingWithOffsets>(postinglist_pointers, &result);
     return result;
   }
 
@@ -74,7 +74,7 @@ class InvertedIndexQqMem {
     std::vector<DocIdType> doc_ids;
     PlPointers postinglist_pointers = FindPostinglists(terms);
 
-    return intersect<RankingPosting>(postinglist_pointers, nullptr);
+    return intersect<RankingPostingWithOffsets>(postinglist_pointers, nullptr);
   }
 
   // Return number of posting lists
