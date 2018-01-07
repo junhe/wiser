@@ -5,6 +5,7 @@
 #include "intersect.h"
 #include "utils.h"
 #include "native_doc_store.h"
+#include "unifiedhighlighter.h"
 
 class InvertedIndexQqMem {
  private:
@@ -159,6 +160,22 @@ class QqMemUncompressedEngine {
     auto intersection_result = Query(terms);
     auto scores = Score(intersection_result);
     return FindTopK(scores, 10);
+  }
+
+  std::string GenerateSnippet(IntersectionResult::row_iterator row_it) {
+    OffsetsEnums res = {};
+    auto col_it = IntersectionResult::col_cbegin(row_it);
+    auto end = IntersectionResult::col_cend(row_it);
+    DocIdType doc_id = IntersectionResult::GetCurDocId(row_it);
+    
+    for ( ; col_it != end; col_it++) {
+      auto p_posting = IntersectionResult::GetPosting(col_it);
+      res.push_back(Offset_Iterator(*p_posting->GetOffsetPairs()));
+    }
+
+    SimpleHighlighter highlighter;
+    
+    return "";
   }
 };
 

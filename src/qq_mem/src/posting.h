@@ -55,6 +55,9 @@ class PostingSimple : public QqMemPostingService {
   const int GetDocId() const {return docID_;}
   const int GetTermFreq() const {return term_frequency_;}
   const Positions GetPositions() const {return positions_;}
+  const OffsetPairs *GetOffsetPairs() const {
+    throw std::runtime_error("Not implemented"); 
+  }
   std::string dump() {return "";}
 };
 
@@ -71,6 +74,9 @@ class RankingPosting : public QqMemPostingService {
   {}
   const int GetDocId() const {return doc_id_;}
   const int GetTermFreq() const {return term_frequency_;}
+  const OffsetPairs *GetOffsetPairs() const {
+    throw std::runtime_error("Not implemented"); 
+  }
 };
 
 

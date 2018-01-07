@@ -80,6 +80,7 @@ class QqMemPostingService {
  public:
   virtual const int GetDocId() const = 0;
   virtual const int GetTermFreq() const = 0;
+  virtual const OffsetPairs *GetOffsetPairs() const = 0;
 };
 
 
