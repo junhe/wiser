@@ -90,7 +90,7 @@ class InvertedIndexQqMem {
 class QqMemUncompressedEngine {
  private:
   int next_doc_id_ = 0;
-  NativeDocStore doc_store_;
+  SimpleDocStore doc_store_;
   InvertedIndexQqMem inverted_index_;
   DocLengthStore doc_lengths_;
 
