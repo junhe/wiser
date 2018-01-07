@@ -1356,9 +1356,10 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
 
   SECTION("It can generate snippets") {
     auto snippets = engine.SearchWithSnippet(TermList{"hello"});
-    for (auto snippet : snippets) {
-      std::cout << snippet << std::endl;
-    }
+    REQUIRE(snippets.size() == 3);
+    REQUIRE(snippets[0] == "<b>hello<\\b> wisconsin\n");
+    REQUIRE(snippets[1] == "<b>hello<\\b> world\n");
+    REQUIRE(snippets[2] == "<b>hello<\\b> world big world\n");
   }
 }
 
