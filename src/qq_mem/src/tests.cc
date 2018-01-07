@@ -1251,6 +1251,25 @@ TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
   inverted_index.AddDocument(1, "hello wisconsin", "hello wisconsin");
   REQUIRE(inverted_index.Size() == 3);
 
+  SECTION("Postings are constructed correctly") {
+    auto postinglists = inverted_index.FindPostinglists(TermList{"hello"});
+    auto p_postinglist = postinglists[0];
+
+    auto it = p_postinglist->cbegin();
+    auto posting = (*p_postinglist).GetPosting(it);
+    REQUIRE(posting.GetDocId() == 0);
+    auto pairs = posting.GetOffsetPairs();
+    REQUIRE(pairs->size() == 1);
+    REQUIRE((*pairs)[0] == std::make_tuple(0, 4)); // in doc 0
+
+    it++;
+    posting = (*p_postinglist).GetPosting(it);
+    REQUIRE(posting.GetDocId() == 1);
+    pairs = posting.GetOffsetPairs();
+    REQUIRE(pairs->size() == 1);
+    REQUIRE((*pairs)[0] == std::make_tuple(0, 4)); // in doc 1
+  }
+
   SECTION("It can find an intersection for single-term queries") {
     IntersectionResult store = inverted_index.FindIntersection(TermList{"hello"});
     REQUIRE(store.Size() == 2);

@@ -33,6 +33,9 @@ class PostingList_Vec {
   Term GetTerm() const {return term_;}
   std::size_t Size() const {return posting_store_.size();}
 
+  iterator_t cbegin() const {return 0;}
+  iterator_t cend() const {return posting_store_.size();}
+
   // You must make sure postings are added with increasing doc ID
   void AddPosting(const T &posting) {
     if (posting_store_.size() > 0 && 
