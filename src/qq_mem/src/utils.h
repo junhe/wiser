@@ -4,6 +4,7 @@
 #include <chrono>
 #include <fstream>
 #include <sstream>
+#include <iostream>
 #include <map>
 #include <unordered_map>
 #include <string>
@@ -32,6 +33,10 @@ typedef std::unordered_map<Term, int> CountMapType;
 CountMapType count_tokens(const std::string &token_text);
 
 typedef std::map<std::string, std::string> ResultRow;
+
+
+void add_term_offset_entry(std::map<Term, OffsetPairs> *result, const Term &buf, const int &i);
+std::map<Term, OffsetPairs> extract_offset_pairs(std::string token_str);
 
 class LineDoc {
  private:

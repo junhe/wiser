@@ -8,6 +8,7 @@
 #include <stdexcept>
 #include <thread>
 #include <queue>
+#include <utility>
 
 
 namespace utils {
@@ -167,6 +168,45 @@ CountMapType count_tokens(const std::string &token_text) {
   }
   return counts;
 }
+
+
+
+void add_term_offset_entry(std::map<Term, OffsetPairs> *result, const Term &buf, const int &i) {
+  int n = buf.size();
+  int end = i - 1;
+  int start = end - n + 1;
+
+  OffsetPair offset_pair = std::make_tuple(start, end);
+
+  (*result)[buf].push_back(offset_pair);
+}
+
+std::map<Term, OffsetPairs> extract_offset_pairs(std::string token_str) {
+  const std::size_t n = token_str.size();
+  std::string buf = "";
+  std::map<Term, OffsetPairs> result;
+
+  int i;
+  for (i = 0; i < n; i++) {
+    char ch = token_str[i];
+    if (ch != ' ') {
+      buf += ch;
+    } else {
+      if (buf != "") {
+        add_term_offset_entry(&result, buf, i);
+        buf = "";
+      }
+    }
+  }
+
+  if (buf != "") {
+    add_term_offset_entry(&result, buf, i);
+  }
+
+  return result;
+}
+
+
 
 
 } // namespace util

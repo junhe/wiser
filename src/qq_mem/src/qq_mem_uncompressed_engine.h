@@ -96,6 +96,7 @@ class QqMemUncompressedEngine {
   }
 
  public:
+  // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, int n_rows) {
     utils::LineDoc linedoc(line_doc_path);
     std::vector<std::string> items;

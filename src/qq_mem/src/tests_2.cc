@@ -2,6 +2,7 @@
 
 #include "unifiedhighlighter.h"
 #include "intersect.h"
+#include "utils.h"
 
 TEST_CASE( "SimpleHighlighter works", "[highlighter]" ) {
   std::string doc_str = "hello world";
@@ -70,6 +71,75 @@ TEST_CASE( "IntersectionResult works", "[intersection]" ) {
     REQUIRE(IntersectionResult::GetCurDocId(row_it) == 2);
     REQUIRE(p == p2);
   }
+}
+
+
+TEST_CASE( "Extract offset pairs from a string", "[utils]" ) {
+  SECTION("Adding entry") {
+    std::map<Term, OffsetPairs> result;
+    utils::add_term_offset_entry(&result, "hello", 5);
+    utils::add_term_offset_entry(&result, "world", 11);
+    utils::add_term_offset_entry(&result, "hello", 17);
+
+    REQUIRE(result["hello"].size() == 2);
+    REQUIRE(result["hello"][0] == std::make_tuple(0, 4));
+    REQUIRE(result["hello"][1] == std::make_tuple(12, 16));
+
+    REQUIRE(result["world"].size() == 1);
+    REQUIRE(result["world"][0] == std::make_tuple(6, 10));
+  }
+
+  SECTION("hello world hello") {
+    auto result = utils::extract_offset_pairs("hello world hello");
+
+    REQUIRE(result.size() == 2);
+
+    REQUIRE(result["hello"].size() == 2);
+    REQUIRE(result["hello"][0] == std::make_tuple(0, 4));
+    REQUIRE(result["hello"][1] == std::make_tuple(12, 16));
+
+    REQUIRE(result["world"].size() == 1);
+    REQUIRE(result["world"][0] == std::make_tuple(6, 10));
+  }
+
+  SECTION("empty string") {
+    auto result = utils::extract_offset_pairs("");
+
+    REQUIRE(result.size() == 0);
+  }
+
+  SECTION("one letter string") {
+    auto result = utils::extract_offset_pairs("h");
+
+    REQUIRE(result.size() == 1);
+    REQUIRE(result["h"].size() == 1);
+    REQUIRE(result["h"][0] == std::make_tuple(0, 0));
+  }
+
+  SECTION("space only string") {
+    auto result = utils::extract_offset_pairs("    ");
+
+    REQUIRE(result.size() == 0);
+  }
+
+  SECTION("pre and suffix spaces") {
+    auto result = utils::extract_offset_pairs(" h ");
+
+    REQUIRE(result.size() == 1);
+    REQUIRE(result["h"].size() == 1);
+    REQUIRE(result["h"][0] == std::make_tuple(1, 1));
+  }
+
+  SECTION("double space seperator") {
+    auto result = utils::extract_offset_pairs("h  h");
+
+    REQUIRE(result.size() == 1);
+
+    REQUIRE(result["h"].size() == 2);
+    REQUIRE(result["h"][0] == std::make_tuple(0, 0));
+    REQUIRE(result["h"][1] == std::make_tuple(3, 3));
+  }
+
 }
 
 
