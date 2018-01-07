@@ -70,6 +70,12 @@ TEST_CASE( "IntersectionResult works", "[intersection]" ) {
     p = IntersectionResult::GetPosting(col_it);
     REQUIRE(IntersectionResult::GetCurDocId(row_it) == 2);
     REQUIRE(p == p2);
+
+    SECTION("GetRow()") {
+      const IntersectionResult::row_dict_t *row = res.GetRow(0);
+      auto row_it = res.row_cbegin();  
+      REQUIRE(&row_it->second == row);
+    }
   }
 }
 

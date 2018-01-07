@@ -17,16 +17,10 @@
 
 
 class IntersectionResult {
- private: 
+ public:
   typedef std::map<Term, const QqMemPostingService *> row_dict_t; 
   typedef std::map<DocIdType, row_dict_t> table_dict_t;
 
-  typedef std::map<Term, int> doc_cnt_dict_t;
-
-  table_dict_t table_;
-  doc_cnt_dict_t doc_cnt_;
-
- public:
   typedef table_dict_t::const_iterator row_iterator;
   typedef row_dict_t::const_iterator col_iterator;
 
@@ -48,6 +42,9 @@ class IntersectionResult {
     return table_.cend();
   }
 
+  const row_dict_t *GetRow(const DocIdType &doc_id) {
+    return &table_[doc_id];
+  }
 
   static Term GetCurTerm(col_iterator &it) {
     return it->first;
@@ -80,6 +77,12 @@ class IntersectionResult {
   std::size_t Size() {
     return table_.size();
   }
+
+ private:
+  typedef std::map<Term, int> doc_cnt_dict_t;
+
+  table_dict_t table_;
+  doc_cnt_dict_t doc_cnt_;
 };
 
 
