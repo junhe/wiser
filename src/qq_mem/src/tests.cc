@@ -1353,6 +1353,13 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     std::vector<DocIdType> doc_ids = engine.FindTopK(doc_scores, 10);
     REQUIRE(doc_ids.size() == 2);
   }
+
+  SECTION("It can generate snippets") {
+    auto snippets = engine.SearchWithSnippet(TermList{"hello"});
+    for (auto snippet : snippets) {
+      std::cout << snippet << std::endl;
+    }
+  }
 }
 
 

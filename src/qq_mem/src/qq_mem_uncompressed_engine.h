@@ -162,20 +162,32 @@ class QqMemUncompressedEngine {
     return FindTopK(scores, 10);
   }
 
-  std::string GenerateSnippet(IntersectionResult::row_iterator row_it) {
+  std::vector<std::string> SearchWithSnippet(const TermList &terms) {
+    auto intersection_result = Query(terms);
+    auto scores = Score(intersection_result);
+    std::vector<DocIdType> top_k = FindTopK(scores, 10);
+
+    std::vector<std::string> snippets;
+    for (auto doc_id : top_k) {
+      auto row = intersection_result.GetRow(doc_id);
+      auto snippet = GenerateSnippet(doc_id, row);
+      snippets.push_back(snippet);
+    }
+
+    return snippets;
+  }
+
+  std::string GenerateSnippet(const DocIdType &doc_id, 
+                              const IntersectionResult::row_dict_t *row) {
     OffsetsEnums res = {};
-    auto col_it = IntersectionResult::col_cbegin(row_it);
-    auto end = IntersectionResult::col_cend(row_it);
-    DocIdType doc_id = IntersectionResult::GetCurDocId(row_it);
     
-    for ( ; col_it != end; col_it++) {
+    for (auto col_it = row->cbegin() ; col_it != row->cend(); col_it++) {
       auto p_posting = IntersectionResult::GetPosting(col_it);
       res.push_back(Offset_Iterator(*p_posting->GetOffsetPairs()));
     }
 
     SimpleHighlighter highlighter;
-    
-    return "";
+    return highlighter.highlightOffsetsEnums(res,  2, doc_store_.Get(doc_id));
   }
 };
 
