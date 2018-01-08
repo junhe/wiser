@@ -1287,17 +1287,17 @@ TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
 TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
   QqMemUncompressedEngine engine;
 
-  auto doc_id = engine.AddDocument("hello world", "hello world");
+  auto doc_id = engine.AddDocumentReturnId("hello world", "hello world");
   REQUIRE(engine.GetDocument(doc_id) == "hello world");
   REQUIRE(engine.GetDocLength(doc_id) == 2);
   REQUIRE(engine.TermCount() == 2);
 
-  doc_id = engine.AddDocument("hello wisconsin", "hello wisconsin");
+  doc_id = engine.AddDocumentReturnId("hello wisconsin", "hello wisconsin");
   REQUIRE(engine.GetDocument(doc_id) == "hello wisconsin");
   REQUIRE(engine.GetDocLength(doc_id) == 2);
   REQUIRE(engine.TermCount() == 3);
 
-  doc_id = engine.AddDocument("hello world big world", "hello world big world");
+  doc_id = engine.AddDocumentReturnId("hello world big world", "hello world big world");
   REQUIRE(engine.GetDocument(doc_id) == "hello world big world");
   REQUIRE(engine.GetDocLength(doc_id) == 4);
   REQUIRE(engine.TermCount() == 4);

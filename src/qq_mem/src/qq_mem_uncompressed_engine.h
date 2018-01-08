@@ -87,7 +87,7 @@ class InvertedIndexQqMem {
 };
 
 
-class QqMemUncompressedEngine {
+class QqMemUncompressedEngine : SearchEngineInterface {
  private:
   int next_doc_id_ = 0;
   SimpleDocStore doc_store_;
@@ -123,7 +123,15 @@ class QqMemUncompressedEngine {
     return count;
   }
 
-  DocIdType AddDocument(const std::string &body, const std::string &tokens) {
+  void AddDocument(const std::string &body, const std::string &tokenized_body) {
+    AddDocumentReturnId(body, tokenized_body);
+  }
+
+  Snippets Search(const TermList &terms, const SearchOperator &op) {
+    return SearchWithSnippet(terms);
+  }
+
+  DocIdType AddDocumentReturnId(const std::string &body, const std::string &tokens) {
     int doc_id = NextDocId();
 
     doc_store_.Add(doc_id, body);
@@ -162,7 +170,7 @@ class QqMemUncompressedEngine {
     return FindTopK(scores, 10);
   }
 
-  std::vector<std::string> SearchWithSnippet(const TermList &terms) {
+  Snippets SearchWithSnippet(const TermList &terms) {
     auto intersection_result = Query(terms);
     auto scores = Score(intersection_result);
     std::vector<DocIdType> top_k = FindTopK(scores, 10);
