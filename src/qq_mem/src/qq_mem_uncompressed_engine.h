@@ -88,7 +88,7 @@ class InvertedIndexQqMem {
 };
 
 
-class QqMemUncompressedEngine : SearchEngineServiceNew {
+class QqMemUncompressedEngine : public SearchEngineServiceNew {
  private:
   int next_doc_id_ = 0;
   SimpleDocStore doc_store_;
@@ -181,6 +181,16 @@ class QqMemUncompressedEngine : SearchEngineServiceNew {
     return highlighter.highlightOffsetsEnums(res,  2, doc_store_.Get(doc_id));
   }
 };
+
+
+std::unique_ptr<SearchEngineServiceNew> create_search_engine(
+    std::string engine_type) {
+  if (engine_type == "qq_mem_uncompressed") {
+    return std::unique_ptr<SearchEngineServiceNew>(new QqMemUncompressedEngine);
+  } else {
+    throw std::runtime_error("Wrong engine type: " + engine_type);
+  }
+}
 
 
 #endif

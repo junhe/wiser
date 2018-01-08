@@ -150,8 +150,8 @@ int main(int argc, char **argv) {
   FLAGS_stderrthreshold = 0; 
   FLAGS_minloglevel = 0; 
 
-  qq_uncompressed_bench();
-  // qq_uncompressed_bench_wiki();
+  // qq_uncompressed_bench();
+  qq_uncompressed_bench_wiki();
 }
 
 
