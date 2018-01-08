@@ -56,6 +56,23 @@ class TermWithOffset { // class Term_With_Offset
 };
 typedef std::vector<TermWithOffset> TermWithOffsetList;
 
+
+struct SearchQuery {
+  TermList terms;
+  SearchOperator op = SearchOperator::AND;
+  int n_results = 10;
+};
+
+struct SearchResultEntry {
+  std::string snippet;
+  DocIdType doc_id;
+};
+
+struct SearchResult {
+  std::vector<SearchResultEntry> entries;
+};
+
+
 // Basic types for precomputation
 // for snippet generating
 typedef std::pair<int, float> Passage_Score; // (passage,score)
