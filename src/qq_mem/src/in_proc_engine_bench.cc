@@ -93,7 +93,8 @@ utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) 
 
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
-    auto doc_ids = engine->SearchWithoutSnippet(terms);
+    // auto doc_ids = engine->SearchWithoutSnippet(terms);
+    auto snippets = engine->SearchWithoutSnippet(terms);
   }
   auto end = utils::now();
   auto dur = utils::duration(start, end);
@@ -149,8 +150,8 @@ int main(int argc, char **argv) {
   FLAGS_stderrthreshold = 0; 
   FLAGS_minloglevel = 0; 
 
-  // qq_uncompressed_bench();
-  qq_uncompressed_bench_wiki();
+  qq_uncompressed_bench();
+  // qq_uncompressed_bench_wiki();
 }
 
 
