@@ -39,6 +39,8 @@
 #include "qq.grpc.pb.h"
 
 #include "qq_engine.h"
+#include "qq_mem_uncompressed_engine.h"
+#include "engine_loader.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -85,7 +87,7 @@ void sleep(int n_secs) {
 // QQEngineServiceImpl: Sync methods are implemented here
 class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEngine::Service> {
   public:
-    void Initialize(QQSearchEngine* search_engine) {
+    void Initialize(SearchEngineServiceNew* search_engine) {
       // TODO: This function is ugly. Need to find a better way to 
       // initialize search engine pointer at class initialization.
       search_engine_ = search_engine;
@@ -97,8 +99,11 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
         // std::cout << "url" << request->document().url() << std::endl;
         // std::cout << "body" << request->document().body() << std::endl;
 
-        search_engine_->AddDocument(request->document().title(),
-                request->document().url(), request->document().body());
+        // search_engine_->AddDocument(request->document().title(),
+                // request->document().url(), request->document().body());
+
+        // In this case, body must be already tokenized.
+        search_engine_->AddDocument(request->document().body(), request->document().body());
 
         count++;
 
@@ -115,12 +120,10 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
             SearchReply* reply) override {
         Term term = request->term();
 
-        auto doc_ids = search_engine_->Search(TermList{term}, SearchOperator::AND);
+        auto snippets = search_engine_->Search(TermList{term}, SearchOperator::AND);
         
-        for (auto id : doc_ids) {
-            reply->add_doc_ids(id);
-            break; // TODO: remove this to be more realistic
-        }
+        reply->add_doc_ids(100);
+
         return Status::OK;
     }
 
@@ -135,20 +138,22 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
 
     private:
         int count = 0;
-        QQSearchEngine* search_engine_ = nullptr;
+        SearchEngineServiceNew* search_engine_ = nullptr;
 };
 
 
 
 class AsyncServer {
  public:
-  AsyncServer(const ConfigType config)
-      :config_(config), search_engine_(new QQSearchEngine) {
+  AsyncServer(const ConfigType config, std::unique_ptr<SearchEngineServiceNew> engine)
+      :config_(config), search_engine_(std::move(engine)) {
 
     std::string line_doc_path = config.at("line_doc_path");
     if (line_doc_path.size() > 0) {
       int n_rows = std::stoi(config.at("n_line_doc_rows"));
-      int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows);
+      // int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows);
+      int ret = engine_loader::load_body_and_tokenized_body(search_engine_.get(), 
+                                                            line_doc_path, n_rows, 2, 2);
       // std::cout << ret << " docs indexed to search engine." << std::endl;
     }
 
@@ -266,7 +271,7 @@ class AsyncServer {
    public:
       ServerRpcContext(QQEngineServiceImpl *async_service,
                        grpc::ServerCompletionQueue *cq,
-                       QQSearchEngine *search_engine)
+                       SearchEngineServiceNew *search_engine)
         : async_service_(async_service), 
           cq_(cq),
           srv_ctx_(new grpc::ServerContext),
@@ -301,9 +306,8 @@ class AsyncServer {
             if (ok) {
               next_state_ = State::WRITE_DONE;
 
-              // auto doc_ids = search_engine_->Search(
-                  // TermList{req_.term()}, SearchOperator::AND);
-              volatile auto it = search_engine_->Find(Term("hello"));
+              auto snippets = search_engine_->Search(
+                  TermList{req_.term()}, SearchOperator::AND);
               stream_.Write(response_, AsyncServer::tag(this));
             } else {  // client has sent writes done
               next_state_ = State::FINISH_DONE;
@@ -354,7 +358,7 @@ class AsyncServer {
     grpc::ServerAsyncReaderWriter<SearchReply, SearchRequest> stream_;
     std::mutex mu_;
     grpc::Status status_;
-    QQSearchEngine *search_engine_;
+    SearchEngineServiceNew *search_engine_;
   };
 
   std::vector<std::thread> threads_;
@@ -372,7 +376,7 @@ class AsyncServer {
 
   std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
   const ConfigType &config_;
-  std::unique_ptr<QQSearchEngine> search_engine_;
+  std::unique_ptr<SearchEngineServiceNew> search_engine_;
 };
 
 
@@ -387,7 +391,10 @@ std::unique_ptr<AsyncServer> CreateServer(const std::string &target,
   config["line_doc_path"] = "";
   config["n_line_doc_rows"] = "";
 
-  std::unique_ptr<AsyncServer> server(new AsyncServer(config));
+  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
+      "qq_mem_uncompressed");
+
+  std::unique_ptr<AsyncServer> server(new AsyncServer(config, std::move(engine)));
   return server;
 }
 
@@ -404,7 +411,10 @@ std::unique_ptr<AsyncServer> CreateServer(const std::string &target,
   config["line_doc_path"] = line_doc_path;
   config["n_line_doc_rows"] = std::to_string(n_rows);
 
-  std::unique_ptr<AsyncServer> server(new AsyncServer(config));
+  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
+      "qq_mem_uncompressed");
+
+  std::unique_ptr<AsyncServer> server(new AsyncServer(config, std::move(engine)));
   return server;
 }
 

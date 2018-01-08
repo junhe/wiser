@@ -183,7 +183,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 };
 
 
-std::unique_ptr<SearchEngineServiceNew> create_search_engine(
+std::unique_ptr<SearchEngineServiceNew> CreateSearchEngine(
     std::string engine_type) {
   if (engine_type == "qq_mem_uncompressed") {
     return std::unique_ptr<SearchEngineServiceNew>(new QqMemUncompressedEngine);

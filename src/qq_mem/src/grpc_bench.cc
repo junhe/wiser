@@ -6,6 +6,9 @@
 #include "index_creator.h"
 #include "utils.h"
 
+//////////////////////////////////////
+// This benchmark does sync echos.
+//////////////////////////////////////
 
 void make_queries(int n_queries) {
     EchoData request, reply;
