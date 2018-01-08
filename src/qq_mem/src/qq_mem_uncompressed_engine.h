@@ -6,6 +6,7 @@
 #include "utils.h"
 #include "native_doc_store.h"
 #include "unifiedhighlighter.h"
+#include "engine_loader.h"
 
 class InvertedIndexQqMem {
  private:
@@ -87,7 +88,7 @@ class InvertedIndexQqMem {
 };
 
 
-class QqMemUncompressedEngine : SearchEngineInterface {
+class QqMemUncompressedEngine : SearchEngineServiceNew {
  private:
   int next_doc_id_ = 0;
   SimpleDocStore doc_store_;
@@ -101,26 +102,8 @@ class QqMemUncompressedEngine : SearchEngineInterface {
  public:
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, int n_rows) {
-    utils::LineDoc linedoc(line_doc_path);
-    std::vector<std::string> items;
-    bool has_it;
-
-    int count = 0;
-    for (int i = 0; i < n_rows; i++) {
-      has_it = linedoc.GetRow(items);
-      if (has_it) {
-        AddDocument(items[2], items[2]);
-        count++;
-      } else {
-        break;
-      }
-
-      if (count % 10000 == 0) {
-        std::cout << "Indexed " << count << " documents" << std::endl;
-      }
-    }
-
-    return count;
+    return engine_loader::load_body_and_tokenized_body(
+        this, line_doc_path, n_rows, 2, 2);
   }
 
   void AddDocument(const std::string &body, const std::string &tokenized_body) {
