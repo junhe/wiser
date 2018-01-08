@@ -33,6 +33,11 @@ class SearchEngineService {
   int next_doc_id_ = 0;
 };
 
+class SearchEngineServiceNew {
+  virtual void AddDocument(std::string body, std::string tokenized_body) = 0;
+  virtual Snippets Search(const TermList &terms, const SearchOperator &op) = 0; 
+};
+
 
 class DocumentStoreService {
     public:

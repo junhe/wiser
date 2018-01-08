@@ -45,6 +45,7 @@ typedef std::tuple<int, int> Offset;  // (startoffset, endoffset)
 typedef Offset OffsetPair; // Alias for Offset, more intuitive
 typedef std::vector<Offset> Offsets;
 typedef Offsets OffsetPairs; // Alias for Offsets, more intuitive
+typedef std::vector<std::string> Snippets;
 
 class TermWithOffset { // class Term_With_Offset
     public:
