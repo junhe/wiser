@@ -22,11 +22,12 @@ void make_queries(int n_queries) {
 
 
 int main(int argc, char** argv) {
-  // Create index on server side
-  // IndexCreator index_creator(
-        // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", *client);
-        // "src/testdata/enwiki-abstract_tokenized.linedoc.sample", *client);
-  // index_creator.DoIndex(100000);
+  if (argc != 2) {
+    std::cout << "Usage: exefile threads" << std::endl;
+    exit(1);
+  }
+
+  int n_threads = std::atoi(argv[1]);
 
   // Search synchroniously
   auto client = CreateSyncClient("localhost:50051");
@@ -42,9 +43,9 @@ int main(int argc, char** argv) {
       64,  // n channels
       100,  // rpcs per channel
       100000,  // messages per rpc
-      16,  // n threads
+      n_threads,  // n threads
       1,  // thread per cq
-      30); // duration (seconds)
+      10); // duration (seconds)
   async_client->Wait();
   async_client->ShowStats();
   return 0;

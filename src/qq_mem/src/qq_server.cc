@@ -46,8 +46,8 @@ static void sigint_handler(int x) {
 }
 
 int main(int argc, char** argv) {
-  if (argc != 3) {
-    std::cout << "Usage: exefile port secs" << std::endl;
+  if (argc != 5) {
+    std::cout << "Usage: exefile port secs threads n_docs" << std::endl;
     exit(1);
   }
 
@@ -55,14 +55,15 @@ int main(int argc, char** argv) {
 
   std::string port(argv[1]);
   std::string n_secs(argv[2]);
+  const int n_threads = std::atoi(argv[3]);
+  const int n_docs = std::atoi(argv[4]);
 
   auto server = CreateServer(std::string("localhost:") + port, 
       1, // threads per cq
-      32,  // n threads
+      n_threads,  // n threads
       0, // duration(seconds)
       "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc",
-      9000000
-      // 500000
+      n_docs
   );
 
   if (std::stoi(n_secs) == 0) {
