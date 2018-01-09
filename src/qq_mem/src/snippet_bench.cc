@@ -70,7 +70,7 @@ void bench() {
   std::cout << "Total duration: " << duration << std::endl;
   std::cout << "Total repeats: " << repeats << std::endl;
   std::cout << "Duration: " << duration / repeats << std::endl;
-  std::cout << "QPS: " << repeats / duration << std::endl;
+  std::cout << "Query (TopK Snippets) Per Sec: " << repeats / duration << std::endl;
 }
 
 int main(int argc, char** argv) {
