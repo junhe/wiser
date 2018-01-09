@@ -51,7 +51,7 @@ message SearchReplyEntry {
 
 message SearchReply {
     repeated SearchReplyEntry entries  = 1;
-    repeated int32 doc_ids = 2;
+    /*repeated int32 doc_ids = 2;*/
 }
 
 message EchoData {
