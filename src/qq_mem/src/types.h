@@ -71,12 +71,23 @@ struct SearchQuery {
 struct SearchResultEntry {
   std::string snippet;
   DocIdType doc_id;
+
+  std::string ToStr() {
+    return "DocId: " + std::to_string(doc_id) + " Snippet: " + snippet;
+  }
 };
 
 struct SearchResult {
   std::vector<SearchResultEntry> entries;
 
   std::size_t Size() {return entries.size();}
+  std::string ToStr() {
+    std::string ret;
+    for (auto entry : entries) {
+      ret += entry.ToStr() + "\n";
+    }
+    return ret;
+  }
 };
 
 
