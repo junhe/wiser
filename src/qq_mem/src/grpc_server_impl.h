@@ -308,7 +308,8 @@ class AsyncServer {
               next_state_ = State::WRITE_DONE;
 
               auto result = search_engine_->Search(
-                  SearchQuery(TermList{req_.term()}));
+                  SearchQuery(TermList{req_.term()}, false));
+                  // SearchQuery(TermList{req_.term()}, true));
               stream_.Write(response_, AsyncServer::tag(this));
             } else {  // client has sent writes done
               next_state_ = State::FINISH_DONE;
