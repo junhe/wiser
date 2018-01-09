@@ -61,6 +61,7 @@ struct SearchQuery {
   TermList terms;
   SearchOperator op = SearchOperator::AND;
   int n_results = 10;
+  bool return_snippets = false;
 };
 
 struct SearchResultEntry {

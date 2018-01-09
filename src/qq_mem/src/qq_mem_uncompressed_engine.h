@@ -114,6 +114,26 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
     return SearchWithSnippet(terms);
   }
 
+  SearchResult SearchTemp(const SearchQuery &query) {
+    SearchResult result;
+    if (query.return_snippets == true) {
+      Snippets snippets = SearchWithSnippet(query.terms);
+      for (auto snippet : snippets) {
+        SearchResultEntry entry;
+        entry.snippet = snippet;
+        result.entries.push_back(entry);
+      }
+    } else {
+      std::vector<DocIdType> doc_ids = SearchWithoutSnippet(query.terms);
+      for (auto doc_id : doc_ids) {
+        SearchResultEntry entry;
+        entry.doc_id = doc_id;
+        result.entries.push_back(entry);
+      }
+    }
+    return result;
+  }
+
   DocIdType AddDocumentReturnId(const std::string &body, const std::string &tokens) {
     int doc_id = NextDocId();
 
