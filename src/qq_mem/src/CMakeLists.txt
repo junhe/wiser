@@ -192,4 +192,18 @@ target_link_libraries(sorting_bench
     ${GLOG_LIB}
 )
 
+add_executable(snippet_bench
+    snippet_bench.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+target_link_libraries(snippet_bench
+    gRPC::grpc++_reflection
+    protobuf::libprotobuf
+    ${BOOST_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
+
 
