@@ -110,26 +110,6 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
     AddDocumentReturnId(body, tokenized_body);
   }
 
-  SearchResult Search(const SearchQuery &query) {
-    SearchResult result;
-    if (query.return_snippets == true) {
-      Snippets snippets = SearchWithSnippet(query.terms);
-      for (auto snippet : snippets) {
-        SearchResultEntry entry;
-        entry.snippet = snippet;
-        result.entries.push_back(entry);
-      }
-    } else {
-      std::vector<DocIdType> doc_ids = SearchWithoutSnippet(query.terms);
-      for (auto doc_id : doc_ids) {
-        SearchResultEntry entry;
-        entry.doc_id = doc_id;
-        result.entries.push_back(entry);
-      }
-    }
-    return result;
-  }
-
   DocIdType AddDocumentReturnId(const std::string &body, const std::string &tokens) {
     int doc_id = NextDocId();
 
@@ -182,6 +162,27 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
     }
 
     return snippets;
+  }
+
+  SearchResult Search(const SearchQuery &query) {
+    auto intersection_result = Query(query.terms);
+    auto scores = Score(intersection_result);
+    std::vector<DocIdType> top_k = FindTopK(scores, 10);
+
+    SearchResult result;
+    for (auto doc_id : top_k) {
+      SearchResultEntry entry;
+      entry.doc_id = doc_id;
+
+      if (query.return_snippets == true) {
+        auto row = intersection_result.GetRow(doc_id);
+        entry.snippet = GenerateSnippet(doc_id, row);
+      }
+
+      result.entries.push_back(entry);
+    }
+
+    return result;
   }
 
   std::string GenerateSnippet(const DocIdType &doc_id, 
