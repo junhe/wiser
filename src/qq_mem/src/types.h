@@ -7,6 +7,9 @@
 #include <map>
 #include <tuple>
 
+#include "qq.pb.h"
+
+
 // for direct IO
 #define PAGE_SIZE 512
 
@@ -75,6 +78,10 @@ struct SearchResultEntry {
   std::string ToStr() {
     return "DocId: " + std::to_string(doc_id) + " Snippet: " + snippet;
   }
+  void CopyTo(qq::SearchReplyEntry *grpc_entry) {
+    grpc_entry->set_doc_id(doc_id);
+    grpc_entry->set_snippet(snippet);
+  }
 };
 
 struct SearchResult {
@@ -87,6 +94,12 @@ struct SearchResult {
       ret += entry.ToStr() + "\n";
     }
     return ret;
+  }
+  void CopyTo(qq::SearchReply *grpc_reply) {
+    for ( auto & result_entry : entries ) {
+      qq::SearchReplyEntry *grpc_entry = grpc_reply->add_entries();
+      result_entry.CopyTo(grpc_entry);
+    }
   }
 };
 

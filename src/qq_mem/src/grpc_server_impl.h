@@ -60,6 +60,7 @@ using qq::StatusReply;
 // for Search
 using qq::SearchRequest;
 using qq::SearchReply;
+using qq::SearchReplyEntry;
 
 // for Echo
 using qq::EchoData;
@@ -123,8 +124,7 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
 
         SearchResult result = search_engine_->Search(SearchQuery(TermList{term}));
         
-        reply->add_doc_ids(100);
-
+        // result.CopyTo(reply);
         return Status::OK;
     }
 

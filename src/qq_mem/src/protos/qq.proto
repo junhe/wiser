@@ -40,13 +40,18 @@ message StatusReply {
 }
 
 
-// Just do the simpliest thing first..
 message SearchRequest {
     string term = 1;
 }
 
+message SearchReplyEntry {
+    int32 doc_id = 1;
+    string snippet = 2;
+}
+
 message SearchReply {
-    repeated int32 doc_ids = 1;
+    repeated SearchReplyEntry entries  = 1;
+    repeated int32 doc_ids = 2;
 }
 
 message EchoData {
