@@ -59,6 +59,8 @@ typedef std::vector<TermWithOffset> TermWithOffsetList;
 
 struct SearchQuery {
   SearchQuery(const TermList &terms_in): terms(terms_in) {}
+  SearchQuery(const TermList &terms_in, const bool &return_snippets_in)
+    : terms(terms_in), return_snippets(return_snippets_in) {}
 
   TermList terms;
   SearchOperator op = SearchOperator::AND;
@@ -73,6 +75,8 @@ struct SearchResultEntry {
 
 struct SearchResult {
   std::vector<SearchResultEntry> entries;
+
+  std::size_t Size() {return entries.size();}
 };
 
 

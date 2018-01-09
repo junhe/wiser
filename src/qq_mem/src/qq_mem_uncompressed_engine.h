@@ -143,27 +143,6 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
     return utils::find_top_k(doc_scores, k);
   }
 
-  std::vector<DocIdType> SearchWithoutSnippet(const TermList &terms) {
-    auto intersection_result = Query(terms);
-    auto scores = Score(intersection_result);
-    return FindTopK(scores, 10);
-  }
-
-  Snippets SearchWithSnippet(const TermList &terms) {
-    auto intersection_result = Query(terms);
-    auto scores = Score(intersection_result);
-    std::vector<DocIdType> top_k = FindTopK(scores, 10);
-
-    std::vector<std::string> snippets;
-    for (auto doc_id : top_k) {
-      auto row = intersection_result.GetRow(doc_id);
-      auto snippet = GenerateSnippet(doc_id, row);
-      snippets.push_back(snippet);
-    }
-
-    return snippets;
-  }
-
   SearchResult Search(const SearchQuery &query) {
     auto intersection_result = Query(query.terms);
     auto scores = Score(intersection_result);

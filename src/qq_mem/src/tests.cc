@@ -1355,19 +1355,19 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
   }
 
   SECTION("It can generate snippets") {
-    auto snippets = engine.SearchWithSnippet(TermList{"hello"});
-    REQUIRE(snippets.size() == 3);
-    REQUIRE(snippets[0] == "<b>hello<\\b> wisconsin\n");
-    REQUIRE(snippets[1] == "<b>hello<\\b> world\n");
-    REQUIRE(snippets[2] == "<b>hello<\\b> world big world\n");
+    auto result = engine.Search(SearchQuery(TermList{"hello"}, true));
+    REQUIRE(result.Size() == 3);
+    REQUIRE(result.entries[0].snippet == "<b>hello<\\b> wisconsin\n");
+    REQUIRE(result.entries[1].snippet == "<b>hello<\\b> world\n");
+    REQUIRE(result.entries[2].snippet == "<b>hello<\\b> world big world\n");
   }
 
   SECTION("It can generate snippets for two-term query") {
-    auto snippets = engine.SearchWithSnippet(TermList{"hello", "world"});
-    REQUIRE(snippets.size() == 2);
+    auto result = engine.Search(SearchQuery(TermList{"hello", "world"}, true));
+    REQUIRE(result.Size() == 2);
 
-    REQUIRE(snippets[0] == "<b>hello<\\b> <b>world<\\b> big <b>world<\\b>\n");
-    REQUIRE(snippets[1] == "<b>hello<\\b> <b>world<\\b>\n");
+    REQUIRE(result.entries[0].snippet == "<b>hello<\\b> <b>world<\\b> big <b>world<\\b>\n");
+    REQUIRE(result.entries[1].snippet == "<b>hello<\\b> <b>world<\\b>\n");
   }
 }
 

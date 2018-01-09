@@ -94,7 +94,7 @@ utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) 
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
     // auto doc_ids = engine->SearchWithoutSnippet(terms);
-    auto snippets = engine->SearchWithoutSnippet(terms);
+    auto result = engine->Search(SearchQuery(terms));
   }
   auto end = utils::now();
   auto dur = utils::duration(start, end);
