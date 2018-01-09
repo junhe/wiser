@@ -110,11 +110,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
     AddDocumentReturnId(body, tokenized_body);
   }
 
-  Snippets Search(const TermList &terms, const SearchOperator &op) {
-    return SearchWithSnippet(terms);
-  }
-
-  SearchResult SearchTemp(const SearchQuery &query) {
+  SearchResult Search(const SearchQuery &query) {
     SearchResult result;
     if (query.return_snippets == true) {
       Snippets snippets = SearchWithSnippet(query.terms);

@@ -37,7 +37,8 @@ class SearchEngineServiceNew {
  public:
   // tokenized_body is stemmed and tokenized. It may have repeated token. 
   virtual void AddDocument(const std::string &body, const std::string &tokenized_body) = 0;
-  virtual Snippets Search(const TermList &terms, const SearchOperator &op) = 0; 
+  // virtual Snippets Search(const TermList &terms, const SearchOperator &op) = 0; 
+  virtual SearchResult Search(const SearchQuery &query) = 0; 
 };
 
 

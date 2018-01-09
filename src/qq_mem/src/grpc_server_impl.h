@@ -38,6 +38,7 @@
 #include <grpc++/security/server_credentials.h>
 #include "qq.grpc.pb.h"
 
+#include "types.h"
 #include "qq_engine.h"
 #include "qq_mem_uncompressed_engine.h"
 #include "engine_loader.h"
@@ -120,7 +121,7 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
             SearchReply* reply) override {
         Term term = request->term();
 
-        auto snippets = search_engine_->Search(TermList{term}, SearchOperator::AND);
+        SearchResult result = search_engine_->Search(SearchQuery(TermList{term}));
         
         reply->add_doc_ids(100);
 
@@ -306,8 +307,8 @@ class AsyncServer {
             if (ok) {
               next_state_ = State::WRITE_DONE;
 
-              auto snippets = search_engine_->Search(
-                  TermList{req_.term()}, SearchOperator::AND);
+              auto result = search_engine_->Search(
+                  SearchQuery(TermList{req_.term()}));
               stream_.Write(response_, AsyncServer::tag(this));
             } else {  // client has sent writes done
               next_state_ = State::FINISH_DONE;
