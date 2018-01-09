@@ -123,8 +123,8 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
         Term term = request->term();
 
         SearchResult result = search_engine_->Search(SearchQuery(TermList{term}));
-        
-        // result.CopyTo(reply);
+        result.CopyTo(reply);
+
         return Status::OK;
     }
 
@@ -310,6 +310,8 @@ class AsyncServer {
               auto result = search_engine_->Search(
                   SearchQuery(TermList{req_.term()}, false));
                   // SearchQuery(TermList{req_.term()}, true));
+              result.CopyTo(&response_);
+
               stream_.Write(response_, AsyncServer::tag(this));
             } else {  // client has sent writes done
               next_state_ = State::FINISH_DONE;
