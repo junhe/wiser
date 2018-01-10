@@ -58,7 +58,7 @@ void bench() {
     contexts.push_back(ctx);
   }
 
-  const int repeats = 1000;
+  const int repeats = 100000;
   SimpleHighlighter highlighter;
   auto start = utils::now();
   for (int i = 0; i < repeats; i++) {
