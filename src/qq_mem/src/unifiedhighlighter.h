@@ -12,6 +12,8 @@
 #include "qq_engine.h"
 #include "lrucache.h"
 
+
+
 class PassageScore_Iterator {
  public:
    PassageScore_Iterator(const Passage_Scores & passage_scores_in) {
@@ -112,12 +114,43 @@ class Passage {
 
 class SentenceBreakIterator {
  public:
+  
+  SentenceBreakIterator() {
+    const std::string & content("");
+    //boost::locale::boundary::sboundary_point_index tmp(boost::locale::boundary::sentence, content.begin(), content.end(),
+    //                                                   locale_all);
+    //map = tmp;
+    map.rule(boost::locale::boundary::sentence_term);
+  }
+
   SentenceBreakIterator(const std::string & content) {
     startoffset = endoffset = -1;
     content_ = & content;
+    
+
     // start boost boundary analysis
-    boost::locale::boundary::sboundary_point_index tmp(boost::locale::boundary::sentence, content_->begin(), content_->end(),gen("en_US.UTF-8"));
+    //boost::locale::boundary::sboundary_point_index tmp(boost::locale::boundary::sentence, content_->begin(), content_->end(),gen("en_US.UTF-8"));
+    boost::locale::boundary::sboundary_point_index tmp(boost::locale::boundary::sentence, content.begin(), content.end(),
+                                                       locale_all);
+    //return;
     map = tmp;
+    map.rule(boost::locale::boundary::sentence_term);
+    
+    current = map.begin();
+    last = map.end();
+    last_offset = content.size()-1;
+
+    return;
+  }
+  
+  void set_content(const std::string & content) {
+    startoffset = endoffset = -1;
+    content_ = & content;
+    
+    // start boost boundary analysis
+    //return;
+    map.map(boost::locale::boundary::sentence, content.begin(), content.end(),
+                                                       locale_all);
     map.rule(boost::locale::boundary::sentence_term);
 
     current = map.begin();
@@ -247,12 +280,13 @@ class UnifiedHighlighter {
 
 class SimpleHighlighter {
  public:
+  SimpleHighlighter() {locale_all = gen_all("en_US.UTF-8");}
+
   std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, 
                                     const int & maxPassages, 
                                     const std::string &doc_str) {
     // break the document according to sentence
-    SentenceBreakIterator breakiterator(doc_str);
-
+    breakiterator.set_content(doc_str);
     // "merge sorting" to calculate all sentence's score
 
     // priority queue for Offset_Iterator TODO extra copy
@@ -370,6 +404,7 @@ class SimpleHighlighter {
 
 
  protected:
+  SentenceBreakIterator breakiterator;
   float pivot = 87;  // hard-coded average length of passage(according to Lucene)
   float k1 = 1.2;    // BM25 parameters
   float b = 0.75;    // BM25 parameters

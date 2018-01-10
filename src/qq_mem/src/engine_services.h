@@ -7,6 +7,7 @@
 #include <map>
 #include <tuple>
 #include "types.h"
+#include <boost/locale.hpp>
 
 // This class is the basic abstract for
 // different kinds of search engine implementations:
@@ -121,6 +122,8 @@ class FlashReader {
 };
 
 // TODO: this design is not good!
-extern FlashReader * Global_Posting_Store; //defined in qq_engine.cc
+extern FlashReader * Global_Posting_Store;  //defined in qq_engine.cc
 extern FlashReader * Global_Document_Store; //defined in qq_engine.cc
+extern boost::locale::generator gen_all;        //
+extern std::locale locale_all;        // all generator
 #endif
