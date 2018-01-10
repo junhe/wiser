@@ -14,8 +14,8 @@ from .Clients import ElasticSearchClient
 BENCH_EXE = "RediSearchBenchmark"
 # WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract1.xml"
 WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml"
-SERVER_PATH = "/users/jhe/workdir/redis-4.0.2/src/redis-server"
-REDISEARCH_SO = "/users/jhe/workdir/RediSearch/src/redisearch.so"
+SERVER_PATH = "/users/jhe/redis-4.0.2/src/redis-server"
+REDISEARCH_SO = "/users/jhe/RediSearch/src/redisearch.so"
 
 
 def build_index(n_shards, n_hosts, engine, start_port, host):
@@ -60,7 +60,7 @@ class ExperimentRsbenchGo(Experiment):
         self.paras = helpers.parameter_combinations({
                     'worker_count': [1, 16, 32, 64, 128],
                     'query': ['hello', 'barack obama'],
-                    'engine': ['elastic'],
+                    'engine': ['redis'],
                     'n_shards': [1],
                     'n_hosts': [1],
                     'rebuild_index': [True]
