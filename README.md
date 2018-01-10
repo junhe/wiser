@@ -1,6 +1,12 @@
 # flashsearch
 
 
+# How to Install Redis
+
+```
+cd ./scripts/
+./setup-redis.sh
+```
 
 # How to Install RedisSearchBenchmark
 
