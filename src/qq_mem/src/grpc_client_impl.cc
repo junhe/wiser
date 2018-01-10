@@ -33,8 +33,8 @@ bool QQEngineSyncClient::Search(const std::string &term, std::vector<int> &doc_i
     Status status = stub_->Search(&context, request,  &reply);
     
     if (status.ok()) {
-      for (int i = 0; i < reply.doc_ids_size(); i++) {
-        doc_ids.push_back(reply.doc_ids(i));
+      for (int i = 0; i < reply.entries_size(); i++) {
+        doc_ids.push_back(reply.entries(i).doc_id());
       }
     }
 

@@ -280,7 +280,6 @@ class AsyncServer {
           stream_(srv_ctx_.get()),
           search_engine_(search_engine)
       {
-          response_.add_doc_ids(88);
           RequestCall();
       }
 
