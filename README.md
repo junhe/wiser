@@ -6,7 +6,10 @@
 ```
 cd ./scripts/
 ./setup-redis.sh
+source ~/.bashrc
 ```
+
+Now you can just use command `redis` in command line.
 
 # How to Install RedisSearchBenchmark
 
