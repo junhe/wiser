@@ -18,7 +18,8 @@ void NativeDocStore::Add(int id, std::string document) {
     if (FLAG_SNIPPETS_PRECOMPUTE) {
         Passage_Segments res;
         
-        SentenceBreakIterator breakiterator(document);
+        auto temp_locale = create_locale();
+        SentenceBreakIterator breakiterator(document, temp_locale);
 
         // iterate on a string
         int i = 0;

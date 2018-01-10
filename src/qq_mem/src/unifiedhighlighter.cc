@@ -3,8 +3,6 @@
 #include <iostream>
 #include <algorithm>
 
-boost::locale::generator gen_all;        // all generator
-std::locale locale_all;        // all generator
 
 // UnifiedHighlighter Functions
 UnifiedHighlighter::UnifiedHighlighter(QQSearchEngine & engine) {
@@ -213,7 +211,9 @@ std::string UnifiedHighlighter::highlightQuickForDoc(const Query & query, const 
 
 std::string UnifiedHighlighter::highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, const int & docID, const int & maxPassages) {
     // break the document according to sentence
-    SentenceBreakIterator breakiterator(engine_->GetDocument(docID));
+
+    auto temp_locale = create_locale();
+    SentenceBreakIterator breakiterator(engine_->GetDocument(docID), temp_locale);
     
     // "merge sorting" to calculate all sentence's score
     
@@ -337,5 +337,11 @@ std::string UnifiedHighlighter::construct_key(const Query & query, const int & d
     }
     return res;
 }
+
+std::locale create_locale() {
+  boost::locale::generator gen_all;        //
+  return gen_all("en_US.UTF-8");
+}
+
 
 

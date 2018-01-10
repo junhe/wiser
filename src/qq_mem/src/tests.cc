@@ -706,7 +706,7 @@ TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_break
     // init 
     std::string test_string = "hello Wisconsin, This is Kan.  Im happy.";
     int breakpoint[2] = {30, 39};
-    SentenceBreakIterator breakiterator(test_string);
+    SentenceBreakIterator breakiterator(test_string, create_locale());
 
     // iterate on a string
     int i = 0;
