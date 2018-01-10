@@ -3,6 +3,9 @@
 #include <iostream>
 #include <algorithm>
 
+boost::locale::generator gen_all;        // all generator
+std::locale locale_all;        // all generator
+
 // UnifiedHighlighter Functions
 UnifiedHighlighter::UnifiedHighlighter(QQSearchEngine & engine) {
     engine_ = & engine;

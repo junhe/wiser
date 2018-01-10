@@ -5,6 +5,7 @@
 #include "types.h"
 #include "utils.h"
 #include "unifiedhighlighter.h"
+#include <boost/locale.hpp>
 
 
 struct DocumentContext {
@@ -14,15 +15,13 @@ struct DocumentContext {
 };
 
 
-Snippets highlight_top_k(std::vector<DocumentContext> contexts) {
-  Snippets snippets;
 
+Snippets highlight_top_k(std::vector<DocumentContext> & contexts, SimpleHighlighter & highlighter) {
+  Snippets snippets;
   for (int i = 0; i < contexts.size(); i++) {
     auto ctx = contexts[i];
     OffsetsEnums enums = {};
     enums.push_back(Offset_Iterator(ctx.hello_pairs));
-
-    SimpleHighlighter highlighter;
     snippets.push_back(highlighter.highlightOffsetsEnums(enums, 2, ctx.body));
   }
 
@@ -33,15 +32,15 @@ Snippets highlight_top_k(std::vector<DocumentContext> contexts) {
 void bench() {
 	std::vector<std::string> bodies{
 		"hello l.o",
-    "hello film",
-    "golden hello",
-    "hei hello",
-    "websit hello project",
-    "websit hello project",
-    "websit hello project",
-    "websit hello project",
-    "hello from mar",
-    "hello caesar german:halloh"};
+    "hello film.",
+    "golden hello .",
+    "hei hello .",
+    "websit hello project.",
+    "websit hello project.",
+    "websit hello project.",
+    "websit hello project.",
+    "hello from mar.",
+    "hello caesar german:halloh."};
 
   std::vector<DocumentContext> contexts;
 
@@ -60,9 +59,10 @@ void bench() {
   }
 
   const int repeats = 1000;
+  SimpleHighlighter highlighter;
   auto start = utils::now();
   for (int i = 0; i < repeats; i++) {
-    highlight_top_k(contexts);
+    highlight_top_k(contexts, highlighter);
   }
   auto end = utils::now();
   auto duration = utils::duration(start, end);
@@ -73,12 +73,12 @@ void bench() {
   std::cout << "Query (TopK Snippets) Per Sec: " << repeats / duration << std::endl;
 }
 
+
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   // FLAGS_logtostderr = 1; // print to stderr instead of file
   FLAGS_stderrthreshold = 0; 
   FLAGS_minloglevel = 0; 
-
   bench();
 }
 
