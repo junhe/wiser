@@ -145,11 +145,12 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   }
 
   SearchResult Search(const SearchQuery &query) {
+    SearchResult result;
+
     auto intersection_result = Query(query.terms);
     auto scores = Score(intersection_result);
-    std::vector<DocIdType> top_k = FindTopK(scores, 10);
+    std::vector<DocIdType> top_k = FindTopK(scores, 5);
 
-    SearchResult result;
     for (auto doc_id : top_k) {
       SearchResultEntry entry;
       entry.doc_id = doc_id;
@@ -174,7 +175,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
       res.push_back(Offset_Iterator(*p_posting->GetOffsetPairs()));
     }
 
-    return highlighter_.highlightOffsetsEnums(res,  2, doc_store_.Get(doc_id));
+    return highlighter_.highlightOffsetsEnums(res,  5, doc_store_.Get(doc_id));
   }
 };
 

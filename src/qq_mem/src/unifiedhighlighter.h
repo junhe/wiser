@@ -115,25 +115,12 @@ class Passage {
 
 class SentenceBreakIterator {
  public:
+  /*
   SentenceBreakIterator(std::locale &locale): locale_(locale) {
     const std::string & content("");
     map.rule(boost::locale::boundary::sentence_term);
   }
- 
-  SentenceBreakIterator(const std::string &content, const std::locale & locale) {
-    startoffset = endoffset = -1;
-    content_ = & content;
-    // start boost boundary analysis
-    map.map(boost::locale::boundary::sentence, content.begin(), content.end(), locale);
-    map.rule(boost::locale::boundary::sentence_term);
-    current = map.begin();
-    last = map.end();
-    last_offset = content.size()-1;
-
-    return;
-  }
-  
-  void set_content(const std::string & content) {
+   void set_content(const std::string & content) {
     startoffset = endoffset = -1;
     content_ = & content;
     
@@ -148,6 +135,22 @@ class SentenceBreakIterator {
     return;
   }
 
+ */
+
+  SentenceBreakIterator(const std::string &content, const std::locale & locale) {
+    startoffset = endoffset = -1;
+    content_ = & content;
+    // start boost boundary analysis
+    //map.reset(new boost::locale::boundary::sboundary_point_index(boost::locale::boundary::sentence, content.begin(), content.end(), locale));
+    
+    map.map(boost::locale::boundary::sentence, content.begin(), content.end(), locale);
+    map.rule(boost::locale::boundary::sentence_term);
+    current = map.begin();
+    last_offset = content.size()-1;
+
+    return;
+  }
+  
   // get current sentence's start offset
   int getStartOffset() {
       return startoffset;
@@ -176,8 +179,8 @@ class SentenceBreakIterator {
       if (offset >=last_offset) {
           return 0;
       }
+      //current = map.find(content_->begin() + offset);
       current = map.find(content_->begin() + offset);
-      //current = map->find(content_->begin() + offset);
       std::string::const_iterator this_offset = *current;
       
       endoffset = this_offset - content_->begin() - 1;
@@ -188,17 +191,16 @@ class SentenceBreakIterator {
       return 1; // Success
   }
 
-  const std::string * content_;
 
+  const std::string * content_;
+  int startoffset;
+  int endoffset;
  private:
-  boost::locale::generator gen;
   boost::locale::boundary::sboundary_point_index map;
   //std::unique_ptr<boost::locale::boundary::sboundary_point_index> map;
   boost::locale::boundary::sboundary_point_index::iterator current; 
-  boost::locale::boundary::sboundary_point_index::iterator last; 
-  std::locale locale_;
-  int startoffset;
-  int endoffset;
+  //boost::locale::boundary::sboundary_point_index::iterator last; 
+  //std::locale locale_;
   int last_offset;
 };
 
@@ -282,8 +284,14 @@ class SimpleHighlighter {
     SentenceBreakIterator breakiterator(doc_str, locale_);
     
     // "merge sorting" to calculate all sentence's score
+    
     // priority queue for Offset_Iterator TODO extra copy
-    auto comp_offset = [] (Offset_Iterator &a, Offset_Iterator &b) -> bool { return a.startoffset > b.startoffset; };
+    /*auto comp_offset = [] (Offset_Iterator * & a, Offset_Iterator * & b) -> bool { return a->startoffset > b->startoffset; };
+    std::priority_queue<Offset_Iterator *, std::vector<Offset_Iterator *>, decltype(comp_offset)> offsets_queue(comp_offset);
+    for (auto it = offsetsEnums.begin(); it != offsetsEnums.end(); it++ ) {
+      offsets_queue.push(&(*it));
+    }*/
+    auto comp_offset = [] (Offset_Iterator & a, Offset_Iterator & b) -> bool { return a.startoffset > b.startoffset; };
     std::priority_queue<Offset_Iterator, std::vector<Offset_Iterator>, decltype(comp_offset)> offsets_queue(comp_offset);
     for (auto it = offsetsEnums.begin(); it != offsetsEnums.end(); it++ ) {
       offsets_queue.push(*it);
@@ -327,8 +335,10 @@ class SimpleHighlighter {
         // advance to next passage
         if (breakiterator.next(cur_start+1) <= 0)
           break;
-        passage->startoffset = breakiterator.getStartOffset();
-        passage->endoffset = breakiterator.getEndOffset();
+        //passage->startoffset = breakiterator.getStartOffset();
+        //passage->endoffset = breakiterator.getEndOffset();
+        passage->startoffset = breakiterator.startoffset;
+        passage->endoffset = breakiterator.endoffset;
       }
 
       // Add this term's appearance to current passage until out of this passage

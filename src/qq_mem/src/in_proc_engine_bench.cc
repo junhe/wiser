@@ -88,7 +88,7 @@ std::unique_ptr<QqMemUncompressedEngine> create_engine_from_file(const int n_doc
 }
 
 utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) {
-  const int n_repeats = 1000;
+  const int n_repeats = 100000;
   utils::ResultRow row;
 
   auto start = utils::now();

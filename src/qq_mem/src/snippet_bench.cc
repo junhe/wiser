@@ -22,7 +22,8 @@ Snippets highlight_top_k(std::vector<DocumentContext> & contexts, SimpleHighligh
     auto ctx = contexts[i];
     OffsetsEnums enums = {};
     enums.push_back(Offset_Iterator(ctx.hello_pairs));
-    snippets.push_back(highlighter.highlightOffsetsEnums(enums, 2, ctx.body));
+    //std::cout << highlighter.highlightOffsetsEnums(enums, 5, ctx.body) << std::endl;
+    snippets.push_back(highlighter.highlightOffsetsEnums(enums, 5, ctx.body));
   }
 
   // std::cout << snippets.size() << std::endl;
