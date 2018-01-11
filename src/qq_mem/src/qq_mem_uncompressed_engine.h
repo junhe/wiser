@@ -94,6 +94,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   SimpleDocStore doc_store_;
   InvertedIndexQqMem inverted_index_;
   DocLengthStore doc_lengths_;
+  SimpleHighlighter highlighter_;
 
   int NextDocId() {
     return next_doc_id_++;
@@ -173,8 +174,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
       res.push_back(Offset_Iterator(*p_posting->GetOffsetPairs()));
     }
 
-    SimpleHighlighter highlighter;
-    return highlighter.highlightOffsetsEnums(res,  2, doc_store_.Get(doc_id));
+    return highlighter_.highlightOffsetsEnums(res,  2, doc_store_.Get(doc_id));
   }
 };
 
