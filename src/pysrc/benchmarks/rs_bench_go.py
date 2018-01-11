@@ -90,6 +90,9 @@ class ExperimentRsbenchGo(Experiment):
         return conf
 
     def beforeEach(self, conf):
+        if conf["engine"] == "redis" and not helpers.is_command_running("redis-4.0.2/src/redis-server"):
+            raise RuntimeError("You have to have redis_server running")
+
         if conf['subexp_index'] == 0 and conf['rebuild_index'] is True:
             build_index(conf['n_shards'], conf['n_hosts'], conf['engine'], conf['start_port'], conf['host'])
 	exit(1)
