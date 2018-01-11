@@ -5,6 +5,7 @@
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <iomanip>
 #include <map>
 #include <unordered_map>
 #include <string>
@@ -76,6 +77,7 @@ class ResultTable {
  public:
   std::vector<ResultRow> table_;
 
+
   void Append(const ResultRow &row) {
     table_.push_back(row);
   }
@@ -85,17 +87,18 @@ class ResultTable {
       return "";
     }
 
+    int width = 12;
     std::ostringstream oss;
 
     // print header
     for (auto it : table_[0]) {
-      oss << it.first << "\t\t";
+      oss << std::setw(width) << it.first << "\t\t";
     }
     oss << std::endl;
 
     for (auto row : table_) {
       for (auto col : row) {
-        oss << col.second << "\t\t";
+        oss << std::setw(width)  << col.second << "\t\t";
       }
       oss << std::endl;
     }
