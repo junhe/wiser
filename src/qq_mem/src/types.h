@@ -50,6 +50,8 @@ typedef std::vector<Offset> Offsets;
 typedef Offsets OffsetPairs; // Alias for Offsets, more intuitive
 typedef std::vector<std::string> Snippets;
 
+typedef unsigned long byte_cnt_t;
+
 class TermWithOffset { // class Term_With_Offset
     public:
         Term term_;

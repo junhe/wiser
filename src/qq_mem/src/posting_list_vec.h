@@ -11,7 +11,7 @@
 #include "posting.h"
 
 
-// Requirements for class T:
+// Requirements for class T (a type for posting):
 //  - class T must have member function const DocIdType T::GetDocId() const
 template <class T>
 class PostingList_Vec {

@@ -1,6 +1,7 @@
 #ifndef QQ_MEM_UNCOMPRESSED_ENGINE_H
 #define QQ_MEM_UNCOMPRESSED_ENGINE_H
 
+
 #include "doc_length_store.h"
 #include "intersect.h"
 #include "utils.h"
@@ -103,8 +104,11 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
  public:
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, int n_rows) {
-    return engine_loader::load_body_and_tokenized_body(
+    int ret = engine_loader::load_body_and_tokenized_body(
         this, line_doc_path, n_rows, 2, 2);
+
+    LOG(WARNING) << "Number of terms in inverted index: " << TermCount();
+    return ret;
   }
 
   void AddDocument(const std::string &body, const std::string &tokenized_body) {
