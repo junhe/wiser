@@ -88,7 +88,7 @@ std::unique_ptr<QqMemUncompressedEngine> create_engine_from_file() {
 }
 
 utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) {
-  const int n_repeats = 10;
+  const int n_repeats = 1000000;
   utils::ResultRow row;
 
   auto start = utils::now();
@@ -100,6 +100,7 @@ utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) 
   auto dur = utils::duration(start, end);
 
   row["duration"] = std::to_string(dur / n_repeats); 
+  row["QPS"] = std::to_string(n_repeats / dur);
 
   std::string query;
   for (int i = 0; i < terms.size(); i++) {

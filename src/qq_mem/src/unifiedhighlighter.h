@@ -119,22 +119,13 @@ class SentenceBreakIterator {
     const std::string & content("");
     map.rule(boost::locale::boundary::sentence_term);
   }
-
-  SentenceBreakIterator(const std::string &content, std::locale locale)
-    : locale_(locale) {
+ 
+  SentenceBreakIterator(const std::string &content, const std::locale & locale) {
     startoffset = endoffset = -1;
     content_ = & content;
-    
-
     // start boost boundary analysis
-    //boost::locale::boundary::sboundary_point_index tmp(boost::locale::boundary::sentence, content_->begin(), content_->end(),gen("en_US.UTF-8"));
-    boost::locale::boundary::sboundary_point_index tmp(
-        boost::locale::boundary::sentence, 
-        content.begin(), content.end(), locale_);
-    //return;
-    map = tmp;
+    map.map(boost::locale::boundary::sentence, content.begin(), content.end(), locale);
     map.rule(boost::locale::boundary::sentence_term);
-    
     current = map.begin();
     last = map.end();
     last_offset = content.size()-1;
@@ -147,7 +138,6 @@ class SentenceBreakIterator {
     content_ = & content;
     
     // start boost boundary analysis
-    //return;
     map.map(boost::locale::boundary::sentence, content.begin(), content.end(),
                                                        locale_);
     map.rule(boost::locale::boundary::sentence_term);
@@ -155,7 +145,6 @@ class SentenceBreakIterator {
     current = map.begin();
     last = map.end();
     last_offset = content.size()-1;
-
     return;
   }
 
@@ -188,6 +177,7 @@ class SentenceBreakIterator {
           return 0;
       }
       current = map.find(content_->begin() + offset);
+      //current = map->find(content_->begin() + offset);
       std::string::const_iterator this_offset = *current;
       
       endoffset = this_offset - content_->begin() - 1;
@@ -202,10 +192,11 @@ class SentenceBreakIterator {
 
  private:
   boost::locale::generator gen;
-  boost::locale::boundary::sboundary_point_index map;    //TODO extra copy operation
+  boost::locale::boundary::sboundary_point_index map;
+  //std::unique_ptr<boost::locale::boundary::sboundary_point_index> map;
   boost::locale::boundary::sboundary_point_index::iterator current; 
   boost::locale::boundary::sboundary_point_index::iterator last; 
-  std::locale locale_;   
+  std::locale locale_;
   int startoffset;
   int endoffset;
   int last_offset;
@@ -282,16 +273,15 @@ class SimpleHighlighter {
  public:
   SimpleHighlighter() {
     locale_ = create_locale();
-    breakiterator.reset(new SentenceBreakIterator(locale_));
   }
 
   std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, 
                                     const int & maxPassages, 
                                     const std::string &doc_str) {
     // break the document according to sentence
-    breakiterator->set_content(doc_str);
+    SentenceBreakIterator breakiterator(doc_str, locale_);
+    
     // "merge sorting" to calculate all sentence's score
-
     // priority queue for Offset_Iterator TODO extra copy
     auto comp_offset = [] (Offset_Iterator &a, Offset_Iterator &b) -> bool { return a.startoffset > b.startoffset; };
     std::priority_queue<Offset_Iterator, std::vector<Offset_Iterator>, decltype(comp_offset)> offsets_queue(comp_offset);
@@ -335,10 +325,10 @@ class SimpleHighlighter {
           }
         }
         // advance to next passage
-        if (breakiterator->next(cur_start+1) <= 0)
+        if (breakiterator.next(cur_start+1) <= 0)
           break;
-        passage->startoffset = breakiterator->getStartOffset();
-        passage->endoffset = breakiterator->getEndOffset();
+        passage->startoffset = breakiterator.getStartOffset();
+        passage->endoffset = breakiterator.getEndOffset();
       }
 
       // Add this term's appearance to current passage until out of this passage
@@ -388,7 +378,7 @@ class SimpleHighlighter {
     // format the final string
     std::string res = "";
     for (auto it = passage_vector.begin(); it != passage_vector.end(); it++) {
-      res += (*it)->to_string(breakiterator->content_);   // highlight appeared terms
+      res += (*it)->to_string(breakiterator.content_);   // highlight appeared terms
       //std::cout <<  "("  << (*it)->score << ") " << breakiterator.content_->substr((*it)->startoffset, (*it)->endoffset - (*it)->startoffset+1) << std::endl;
       delete (*it);
     }
@@ -407,7 +397,7 @@ class SimpleHighlighter {
 
 
  protected:
-  std::unique_ptr<SentenceBreakIterator> breakiterator;
+  //std::unique_ptr<SentenceBreakIterator> breakiterator;
   float pivot = 87;  // hard-coded average length of passage(according to Lucene)
   float k1 = 1.2;    // BM25 parameters
   float b = 0.75;    // BM25 parameters
