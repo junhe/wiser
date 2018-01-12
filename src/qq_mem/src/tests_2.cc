@@ -33,6 +33,47 @@ TEST_CASE( "SimpleHighlighter works", "[highlighter]" ) {
   }
 }
 
+
+TEST_CASE( "SimpleHighlighter works for some corner cases", "[highlighter]" ) {
+  SECTION("One letter") {
+    std::string doc_str = "0";
+
+    Offsets offsets;
+    offsets.emplace_back( Offset{0, 0} ); 
+
+    OffsetsEnums enums;
+    enums.push_back(Offset_Iterator(offsets));
+
+    SimpleHighlighter highlighter;
+    auto s = highlighter.highlightOffsetsEnums(enums, 5, doc_str);
+    REQUIRE(s == "<b>0<\\b>\n");
+  }
+
+  SECTION("Two letter") {
+    std::string doc_str = "0 1";
+
+    Offsets offsets01;
+    offsets01.emplace_back( Offset{0, 0} ); 
+
+    Offsets offsets02;
+    offsets02.emplace_back( Offset{2, 2} ); 
+
+    OffsetsEnums enums;
+    enums.push_back(Offset_Iterator(offsets01));
+    enums.push_back(Offset_Iterator(offsets02));
+
+    SimpleHighlighter highlighter;
+    auto s = highlighter.highlightOffsetsEnums(enums, 5, doc_str);
+    std::cout << s << std::endl;
+    REQUIRE(s == "<b>0<\\b> 1");
+  }
+
+
+
+}
+
+
+
 TEST_CASE( "IntersectionResult works", "[intersection]" ) {
   IntersectionResult res;
 
