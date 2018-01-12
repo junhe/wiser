@@ -268,7 +268,7 @@ struct ResultDocEntry {
 
 // Return top K
 template <class T>
-std::vector<DocIdType> intersect_score_and_sort(
+std::vector<ResultDocEntry> intersect_score_and_sort(
     const std::vector<const PostingList_Vec<T>*> &lists, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index) 
@@ -346,13 +346,17 @@ std::vector<DocIdType> intersect_score_and_sort(
       std::cout << "doc id: " << max_doc_id 
         << " score: " << score_of_this_doc << std::endl;
       result_doc_entries.emplace_back(max_doc_id, score_of_this_doc);
+      std::vector< const RankingPostingWithOffsets *> &postings = 
+        result_doc_entries.back().postings;
+      for (int i = 0; i < n_lists; i++) {
+        postings.push_back(&lists[i]->GetPosting(posting_iters[i]));
+      }
 
       // Advance iterators
       for (int i = 0; i < n_lists; i++) {
         posting_iters[i]++;
       }
     }
-
   } // while
 
   for (auto doc : result_doc_entries) {
@@ -361,11 +365,11 @@ std::vector<DocIdType> intersect_score_and_sort(
 
   std::priority_queue<ResultDocEntry> queue(std::less<ResultDocEntry>(), 
       result_doc_entries);
-  std::vector<DocIdType> ret;
+  std::vector<ResultDocEntry> ret;
   
   int k = 5;
   while (k > 0 && !queue.empty()) {
-    ret.push_back(queue.top().doc_id);
+    ret.push_back(queue.top());
     queue.pop();
     k--;
   }

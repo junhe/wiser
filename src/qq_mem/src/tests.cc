@@ -1372,12 +1372,12 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
 
   SECTION("It can use intersect_score_and_sort()") {
     std::cout << "This --------------" << std::endl;
-    std::vector<DocIdType> top_k_doc_ids = engine.ProcessQueryTogether(
+    auto top_k = engine.ProcessQueryTogether(
         SearchQuery(TermList{"hello"}));
 
     std::cout << "top k:" << std::endl;
-    for (auto x : top_k_doc_ids) {
-      std::cout << x << std::endl;
+    for (auto e : top_k) {
+      std::cout << e.ToStr() << std::endl;
     }
 
   }
