@@ -1,3 +1,4 @@
+# encoding=utf8  
 import sys
 import requests, json
 import codecs
@@ -64,8 +65,12 @@ def tokenize(line_doc, output):
     doc["analyzer"] = "my_english_analyzer"
     
     header = line_doc.readline()
+    count = 0
     #output.write(header.strip('\n') + "\t" + "tokenized\n")
     for line in line_doc:
+        count = count + 1
+        if (count % 10000 == 0):
+            print count
         items = line.split("\t")
         doc_content = items[1]
         doc["text"] = doc_content
@@ -90,7 +95,7 @@ def tokenize(line_doc, output):
         for token in dic:
             terms += token + ' '
             offsets += dic[token] + '.'
-            print token, ': ', dic[token]
+            #print token, ': ', dic[token]
         #output.write(token["token"].encode('utf8') + ' ')
         output.write( unicode(terms + '\t' + offsets) )
         output.write( unicode('\n') )
@@ -100,6 +105,9 @@ if __name__=='__main__':
     if len(sys.argv)!=2:
         print('Usage: python tokenize_wiki_linedoc.py [input_name]  (results stored in input_name_tokenized)')
         exit(1)
+    
+    reload(sys)  
+    sys.setdefaultencoding('utf8')
     
     # do analysis
     #line_doc = open(sys.argv[1])
