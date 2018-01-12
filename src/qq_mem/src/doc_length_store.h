@@ -28,7 +28,7 @@ class DocLengthStore {
     return length_dict_.at(doc_id);  
   }
 
-  qq_float GetAvgLength() const {
+  const qq_float &GetAvgLength() const {
     return avg_length_;
   }
 

@@ -163,8 +163,12 @@ TEST_CASE( "Intersect, score and sort in one place", "[intersect]" ) {
     pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
   }
 
+  for (int i = 0; i < 10; i++) {
+    doc_lengths.AddLength(i, 20);
+  }
+
   std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-  intersect_score_and_sort(lists, &result, doc_lengths);
+  intersect_score_and_sort<PostingSimple>(lists, doc_lengths, 10);
 }
 
 

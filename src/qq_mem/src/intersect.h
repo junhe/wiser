@@ -107,7 +107,7 @@ DocScoreVec score_docs(const IntersectionResult &intersection_result,
 //  - If res != nullptr, T must has T::GetTermFreq() const
 template <class T>
 std::vector<DocIdType> intersect(
-    const std::vector<const PostingList_Vec<T>*> lists, IntersectionResult *res=nullptr) {
+    const std::vector<const PostingList_Vec<T>*> &lists, IntersectionResult *res=nullptr) {
   const int n_lists = lists.size();
   std::vector<typename PostingList_Vec<T>::iterator_t> posting_iters(n_lists);
   std::vector<DocIdType> ret_vec{};
@@ -194,105 +194,6 @@ std::vector<DocIdType> intersect(
 }
 
 
-template <class T>
-std::vector<DocIdType> intersect_score_and_sort(
-    const std::vector<const PostingList_Vec<T>*> &lists, 
-    IntersectionResult *res, 
-    const DocLengthStore &doc_lengths) 
-{
-  const int n_lists = lists.size();
-  std::vector<typename PostingList_Vec<T>::iterator_t> posting_iters(n_lists);
-  std::vector<DocIdType> ret_vec{};
-  bool finished = false;
-  DocIdType max_doc_id = -1;
-
-  std::map<Term, int> doc_cnt;
-  
-  for (int list_i = 0; list_i < n_lists; list_i++) {
-    posting_iters[list_i] = 0;
-  }
-
-  while (finished == false) {
-    // find max doc id
-    max_doc_id = -1;
-    for (int list_i = 0; list_i < n_lists; list_i++) {
-      const PostingList_Vec<T> *postinglist = lists[list_i];
-      typename PostingList_Vec<T>::iterator_t it = posting_iters[list_i];
-      if (it == postinglist->Size()) {
-        finished = true;
-        break;
-      }
-      const DocIdType cur_doc_id = postinglist->GetPosting(it).GetDocId(); 
-
-      if (cur_doc_id > max_doc_id) {
-        max_doc_id = cur_doc_id; 
-      }
-    }
-    DLOG(INFO) << "max_doc_id: " << max_doc_id << std::endl;
-
-    if (finished == true) {
-      break;
-    }
-
-    // Try to reach max_doc_id in all posting lists
-    int list_i;
-    for (list_i = 0; list_i < n_lists; list_i++) {
-      const PostingList_Vec<T> *postinglist = lists[list_i];
-      typename PostingList_Vec<T>::iterator_t *p_it = &posting_iters[list_i];
-
-      *p_it = postinglist->SkipForward(*p_it, max_doc_id);
-      if (*p_it == postinglist->Size()) {
-        finished = true;
-        break;
-      }
-
-      const DocIdType cur_doc_id = postinglist->GetPosting(*p_it).GetDocId(); 
-      // (*p_it)++;
-      
-      if (cur_doc_id != max_doc_id) {
-        break;
-      }
-    }
-    
-    if (list_i == n_lists) {
-      // all posting lists are at max_doc_id 
-      ret_vec.push_back(max_doc_id);
-
-      // Get all term frequencies for doc 'max_doc_id'
-      if (res != nullptr) {
-        for (int i = 0; i < n_lists; i++) {
-          const PostingList_Vec<T> *postinglist = lists[i];
-          typename PostingList_Vec<T>::iterator_t *p_it = &posting_iters[i];
-          const QqMemPostingService *posting = &postinglist->GetPosting(*p_it); 
-          res->SetPosting(max_doc_id, postinglist->GetTerm(), posting);
-
-          // score it
-          
-        
-          // put to priority queue
-
-
-        }
-      }
-
-      // Advance iterators
-      for (int i = 0; i < n_lists; i++) {
-        posting_iters[i]++;
-      }
-    }
-
-  } // while
-
-  // set doc count of each term
-  for (int list_i = 0; list_i < n_lists; list_i++) {
-    const PostingList_Vec<T> *postinglist = lists[list_i];
-    doc_cnt[postinglist->GetTerm()] = postinglist->Size();
-  }
-
-  return ret_vec;
-}
-
-
 
 // This is the score of a document for a query. This query may have multiple
 // terms.
@@ -345,6 +246,98 @@ qq_float calc_doc_score_for_a_query(
 
   return final_doc_score;
 }
+
+
+// Return top K
+template <class T>
+std::vector<DocIdType> intersect_score_and_sort(
+    const std::vector<const PostingList_Vec<T>*> &lists, 
+    const DocLengthStore &doc_lengths,
+    const int n_total_docs_in_index) 
+{
+  const int n_lists = lists.size();
+  std::vector<typename PostingList_Vec<T>::iterator_t> posting_iters(n_lists);
+  std::vector<DocIdType> ret_vec{};
+  bool finished = false;
+  DocIdType max_doc_id = -1;
+  
+
+  // initialize iterators
+  for (int list_i = 0; list_i < n_lists; list_i++) {
+    posting_iters[list_i] = 0;
+  }
+
+  // set doc count of each term
+  std::vector<int> doc_freqs_of_terms(n_lists);
+  for (int list_i = 0; list_i < n_lists; list_i++) {
+    doc_freqs_of_terms[list_i] = lists[list_i]->Size();
+  }
+
+  while (finished == false) {
+    // find max doc id
+    max_doc_id = -1;
+    for (int list_i = 0; list_i < n_lists; list_i++) {
+      const PostingList_Vec<T> *postinglist = lists[list_i];
+      typename PostingList_Vec<T>::iterator_t it = posting_iters[list_i];
+      if (it == postinglist->Size()) {
+        finished = true;
+        break;
+      }
+      const DocIdType cur_doc_id = postinglist->GetPosting(it).GetDocId(); 
+
+      if (cur_doc_id > max_doc_id) {
+        max_doc_id = cur_doc_id; 
+      }
+    }
+    DLOG(INFO) << "max_doc_id: " << max_doc_id << std::endl;
+
+    if (finished == true) {
+      break;
+    }
+
+    // Try to reach max_doc_id in all posting lists
+    int list_i;
+    for (list_i = 0; list_i < n_lists; list_i++) {
+      const PostingList_Vec<T> *postinglist = lists[list_i];
+      typename PostingList_Vec<T>::iterator_t *p_it = &posting_iters[list_i];
+
+      *p_it = postinglist->SkipForward(*p_it, max_doc_id);
+      if (*p_it == postinglist->Size()) {
+        finished = true;
+        break;
+      }
+
+      const DocIdType cur_doc_id = postinglist->GetPosting(*p_it).GetDocId(); 
+      
+      if (cur_doc_id != max_doc_id) {
+        break;
+      }
+    }
+    
+    if (list_i == n_lists) {
+      // all posting lists are at max_doc_id 
+      std::cout << "doc id: " << max_doc_id << std::endl;
+
+      // calc score
+      qq_float score_of_this_doc = calc_doc_score_for_a_query<T>(
+          lists, 
+          posting_iters,
+          doc_freqs_of_terms,
+          n_total_docs_in_index,
+          doc_lengths.GetAvgLength(),
+          doc_lengths.GetLength(max_doc_id));
+ 
+      // Advance iterators
+      for (int i = 0; i < n_lists; i++) {
+        posting_iters[i]++;
+      }
+    }
+
+  } // while
+
+  return ret_vec;
+}
+
 
 
 
