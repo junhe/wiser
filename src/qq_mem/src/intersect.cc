@@ -1,6 +1,9 @@
 #include "intersect.h"
 
 
+
+
+
 TermScoreMap score_terms_in_doc(const IntersectionResult &intersection_result, 
     IntersectionResult::row_iterator row_it,
     const qq_float &avg_doc_length, 
@@ -39,10 +42,6 @@ TermScoreMap score_terms_in_doc(const IntersectionResult &intersection_result,
 
   return term_scores;
 }
-
-
-
-
 
 
 

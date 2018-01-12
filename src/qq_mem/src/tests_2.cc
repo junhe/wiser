@@ -149,4 +149,84 @@ TEST_CASE( "Extract offset pairs from a string", "[utils]" ) {
 }
 
 
+TEST_CASE( "Intersect, score and sort in one place", "[intersect]" ) {
+  IntersectionResult result;  
+  DocLengthStore doc_lengths;
+
+  PostingList_Vec<PostingSimple> pl01("hello");   
+  for (int i = 0; i < 10; i++) {
+    pl01.AddPosting(PostingSimple(i, 1, Positions{28}));
+  }
+
+  PostingList_Vec<PostingSimple> pl02("world");   
+  for (int i = 5; i < 10; i++) {
+    pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
+  }
+
+  std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
+  intersect_score_and_sort(lists, &result, doc_lengths);
+}
+
+
+TEST_CASE( "score_terms_in_doc()", "[score]" ) {
+  // Assuming an engine that has the following documents
+  //
+  // hello world
+  // hello wisconsin
+  // hello world big world
+  int n_total_docs_in_index = 3;
+  qq_float avg_doc_length_in_index = (2 + 2 + 4) / 3.0;
+
+  SECTION("Query wisconsin") {
+    // This is document "hello wisconsin"
+    int length_of_this_doc = 2;
+    PostingList_Vec<PostingSimple> pl01("wisconsin");   
+    pl01.AddPosting(PostingSimple(0, 1, Positions{28}));
+
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01};
+    std::vector<PostingList_Vec<PostingSimple>::iterator_t> posting_iters{0};
+    std::vector<int> doc_freqs_of_terms{1};
+
+    qq_float doc_score = calc_doc_score_for_a_query<PostingSimple>(
+          lists, 
+          posting_iters,
+          doc_freqs_of_terms,
+          n_total_docs_in_index,
+          avg_doc_length_in_index,
+          length_of_this_doc);
+    REQUIRE(utils::format_double(doc_score, 3) == "1.09");
+  }
+
+  SECTION("Query hello") {
+    // This is document "hello world"
+    int length_of_this_doc = 2;
+
+    PostingList_Vec<PostingSimple> pl01("hello");   
+    pl01.AddPosting(PostingSimple(0, 1, Positions{28}));
+
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01};
+    std::vector<PostingList_Vec<PostingSimple>::iterator_t> posting_iters{0};
+    std::vector<int> doc_freqs_of_terms{3};
+
+    qq_float doc_score = calc_doc_score_for_a_query<PostingSimple>(
+          lists, 
+          posting_iters,
+          doc_freqs_of_terms,
+          n_total_docs_in_index,
+          avg_doc_length_in_index,
+          length_of_this_doc);
+    REQUIRE(utils::format_double(doc_score, 3) == "0.149");
+  }
+
+}
+
+
+
+
+
+
+
+
+
+
 
