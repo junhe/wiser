@@ -218,6 +218,29 @@ TEST_CASE( "score_terms_in_doc()", "[score]" ) {
     REQUIRE(utils::format_double(doc_score, 3) == "0.149");
   }
 
+  SECTION("Query hello+world") {
+    // This is document "hello world"
+    int length_of_this_doc = 2;
+
+    PostingList_Vec<PostingSimple> pl01("hello");   
+    pl01.AddPosting(PostingSimple(0, 1, Positions{28}));
+
+    PostingList_Vec<PostingSimple> pl02("world");   
+    pl02.AddPosting(PostingSimple(0, 1, Positions{28}));
+
+    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
+    std::vector<PostingList_Vec<PostingSimple>::iterator_t> posting_iters{0, 0};
+    std::vector<int> doc_freqs_of_terms{3, 2};
+
+    qq_float doc_score = calc_doc_score_for_a_query<PostingSimple>(
+          lists, 
+          posting_iters,
+          doc_freqs_of_terms,
+          n_total_docs_in_index,
+          avg_doc_length_in_index,
+          length_of_this_doc);
+    REQUIRE(utils::format_double(doc_score, 3) == "0.672");
+  }
 }
 
 
