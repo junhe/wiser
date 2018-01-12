@@ -24,8 +24,7 @@ grpc_benchmark:
 	python ./tools/run_client_server.py ./build/grpc_benchmark ./build/qq_server
 
 in_proc_engine_bench:
-	./build.sh
-	./build/in_proc_engine_bench
+	cd build && cmake ../src/ && make -j32 in_proc_engine_bench && ./in_proc_engine_bench
 
 run_qq_mem:
 	./build.sh

@@ -94,8 +94,9 @@ utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) 
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
     // auto doc_ids = engine->SearchWithoutSnippet(terms);
-    auto result = engine->Search(SearchQuery(terms, true));
+    // auto result = engine->Search(SearchQuery(terms, true));
     // auto result = engine->Search(SearchQuery(terms, false));
+    auto result = engine->ProcessQueryTogether(SearchQuery(terms, false));
   }
   auto end = utils::now();
   auto dur = utils::duration(start, end);
@@ -118,20 +119,20 @@ utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) 
 
 void qq_uncompressed_bench() {
   utils::ResultTable table;
-  auto engine = create_engine(100, 1, 1000);
+  auto engine = create_engine(1, 2, 425);
 
   table.Append(search(engine.get(), TermList{"0"}));
-  table.Append(search(engine.get(), TermList{"100"}));
-  table.Append(search(engine.get(), TermList{"500"}));
-  table.Append(search(engine.get(), TermList{"980"}));
-  table.Append(search(engine.get(), TermList{"990"}));
-  table.Append(search(engine.get(), TermList{"995"})); // 500 docs
-  table.Append(search(engine.get(), TermList{"999"}));
+  // table.Append(search(engine.get(), TermList{"100"}));
+  // table.Append(search(engine.get(), TermList{"500"}));
+  // table.Append(search(engine.get(), TermList{"980"}));
+  // table.Append(search(engine.get(), TermList{"990"}));
+  // table.Append(search(engine.get(), TermList{"995"})); // 500 docs
+  // table.Append(search(engine.get(), TermList{"999"}));
 
-  table.Append(search(engine.get(), TermList{"0", "1"}));
-  table.Append(search(engine.get(), TermList{"500", "501"}));
-  table.Append(search(engine.get(), TermList{"994", "995"}));
-  table.Append(search(engine.get(), TermList{"998", "999"}));
+  // table.Append(search(engine.get(), TermList{"0", "1"}));
+  // table.Append(search(engine.get(), TermList{"500", "501"}));
+  // table.Append(search(engine.get(), TermList{"994", "995"}));
+  // table.Append(search(engine.get(), TermList{"998", "999"}));
 
   std::cout << table.ToStr();
 }
@@ -157,8 +158,8 @@ int main(int argc, char **argv) {
   FLAGS_stderrthreshold = 0; 
   FLAGS_minloglevel = 0; 
 
-  // qq_uncompressed_bench();
-  qq_uncompressed_bench_wiki();
+  qq_uncompressed_bench();
+  // qq_uncompressed_bench_wiki();
 }
 
 
