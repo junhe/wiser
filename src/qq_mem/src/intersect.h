@@ -214,7 +214,7 @@ std::vector<DocIdType> intersect(
 //
 // T is a class for a posting.
 template <class T>
-qq_float calc_doc_score_for_a_query(
+inline qq_float calc_doc_score_for_a_query(
     const std::vector<const PostingList_Vec<T>*> &lists, 
     const std::vector<typename PostingList_Vec<T>::iterator_t> &posting_iters,
     const std::vector<int> &doc_freqs_of_terms,
@@ -256,6 +256,10 @@ struct ResultDocEntry {
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in)
     :doc_id(doc_id_in), score(score_in) {}
 
+  ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
+      const std::vector<const RankingPostingWithOffsets *> &postings_in)
+    :doc_id(doc_id_in), score(score_in), postings(postings_in) {}
+
   friend bool operator<(ResultDocEntry a, ResultDocEntry b)
   {
     return a.score < b.score;
@@ -266,7 +270,6 @@ struct ResultDocEntry {
   }
 };
 
-// Return top K
 template <class T>
 std::vector<ResultDocEntry> intersect_score_and_sort(
     const std::vector<const PostingList_Vec<T>*> &lists, 
@@ -278,6 +281,8 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
   bool finished = false;
   DocIdType max_doc_id = -1;
   std::vector<ResultDocEntry> result_doc_entries;
+  std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
+    std::less<ResultDocEntry> > priority_q;
 
   // initialize iterators
   for (int list_i = 0; list_i < n_lists; list_i++) {
@@ -342,13 +347,21 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
           n_total_docs_in_index,
           doc_lengths.GetAvgLength(),
           doc_lengths.GetLength(max_doc_id));
+      // qq_float score_of_this_doc = 0.331;
 
-      result_doc_entries.emplace_back(max_doc_id, score_of_this_doc);
-      std::vector< const RankingPostingWithOffsets *> &postings = 
-        result_doc_entries.back().postings;
+      // result_doc_entries.emplace_back(max_doc_id, score_of_this_doc);
+      // std::vector< const RankingPostingWithOffsets *> &postings = 
+        // result_doc_entries.back().postings;
+      // for (int i = 0; i < n_lists; i++) {
+        // postings.push_back(&lists[i]->GetPosting(posting_iters[i]));
+      // }
+      
+      // directly push to priority queue
+      std::vector<const RankingPostingWithOffsets *> postings;
       for (int i = 0; i < n_lists; i++) {
         postings.push_back(&lists[i]->GetPosting(posting_iters[i]));
       }
+      priority_q.emplace(max_doc_id, score_of_this_doc, postings);
 
       // Advance iterators
       for (int i = 0; i < n_lists; i++) {
@@ -357,16 +370,31 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
     }
   } // while
 
-  std::priority_queue<ResultDocEntry> queue(std::less<ResultDocEntry>(), 
-      result_doc_entries);
-  std::vector<ResultDocEntry> ret;
+  // std::priority_queue<ResultDocEntry> queue(std::less<ResultDocEntry>(), 
+      // result_doc_entries);
+  // std::vector<ResultDocEntry> ret;
   
+  // int k = 5;
+  // while (k > 0 && !queue.empty()) {
+    // ret.push_back(queue.top());
+    // queue.pop();
+    // k--;
+  // }
+
+  // auto ret_it = result_doc_entries.cbegin(); 
+  // auto early_end = ret_it + 5 < result_doc_entries.cend() ? 
+                    // ret_it + 5 : result_doc_entries.cend();
+  // std::vector<ResultDocEntry> ret(ret_it, early_end);
+
+	std::vector<ResultDocEntry> ret;
+
   int k = 5;
-  while (k > 0 && !queue.empty()) {
-    ret.push_back(queue.top());
-    queue.pop();
+  while(!priority_q.empty() && k != 0) {
+    ret.push_back(priority_q.top());
+    priority_q.pop();
     k--;
   }
+
 
   return ret;
 }
