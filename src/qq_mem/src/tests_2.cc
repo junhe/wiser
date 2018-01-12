@@ -35,7 +35,20 @@ TEST_CASE( "SimpleHighlighter works", "[highlighter]" ) {
 
 
 TEST_CASE( "SimpleHighlighter works for some corner cases", "[highlighter]" ) {
+  SECTION("Empty") {
+    // Currently it fails due to seg fault
+    std::string doc_str = "";
+
+    OffsetsEnums enums;
+
+    SimpleHighlighter highlighter;
+    auto s = highlighter.highlightOffsetsEnums(enums, 5, doc_str);
+    REQUIRE(s == "");
+  }
+
+
   SECTION("One letter") {
+    // Currently it fails due to seg fault
     std::string doc_str = "0";
 
     Offsets offsets;
@@ -67,9 +80,6 @@ TEST_CASE( "SimpleHighlighter works for some corner cases", "[highlighter]" ) {
     std::cout << s << std::endl;
     REQUIRE(s == "<b>0<\\b> 1");
   }
-
-
-
 }
 
 
