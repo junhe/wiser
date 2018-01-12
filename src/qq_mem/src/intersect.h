@@ -343,8 +343,6 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
           doc_lengths.GetAvgLength(),
           doc_lengths.GetLength(max_doc_id));
 
-      std::cout << "doc id: " << max_doc_id 
-        << " score: " << score_of_this_doc << std::endl;
       result_doc_entries.emplace_back(max_doc_id, score_of_this_doc);
       std::vector< const RankingPostingWithOffsets *> &postings = 
         result_doc_entries.back().postings;
@@ -358,10 +356,6 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
       }
     }
   } // while
-
-  for (auto doc : result_doc_entries) {
-    std::cout << doc.ToStr() << std::endl;
-  }
 
   std::priority_queue<ResultDocEntry> queue(std::less<ResultDocEntry>(), 
       result_doc_entries);
