@@ -265,6 +265,11 @@ struct ResultDocEntry {
     return a.score < b.score;
   }
 
+  friend bool operator>(ResultDocEntry a, ResultDocEntry b)
+  {
+    return a.score > b.score;
+  }
+
   std::string ToStr() {
     return std::to_string(doc_id) + " (" + std::to_string(score) + ")";
   }
@@ -282,7 +287,8 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
   DocIdType max_doc_id = -1;
   std::vector<ResultDocEntry> result_doc_entries;
   std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
-    std::less<ResultDocEntry> > priority_q;
+    std::greater<ResultDocEntry> > min_heap;
+  const int k = 5;
 
   // initialize iterators
   for (int list_i = 0; list_i < n_lists; list_i++) {
@@ -357,11 +363,24 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
       // }
       
       // directly push to priority queue
-      std::vector<const RankingPostingWithOffsets *> postings;
-      for (int i = 0; i < n_lists; i++) {
-        postings.push_back(&lists[i]->GetPosting(posting_iters[i]));
+
+      if (min_heap.size() < k) {
+        std::vector<const RankingPostingWithOffsets *> postings;
+        for (int i = 0; i < n_lists; i++) {
+          postings.push_back(&lists[i]->GetPosting(posting_iters[i]));
+        }
+        min_heap.emplace(max_doc_id, score_of_this_doc, postings);
+      } else {
+        if (score_of_this_doc > min_heap.top().score) {
+          min_heap.pop();
+          std::vector<const RankingPostingWithOffsets *> postings;
+          for (int i = 0; i < n_lists; i++) {
+            postings.push_back(&lists[i]->GetPosting(posting_iters[i]));
+          }
+          min_heap.emplace(max_doc_id, score_of_this_doc, postings);
+        }
+        assert(min_heap.size() == k);
       }
-      priority_q.emplace(max_doc_id, score_of_this_doc, postings);
 
       // Advance iterators
       for (int i = 0; i < n_lists; i++) {
@@ -388,13 +407,14 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
 
 	std::vector<ResultDocEntry> ret;
 
-  int k = 5;
-  while(!priority_q.empty() && k != 0) {
-    ret.push_back(priority_q.top());
-    priority_q.pop();
-    k--;
+  // int kk = k;
+  int kk = 5;
+  while(!min_heap.empty() && kk != 0) {
+    ret.push_back(min_heap.top());
+    min_heap.pop();
+    kk--;
   }
-
+  std::reverse(ret.begin(), ret.end());
 
   return ret;
 }
