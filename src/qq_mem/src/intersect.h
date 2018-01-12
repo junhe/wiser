@@ -14,6 +14,7 @@
 #include "engine_services.h"
 #include "posting_list_vec.h"
 #include "ranking.h"
+#include "utils.h"
 
 
 class IntersectionResult {
@@ -247,6 +248,23 @@ qq_float calc_doc_score_for_a_query(
   return final_doc_score;
 }
 
+struct ResultDocEntry {
+  DocIdType doc_id;
+  qq_float score;
+  std::vector<const RankingPostingWithOffsets *> postings;
+
+  ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in)
+    :doc_id(doc_id_in), score(score_in) {}
+
+  friend bool operator<(ResultDocEntry a, ResultDocEntry b)
+  {
+    return a.score < b.score;
+  }
+
+  std::string ToStr() {
+    return std::to_string(doc_id) + " (" + std::to_string(score) + ")";
+  }
+};
 
 // Return top K
 template <class T>
@@ -257,10 +275,9 @@ std::vector<DocIdType> intersect_score_and_sort(
 {
   const int n_lists = lists.size();
   std::vector<typename PostingList_Vec<T>::iterator_t> posting_iters(n_lists);
-  std::vector<DocIdType> ret_vec{};
   bool finished = false;
   DocIdType max_doc_id = -1;
-  
+  std::vector<ResultDocEntry> result_doc_entries;
 
   // initialize iterators
   for (int list_i = 0; list_i < n_lists; list_i++) {
@@ -316,7 +333,6 @@ std::vector<DocIdType> intersect_score_and_sort(
     
     if (list_i == n_lists) {
       // all posting lists are at max_doc_id 
-      std::cout << "doc id: " << max_doc_id << std::endl;
 
       // calc score
       qq_float score_of_this_doc = calc_doc_score_for_a_query<T>(
@@ -326,7 +342,11 @@ std::vector<DocIdType> intersect_score_and_sort(
           n_total_docs_in_index,
           doc_lengths.GetAvgLength(),
           doc_lengths.GetLength(max_doc_id));
- 
+
+      std::cout << "doc id: " << max_doc_id 
+        << " score: " << score_of_this_doc << std::endl;
+      result_doc_entries.emplace_back(max_doc_id, score_of_this_doc);
+
       // Advance iterators
       for (int i = 0; i < n_lists; i++) {
         posting_iters[i]++;
@@ -335,7 +355,22 @@ std::vector<DocIdType> intersect_score_and_sort(
 
   } // while
 
-  return ret_vec;
+  for (auto doc : result_doc_entries) {
+    std::cout << doc.ToStr() << std::endl;
+  }
+
+  std::priority_queue<ResultDocEntry> queue(std::less<ResultDocEntry>(), 
+      result_doc_entries);
+  std::vector<DocIdType> ret;
+  
+  int k = 5;
+  while (k > 0 && !queue.empty()) {
+    ret.push_back(queue.top().doc_id);
+    queue.pop();
+    k--;
+  }
+
+  return ret;
 }
 
 

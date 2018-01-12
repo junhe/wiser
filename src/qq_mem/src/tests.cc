@@ -1369,6 +1369,18 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     REQUIRE(result.entries[0].snippet == "<b>hello<\\b> <b>world<\\b> big <b>world<\\b>\n");
     REQUIRE(result.entries[1].snippet == "<b>hello<\\b> <b>world<\\b>\n");
   }
+
+  SECTION("It can use intersect_score_and_sort()") {
+    std::cout << "This --------------" << std::endl;
+    std::vector<DocIdType> top_k_doc_ids = engine.ProcessQueryTogether(
+        SearchQuery(TermList{"hello"}));
+
+    std::cout << "top k:" << std::endl;
+    for (auto x : top_k_doc_ids) {
+      std::cout << x << std::endl;
+    }
+
+  }
 }
 
 

@@ -32,7 +32,7 @@ class DocLengthStore {
     return avg_length_;
   }
 
-  std::size_t Size() const {
+  int Size() const {
     return length_dict_.size();
   }
 

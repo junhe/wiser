@@ -149,28 +149,6 @@ TEST_CASE( "Extract offset pairs from a string", "[utils]" ) {
 }
 
 
-TEST_CASE( "Intersect, score and sort in one place", "[intersect]" ) {
-  IntersectionResult result;  
-  DocLengthStore doc_lengths;
-
-  PostingList_Vec<PostingSimple> pl01("hello");   
-  for (int i = 0; i < 10; i++) {
-    pl01.AddPosting(PostingSimple(i, 1, Positions{28}));
-  }
-
-  PostingList_Vec<PostingSimple> pl02("world");   
-  for (int i = 5; i < 10; i++) {
-    pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
-  }
-
-  for (int i = 0; i < 10; i++) {
-    doc_lengths.AddLength(i, 20);
-  }
-
-  std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-  intersect_score_and_sort<PostingSimple>(lists, doc_lengths, 10);
-}
-
 
 TEST_CASE( "score_terms_in_doc()", "[score]" ) {
   // Assuming an engine that has the following documents

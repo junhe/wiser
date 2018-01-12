@@ -148,6 +148,18 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
     return utils::find_top_k(doc_scores, k);
   }
 
+  std::vector<DocIdType> ProcessQueryTogether(const SearchQuery &query) {
+    InvertedIndexQqMem::PlPointers lists = 
+      inverted_index_.FindPostinglists(query.terms);
+
+    std::vector<DocIdType> top_k = 
+      intersect_score_and_sort<RankingPostingWithOffsets>(
+        lists, doc_lengths_, doc_lengths_.Size());  
+
+
+    return top_k;
+  }
+
   SearchResult Search(const SearchQuery &query) {
     SearchResult result;
 

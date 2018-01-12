@@ -65,7 +65,7 @@ struct DocScore {
   }
 
   std::string ToStr() {
-    return std::to_string(doc_id) + " (" + std::to_string(score) + ")\n";
+    return std::to_string(doc_id) + " (" + std::to_string(score) + ")";
   }
 };
 
