@@ -148,7 +148,8 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
     return utils::find_top_k(doc_scores, k);
   }
 
-  std::vector<ResultDocEntry> ProcessQueryTogether(const SearchQuery &query) {
+  SearchResult ProcessQueryTogether(const SearchQuery &query) {
+    SearchResult result;
     InvertedIndexQqMem::PlPointers lists = 
       inverted_index_.FindPostinglists(query.terms);
 
@@ -156,8 +157,30 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
       intersect_score_and_sort<RankingPostingWithOffsets>(
         lists, doc_lengths_, doc_lengths_.Size());  
 
+    for (auto & top_doc_entry : top_k) {
+      SearchResultEntry result_entry;
+      result_entry.doc_id = top_doc_entry.doc_id;
 
-    return top_k;
+      if (query.return_snippets == true) {
+        result_entry.snippet = GenerateSnippet(top_doc_entry.doc_id,
+            top_doc_entry.postings);
+      }
+
+      result.entries.push_back(result_entry);
+    }
+
+    return result;
+  }
+
+  std::string GenerateSnippet(const DocIdType &doc_id, 
+      const std::vector<const RankingPostingWithOffsets *> &postings) {
+    OffsetsEnums res = {};
+
+    for (int i = 0; i < postings.size(); i++) {
+      res.push_back(Offset_Iterator(*postings[i]->GetOffsetPairs()));
+    }
+
+    return highlighter_.highlightOffsetsEnums(res,  5, doc_store_.Get(doc_id));
   }
 
   SearchResult Search(const SearchQuery &query) {
