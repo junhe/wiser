@@ -70,7 +70,7 @@ struct SearchQuery {
 
   TermList terms;
   SearchOperator op = SearchOperator::AND;
-  int n_results = 10;
+  int n_results = 5;
   bool return_snippets = false;
   QueryProcessingCore query_processing_core = QueryProcessingCore::TOGETHER;
   // QueryProcessingCore query_processing_core = QueryProcessingCore::BY_PHASE;

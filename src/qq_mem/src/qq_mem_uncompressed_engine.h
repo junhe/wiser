@@ -155,7 +155,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
     std::vector<ResultDocEntry> top_k = 
       intersect_score_and_sort<RankingPostingWithOffsets>(
-        lists, doc_lengths_, doc_lengths_.Size());  
+        lists, doc_lengths_, doc_lengths_.Size(), query.n_results);  
 
     for (auto & top_doc_entry : top_k) {
       SearchResultEntry result_entry;
@@ -196,7 +196,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
     auto intersection_result = Query(query.terms);
     auto scores = Score(intersection_result);
-    std::vector<DocIdType> top_k = FindTopK(scores, 5);
+    std::vector<DocIdType> top_k = FindTopK(scores, query.n_results);
 
     for (auto doc_id : top_k) {
       SearchResultEntry entry;

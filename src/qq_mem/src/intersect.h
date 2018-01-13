@@ -279,7 +279,7 @@ template <class T>
 std::vector<ResultDocEntry> intersect_score_and_sort(
     const std::vector<const PostingList_Vec<T>*> &lists, 
     const DocLengthStore &doc_lengths,
-    const int n_total_docs_in_index) 
+    const int n_total_docs_in_index, const int k = 5) 
 {
   const int n_lists = lists.size();
   std::vector<typename PostingList_Vec<T>::iterator_t> posting_iters(n_lists);
@@ -288,7 +288,6 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
   std::vector<ResultDocEntry> result_doc_entries;
   std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
     std::greater<ResultDocEntry> > min_heap;
-  const int k = 5;
 
   // initialize iterators
   for (int list_i = 0; list_i < n_lists; list_i++) {
@@ -407,8 +406,7 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
 
 	std::vector<ResultDocEntry> ret;
 
-  // int kk = k;
-  int kk = 5;
+  int kk = k;
   while(!min_heap.empty() && kk != 0) {
     ret.push_back(min_heap.top());
     min_heap.pop();
