@@ -1357,8 +1357,8 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
   SECTION("It can generate snippets") {
     auto result = engine.Search(SearchQuery(TermList{"hello"}, true));
     REQUIRE(result.Size() == 3);
-    REQUIRE(result.entries[0].snippet == "<b>hello<\\b> wisconsin\n");
-    REQUIRE(result.entries[1].snippet == "<b>hello<\\b> world\n");
+    // We cannot test the snippets of the first entries because we do not know
+    // their order (the first two entries have the same score).
     REQUIRE(result.entries[2].snippet == "<b>hello<\\b> world big world\n");
   }
 

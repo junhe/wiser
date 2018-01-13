@@ -62,6 +62,7 @@ class TermWithOffset { // class Term_With_Offset
 typedef std::vector<TermWithOffset> TermWithOffsetList;
 
 
+enum class QueryProcessingCore {TOGETHER, BY_PHASE};
 struct SearchQuery {
   SearchQuery(const TermList &terms_in): terms(terms_in) {}
   SearchQuery(const TermList &terms_in, const bool &return_snippets_in)
@@ -71,6 +72,8 @@ struct SearchQuery {
   SearchOperator op = SearchOperator::AND;
   int n_results = 10;
   bool return_snippets = false;
+  QueryProcessingCore query_processing_core = QueryProcessingCore::TOGETHER;
+  // QueryProcessingCore query_processing_core = QueryProcessingCore::BY_PHASE;
 };
 
 struct SearchResultEntry {

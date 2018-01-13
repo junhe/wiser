@@ -184,6 +184,14 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   }
 
   SearchResult Search(const SearchQuery &query) {
+    if (query.query_processing_core == QueryProcessingCore::TOGETHER) {
+      return ProcessQueryTogether(query);
+    } else if (query.query_processing_core == QueryProcessingCore::BY_PHASE) {
+      return ProcessQueryStepByStep(query);
+    }
+  }
+
+  SearchResult ProcessQueryStepByStep(const SearchQuery &query) {
     SearchResult result;
 
     auto intersection_result = Query(query.terms);
