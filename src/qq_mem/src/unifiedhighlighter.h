@@ -176,14 +176,15 @@ class SentenceBreakIterator {
 
   // get to the next 'passage' contains offset
   int next(int offset) {
-      if (offset >=last_offset) {
+      if (offset > last_offset) {
           return 0;
       }
       //current = map.find(content_->begin() + offset);
-      current = map.find(content_->begin() + offset);
+      current = map.find(content_->begin() + offset + 1);
       std::string::const_iterator this_offset = *current;
       
       endoffset = this_offset - content_->begin() - 1;
+      
       current--;
       std::string::const_iterator tmp_offset = *current;
       startoffset = tmp_offset - content_->begin() - 1 + 1;
@@ -280,6 +281,8 @@ class SimpleHighlighter {
   std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, 
                                     const int & maxPassages, 
                                     const std::string &doc_str) {
+    
+    if (offsetsEnums.size() == 0) return "";
     // break the document according to sentence
     SentenceBreakIterator breakiterator(doc_str, locale_);
     
@@ -296,9 +299,11 @@ class SimpleHighlighter {
     for (auto it = offsetsEnums.begin(); it != offsetsEnums.end(); it++ ) {
       offsets_queue.push(*it);
     }
+
     // priority queue for passages
     auto comp_passage = [] (Passage * & a, Passage * & b) -> bool { return a->score > b->score; };
     std::priority_queue<Passage *, std::vector<Passage*>, decltype(comp_passage)> passage_queue(comp_passage);
+    // TODO min score
 
     // start caculate score for passage
 
@@ -309,13 +314,13 @@ class SimpleHighlighter {
       offsets_queue.pop();
 
       int cur_start = cur_iter.startoffset;
-      int cur_end = cur_iter.endoffset;
       // judge whether this iterator is over
       if (cur_start == -1)
         continue;
+      int cur_end = cur_iter.endoffset;
 
       // judge whether this iterator's offset is beyond current passage
-      if (cur_start >= passage->endoffset) {
+      if (cur_start > passage->endoffset) {
         // if this passage is not empty, then wrap up it and push it to the priority queue
         if (passage->startoffset >= 0) {
           passage->score = passage->score * passage_norm(passage->startoffset); //normalize according to passage's startoffset
@@ -333,12 +338,16 @@ class SimpleHighlighter {
           }
         }
         // advance to next passage
-        if (breakiterator.next(cur_start+1) <= 0)
-          break;
+        //if (breakiterator.next(cur_start+1) <= 0) {
+        if (breakiterator.next(cur_start) <= 0) {
+            std::cout << "cannot find next passage contain " << cur_start << std::endl;
+            break;
+        }
         //passage->startoffset = breakiterator.getStartOffset();
         //passage->endoffset = breakiterator.getEndOffset();
         passage->startoffset = breakiterator.startoffset;
         passage->endoffset = breakiterator.endoffset;
+        //std::cout << "next passage: " << breakiterator.startoffset << " -> " << breakiterator.endoffset << std::endl;
       }
 
       // Add this term's appearance to current passage until out of this passage
@@ -351,11 +360,11 @@ class SimpleHighlighter {
           break;
         }
         cur_start = cur_iter.startoffset;
-        cur_end = cur_iter.endoffset;
-        if (cur_start >= passage->endoffset) {
+        if (cur_start > passage->endoffset) {
           offsets_queue.push(cur_iter);
           break;
         }
+        cur_end = cur_iter.endoffset;
       }
       // Add the score from this term to this passage
       passage->score = passage->score + cur_iter.weight * tf_norm(tf, passage->endoffset-passage->startoffset+1);   //scoring

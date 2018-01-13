@@ -77,8 +77,7 @@ TEST_CASE( "SimpleHighlighter works for some corner cases", "[highlighter]" ) {
 
     SimpleHighlighter highlighter;
     auto s = highlighter.highlightOffsetsEnums(enums, 5, doc_str);
-    std::cout << s << std::endl;
-    REQUIRE(s == "<b>0<\\b> 1");
+    REQUIRE(s == "<b>0<\\b> <b>1<\\b>\n");
   }
 }
 
