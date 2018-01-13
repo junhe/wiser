@@ -64,4 +64,6 @@ test_args:
 	cd ..
 	./build/testmain ${args}
 
-
+snippet_bench:
+	./build.sh
+	./build/snippet_bench

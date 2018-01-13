@@ -303,10 +303,9 @@ class SimpleHighlighter {
     // priority queue for passages
     auto comp_passage = [] (Passage * & a, Passage * & b) -> bool { return a->score > b->score; };
     std::priority_queue<Passage *, std::vector<Passage*>, decltype(comp_passage)> passage_queue(comp_passage);
-    // TODO min score
+    float min_score = -1;
 
     // start caculate score for passage
-
     Passage * passage = new Passage();  // current passage
     while (!offsets_queue.empty()) {
       // analyze current passage
@@ -324,7 +323,8 @@ class SimpleHighlighter {
         // if this passage is not empty, then wrap up it and push it to the priority queue
         if (passage->startoffset >= 0) {
           passage->score = passage->score * passage_norm(passage->startoffset); //normalize according to passage's startoffset
-          if (passage_queue.size() == maxPassages && passage->score <= passage_queue.top()->score) {
+          //if (passage_queue.size() == maxPassages && passage->score <= passage_queue.top()->score) {
+          if (passage_queue.size() == maxPassages && passage->score <= min_score) {
             passage->reset();
           } else {
             passage_queue.push(passage);
@@ -335,6 +335,7 @@ class SimpleHighlighter {
             } else {
               passage = new Passage();
             }
+            min_score = passage_queue.top()->score;
           }
         }
         // advance to next passage
@@ -375,7 +376,8 @@ class SimpleHighlighter {
     if (passage_queue.size() < maxPassages && passage->score > 0) {
       passage_queue.push(passage);
     } else {
-      if (passage->score > passage_queue.top()->score) {
+      //if (passage->score > passage_queue.top()->score) {
+      if (passage->score > min_score) {
         Passage * tmp = passage_queue.top();
         passage_queue.pop();
         delete tmp;
