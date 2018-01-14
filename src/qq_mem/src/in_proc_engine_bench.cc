@@ -49,12 +49,14 @@ std::unique_ptr<QqMemUncompressedEngine> create_engine_from_file(const int n_doc
 
 utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) {
   const int n_repeats = 100000;
+  //const int n_repeats = 1;
   utils::ResultRow row;
 
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
     // auto doc_ids = engine->SearchWithoutSnippet(terms);
     auto result = engine->Search(SearchQuery(terms, true));
+    //std::cout << result.ToStr() << std::endl;
     // auto result = engine->Search(SearchQuery(terms, false));
     // auto result = engine->ProcessQueryTogether(SearchQuery(terms, false));
     // auto result = engine->ProcessQueryTogether(SearchQuery(terms, true));
@@ -103,9 +105,11 @@ void qq_uncompressed_bench_wiki() {
   utils::ResultTable table;
 
   const int n_docs = 10000000;
+  //const int n_docs = 10000;
   auto engine = create_engine_from_file(n_docs);
 
-  auto row = search(engine.get(), TermList{"hello"});
+  //auto row = search(engine.get(), TermList{"hello"});
+  auto row = search(engine.get(), TermList{"anarch"});
   row["n_docs"] = std::to_string(n_docs);
   table.Append(row);
 

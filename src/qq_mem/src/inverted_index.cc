@@ -69,8 +69,6 @@ std::vector<int> InvertedIndex::Search(const TermList &terms, const SearchOperat
         // TODO: define an exception class
         throw "NotImplementedError";
     }
-
-    std::cout << "==== Get in search" << std::endl;
     std::vector<int> doc_ids;
     for (auto &term : terms) {
         auto tmp_doc_ids = GetDocumentIds(term);

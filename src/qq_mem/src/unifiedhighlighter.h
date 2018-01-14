@@ -317,6 +317,7 @@ class SimpleHighlighter {
       if (cur_start == -1)
         continue;
       int cur_end = cur_iter.endoffset;
+      //std::cout <<"cur offset: " << cur_start << "," << cur_end << std::endl;
 
       // judge whether this iterator's offset is beyond current passage
       if (cur_start > passage->endoffset) {
@@ -341,7 +342,6 @@ class SimpleHighlighter {
         // advance to next passage
         //if (breakiterator.next(cur_start+1) <= 0) {
         if (breakiterator.next(cur_start) <= 0) {
-            std::cout << "cannot find next passage contain " << cur_start << std::endl;
             break;
         }
         //passage->startoffset = breakiterator.getStartOffset();

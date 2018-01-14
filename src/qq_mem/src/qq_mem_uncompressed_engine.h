@@ -59,6 +59,33 @@ class InvertedIndexQqMem {
     }
   }
 
+  void AddDocument(const int &doc_id, const std::string &body, 
+      const std::string &tokens, const std::string &token_offsets) {
+    TermList token_vec = utils::explode(tokens, ' ');
+    std::vector<Offsets> offsets_parsed = utils::parse_offsets(token_offsets);
+
+    utils::CountMapType token_counts = utils::count_tokens(tokens);
+    std::map<Term, OffsetPairs> term_offsets = utils::construct_offset_pairs(token_vec, offsets_parsed);
+
+    for (auto token_it = token_counts.begin(); token_it != token_counts.end(); 
+        token_it++) {
+      IndexStore::iterator it;
+      auto term = token_it->first;
+      it = index_.find(term);
+
+      if (it == index_.cend()) {
+        // term does not exist
+        std::pair<IndexStore::iterator, bool> ret;
+        ret = index_.insert( std::make_pair(term, PostingListType(term)) );
+        it = ret.first;
+      } 
+
+      PostingListType &postinglist = it->second;        
+      postinglist.AddPosting(
+          RankingPostingWithOffsets(doc_id, token_it->second, term_offsets[term]));
+    }
+  }
+
   // terms must have unique terms.
   IntersectionResult FindIntersection(const TermList &terms) {
     PlPointers postinglist_pointers = FindPostinglists(terms);
@@ -104,8 +131,10 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
  public:
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, int n_rows) {
-    int ret = engine_loader::load_body_and_tokenized_body(
-        this, line_doc_path, n_rows, 2, 2);
+    //int ret = engine_loader::load_body_and_tokenized_body(
+    //    this, line_doc_path, n_rows, 1, 2);
+    int ret = engine_loader::load_body_and_tokenized_body_and_token_offsets(
+        this, line_doc_path, n_rows, 1, 2, 3);
 
     LOG(WARNING) << "Number of terms in inverted index: " << TermCount();
     return ret;
@@ -113,6 +142,10 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
   void AddDocument(const std::string &body, const std::string &tokenized_body) {
     AddDocumentReturnId(body, tokenized_body);
+  }
+
+  void AddDocument(const std::string &body, const std::string &tokenized_body, const std::string &token_offsets) {
+    AddDocumentReturnId(body, tokenized_body, token_offsets);
   }
 
   DocIdType AddDocumentReturnId(const std::string &body, const std::string &tokens) {
@@ -124,6 +157,15 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
     return doc_id;
   }
 
+  DocIdType AddDocumentReturnId(const std::string &body, const std::string &tokens, const std::string &token_offsets) {
+    int doc_id = NextDocId();
+
+    doc_store_.Add(doc_id, body);
+    inverted_index_.AddDocument(doc_id, body, tokens, token_offsets);
+    doc_lengths_.AddLength(doc_id, utils::count_terms(body));
+    return doc_id;
+  }
+  
   std::string GetDocument(const DocIdType &doc_id) {
     return doc_store_.Get(doc_id);
   }

@@ -181,7 +181,7 @@ void add_term_offset_entry(std::map<Term, OffsetPairs> *result, const Term &buf,
   (*result)[buf].push_back(offset_pair);
 }
 
-std::map<Term, OffsetPairs> extract_offset_pairs(std::string token_str) {
+std::map<Term, OffsetPairs> extract_offset_pairs(const std::string & token_str) {
   const std::size_t n = token_str.size();
   std::string buf = "";
   std::map<Term, OffsetPairs> result;
@@ -203,6 +203,15 @@ std::map<Term, OffsetPairs> extract_offset_pairs(std::string token_str) {
     add_term_offset_entry(&result, buf, i);
   }
 
+  return result;
+}
+
+std::map<Term, OffsetPairs> construct_offset_pairs(const TermList & tokens, 
+                                                   const std::vector<Offsets> & token_offsets) {
+  std::map<Term, OffsetPairs> result;
+  for (int i = 0; i < tokens.size(); i++) {
+    result[tokens[i]] = token_offsets[i];
+  }
   return result;
 }
 

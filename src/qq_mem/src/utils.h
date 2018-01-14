@@ -37,7 +37,8 @@ typedef std::map<std::string, std::string> ResultRow;
 
 
 void add_term_offset_entry(std::map<Term, OffsetPairs> *result, const Term &buf, const int &i);
-std::map<Term, OffsetPairs> extract_offset_pairs(std::string token_str);
+std::map<Term, OffsetPairs> extract_offset_pairs(const std::string & token_str);
+std::map<Term, OffsetPairs> construct_offset_pairs(const TermList & tokens, const std::vector<Offsets> & token_offsets);
 
 class LineDoc {
  private:
