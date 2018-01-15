@@ -217,7 +217,8 @@ template <class T>
 inline qq_float calc_doc_score_for_a_query(
     const std::vector<const PostingList_Vec<T>*> &lists, 
     const std::vector<typename PostingList_Vec<T>::iterator_t> &posting_iters,
-    const std::vector<int> &doc_freqs_of_terms,
+    // const std::vector<int> &doc_freqs_of_terms,
+    const std::vector<qq_float> &idfs_of_terms,
     const int &n_total_docs_in_index, 
     const qq_float &avg_doc_length_in_index,
     const int &length_of_this_doc) 
@@ -233,9 +234,10 @@ inline qq_float calc_doc_score_for_a_query(
     const int cur_term_freq = postinglist->GetPosting(it).GetTermFreq(); 
 
     // get the number of documents that have the current term
-    const int doc_freq = doc_freqs_of_terms[list_i];
+    // const int doc_freq = doc_freqs_of_terms[list_i];
 
-    qq_float idf = calc_es_idf(n_total_docs_in_index, doc_freq);
+    // qq_float idf = calc_es_idf(n_total_docs_in_index, doc_freq);
+    qq_float idf = idfs_of_terms[list_i];
     qq_float tfnorm = calc_es_tfnorm(cur_term_freq, length_of_this_doc, 
         avg_doc_length_in_index);
 
@@ -275,6 +277,8 @@ struct ResultDocEntry {
   }
 };
 
+
+
 template <class T>
 std::vector<ResultDocEntry> intersect_score_and_sort(
     const std::vector<const PostingList_Vec<T>*> &lists, 
@@ -295,9 +299,12 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
   }
 
   // set doc count of each term
-  std::vector<int> doc_freqs_of_terms(n_lists);
+  // std::vector<int> doc_freqs_of_terms(n_lists);
+  std::vector<qq_float> idfs_of_terms(n_lists);
   for (int list_i = 0; list_i < n_lists; list_i++) {
-    doc_freqs_of_terms[list_i] = lists[list_i]->Size();
+    // doc_freqs_of_terms[list_i] = lists[list_i]->Size();
+    idfs_of_terms[list_i] = calc_es_idf(n_total_docs_in_index, 
+                                        lists[list_i]->Size());
   }
 
   while (finished == false) {
@@ -348,7 +355,8 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
       qq_float score_of_this_doc = calc_doc_score_for_a_query<T>(
           lists, 
           posting_iters,
-          doc_freqs_of_terms,
+          // doc_freqs_of_terms,
+          idfs_of_terms,
           n_total_docs_in_index,
           doc_lengths.GetAvgLength(),
           doc_lengths.GetLength(max_doc_id));
