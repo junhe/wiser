@@ -111,6 +111,8 @@ class WikiAbstract2(object):
                    }
             element.clear()
 
+
+
 class Wiki(object):
     """
     This class allows you to iterate entries in wikipedia abstract
@@ -119,11 +121,31 @@ class Wiki(object):
         self.path = path
 
     def entries(self):
-        for event, element in etree.iterparse(self.path, tag="page"):
-            yield {'title': element.findtext('title'),
-                   'text': element.findtext('revision/text'), 
-                  }
-            element.clear()
+
+        context = etree.iterparse(self.path, tag='page', events = ('end', ))
+        
+        for event, elem in context:
+            #TODO
+    #        func(elem, *args, **kwargs)
+            yield {'title': elem.findtext('title'),
+                   'text': elem.findtext('revision/text'), 
+            }
+            # It's safe to call clear() here because no descendants will be
+            # accessed
+            elem.clear()
+            # Also eliminate now-empty references from the root node to elem
+            for ancestor in elem.xpath('ancestor-or-self::*'):
+                while ancestor.getprevious() is not None:
+                    del ancestor.getparent()[0]
+        del context
+
+
+        #for event, element in etree.iterparse(self.path, tag="page"):
+        #    print 'get here'
+            #yield {'title': element.findtext('title'),
+                   #'text': element.findtext('revision/text'), 
+            #      }
+        #    element.clear()
 
 
 def index_wikiabs_on_elasticsearch(wiki_abstract_path):
