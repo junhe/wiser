@@ -128,6 +128,7 @@ class Wiki(object):
             #TODO
     #        func(elem, *args, **kwargs)
             yield {'title': elem.findtext('title'),
+                   'redirect': elem.findtext('redirect'),
                    'text': elem.findtext('revision/text'), 
             }
             # It's safe to call clear() here because no descendants will be

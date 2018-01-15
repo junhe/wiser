@@ -9,6 +9,8 @@ def generate():
         wiki = Wiki("enwiki-latest-pages-articles.xml")
         i = 0
         for entry in wiki.entries():
+            if entry['redirect'] != None:
+                continue
             i += 1
             if i % 10000 == 0:
                 print "get ", i, "documents"
