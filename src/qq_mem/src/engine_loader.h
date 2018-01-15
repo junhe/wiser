@@ -52,7 +52,7 @@ namespace engine_loader {
         break;
       }
 
-      if (count % 10000 == 0) {
+      if (count % 1000 == 0) {
         std::cout << "Indexed " << count << " documents" << std::endl;
       }
     }

@@ -40,6 +40,8 @@ class PostingList_Vec {
   void AddPosting(const T &posting) {
     if (posting_store_.size() > 0 && 
         posting_store_.back().GetDocId() >= posting.GetDocId()) {
+      std::cout << posting_store_.back().GetDocId() << ">=" << posting.GetDocId() << std::endl;
+      //std::cout << term_ << std::endl;
       throw std::runtime_error(
           "New posting doc ID must be larger than the last existing one.");
     }

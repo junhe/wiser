@@ -42,13 +42,15 @@ std::unique_ptr<QqMemUncompressedEngine> create_engine(const int &step_height,
 
 std::unique_ptr<QqMemUncompressedEngine> create_engine_from_file(const int n_docs) {
   std::unique_ptr<QqMemUncompressedEngine> engine(new QqMemUncompressedEngine);
-  engine->LoadLocalDocuments("/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", n_docs);
+  //engine->LoadLocalDocuments("/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", n_docs);
+  engine->LoadLocalDocuments("/mnt/ssd/downloads/wiki_tokenized.linedoc", n_docs);
+  //engine->LoadLocalDocuments("/mnt/ssd/downloads/test.linedoc", n_docs);
   std::cout << "Term Count: " << engine->TermCount() << std::endl;
   return engine;
 }
 
 utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) {
-  const int n_repeats = 100000;
+  const int n_repeats = 10000;
   //const int n_repeats = 1;
   utils::ResultRow row;
 
@@ -108,8 +110,9 @@ void qq_uncompressed_bench_wiki() {
   //const int n_docs = 10000;
   auto engine = create_engine_from_file(n_docs);
 
-  //auto row = search(engine.get(), TermList{"hello"});
-  auto row = search(engine.get(), TermList{"anarch"});
+  auto row = search(engine.get(), TermList{"hello"});
+  //auto row = search(engine.get(), TermList{"barack", "obama"});
+  //auto row = search(engine.get(), TermList{"len", "from", "mai"});
   row["n_docs"] = std::to_string(n_docs);
   table.Append(row);
 

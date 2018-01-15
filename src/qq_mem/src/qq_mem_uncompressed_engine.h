@@ -8,6 +8,7 @@
 #include "native_doc_store.h"
 #include "unifiedhighlighter.h"
 #include "engine_loader.h"
+#include <assert.h>
 
 class InvertedIndexQqMem {
  private:
@@ -36,7 +37,7 @@ class InvertedIndexQqMem {
 
   void AddDocument(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
-    TermList token_vec = utils::explode(tokens, ' ');
+    //TermList token_vec = utils::explode(tokens, ' ');
     utils::CountMapType token_counts = utils::count_tokens(tokens);
     std::map<Term, OffsetPairs> term_offsets = utils::extract_offset_pairs(tokens);
 
@@ -63,26 +64,25 @@ class InvertedIndexQqMem {
       const std::string &tokens, const std::string &token_offsets) {
     TermList token_vec = utils::explode(tokens, ' ');
     std::vector<Offsets> offsets_parsed = utils::parse_offsets(token_offsets);
+    
+    assert(token_vec.size() == offsets_parsed.size());
 
-    utils::CountMapType token_counts = utils::count_tokens(tokens);
-    std::map<Term, OffsetPairs> term_offsets = utils::construct_offset_pairs(token_vec, offsets_parsed);
-
-    for (auto token_it = token_counts.begin(); token_it != token_counts.end(); 
-        token_it++) {
-      IndexStore::iterator it;
-      auto term = token_it->first;
-      it = index_.find(term);
+    //std::cout << "Add document " << doc_id << ": " << token_vec.size() << " : ";
+    for (int i = 0; i < token_vec.size(); i++) {
+      IndexStore::iterator it = index_.find(token_vec[i]);
 
       if (it == index_.cend()) {
         // term does not exist
         std::pair<IndexStore::iterator, bool> ret;
-        ret = index_.insert( std::make_pair(term, PostingListType(term)) );
+        ret = index_.insert( std::make_pair(token_vec[i], PostingListType(token_vec[i])) );
         it = ret.first;
       } 
-
-      PostingListType &postinglist = it->second;        
+      
+      PostingListType &postinglist = it->second;
+      //std::cout << i << ", " << token_vec[i];
       postinglist.AddPosting(
-          RankingPostingWithOffsets(doc_id, token_it->second, term_offsets[term]));
+          RankingPostingWithOffsets(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
+      //std::cout << ";" ;
     }
   }
 
