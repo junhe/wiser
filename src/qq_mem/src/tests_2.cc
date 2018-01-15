@@ -217,12 +217,13 @@ TEST_CASE( "score_terms_in_doc()", "[score]" ) {
 
     std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01};
     std::vector<PostingList_Vec<PostingSimple>::iterator_t> posting_iters{0};
-    std::vector<int> doc_freqs_of_terms{1};
+    std::vector<qq_float> idfs_of_terms(1);
+    idfs_of_terms[0] = calc_es_idf(3, 1);
 
     qq_float doc_score = calc_doc_score_for_a_query<PostingSimple>(
           lists, 
           posting_iters,
-          doc_freqs_of_terms,
+          idfs_of_terms,
           n_total_docs_in_index,
           avg_doc_length_in_index,
           length_of_this_doc);
@@ -238,12 +239,13 @@ TEST_CASE( "score_terms_in_doc()", "[score]" ) {
 
     std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01};
     std::vector<PostingList_Vec<PostingSimple>::iterator_t> posting_iters{0};
-    std::vector<int> doc_freqs_of_terms{3};
+    std::vector<qq_float> idfs_of_terms(1);
+    idfs_of_terms[0] = calc_es_idf(3, 3);
 
     qq_float doc_score = calc_doc_score_for_a_query<PostingSimple>(
           lists, 
           posting_iters,
-          doc_freqs_of_terms,
+          idfs_of_terms,
           n_total_docs_in_index,
           avg_doc_length_in_index,
           length_of_this_doc);
@@ -262,26 +264,19 @@ TEST_CASE( "score_terms_in_doc()", "[score]" ) {
 
     std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
     std::vector<PostingList_Vec<PostingSimple>::iterator_t> posting_iters{0, 0};
-    std::vector<int> doc_freqs_of_terms{3, 2};
+    std::vector<qq_float> idfs_of_terms(2);
+    idfs_of_terms[0] = calc_es_idf(3, 3);
+    idfs_of_terms[1] = calc_es_idf(3, 2);
 
     qq_float doc_score = calc_doc_score_for_a_query<PostingSimple>(
           lists, 
           posting_iters,
-          doc_freqs_of_terms,
+          idfs_of_terms,
           n_total_docs_in_index,
           avg_doc_length_in_index,
           length_of_this_doc);
     REQUIRE(utils::format_double(doc_score, 3) == "0.672");
   }
 }
-
-
-
-
-
-
-
-
-
 
 

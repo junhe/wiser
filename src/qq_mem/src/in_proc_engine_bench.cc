@@ -60,6 +60,8 @@ utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) 
     auto result = engine->Search(SearchQuery(terms, true));
     //std::cout << result.ToStr() << std::endl;
     // auto result = engine->Search(SearchQuery(terms, false));
+    // auto result = engine->Search(SearchQuery(terms, true));
+    // auto result = engine->Search(SearchQuery(terms, false));
     // auto result = engine->ProcessQueryTogether(SearchQuery(terms, false));
     // auto result = engine->ProcessQueryTogether(SearchQuery(terms, true));
   }
