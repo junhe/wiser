@@ -104,10 +104,25 @@ class WikiAbstract2(object):
 
     def entries(self):
         for event, element in etree.iterparse(self.path, tag="doc"):
+            
             yield {'title': element.findtext('title'),
                    'abstract': element.findtext('abstract'),
                    'url': element.findtext('url')
                    }
+            element.clear()
+
+class Wiki(object):
+    """
+    This class allows you to iterate entries in wikipedia abstract
+    """
+    def __init__(self, path):
+        self.path = path
+
+    def entries(self):
+        for event, element in etree.iterparse(self.path, tag="page"):
+            yield {'title': element.findtext('title'),
+                   'text': element.findtext('revision/text'), 
+                  }
             element.clear()
 
 
