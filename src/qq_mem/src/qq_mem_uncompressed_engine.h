@@ -36,7 +36,6 @@ class InvertedIndexQqMem {
 
   void AddDocument(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
-    TermList token_vec = utils::explode(tokens, ' ');
     utils::CountMapType token_counts = utils::count_tokens(tokens);
     std::map<Term, OffsetPairs> term_offsets = utils::extract_offset_pairs(tokens);
 
@@ -135,7 +134,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
     int ret;
     if (loader == "naive") {
       ret = engine_loader::load_body_and_tokenized_body(
-         this, line_doc_path, n_rows, 1, 2);
+         this, line_doc_path, n_rows, 2, 2);
     } else if (loader == "with-offsets") {
       ret = engine_loader::load_body_and_tokenized_body_and_token_offsets(
           this, line_doc_path, n_rows, 1, 2, 3);
