@@ -285,9 +285,14 @@ TEST_CASE( "Config basic operations are OK", "[config]" ) {
   GeneralConfig config; 
   config.SetInt("mykey", 2);
   config.SetString("mykey", "myvalue");
+  config.SetBool("mykey", true);
+  config.SetStringVec("mykey", std::vector<std::string>{"hello", "world"});
 
   REQUIRE(config.GetInt("mykey") == 2);
   REQUIRE(config.GetString("mykey") == "myvalue");
+  REQUIRE(config.GetBool("mykey") == true);
+  REQUIRE(config.GetStringVec("mykey") 
+      == std::vector<std::string>{"hello", "world"});
 }
 
 

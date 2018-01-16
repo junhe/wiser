@@ -16,24 +16,24 @@ class GeneralConfig {
     int_map_[key] = value;
   }
 
-  int GetInt(const std::string key) {
-    return int_map_[key];
+  const int GetInt(const std::string key) const {
+    return int_map_.at(key);
   }
 
   void SetString(const std::string key, const std::string value) {
     string_map_[key] = value;
   }
 
-  const std::string GetString(const std::string key) {
-    return string_map_[key];
+  const std::string GetString(const std::string key) const {
+    return string_map_.at(key);
   }
 
   void SetBool(const std::string key, const bool value) {
     bool_map_[key] = value;
   }
 
-  bool GetBool(const std::string key) {
-    return bool_map_[key];
+  const bool GetBool(const std::string key) const {
+    return bool_map_.at(key);
   }
 
   void SetStringVec(const std::string key, 
@@ -41,8 +41,8 @@ class GeneralConfig {
     string_vec_map_[key] = value;
   }
 
-  std::vector<std::string> GetStringVec(const std::string key) {
-    return string_vec_map_[key];
+  const std::vector<std::string> GetStringVec(const std::string key) const {
+    return string_vec_map_.at(key);
   }
 };
 
