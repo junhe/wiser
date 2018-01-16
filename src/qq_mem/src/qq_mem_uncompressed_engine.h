@@ -131,10 +131,10 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
  public:
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, int n_rows) {
-    //int ret = engine_loader::load_body_and_tokenized_body(
-    //    this, line_doc_path, n_rows, 1, 2);
-    int ret = engine_loader::load_body_and_tokenized_body_and_token_offsets(
-        this, line_doc_path, n_rows, 1, 2, 3);
+    int ret = engine_loader::load_body_and_tokenized_body(
+       this, line_doc_path, n_rows, 1, 2);
+    // int ret = engine_loader::load_body_and_tokenized_body_and_token_offsets(
+        // this, line_doc_path, n_rows, 1, 2, 3);
 
     LOG(WARNING) << "Number of terms in inverted index: " << TermCount();
     return ret;
