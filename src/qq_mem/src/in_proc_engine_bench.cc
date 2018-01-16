@@ -60,7 +60,9 @@ utils::ResultRow search(QqMemUncompressedEngine *engine,
 
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
-    auto result = engine->Search(SearchQuery(terms, enable_snippets));
+    auto query = SearchQuery(terms, enable_snippets);
+    query.n_snippet_passages = config.GetInt("n_passages");
+    auto result = engine->Search(query);
   }
   auto end = utils::now();
   auto dur = utils::duration(start, end);
@@ -128,6 +130,7 @@ int main(int argc, char **argv) {
       "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
   config.SetString("loader", "naive");
   config.SetInt("n_repeats", 100000);
+  config.SetInt("n_passages", 3);
   config.SetBool("enable_snippets", true);
   config.SetStringVec("terms", std::vector<std::string>{"hello"});
 
