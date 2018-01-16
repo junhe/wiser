@@ -166,7 +166,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
     doc_store_.Add(doc_id, body);
     inverted_index_.AddDocument(doc_id, body, tokens, token_offsets);
-    doc_lengths_.AddLength(doc_id, utils::count_terms(body));
+    doc_lengths_.AddLength(doc_id, utils::count_terms(body)); // TODO modify to count on offsets?
     return doc_id;
   }
   
