@@ -74,6 +74,7 @@ struct SearchQuery {
   bool return_snippets = false;
   QueryProcessingCore query_processing_core = QueryProcessingCore::TOGETHER;
   // QueryProcessingCore query_processing_core = QueryProcessingCore::BY_PHASE;
+  int n_snippet_passages = 3;
 };
 
 struct SearchResultEntry {

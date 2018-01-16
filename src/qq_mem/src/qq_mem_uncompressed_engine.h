@@ -214,7 +214,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
       if (query.return_snippets == true) {
         result_entry.snippet = GenerateSnippet(top_doc_entry.doc_id,
-            top_doc_entry.postings);
+            top_doc_entry.postings, query.n_snippet_passages);
       }
 
       result.entries.push_back(result_entry);
@@ -224,14 +224,15 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   }
 
   std::string GenerateSnippet(const DocIdType &doc_id, 
-      const std::vector<const RankingPostingWithOffsets *> &postings) {
+      const std::vector<const RankingPostingWithOffsets *> &postings, 
+      const int n_passages) {
     OffsetsEnums res = {};
 
     for (int i = 0; i < postings.size(); i++) {
       res.push_back(Offset_Iterator(*postings[i]->GetOffsetPairs()));
     }
 
-    return highlighter_.highlightOffsetsEnums(res,  5, doc_store_.Get(doc_id));
+    return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));
   }
 
   SearchResult Search(const SearchQuery &query) {
@@ -255,7 +256,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
       if (query.return_snippets == true) {
         auto row = intersection_result.GetRow(doc_id);
-        entry.snippet = GenerateSnippet(doc_id, row);
+        entry.snippet = GenerateSnippet(doc_id, row, query.n_snippet_passages);
       }
 
       result.entries.push_back(entry);
@@ -265,7 +266,8 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   }
 
   std::string GenerateSnippet(const DocIdType &doc_id, 
-                              const IntersectionResult::row_dict_t *row) {
+                              const IntersectionResult::row_dict_t *row,
+                              const int n_passages) {
     OffsetsEnums res = {};
     
     for (auto col_it = row->cbegin() ; col_it != row->cend(); col_it++) {
@@ -273,7 +275,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
       res.push_back(Offset_Iterator(*p_posting->GetOffsetPairs()));
     }
 
-    return highlighter_.highlightOffsetsEnums(res,  5, doc_store_.Get(doc_id));
+    return highlighter_.highlightOffsetsEnums(res,  n_passages, doc_store_.Get(doc_id));
   }
 };
 
