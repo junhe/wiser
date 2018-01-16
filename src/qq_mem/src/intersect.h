@@ -278,7 +278,7 @@ struct ResultDocEntry {
 };
 
 
-
+// lists must have at least one posting list in it.
 template <class T>
 std::vector<ResultDocEntry> intersect_score_and_sort(
     const std::vector<const PostingList_Vec<T>*> &lists, 

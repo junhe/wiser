@@ -200,6 +200,10 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
     InvertedIndexQqMem::PlPointers lists = 
       inverted_index_.FindPostinglists(query.terms);
 
+    if (lists.size() == 0) {
+      return result;
+    }
+
     std::vector<ResultDocEntry> top_k = 
       intersect_score_and_sort<RankingPostingWithOffsets>(
         lists, doc_lengths_, doc_lengths_.Size(), query.n_results);  
