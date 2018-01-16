@@ -45,7 +45,8 @@ std::unique_ptr<QqMemUncompressedEngine> create_engine_from_file(
     const GeneralConfig &config) {
   std::unique_ptr<QqMemUncompressedEngine> engine(new QqMemUncompressedEngine);
   engine->LoadLocalDocuments(config.GetString("linedoc_path"), 
-                             config.GetInt("n_docs"));
+                             config.GetInt("n_docs"),
+                             config.GetString("loader"));
   std::cout << "Term Count: " << engine->TermCount() << std::endl;
   return engine;
 }
@@ -125,9 +126,11 @@ int main(int argc, char **argv) {
   config.SetInt("n_docs", 10000000);
   config.SetString("linedoc_path", 
       "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  config.SetString("loader", "naive");
   config.SetInt("n_repeats", 100000);
   config.SetBool("enable_snippets", true);
   config.SetStringVec("terms", std::vector<std::string>{"hello"});
+
   qq_uncompressed_bench_wiki(config);
 
   // qq_uncompressed_bench();
