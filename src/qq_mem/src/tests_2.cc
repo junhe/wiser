@@ -3,6 +3,7 @@
 #include "unifiedhighlighter.h"
 #include "intersect.h"
 #include "utils.h"
+#include "general_config.h"
 
 TEST_CASE( "SimpleHighlighter works", "[highlighter]" ) {
   std::string doc_str = "hello world";
@@ -278,5 +279,17 @@ TEST_CASE( "score_terms_in_doc()", "[score]" ) {
     REQUIRE(utils::format_double(doc_score, 3) == "0.672");
   }
 }
+
+
+TEST_CASE( "Config basic operations are OK", "[config]" ) {
+  GeneralConfig config; 
+  config.SetInt("mykey", 2);
+  config.SetString("mykey", "myvalue");
+
+  REQUIRE(config.GetInt("mykey") == 2);
+  REQUIRE(config.GetString("mykey") == "myvalue");
+}
+
+
 
 
