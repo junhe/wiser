@@ -65,6 +65,7 @@ def tokenize(query_log, output):
     doc["analyzer"] = "my_english_analyzer"
     
     i = 0
+    j = 0
     with requests.Session() as session:
 
         for line in query_log:
@@ -78,7 +79,12 @@ def tokenize(query_log, output):
                 continue
 
             #print items
-            doc_content = unicodedata.normalize('NFKD', unicode(items)).encode('ascii', 'ignore')
+            try: 
+                doc_content = unicodedata.normalize('NFKD', unicode(items)).encode('ascii', 'ignore')
+            except:
+                j += 1
+                continue
+
             doc["text"] = doc_content
             doc_result = json.dumps(doc)
             #r = requests.post(url, doc_result, headers=headers)
@@ -88,7 +94,8 @@ def tokenize(query_log, output):
                 query_res += unicodedata.normalize('NFKD', unicode(token['token'])).encode('ascii', 'ignore') + ' '
             if query_res != '':
                 output.write( unicode(query_res + '\n') )
-        
+    print '=== overall get : ', j, 'execptions'
+
 if __name__=='__main__':
     # print help
     if len(sys.argv)!=2:
