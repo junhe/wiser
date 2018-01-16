@@ -6,6 +6,9 @@
 #include "intersect.h"
 #include "utils.h"
 #include "general_config.h"
+#include "histogram.h"
+#include <grpc/support/histogram.h>
+
 
 TEST_CASE( "SimpleHighlighter works", "[highlighter]" ) {
   std::string doc_str = "hello world";
@@ -313,6 +316,15 @@ TEST_CASE("GRPC query copying", "[engine]") {
   REQUIRE(local_query.n_results == 3);
   REQUIRE(local_query.n_snippet_passages == 5);
   REQUIRE(local_query.query_processing_core == QueryProcessingCore::TOGETHER);
+}
+
+
+TEST_CASE( "Histogram basic operations are fine", "[histogram]" ) {
+  Histogram hist;
+  hist.Add(0.011);
+  hist.Add(0.021);
+  hist.Add(0.031);
+  hist.Add(0.041);
 }
 
 
