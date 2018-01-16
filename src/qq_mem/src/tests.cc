@@ -403,8 +403,6 @@ TEST_CASE( "GRPC Sync Client and Server", "[grpc]" ) {
   }
 
   SECTION("Add documents and search") {
-    if (FLAG_POSTINGS_ON_FLASH || FLAG_SNIPPETS_PRECOMPUTE)    //TODO client should add offsets
-        return;
     std::vector<int> doc_ids;
     bool ret;
 

@@ -40,7 +40,7 @@ message StatusReply {
 }
 
 message SearchRequest {
-    string term = 1;
+    /*string term = 1;*/
     repeated string terms = 2;
     int32 n_results = 3;
     bool return_snippets = 4;

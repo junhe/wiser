@@ -120,9 +120,7 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
 
     Status Search(ServerContext* context, const SearchRequest* request,
             SearchReply* reply) override {
-        Term term = request->term();
-
-        SearchResult result = search_engine_->Search(SearchQuery(TermList{term}));
+        SearchResult result = search_engine_->Search(SearchQuery(*request));
         result.CopyTo(reply);
 
         return Status::OK;
@@ -306,9 +304,7 @@ class AsyncServer {
             if (ok) {
               next_state_ = State::WRITE_DONE;
 
-              auto result = search_engine_->Search(
-                  SearchQuery(TermList{req_.term()}, false));
-                  // SearchQuery(TermList{req_.term()}, true));
+              auto result = search_engine_->Search(SearchQuery(req_));
               result.CopyTo(&response_);
 
               stream_.Write(response_, AsyncServer::tag(this));

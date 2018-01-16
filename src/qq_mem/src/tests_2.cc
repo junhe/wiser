@@ -299,7 +299,6 @@ TEST_CASE( "Config basic operations are OK", "[config]" ) {
 
 TEST_CASE("GRPC query copying", "[engine]") {
   qq::SearchRequest grpc_query;
-  grpc_query.set_term("hello");
   grpc_query.set_n_results(3);
   grpc_query.set_n_snippet_passages(5);
   grpc_query.set_query_processing_core(
