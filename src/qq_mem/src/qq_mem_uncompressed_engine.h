@@ -197,6 +197,11 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
   SearchResult ProcessQueryTogether(const SearchQuery &query) {
     SearchResult result;
+
+    if (query.n_results == 0) {
+      return result;
+    }
+
     InvertedIndexQqMem::PlPointers lists = 
       inverted_index_.FindPostinglists(query.terms);
 

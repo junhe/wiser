@@ -1368,6 +1368,13 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     REQUIRE(result.entries[1].snippet == "<b>hello<\\b> <b>world<\\b>\n");
   }
 
+  SECTION("The engine behaves correct when n_results is 0") {
+    auto query = SearchQuery(TermList{"hello", "world"}, true);
+    query.n_results = 0;
+    auto result = engine.Search(query);
+    REQUIRE(result.Size() == 0);
+  }
+
   SECTION("It can use intersect_score_and_sort()") {
     std::cout << "This --------------" << std::endl;
     auto query_result = engine.ProcessQueryTogether(
