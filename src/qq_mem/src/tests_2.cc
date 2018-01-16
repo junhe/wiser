@@ -1,5 +1,7 @@
 #include "catch.hpp"
 
+#include "qq.pb.h"
+
 #include "unifiedhighlighter.h"
 #include "intersect.h"
 #include "utils.h"
@@ -293,6 +295,25 @@ TEST_CASE( "Config basic operations are OK", "[config]" ) {
   REQUIRE(config.GetBool("mykey") == true);
   REQUIRE(config.GetStringVec("mykey") 
       == std::vector<std::string>{"hello", "world"});
+}
+
+TEST_CASE("GRPC query copying", "[engine]") {
+  qq::SearchRequest grpc_query;
+  grpc_query.set_term("hello");
+  grpc_query.set_n_results(3);
+  grpc_query.set_n_snippet_passages(5);
+  grpc_query.set_query_processing_core(
+      qq::SearchRequest_QueryProcessingCore_TOGETHER);
+  grpc_query.add_terms("hello");
+  grpc_query.add_terms("world");
+
+  SearchQuery local_query;
+  local_query.CopyFrom(grpc_query);
+
+  REQUIRE(local_query.terms == TermList{"hello", "world"});
+  REQUIRE(local_query.n_results == 3);
+  REQUIRE(local_query.n_snippet_passages == 5);
+  REQUIRE(local_query.query_processing_core == QueryProcessingCore::TOGETHER);
 }
 
 

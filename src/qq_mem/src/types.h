@@ -64,17 +64,42 @@ typedef std::vector<TermWithOffset> TermWithOffsetList;
 
 enum class QueryProcessingCore {TOGETHER, BY_PHASE};
 struct SearchQuery {
+  SearchQuery(){}
+  SearchQuery(const qq::SearchRequest &grpc_req){
+    this->CopyFrom(grpc_req);
+  }
   SearchQuery(const TermList &terms_in): terms(terms_in) {}
   SearchQuery(const TermList &terms_in, const bool &return_snippets_in)
     : terms(terms_in), return_snippets(return_snippets_in) {}
 
   TermList terms;
-  SearchOperator op = SearchOperator::AND;
   int n_results = 5;
   bool return_snippets = false;
   QueryProcessingCore query_processing_core = QueryProcessingCore::TOGETHER;
-  // QueryProcessingCore query_processing_core = QueryProcessingCore::BY_PHASE;
   int n_snippet_passages = 3;
+
+  void CopyFrom(const qq::SearchRequest &grpc_req) {
+    int n = grpc_req.terms_size();
+    terms.clear();
+    for (int i = 0; i < n; i++) {
+      terms.push_back(grpc_req.terms(i));
+    }
+
+    n_results = grpc_req.n_results();
+    return_snippets = grpc_req.return_snippets();
+    n_snippet_passages = grpc_req.n_snippet_passages();
+
+    switch (grpc_req.query_processing_core()) {
+      case qq::SearchRequest_QueryProcessingCore_TOGETHER:
+        query_processing_core = QueryProcessingCore::TOGETHER;
+        break;
+      case qq::SearchRequest_QueryProcessingCore_BY_PHASE:
+        query_processing_core = QueryProcessingCore::BY_PHASE;
+        break;
+      default:
+        throw std::runtime_error("query processsing core not exists");
+    }
+  }
 };
 
 struct SearchResultEntry {
