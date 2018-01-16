@@ -14,6 +14,7 @@ from .Clients import ElasticSearchClient
 BENCH_EXE = "RediSearchBenchmark"
 # WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract1.xml"
 WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml"
+# WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-latest-abstract18.xml"
 SERVER_PATH = "/users/jhe/redis-4.0.2/src/redis-server"
 REDISEARCH_SO = "/users/jhe/RediSearch/src/redisearch.so"
 
@@ -33,6 +34,7 @@ def hosts_string(host, n, start_port):
 
 def start_redis(port):
     cmd = "{server} --port {port} --loadmodule {mod}".format(
+    # cmd = "gdb --args {server} --port {port} --loadmodule {mod}".format(
             server=SERVER_PATH, mod=REDISEARCH_SO, port=port)
     p = subprocess.Popen(cmd, shell = True)
     return p
@@ -95,7 +97,6 @@ class ExperimentRsbenchGo(Experiment):
 
         if conf['subexp_index'] == 0 and conf['rebuild_index'] is True:
             build_index(conf['n_shards'], conf['n_hosts'], conf['engine'], conf['start_port'], conf['host'])
-	exit(1)
 
     def treatment(self, conf):
         helpers.shcmd("{bench_exe} -engine {engine} -shards {n_shards} " \

@@ -12,6 +12,7 @@
 #include "qq_engine.h"
 #include "qq_mem_uncompressed_engine.h"
 #include "utils.h"
+#include "general_config.h"
 
 const int K = 1000;
 const int M = 1000 * K;
@@ -40,30 +41,28 @@ std::unique_ptr<QqMemUncompressedEngine> create_engine(const int &step_height,
 }
 
 
-std::unique_ptr<QqMemUncompressedEngine> create_engine_from_file(const int n_docs) {
+std::unique_ptr<QqMemUncompressedEngine> create_engine_from_file(
+    const GeneralConfig &config) {
   std::unique_ptr<QqMemUncompressedEngine> engine(new QqMemUncompressedEngine);
-  //engine->LoadLocalDocuments("/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc", n_docs);
-  engine->LoadLocalDocuments("/mnt/ssd/downloads/wiki_tokenized.linedoc", n_docs);
-  //engine->LoadLocalDocuments("/mnt/ssd/downloads/test.linedoc", n_docs);
+  engine->LoadLocalDocuments(config.GetString("linedoc_path"), 
+                             config.GetInt("n_docs"),
+                             config.GetString("loader"));
   std::cout << "Term Count: " << engine->TermCount() << std::endl;
   return engine;
 }
 
-utils::ResultRow search(QqMemUncompressedEngine *engine, const TermList &terms) {
-  const int n_repeats = 10000;
-  //const int n_repeats = 1;
+utils::ResultRow search(QqMemUncompressedEngine *engine, 
+                        const GeneralConfig &config) {
+  const int n_repeats = config.GetInt("n_repeats");
   utils::ResultRow row;
+  auto terms = config.GetStringVec("terms");
+  auto enable_snippets = config.GetBool("enable_snippets");
 
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
-    // auto doc_ids = engine->SearchWithoutSnippet(terms);
-    auto result = engine->Search(SearchQuery(terms, true));
-    //std::cout << result.ToStr() << std::endl;
-    // auto result = engine->Search(SearchQuery(terms, false));
-    // auto result = engine->Search(SearchQuery(terms, true));
-    // auto result = engine->Search(SearchQuery(terms, false));
-    // auto result = engine->ProcessQueryTogether(SearchQuery(terms, false));
-    // auto result = engine->ProcessQueryTogether(SearchQuery(terms, true));
+    auto query = SearchQuery(terms, enable_snippets);
+    query.n_snippet_passages = config.GetInt("n_passages");
+    auto result = engine->Search(query);
   }
   auto end = utils::now();
   auto dur = utils::duration(start, end);
@@ -88,7 +87,7 @@ void qq_uncompressed_bench() {
   utils::ResultTable table;
   auto engine = create_engine(1, 2, 425);
 
-  table.Append(search(engine.get(), TermList{"0"}));
+  // table.Append(search(engine.get(), TermList{"0"}));
   // table.Append(search(engine.get(), TermList{"100"}));
   // table.Append(search(engine.get(), TermList{"500"}));
   // table.Append(search(engine.get(), TermList{"980"}));
@@ -105,17 +104,14 @@ void qq_uncompressed_bench() {
 }
 
 
-void qq_uncompressed_bench_wiki() {
+void qq_uncompressed_bench_wiki(const GeneralConfig &config) {
   utils::ResultTable table;
 
-  const int n_docs = 10000000;
-  //const int n_docs = 10000;
-  auto engine = create_engine_from_file(n_docs);
+  auto engine = create_engine_from_file(config);
 
-  auto row = search(engine.get(), TermList{"hello"});
-  //auto row = search(engine.get(), TermList{"barack", "obama"});
-  //auto row = search(engine.get(), TermList{"len", "from", "mai"});
-  row["n_docs"] = std::to_string(n_docs);
+  auto row = search(engine.get(), config);
+
+  row["n_docs"] = std::to_string(config.GetInt("n_docs"));
   table.Append(row);
 
   std::cout << table.ToStr();
@@ -128,8 +124,19 @@ int main(int argc, char **argv) {
   FLAGS_stderrthreshold = 0; 
   FLAGS_minloglevel = 0; 
 
+  GeneralConfig config;
+  config.SetInt("n_docs", 10000000);
+  config.SetString("linedoc_path", 
+      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  config.SetString("loader", "naive");
+  config.SetInt("n_repeats", 100000);
+  config.SetInt("n_passages", 3);
+  config.SetBool("enable_snippets", true);
+  config.SetStringVec("terms", std::vector<std::string>{"hello"});
+
+  qq_uncompressed_bench_wiki(config);
+
   // qq_uncompressed_bench();
-  qq_uncompressed_bench_wiki();
 }
 
 
