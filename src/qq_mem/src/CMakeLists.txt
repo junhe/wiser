@@ -56,6 +56,11 @@ set(BOOST_LIBS
     boost_locale
     )
 
+set(GRPC_LIBS
+    gpr
+    gRPC::grpc++_reflection
+    )
+
 set(GLOG_LIB glog)
 
 
@@ -69,7 +74,7 @@ add_executable(qq_server
     ${GRPC_SRCS}
 )
 target_link_libraries(qq_server
-    gRPC::grpc++_reflection
+    ${GRPC_LIBS}
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
@@ -84,7 +89,7 @@ add_executable(qq_client
     ${GRPC_SRCS}
 )
 target_link_libraries(qq_client
-    gRPC::grpc++_reflection
+    ${GRPC_LIBS}
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
@@ -106,7 +111,7 @@ add_executable( testmain
     ${GRPC_SRCS}
     $<TARGET_OBJECTS:CatchMain> catch.hpp )
 target_link_libraries(testmain
-    gRPC::grpc++_reflection
+    ${GRPC_LIBS}
     protobuf::libprotobuf
     ${BOOST_LIBS}
     ${GLOG_LIB}
@@ -128,7 +133,7 @@ add_executable(in_proc_engine_bench
     ${GRPC_SRCS}
 )
 target_link_libraries(in_proc_engine_bench
-    gRPC::grpc++_reflection
+    ${GRPC_LIBS}
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
@@ -143,7 +148,7 @@ add_executable(grpc_benchmark
     ${GRPC_SRCS}
 )
 target_link_libraries(grpc_benchmark
-    gRPC::grpc++_reflection
+    ${GRPC_LIBS}
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
@@ -157,7 +162,7 @@ add_executable(intersect_bench
     ${GRPC_SRCS}
 )
 target_link_libraries(intersect_bench
-    gRPC::grpc++_reflection
+    ${GRPC_LIBS}
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
@@ -171,7 +176,7 @@ add_executable(scoring_bench
     ${GRPC_SRCS}
 )
 target_link_libraries(scoring_bench
-    gRPC::grpc++_reflection
+    ${GRPC_LIBS}
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
@@ -185,7 +190,7 @@ add_executable(sorting_bench
     ${GRPC_SRCS}
 )
 target_link_libraries(sorting_bench
-    gRPC::grpc++_reflection
+    ${GRPC_LIBS}
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
@@ -199,7 +204,7 @@ add_executable(snippet_bench
     ${GRPC_SRCS}
 )
 target_link_libraries(snippet_bench
-    gRPC::grpc++_reflection
+    ${GRPC_LIBS}
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
