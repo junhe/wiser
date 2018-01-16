@@ -5,7 +5,7 @@ import re
 import io
 import unicodedata
 
-def tokenize(line_doc, output):
+def tokenize(query_log, output):
 
     # setting url
     url_setting = 'http://localhost:9200/my_index?pretty'
@@ -64,55 +64,48 @@ def tokenize(line_doc, output):
     doc = {}
     doc["analyzer"] = "my_english_analyzer"
     
-    header = line_doc.readline()
-    output.write(u"FIELDS_HEADER_INDICATOR###\tdoctitle\tbody\ttokenized\toffsets\n")
     i = 0
-    for line in line_doc:
-        i+=1
-        if i % 10000 == 0:
-            print 'Finished ', i, 'documents'
-        items = line.split("\t")
-        #doc_content = items[1]
-        doc_content = unicodedata.normalize('NFKD', unicode(items[1])).encode('ascii', 'ignore')
-        doc["text"] = doc_content
-        doc_result = json.dumps(doc)
-        r = requests.post(url, doc_result, headers=headers)
-        output.write(unicode(items[0] +'\t' + items[1].strip('\n') +'\t'))
-        
-        # unique and collect offsets
-        dic = {}
-        for token in r.json()["tokens"]:
-            # also store offsets
+    j = 0
+    with requests.Session() as session:
 
-            #if token["token"].encode('utf8') in dic:
-            token_str = unicodedata.normalize('NFKD', unicode(token['token'])).encode('ascii', 'ignore')
-            if token_str in dic:
-                tmp = dic[token_str]
-                tmp += (str(token["start_offset"]) + ',' + str(token["end_offset"]) + ';')
-                dic[token_str] = tmp
+        for line in query_log:
+            i+=1
+            if i % 100000 == 0:
+                print 'Finished ', i, 'documents'
+            items = line.replace('AND', ' ').replace('\"', '')
+            try:
+                items.decode('utf-8')
+            except UnicodeError:
                 continue
-            dic[token_str] = str(token["start_offset"]) + ',' + str(token["end_offset"]) + ';'
 
-        terms = ""
-        offsets = ""
-        for token in dic:
-            terms += token + ' '
-            offsets += dic[token] + '.'
-            #print token, ': ', dic[token]
-        #output.write(token["token"].encode('utf8') + ' ')
-        output.write( unicode(terms + '\t' + offsets) )
-        output.write( unicode('\n') )
+            #print items
+            try: 
+                doc_content = unicodedata.normalize('NFKD', unicode(items)).encode('ascii', 'ignore')
+            except:
+                j += 1
+                continue
+
+            doc["text"] = doc_content
+            doc_result = json.dumps(doc)
+            #r = requests.post(url, doc_result, headers=headers)
+            r = session.post(url, doc_result, headers=headers)
+            query_res = ''
+            for token in r.json()["tokens"]:
+                query_res += unicodedata.normalize('NFKD', unicode(token['token'])).encode('ascii', 'ignore') + ' '
+            if query_res != '':
+                output.write( unicode(query_res + '\n') )
+    print '=== overall get : ', j, 'execptions'
 
 if __name__=='__main__':
     # print help
     if len(sys.argv)!=2:
-        print('Usage: python tokenize_wiki_linedoc.py [input_name]  (results stored in input_name_tokenized)')
+        print('Usage: python tokenize_querylog.py [input_name]  (results stored in input_name_tokenized)')
         exit(1)
     
     # do analysis
     #line_doc = open(sys.argv[1])
     output = io.open(sys.argv[1] + '_tokenized', 'w', encoding="utf-8")
-    with io.open(sys.argv[1], "r", encoding="utf-8") as line_doc:
+    with open(sys.argv[1], "r") as line_doc:
         tokenize(line_doc, output)
     #line_doc.close()
     output.close()
