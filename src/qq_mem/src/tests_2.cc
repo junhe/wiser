@@ -336,3 +336,15 @@ TEST_CASE( "Histogram basic operations are fine", "[histogram]" ) {
   }
 }
 
+
+
+TEST_CASE( "Time operations are accurate", "[time][slow]" ) {
+  SECTION("utils::duration() returned value is in seconds") {
+    auto start = utils::now();    
+    utils::sleep(1);
+    auto end = utils::now();    
+    auto duration = utils::duration(start, end);
+    REQUIRE(round(duration) == 1);
+  }
+}
+
