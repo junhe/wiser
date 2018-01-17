@@ -1,14 +1,14 @@
 #ifndef QUERY_POOL_H
 #define QUERY_POOL_H
+
 #include <iostream>
 #include <fstream>
+
 #include "general_config.h"
 
 class QueryPool {
-
  public:
   QueryPool(const GeneralConfig &config) {
-    // set source
     query_source_ = config.GetString("query_source");
 
     // config according to different mode
@@ -24,22 +24,15 @@ class QueryPool {
         query_buffer_.push_back(utils::explode(str, ' '));
       }
       query_buffer_size_ = query_buffer_.size();
-      /*for (auto query: query_buffer_) {
-        std::cout << "query: ";
-        for (auto term: query) {
-          std::cout << term << " ";
-        }
-        std::cout << std::endl;
-      } */
     } else {
       LOG(WARNING) << "Cannot determine query source";
     }
   }
-  const std::vector<std::string> & next() {
-    return query_buffer_[(counter_++)%query_buffer_size_];
+  const std::vector<std::string> & Next() {
+    return query_buffer_[(counter_++) % query_buffer_size_];
   }
 
-  std::string summarize() {
+  std::string Summarize() {
     if (query_source_ == "hardcoded") {
       std::string query;
       for (auto term: query_buffer_[0]) {

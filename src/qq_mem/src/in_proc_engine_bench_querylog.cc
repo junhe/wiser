@@ -52,24 +52,19 @@ std::unique_ptr<QqMemUncompressedEngine> create_engine_from_file(
   return engine;
 }
 
+
 utils::ResultRow search(QqMemUncompressedEngine *engine, 
                         const GeneralConfig &config) {
   const int n_repeats = config.GetInt("n_repeats");
   utils::ResultRow row;
+  
   // construct query pool
   QueryPool query_pool(config);
   auto enable_snippets = config.GetBool("enable_snippets");
 
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
-    auto terms = query_pool.next();
-    /*for (auto term: terms) {
-      std::cout << term << " ";
-    }
-    std::cout << std::endl;
-    auto query = SearchQuery(terms, enable_snippets);
-    */ 
-    auto query = SearchQuery(query_pool.next(), enable_snippets);
+    auto query = SearchQuery(query_pool.Next(), enable_snippets);
     query.n_snippet_passages = config.GetInt("n_passages");
     auto result = engine->Search(query);
   }
@@ -79,7 +74,7 @@ utils::ResultRow search(QqMemUncompressedEngine *engine,
   row["duration"] = std::to_string(dur / n_repeats); 
   row["QPS"] = std::to_string(n_repeats / dur);
 
-  std::string query = query_pool.summarize();
+  std::string query = query_pool.Summarize();
   row["query"] = query;
 
   return row;
