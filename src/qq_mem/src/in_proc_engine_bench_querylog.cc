@@ -59,7 +59,9 @@ utils::ResultRow search(QqMemUncompressedEngine *engine,
   utils::ResultRow row;
   
   // construct query pool
-  QueryPool query_pool(config);
+  QueryPool query_pool;
+  load_query_pool(&query_pool, config);
+
   auto enable_snippets = config.GetBool("enable_snippets");
   std::cout << "Construct query pool successfully" << std::endl;
   auto start = utils::now();
@@ -80,10 +82,6 @@ utils::ResultRow search(QqMemUncompressedEngine *engine,
 
   row["duration"] = std::to_string(dur / n_repeats); 
   row["QPS"] = std::to_string(n_repeats / dur);
-
-  std::string query = query_pool.Summarize();
-  row["query"] = query;
-
   return row;
 }
 
@@ -117,6 +115,13 @@ void qq_uncompressed_bench_wiki(const GeneralConfig &config) {
   auto row = search(engine.get(), config);
 
   row["n_docs"] = std::to_string(config.GetInt("n_docs"));
+  row["query_source"] = config.GetString("query_source");
+  if (row["query_source"] == "hardcoded") {
+    auto terms = config.GetStringVec("terms");
+    for (auto term : terms) {
+      row["query"] += term;
+    }
+  }
   table.Append(row);
 
   std::cout << table.ToStr();
@@ -130,28 +135,30 @@ int main(int argc, char **argv) {
   FLAGS_minloglevel = 0; 
 
   GeneralConfig config;
-  config.SetInt("n_docs", 10000000);
+  config.SetInt("n_docs", 10000);
+  // config.SetString("linedoc_path", 
+      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  // config.SetString("loader", "with-offsets");
+
   config.SetString("linedoc_path", 
       "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  config.SetString("loader", "with-offsets");
+  config.SetString("loader", "naive");
+
   config.SetInt("n_repeats", 500000);
   config.SetInt("n_passages", 3);
   config.SetBool("enable_snippets", true);
   //config.SetBool("enable_snippets", false);
   
   
-  /* hardcoded query
   config.SetString("query_source", "hardcoded");
-  //config.SetStringVec("terms", std::vector<std::string>{"hello"});
+  config.SetStringVec("terms", std::vector<std::string>{"hello"});
   //config.SetStringVec("terms", std::vector<std::string>{"barack", "obama"});
   //config.SetStringVec("terms", std::vector<std::string>{"len", "from", "mai"});
-  config.SetStringVec("terms", std::vector<std::string>{"arsen"});
-  */
+  // config.SetStringVec("terms", std::vector<std::string>{"arsen"});
 
-  ///* query pool from file
-  config.SetString("query_source", "querylog");
-  config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
-  //*/
+  // config.SetString("query_source", "querylog");
+  // config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
+
   qq_uncompressed_bench_wiki(config);
 
   // qq_uncompressed_bench();
