@@ -321,12 +321,18 @@ TEST_CASE("GRPC query copying", "[engine]") {
 
 TEST_CASE( "Histogram basic operations are fine", "[histogram]" ) {
   Histogram hist;
-  hist.Add(0.011);
-  hist.Add(0.021);
-  hist.Add(0.031);
-  hist.Add(0.041);
+
+  for (int i = 0; i < 10; i++) {
+    hist.Add(i);
+  }
+
+  std::cout << "Count: " << hist.Count() << std::endl;
+  REQUIRE(hist.Count() == 10);
+  REQUIRE(hist.Percentile(0) == 0);
+  REQUIRE(hist.Percentile(100) == 9);
+
+  for (int i = 0; i < 101; i += 10) {
+    LOG(INFO) << ((double)i) << " :: " << hist.Percentile((double)i) << std::endl;  
+  }
 }
-
-
-
 
