@@ -66,16 +66,15 @@ utils::ResultRow search(QqMemUncompressedEngine *engine,
   std::cout << "Construct query pool successfully" << std::endl;
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
-    /*auto terms = query_pool.next();
-    for (auto term: terms) {
-      std::cout << term << " ";
-    }
-    auto query = SearchQuery(terms, enable_snippets);
-    */
+    // auto terms = query_pool.Next();
+    // for (auto term: terms) {
+      // std::cout << term << " ";
+    // }
+    // auto query = SearchQuery(terms, enable_snippets);
     auto query = SearchQuery(query_pool.Next(), enable_snippets);
+    
     query.n_snippet_passages = config.GetInt("n_passages");
     auto result = engine->Search(query);
-    //std::cout << i << ": search successfully" << std::endl;
   }
   auto end = utils::now();
   auto dur = utils::duration(start, end);

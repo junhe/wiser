@@ -239,12 +239,19 @@ class RPCContext {
 };
 
 
-AsyncClient::AsyncClient(const ConfigType config)
+AsyncClient::AsyncClient(const GeneralConfig config)
   :config_(config){
-  int tpc = std::stoi(config.at("n_threads_per_cq")); 
-  int num_async_threads = std::stoi(config.at("n_async_threads"));
-  int n_client_channels = std::stoi(config.at("n_client_channels"));
-  int n_rpcs_per_channel = std::stoi(config.at("n_rpcs_per_channel"));
+  // int tpc = std::stoi(config.at("n_threads_per_cq")); 
+  int tpc = config.GetInt("n_threads_per_cq");
+  // int num_async_threads = std::stoi(config.at("n_async_threads"));
+  int num_async_threads = config.GetInt("n_async_threads");
+
+  // int n_client_channels = std::stoi(config.at("n_client_channels"));
+  int n_client_channels = config.GetInt("n_client_channels");
+
+  // int n_rpcs_per_channel = std::stoi(config.at("n_rpcs_per_channel"));
+  int n_rpcs_per_channel = config.GetInt("n_rpcs_per_channel");
+
   std::cout << "n_threads_per_cq: " << tpc << std::endl;
   std::cout << "num_async_threads: " << num_async_threads << std::endl;
   std::cout << "n_client_channels: " << n_client_channels << std::endl;
@@ -257,7 +264,7 @@ AsyncClient::AsyncClient(const ConfigType config)
 
   // create channels
   for (int i = 0; i < n_client_channels; i++) {
-    channels_.emplace_back(config.at("target"), i); 
+    channels_.emplace_back(config.GetString("target"), i); 
   }
   std::cout << channels_.size() << " channels created." << std::endl;
 
@@ -282,7 +289,7 @@ AsyncClient::AsyncClient(const ConfigType config)
       auto ctx = new RPCContext(
           cq, 
           channels_[ch].get_stub(),
-          std::stoi(config.at("n_messages_per_call")), 
+          config.GetInt("n_messages_per_call"), 
           finished_call_counts_,
           finished_roundtrips_);
     }
@@ -313,8 +320,8 @@ void AsyncClient::DestroyMultithreading() {
 
 void AsyncClient::Wait() {
   std::cout << "About to wait" << std::endl;
-  std::cout << "Waiting for " << config_.at("benchmark_duration") << " seconds.\n";
-  utils::sleep(std::stoi(config_.at("benchmark_duration")));
+  std::cout << "Waiting for " << config_.GetInt("benchmark_duration") << " seconds.\n";
+  utils::sleep(config_.GetInt("benchmark_duration"));
   std::cout << "The wait is done" << std::endl;
 
   DestroyMultithreading();
@@ -335,8 +342,8 @@ void AsyncClient::ShowStats() {
     total_roundtrips += count;
   }
 
-  auto n_secs = std::stoi(config_.at("benchmark_duration"));
-  auto n_messages_per_call = std::stoi(config_.at("n_messages_per_call"));
+  auto n_secs = config_.GetInt("benchmark_duration");
+  auto n_messages_per_call = config_.GetInt("n_messages_per_call");
   std::cout << "Duration: " << n_secs << std::endl;
   std::cout << "Total calls: " << total_calls << std::endl;
   std::cout << "Total roundtrips: " << total_roundtrips << std::endl;
@@ -400,24 +407,9 @@ void AsyncClient::ThreadFunc(int thread_idx) {
 }
 
 
-std::unique_ptr<AsyncClient> CreateAsyncClient(const std::string &target, 
-  int n_client_channels, int n_rpcs_per_channel, int n_messages_per_call,
-  int n_async_threads, int n_threads_per_cq, int benchmark_duration) 
+std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config) 
 {
-  ConfigType config;
-  config["target"] = target;
-
-  config["n_client_channels"] = std::to_string(n_client_channels);
-  config["n_rpcs_per_channel"] = std::to_string(n_rpcs_per_channel);
-  config["n_messages_per_call"] = std::to_string(n_messages_per_call);
-
-  config["n_async_threads"] = std::to_string(n_async_threads); 
-  config["n_threads_per_cq"] = std::to_string(n_threads_per_cq);
-
-  config["benchmark_duration"] = std::to_string(benchmark_duration);
-
   std::unique_ptr<AsyncClient> client(new AsyncClient(config));
-
   return client;
 }
 

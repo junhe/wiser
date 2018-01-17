@@ -19,6 +19,7 @@
 #include "qq.grpc.pb.h"
 
 #include "histogram.h"
+#include "general_config.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -61,7 +62,7 @@ class AsyncClient {
   AsyncClient(AsyncClient&&) = default;
   AsyncClient& operator=(AsyncClient&&) = default;
 
-  AsyncClient(const ConfigType config);
+  AsyncClient(const GeneralConfig config);
   void DestroyMultithreading();
   void Wait();
   void ShowStats();
@@ -70,7 +71,7 @@ class AsyncClient {
   void ThreadFunc(int thread_idx);
 
  private:
-  const ConfigType config_;
+  const GeneralConfig config_;
   std::vector<ChannelInfo> channels_;
   std::vector<std::unique_ptr<CompletionQueue>> cli_cqs_;
 
@@ -85,9 +86,7 @@ class AsyncClient {
 
 
 std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target);
-std::unique_ptr<AsyncClient> CreateAsyncClient(const std::string &target, 
-  int n_client_channels, int n_rpcs_per_channel, int n_messages_per_call,
-  int n_async_threads, int n_threads_per_cq, int benchmark_duration);
+std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config);
 
 #endif
 

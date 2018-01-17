@@ -424,7 +424,16 @@ TEST_CASE( "GRPC Sync Client and Server", "[grpc]" ) {
 }
 
 void run_client() {
-  auto client = CreateAsyncClient("localhost:50051", 64, 100, 1000, 8, 1, 8);
+  GeneralConfig config;
+  config.SetString("target", "localhost:50051");
+  config.SetInt("n_client_channels", 64);
+  config.SetInt("n_rpcs_per_channel", 100);
+  config.SetInt("n_messages_per_call", 1000);
+  config.SetInt("n_async_threads", 8); 
+  config.SetInt("n_threads_per_cq", 1);
+  config.SetInt("benchmark_duration", 8);
+
+  auto client = CreateAsyncClient(config);
   client->Wait();
 }
 
@@ -434,12 +443,19 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
 
   // Use another thread to create client
   // std::thread client_thread(run_client);
-  auto client = CreateAsyncClient("localhost:50051", 64, 100, 1000, 8, 1, 2);
-  client->Wait();
-  // client->ShowStats();
-  client.release();
 
-  // client_thread.join();
+  GeneralConfig config;
+  config.SetString("target", "localhost:50051");
+  config.SetInt("n_client_channels", 64);
+  config.SetInt("n_rpcs_per_channel", 100);
+  config.SetInt("n_messages_per_call", 100);
+  config.SetInt("n_async_threads", 8); 
+  config.SetInt("n_threads_per_cq", 1);
+  config.SetInt("benchmark_duration", 2);
+
+  auto client = CreateAsyncClient(config);
+  client->Wait();
+  client.release();
 }
 
 TEST_CASE( "IndexCreator works over the network", "[grpc]" ) {

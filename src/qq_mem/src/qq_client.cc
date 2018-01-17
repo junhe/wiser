@@ -3,22 +3,7 @@
 
 #include "grpc_client_impl.h"
 #include "index_creator.h"
-
-
-void make_queries(int n_queries) {
-    std::string reply;
-
-    auto qqengine = CreateSyncClient("localhost:50051");
-
-
-    for (int i = 0; i < n_queries; i++) {
-        std::vector<int> doc_ids;
-        qqengine->Search("hello", doc_ids);
-    }
-
-}
-
-
+#include "general_config.h"
 
 
 int main(int argc, char** argv) {
@@ -39,13 +24,16 @@ int main(int argc, char** argv) {
 
   utils::sleep(1);
 
-  auto async_client = CreateAsyncClient("localhost:50051", 
-      64,  // n channels
-      100,  // rpcs per channel
-      100000,  // messages per rpc
-      n_threads,  // n threads
-      1,  // thread per cq
-      5); // duration (seconds)
+  GeneralConfig config;
+  config.SetString("target", "localhost:50051");
+  config.SetInt("n_client_channels", 64);
+  config.SetInt("n_rpcs_per_channel", 100);
+  config.SetInt("n_messages_per_call", 100000);
+  config.SetInt("n_async_threads", n_threads); 
+  config.SetInt("n_threads_per_cq", 1);
+  config.SetInt("benchmark_duration", 5);
+
+  auto async_client = CreateAsyncClient(config);
   async_client->Wait();
   async_client->ShowStats();
   return 0;
