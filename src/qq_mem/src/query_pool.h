@@ -6,6 +6,31 @@
 
 #include "general_config.h"
 
+class QueryLogReader {
+ public:
+   QueryLogReader(const std::string &path)
+    :in_(path) {
+      if (in_.good() == false) {
+        throw std::runtime_error("File may not exist");
+      }
+   }
+
+   bool NextQuery(TermList &query) {
+     std::string line;
+     auto &ret = std::getline(in_, line);
+
+     if (ret) {
+       query = utils::explode(line, ' ');
+       return true;
+     } else {
+       return false;
+     }
+   }
+
+ private:
+   std::ifstream in_;
+};
+
 class QueryPool {
  public:
   QueryPool(const GeneralConfig &config) {

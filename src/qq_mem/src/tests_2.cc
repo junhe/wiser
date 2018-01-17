@@ -6,6 +6,7 @@
 #include "intersect.h"
 #include "utils.h"
 #include "general_config.h"
+#include "query_pool.h"
 #include "histogram.h"
 #include <grpc/support/histogram.h>
 
@@ -347,4 +348,26 @@ TEST_CASE( "Time operations are accurate", "[time][slow]" ) {
     REQUIRE(round(duration) == 1);
   }
 }
+
+
+TEST_CASE( "QueryLogReader works", "[aux]" ) {
+  QueryLogReader reader("src/testdata/query-log-sample.txt");
+  
+  TermList query;
+  bool ret;
+
+  ret = reader.NextQuery(query);
+  REQUIRE(ret == true);
+  REQUIRE(query == TermList{"hello", "world"});
+
+  ret = reader.NextQuery(query);
+  REQUIRE(ret == true);
+  REQUIRE(query == TermList{"barack", "obama"});
+
+  ret = reader.NextQuery(query);
+  REQUIRE(ret == false);
+}
+
+
+
 
