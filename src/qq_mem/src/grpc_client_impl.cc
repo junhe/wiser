@@ -1,5 +1,10 @@
 #include "grpc_client_impl.h"
 
+#include <iomanip>
+
+#include "utils.h"
+
+
 
 bool QQEngineSyncClient::AddDocument(const std::string &title, 
         const std::string &url, const std::string &body) {
@@ -131,7 +136,7 @@ class RPCContext {
     context_.TryCancel();
   }
 
-  bool RunNextState(bool ok, int thread_idx) {
+  bool RunNextState(bool ok, int thread_idx, Histogram *hist) {
     while (true) {
       switch (next_state_) {
         case State::STREAM_IDLE:
@@ -144,9 +149,7 @@ class RPCContext {
           if (!ok) {
             return false;
           }
-          // w_mutex.lock();
-          // write_count++;
-          // w_mutex.unlock();
+          start_ = utils::now();
           next_state_ = State::WRITE_DONE;
           stream_->Write(req_, RPCContext::tag(this));
           return true;
@@ -160,7 +163,11 @@ class RPCContext {
         case State::READ_DONE:
           ++n_issued_;
           finished_roundtrips_[thread_idx]++;
-          // assert("asyncssserver" == reply_.username());
+
+          end_ = utils::now();
+          duration_ = utils::duration(start_, end_);
+          hist->Add(duration_ * 1e6);
+
           if (n_issued_ < n_messages_per_call_) {
             // has more to do
             next_state_ = State::STREAM_IDLE;
@@ -227,6 +234,8 @@ class RPCContext {
   std::unique_ptr<grpc::ClientAsyncReaderWriter<SearchRequest, SearchReply>> stream_;
   std::vector<int> &finished_call_counts_;
   std::vector<int> &finished_roundtrips_;
+  utils::time_point start_, end_;
+  double duration_;
 };
 
 
@@ -240,6 +249,11 @@ AsyncClient::AsyncClient(const ConfigType config)
   std::cout << "num_async_threads: " << num_async_threads << std::endl;
   std::cout << "n_client_channels: " << n_client_channels << std::endl;
   std::cout << "n_rpcs_per_channel: " << n_rpcs_per_channel << std::endl;
+
+  // initialize hitogram vector  
+  for (int i = 0; i < num_async_threads; i++) {
+    histograms_.emplace_back();
+  }
 
   // create channels
   for (int i = 0; i < n_client_channels; i++) {
@@ -330,6 +344,21 @@ void AsyncClient::ShowStats() {
   std::cout << "Roundtrip Per Second: " 
     << total_roundtrips / n_secs << std::endl;
   // std::cout << "Client stream write count: " << write_count << std::endl;
+
+  // Merge histograms collected by all threads
+  Histogram hist_all;
+  for (auto & histogram : histograms_) {
+    hist_all.Merge(histogram);
+  }
+
+  std::cout << "---- Latency histogram (us) ----" << std::endl;
+  std::vector<int> percentiles{0, 25, 50, 75, 90, 95, 99, 100};
+  for (auto percentile : percentiles) {
+    std::cout << "Percentile " << std::setw(4) << percentile << ": " 
+      << std::setw(25) 
+      << utils::format_with_commas<int>(round(hist_all.Percentile(percentile))) 
+      << std::endl;
+  }
 }
 
 AsyncClient::~AsyncClient() {
@@ -360,10 +389,9 @@ void AsyncClient::ThreadFunc(int thread_idx) {
       break;
     }
     
-    if (!ctx->RunNextState(ok, thread_idx)) {
+    if (!ctx->RunNextState(ok, thread_idx, &histograms_[thread_idx])) {
       ctx->StartNewClone();
       delete ctx;
-      // break; // end this thread
     } else {
     }
   }

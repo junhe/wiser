@@ -6,6 +6,9 @@
 #include "intersect.h"
 #include "utils.h"
 #include "general_config.h"
+#include "histogram.h"
+#include <grpc/support/histogram.h>
+
 
 TEST_CASE( "SimpleHighlighter works", "[highlighter]" ) {
   std::string doc_str = "hello world";
@@ -316,5 +319,32 @@ TEST_CASE("GRPC query copying", "[engine]") {
 }
 
 
+TEST_CASE( "Histogram basic operations are fine", "[histogram]" ) {
+  Histogram hist;
 
+  for (int i = 0; i < 10; i++) {
+    hist.Add(i);
+  }
+
+  std::cout << "Count: " << hist.Count() << std::endl;
+  REQUIRE(hist.Count() == 10);
+  REQUIRE(hist.Percentile(0) == 0);
+  REQUIRE(hist.Percentile(100) == 9);
+
+  for (int i = 0; i < 101; i += 10) {
+    LOG(INFO) << ((double)i) << " :: " << hist.Percentile((double)i) << std::endl;  
+  }
+}
+
+
+
+TEST_CASE( "Time operations are accurate", "[time][slow]" ) {
+  SECTION("utils::duration() returned value is in seconds") {
+    auto start = utils::now();    
+    utils::sleep(1);
+    auto end = utils::now();    
+    auto duration = utils::duration(start, end);
+    REQUIRE(round(duration) == 1);
+  }
+}
 
