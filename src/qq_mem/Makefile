@@ -56,7 +56,7 @@ test_fast:
 	cmake ../src/
 	make -j32 testmain
 	cd ..
-	./build/testmain '~[grpc]'
+	./build/testmain '~[grpc]~[slow]'
 
 test_args:
 	rm -f ./build/testmain
