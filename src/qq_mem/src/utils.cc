@@ -63,7 +63,7 @@ void sleep(int n_secs) {
   sleep_for(seconds(n_secs));
 }
 
-const std::chrono::time_point<std::chrono::system_clock> now() {
+const time_point now() {
     return std::chrono::system_clock::now();
 }
 

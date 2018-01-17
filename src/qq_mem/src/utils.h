@@ -16,11 +16,12 @@
 
 namespace utils {
 
+typedef std::chrono::time_point<std::chrono::system_clock> time_point;
 const std::vector<std::string> explode(const std::string& s, const char& c);
 const std::vector<std::string> explode_by_non_letter(const std::string& text);
 const std::vector<std::string> explode_strict(const std::string& s, const char& c);
 void sleep(int n_secs);
-const std::chrono::time_point<std::chrono::system_clock> now();
+const time_point now();
 const double duration(std::chrono::time_point<std::chrono::system_clock> t1, 
     std::chrono::time_point<std::chrono::system_clock> t2);
 const std::string fill_zeros(const std::string &s, std::size_t width);

@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
 
   int n_threads = std::atoi(argv[1]);
 
-  // Search synchroniously
+  // Search synchroniously, as a sanity check
   auto client = CreateSyncClient("localhost:50051");
   std::vector<int> doc_ids;
   bool ret;
