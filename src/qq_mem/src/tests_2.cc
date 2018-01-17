@@ -350,22 +350,46 @@ TEST_CASE( "Time operations are accurate", "[time][slow]" ) {
 }
 
 
-TEST_CASE( "QueryLogReader works", "[aux]" ) {
-  QueryLogReader reader("src/testdata/query-log-sample.txt");
-  
-  TermList query;
-  bool ret;
+TEST_CASE( "Query pool work", "[aux]" ) {
+  SECTION("QueryPool") {
+    QueryPool pool;
+    pool.Add(TermList{"hello"});
+    pool.Add(TermList{"obama"});
 
-  ret = reader.NextQuery(query);
-  REQUIRE(ret == true);
-  REQUIRE(query == TermList{"hello", "world"});
+    REQUIRE(pool.Next() == TermList{"hello"});
+    REQUIRE(pool.Next() == TermList{"obama"});
+    REQUIRE(pool.Next() == TermList{"hello"});
+    REQUIRE(pool.Next() == TermList{"obama"});
+  }
 
-  ret = reader.NextQuery(query);
-  REQUIRE(ret == true);
-  REQUIRE(query == TermList{"barack", "obama"});
+  SECTION("QueryPoolArray") {
+    QueryPoolArray array(2);
+    array.Add(0, TermList{"hello"});
+    array.Add(1, TermList{"obama"});
 
-  ret = reader.NextQuery(query);
-  REQUIRE(ret == false);
+    REQUIRE(array.Next(0) == TermList{"hello"});
+    REQUIRE(array.Next(0) == TermList{"hello"});
+    REQUIRE(array.Next(1) == TermList{"obama"});
+    REQUIRE(array.Next(1) == TermList{"obama"});
+  }
+
+  SECTION("QueryLogReader") {
+    QueryLogReader reader("src/testdata/query-log-sample.txt");
+    
+    TermList query;
+    bool ret;
+
+    ret = reader.NextQuery(query);
+    REQUIRE(ret == true);
+    REQUIRE(query == TermList{"hello", "world"});
+
+    ret = reader.NextQuery(query);
+    REQUIRE(ret == true);
+    REQUIRE(query == TermList{"barack", "obama"});
+
+    ret = reader.NextQuery(query);
+    REQUIRE(ret == false);
+  }
 }
 
 

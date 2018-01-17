@@ -36,7 +36,7 @@ class QueryPool {
  public:
   QueryPool() {}
 
-  const std::vector<std::string> & Next() {
+  const TermList &Next() {
     return query_buffer_[(counter_++) % query_buffer_size_];
   }
 
@@ -46,9 +46,27 @@ class QueryPool {
   }
 
  private:
-  std::vector<std::vector<std::string>> query_buffer_;
+  std::vector<TermList> query_buffer_;
   int counter_ = 0;                // for iterating the query buffer
   int query_buffer_size_;
+};
+
+
+class QueryPoolArray {
+ public:
+  QueryPoolArray(const int n_pools): array_(n_pools) {
+  }
+
+  void Add(const int i, const TermList &query) {
+    array_[i].Add(query);
+  }
+
+  const TermList &Next(const int i) {
+    return array_[i].Next();
+  }
+
+ private:
+  std::vector<QueryPool> array_;
 };
 
 
