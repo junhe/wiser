@@ -9,6 +9,7 @@
 #include <thread>
 #include <queue>
 #include <utility>
+#include <locale>
 
 
 namespace utils {
@@ -63,7 +64,7 @@ void sleep(int n_secs) {
   sleep_for(seconds(n_secs));
 }
 
-const std::chrono::time_point<std::chrono::system_clock> now() {
+const time_point now() {
     return std::chrono::system_clock::now();
 }
 
@@ -214,7 +215,6 @@ std::map<Term, OffsetPairs> construct_offset_pairs(const TermList & tokens,
   }
   return result;
 }
-
 
 
 

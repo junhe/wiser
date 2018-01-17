@@ -360,16 +360,6 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
           n_total_docs_in_index,
           doc_lengths.GetAvgLength(),
           doc_lengths.GetLength(max_doc_id));
-      // qq_float score_of_this_doc = 0.331;
-
-      // result_doc_entries.emplace_back(max_doc_id, score_of_this_doc);
-      // std::vector< const RankingPostingWithOffsets *> &postings = 
-        // result_doc_entries.back().postings;
-      // for (int i = 0; i < n_lists; i++) {
-        // postings.push_back(&lists[i]->GetPosting(posting_iters[i]));
-      // }
-      
-      // directly push to priority queue
 
       if (min_heap.size() < k) {
         std::vector<const RankingPostingWithOffsets *> postings;
@@ -395,22 +385,6 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
       }
     }
   } // while
-
-  // std::priority_queue<ResultDocEntry> queue(std::less<ResultDocEntry>(), 
-      // result_doc_entries);
-  // std::vector<ResultDocEntry> ret;
-  
-  // int k = 5;
-  // while (k > 0 && !queue.empty()) {
-    // ret.push_back(queue.top());
-    // queue.pop();
-    // k--;
-  // }
-
-  // auto ret_it = result_doc_entries.cbegin(); 
-  // auto early_end = ret_it + 5 < result_doc_entries.cend() ? 
-                    // ret_it + 5 : result_doc_entries.cend();
-  // std::vector<ResultDocEntry> ret(ret_it, early_end);
 
 	std::vector<ResultDocEntry> ret;
 

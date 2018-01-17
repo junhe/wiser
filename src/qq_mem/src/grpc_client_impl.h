@@ -18,6 +18,7 @@
 #include "utils.h"
 #include "qq.grpc.pb.h"
 
+#include "histogram.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -79,11 +80,8 @@ class AsyncClient {
   std::vector<int> finished_call_counts_;
   std::vector<int> finished_roundtrips_;
   std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
+  std::vector<Histogram> histograms_;
 };
-
-
-
-
 
 
 std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target);
