@@ -149,7 +149,7 @@ add_executable(in_proc_engine_bench_querylog
 )
 
 target_link_libraries(in_proc_engine_bench_querylog
-    gRPC::grpc++_reflection
+    ${GRPC_LIBS}
     protobuf::libprotobuf
     ${BOOST_LIBS}
     pthread
