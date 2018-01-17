@@ -4,6 +4,7 @@
 #include <queue>
 #include <math.h> 
 #include <fstream>
+#include <algorithm>
 
 #include <boost/locale.hpp>
 
@@ -98,14 +99,18 @@ class Passage {
     std::string to_string(const std::string * doc_string) {
       std::string res= "";
       res += doc_string->substr(startoffset, endoffset - startoffset + 1) + "\n";
+      //std::cout << "\nprepare to string: " << res << "\n(" << res.size() << ")" << std::endl;
       // highlight
 
       auto cmp_terms = [] (Offset & a, Offset & b) -> bool { return (std::get<0>(a) > std::get<0>(b));};
       std::sort(matches.begin(), matches.end(), cmp_terms);
-
+      //std::cout << matches.size() << std::endl;
       for (auto it = matches.begin(); it != matches.end(); it++) {
+        //std::cout << "insert end to " << std::get<1>(*it)-startoffset+1 << std::endl;
         res.insert(std::get<1>(*it)-startoffset+1, "<\\b>");
-        res.insert(std::get<0>(*it)-startoffset, "<b>");
+        //std::cout << "insert begin to " << std::max(0, std::get<0>(*it)-startoffset) << std::endl;
+        res.insert(std::max(0, std::get<0>(*it)-startoffset), "<b>");
+        //res.insert(std::get<0>(*it)-startoffset, "<b>");
       }
       //std::cout << std::endl << res;
       return res;
@@ -179,15 +184,20 @@ class SentenceBreakIterator {
       if (offset > last_offset) {
           return 0;
       }
-      //current = map.find(content_->begin() + offset);
-      current = map.find(content_->begin() + offset + 1);
+      //std::cout <<  last_offset << " last time: " << startoffset << ", " << endoffset; 
+      current = map.find(content_->begin() + offset);
+      
+      if (offset == 0)
+          current++; 
+      //current = map.find(content_->begin() + offset + 1);
       std::string::const_iterator this_offset = *current;
       
-      endoffset = this_offset - content_->begin() - 1;
+      endoffset = std::max(0, (int)(this_offset - content_->begin() - 1));
       
       current--;
       std::string::const_iterator tmp_offset = *current;
       startoffset = tmp_offset - content_->begin() - 1 + 1;
+      //std::cout << "now      : " << startoffset << ", " << endoffset << std::endl; 
       current++;
       return 1; // Success
   }
@@ -281,9 +291,9 @@ class SimpleHighlighter {
   std::string highlightOffsetsEnums(const OffsetsEnums & offsetsEnums, 
                                     const int & maxPassages, 
                                     const std::string &doc_str) {
-    
     if (offsetsEnums.size() == 0) return "";
     // break the document according to sentence
+    //std::cout << doc_str << std::endl;
     SentenceBreakIterator breakiterator(doc_str, locale_);
     
     // "merge sorting" to calculate all sentence's score
@@ -320,7 +330,8 @@ class SimpleHighlighter {
       //std::cout <<"cur offset: " << cur_start << "," << cur_end << std::endl;
 
       // judge whether this iterator's offset is beyond current passage
-      if (cur_start > passage->endoffset) {
+      //if (cur_start > passage->endoffset) {
+      if (cur_end > passage->endoffset) {
         // if this passage is not empty, then wrap up it and push it to the priority queue
         if (passage->startoffset >= 0) {
           passage->score = passage->score * passage_norm(passage->startoffset); //normalize according to passage's startoffset
@@ -340,8 +351,7 @@ class SimpleHighlighter {
           }
         }
         // advance to next passage
-        //if (breakiterator.next(cur_start+1) <= 0) {
-        if (breakiterator.next(cur_start) <= 0) {
+        if (breakiterator.next(cur_end) <= 0) {
             break;
         }
         //passage->startoffset = breakiterator.getStartOffset();
@@ -361,11 +371,13 @@ class SimpleHighlighter {
           break;
         }
         cur_start = cur_iter.startoffset;
-        if (cur_start > passage->endoffset) {
+        cur_end = cur_iter.endoffset;
+        //if (cur_start > passage->endoffset) {
+        if (cur_end > passage->endoffset) {
           offsets_queue.push(cur_iter);
           break;
         }
-        cur_end = cur_iter.endoffset;
+        //cur_end = cur_iter.endoffset;
       }
       // Add the score from this term to this passage
       passage->score = passage->score + cur_iter.weight * tf_norm(tf, passage->endoffset-passage->startoffset+1);   //scoring
@@ -373,7 +385,9 @@ class SimpleHighlighter {
 
     // Add the last passage
     passage->score = passage->score * passage_norm(passage->startoffset);
-    if (passage_queue.size() < maxPassages && passage->score > 0) {
+    if (passage->score > 0) {
+    //if (passage_queue.size() < maxPassages && passage->score > 0) {
+    if (passage_queue.size() < maxPassages) {
       passage_queue.push(passage);
     } else {
       //if (passage->score > passage_queue.top()->score) {
@@ -384,7 +398,7 @@ class SimpleHighlighter {
         passage_queue.push(passage);
       }
     }
-
+    }
     // format it into a string to return
     std::vector<Passage *> passage_vector;
     while (!passage_queue.empty()) {
@@ -403,7 +417,7 @@ class SimpleHighlighter {
       //std::cout <<  "("  << (*it)->score << ") " << breakiterator.content_->substr((*it)->startoffset, (*it)->endoffset - (*it)->startoffset+1) << std::endl;
       delete (*it);
     }
-
+    //std::cout << res << std::endl;
     return res;
   }
 

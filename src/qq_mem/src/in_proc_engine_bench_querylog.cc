@@ -59,19 +59,19 @@ utils::ResultRow search(QqMemUncompressedEngine *engine,
   // construct query pool
   QueryPool query_pool(config);
   auto enable_snippets = config.GetBool("enable_snippets");
-
+  std::cout << "Construct query pool successfully" << std::endl;
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
-    auto terms = query_pool.next();
-    /*for (auto term: terms) {
+    /*auto terms = query_pool.next();
+    for (auto term: terms) {
       std::cout << term << " ";
     }
-    std::cout << std::endl;
     auto query = SearchQuery(terms, enable_snippets);
-    */ 
+    */
     auto query = SearchQuery(query_pool.next(), enable_snippets);
     query.n_snippet_passages = config.GetInt("n_passages");
     auto result = engine->Search(query);
+    //std::cout << i << ": search successfully" << std::endl;
   }
   auto end = utils::now();
   auto dur = utils::duration(start, end);
@@ -132,19 +132,24 @@ int main(int argc, char **argv) {
   config.SetString("linedoc_path", 
       "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
   config.SetString("loader", "with-offsets");
-  config.SetInt("n_repeats", 100000);
+  config.SetInt("n_repeats", 500000);
   config.SetInt("n_passages", 3);
   config.SetBool("enable_snippets", true);
+  //config.SetBool("enable_snippets", false);
   
-
+  
+  /* hardcoded query
   config.SetString("query_source", "hardcoded");
-  config.SetStringVec("terms", std::vector<std::string>{"hello"});
+  //config.SetStringVec("terms", std::vector<std::string>{"hello"});
   //config.SetStringVec("terms", std::vector<std::string>{"barack", "obama"});
   //config.SetStringVec("terms", std::vector<std::string>{"len", "from", "mai"});
+  config.SetStringVec("terms", std::vector<std::string>{"arsen"});
+  */
 
-  //config.SetString("query_source", "querylog");
-  //config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
-  
+  ///* query pool from file
+  config.SetString("query_source", "querylog");
+  config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
+  //*/
   qq_uncompressed_bench_wiki(config);
 
   // qq_uncompressed_bench();
