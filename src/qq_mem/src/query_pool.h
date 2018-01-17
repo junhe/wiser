@@ -64,6 +64,10 @@ class QueryPoolArray {
   const TermList &Next(const int i) {
     return array_[i].Next();
   }
+  
+  const int Size() {
+    return array_.size();
+  }
 
  private:
   std::vector<QueryPool> array_;
@@ -88,5 +92,17 @@ void load_query_pool(QueryPool *pool, const GeneralConfig &config) {
   }
 }
 
+
+void load_query_pool_array(QueryPoolArray *array, 
+                           const std::string &query_log_path) {
+  QueryLogReader reader(query_log_path);
+  TermList query;
+
+  int i = 0;
+  while (reader.NextQuery(query)) {
+    array->Add( i % array->Size(), query);
+    i++;
+  }
+}
 
 #endif 

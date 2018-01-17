@@ -364,6 +364,9 @@ TEST_CASE( "Query pool work", "[aux]" ) {
 
   SECTION("QueryPoolArray") {
     QueryPoolArray array(2);
+
+    REQUIRE(array.Size() == 2);
+
     array.Add(0, TermList{"hello"});
     array.Add(1, TermList{"obama"});
 
@@ -389,6 +392,16 @@ TEST_CASE( "Query pool work", "[aux]" ) {
 
     ret = reader.NextQuery(query);
     REQUIRE(ret == false);
+  }
+
+  SECTION("Loading query pool") {
+    QueryPoolArray array(2);
+
+    load_query_pool_array(&array, "src/testdata/query-log-sample.txt");
+    REQUIRE(array.Next(0) == TermList{"hello", "world"});
+    REQUIRE(array.Next(0) == TermList{"hello", "world"});
+    REQUIRE(array.Next(1) == TermList{"barack", "obama"});
+    REQUIRE(array.Next(1) == TermList{"barack", "obama"});
   }
 }
 
