@@ -13,6 +13,7 @@
 #include "qq_mem_uncompressed_engine.h"
 #include "utils.h"
 #include "general_config.h"
+#include "query_pool.h"
 
 const int K = 1000;
 const int M = 1000 * K;
@@ -55,12 +56,20 @@ utils::ResultRow search(QqMemUncompressedEngine *engine,
                         const GeneralConfig &config) {
   const int n_repeats = config.GetInt("n_repeats");
   utils::ResultRow row;
-  auto terms = config.GetStringVec("terms");
+  // construct query pool
+  QueryPool query_pool(config);
   auto enable_snippets = config.GetBool("enable_snippets");
 
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
+    auto terms = query_pool.next();
+    /*for (auto term: terms) {
+      std::cout << term << " ";
+    }
+    std::cout << std::endl;
     auto query = SearchQuery(terms, enable_snippets);
+    */ 
+    auto query = SearchQuery(query_pool.next(), enable_snippets);
     query.n_snippet_passages = config.GetInt("n_passages");
     auto result = engine->Search(query);
   }
@@ -70,13 +79,7 @@ utils::ResultRow search(QqMemUncompressedEngine *engine,
   row["duration"] = std::to_string(dur / n_repeats); 
   row["QPS"] = std::to_string(n_repeats / dur);
 
-  std::string query;
-  for (int i = 0; i < terms.size(); i++) {
-    query += terms[i];
-    if (i != terms.size() - 1) {
-      query += "+";
-    }
-  }
+  std::string query = query_pool.summarize();
   row["query"] = query;
 
   return row;
@@ -128,12 +131,20 @@ int main(int argc, char **argv) {
   config.SetInt("n_docs", 10000000);
   config.SetString("linedoc_path", 
       "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  config.SetString("loader", "naive");
+  config.SetString("loader", "with-offsets");
   config.SetInt("n_repeats", 100000);
   config.SetInt("n_passages", 3);
   config.SetBool("enable_snippets", true);
-  config.SetStringVec("terms", std::vector<std::string>{"hello"});
+  
 
+  config.SetString("query_source", "hardcoded");
+  config.SetStringVec("terms", std::vector<std::string>{"hello"});
+  //config.SetStringVec("terms", std::vector<std::string>{"barack", "obama"});
+  //config.SetStringVec("terms", std::vector<std::string>{"len", "from", "mai"});
+
+  //config.SetString("query_source", "querylog");
+  //config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
+  
   qq_uncompressed_bench_wiki(config);
 
   // qq_uncompressed_bench();

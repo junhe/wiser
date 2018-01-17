@@ -403,8 +403,6 @@ TEST_CASE( "GRPC Sync Client and Server", "[grpc]" ) {
   }
 
   SECTION("Add documents and search") {
-    if (FLAG_POSTINGS_ON_FLASH || FLAG_SNIPPETS_PRECOMPUTE)    //TODO client should add offsets
-        return;
     std::vector<int> doc_ids;
     bool ret;
 
@@ -1368,6 +1366,13 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
 
     REQUIRE(result.entries[0].snippet == "<b>hello<\\b> <b>world<\\b> big <b>world<\\b>\n");
     REQUIRE(result.entries[1].snippet == "<b>hello<\\b> <b>world<\\b>\n");
+  }
+
+  SECTION("The engine behaves correct when n_results is 0") {
+    auto query = SearchQuery(TermList{"hello", "world"}, true);
+    query.n_results = 0;
+    auto result = engine.Search(query);
+    REQUIRE(result.Size() == 0);
   }
 
   SECTION("It can use intersect_score_and_sort()") {

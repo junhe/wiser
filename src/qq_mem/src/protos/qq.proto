@@ -39,9 +39,17 @@ message StatusReply {
     string message = 2;
 }
 
-
 message SearchRequest {
-    string term = 1;
+    /*string term = 1;*/
+    repeated string terms = 2;
+    int32 n_results = 3;
+    bool return_snippets = 4;
+    int32 n_snippet_passages = 5;
+  	enum QueryProcessingCore {
+		TOGETHER = 0;
+        BY_PHASE = 1;
+    }
+	QueryProcessingCore query_processing_core = 6;
 }
 
 message SearchReplyEntry {
@@ -51,7 +59,6 @@ message SearchReplyEntry {
 
 message SearchReply {
     repeated SearchReplyEntry entries  = 1;
-    /*repeated int32 doc_ids = 2;*/
 }
 
 message EchoData {

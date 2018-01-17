@@ -37,7 +37,6 @@ class InvertedIndexQqMem {
 
   void AddDocument(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
-    //TermList token_vec = utils::explode(tokens, ' ');
     utils::CountMapType token_counts = utils::count_tokens(tokens);
     std::map<Term, OffsetPairs> term_offsets = utils::extract_offset_pairs(tokens);
 
@@ -130,11 +129,16 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
  public:
   // colum 2 should be tokens
-  int LoadLocalDocuments(const std::string &line_doc_path, int n_rows) {
-    //int ret = engine_loader::load_body_and_tokenized_body(
-    //    this, line_doc_path, n_rows, 1, 2);
-    int ret = engine_loader::load_body_and_tokenized_body_and_token_offsets(
-        this, line_doc_path, n_rows, 1, 2, 3);
+  int LoadLocalDocuments(const std::string &line_doc_path, 
+      int n_rows, const std::string loader) {
+    int ret;
+    if (loader == "naive") {
+      ret = engine_loader::load_body_and_tokenized_body(
+         this, line_doc_path, n_rows, 2, 2);
+    } else if (loader == "with-offsets") {
+      ret = engine_loader::load_body_and_tokenized_body_and_token_offsets(
+          this, line_doc_path, n_rows, 1, 2, 3);
+    }
 
     LOG(WARNING) << "Number of terms in inverted index: " << TermCount();
     return ret;
@@ -162,7 +166,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
     doc_store_.Add(doc_id, body);
     inverted_index_.AddDocument(doc_id, body, tokens, token_offsets);
-    doc_lengths_.AddLength(doc_id, utils::count_terms(body));
+    doc_lengths_.AddLength(doc_id, utils::count_terms(body)); // TODO modify to count on offsets?
     return doc_id;
   }
   
@@ -192,8 +196,17 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
   SearchResult ProcessQueryTogether(const SearchQuery &query) {
     SearchResult result;
+
+    if (query.n_results == 0) {
+      return result;
+    }
+
     InvertedIndexQqMem::PlPointers lists = 
       inverted_index_.FindPostinglists(query.terms);
+
+    if (lists.size() == 0) {
+      return result;
+    }
 
     std::vector<ResultDocEntry> top_k = 
       intersect_score_and_sort<RankingPostingWithOffsets>(
@@ -205,7 +218,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
       if (query.return_snippets == true) {
         result_entry.snippet = GenerateSnippet(top_doc_entry.doc_id,
-            top_doc_entry.postings);
+            top_doc_entry.postings, query.n_snippet_passages);
       }
 
       result.entries.push_back(result_entry);
@@ -215,14 +228,15 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   }
 
   std::string GenerateSnippet(const DocIdType &doc_id, 
-      const std::vector<const RankingPostingWithOffsets *> &postings) {
+      const std::vector<const RankingPostingWithOffsets *> &postings, 
+      const int n_passages) {
     OffsetsEnums res = {};
 
     for (int i = 0; i < postings.size(); i++) {
       res.push_back(Offset_Iterator(*postings[i]->GetOffsetPairs()));
     }
 
-    return highlighter_.highlightOffsetsEnums(res,  5, doc_store_.Get(doc_id));
+    return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));
   }
 
   SearchResult Search(const SearchQuery &query) {
@@ -246,7 +260,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
       if (query.return_snippets == true) {
         auto row = intersection_result.GetRow(doc_id);
-        entry.snippet = GenerateSnippet(doc_id, row);
+        entry.snippet = GenerateSnippet(doc_id, row, query.n_snippet_passages);
       }
 
       result.entries.push_back(entry);
@@ -256,7 +270,8 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   }
 
   std::string GenerateSnippet(const DocIdType &doc_id, 
-                              const IntersectionResult::row_dict_t *row) {
+                              const IntersectionResult::row_dict_t *row,
+                              const int n_passages) {
     OffsetsEnums res = {};
     
     for (auto col_it = row->cbegin() ; col_it != row->cend(); col_it++) {
@@ -264,7 +279,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
       res.push_back(Offset_Iterator(*p_posting->GetOffsetPairs()));
     }
 
-    return highlighter_.highlightOffsetsEnums(res,  5, doc_store_.Get(doc_id));
+    return highlighter_.highlightOffsetsEnums(res,  n_passages, doc_store_.Get(doc_id));
   }
 };
 

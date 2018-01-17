@@ -27,7 +27,12 @@ bool QQEngineSyncClient::Search(const std::string &term, std::vector<int> &doc_i
 
     assert(doc_ids.size() == 0);
 
-    request.set_term(term);
+    request.add_terms(term);
+    request.set_n_results(10);
+    request.set_return_snippets(true);
+    request.set_n_snippet_passages(3);
+    request.set_query_processing_core(
+      qq::SearchRequest_QueryProcessingCore_TOGETHER);
 
     // Here we can the stub's newly available method we just added.
     Status status = stub_->Search(&context, request,  &reply);
@@ -106,7 +111,7 @@ class RPCContext {
     finished_call_counts_(finished_call_counts),
     finished_roundtrips_(finished_roundtrips)
   {
-      req_.set_term("hello");
+      req_.add_terms("hello");
       Start();
   } 
 
