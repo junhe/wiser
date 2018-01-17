@@ -146,9 +146,6 @@ class RPCContext {
           if (!ok) {
             return false;
           }
-          // w_mutex.lock();
-          // write_count++;
-          // w_mutex.unlock();
           start_ = utils::now();
           next_state_ = State::WRITE_DONE;
           stream_->Write(req_, RPCContext::tag(this));
@@ -166,12 +163,8 @@ class RPCContext {
 
           end_ = utils::now();
           duration_ = utils::duration(start_, end_);
-          // std::cout << duration_ 
-            // << " scaled: " << duration_ * 1e6 
-            // << " round trip count: " << finished_roundtrips_[thread_idx] << std::endl;
           hist->Add(duration_ * 1e6);
 
-          // assert("asyncssserver" == reply_.username());
           if (n_issued_ < n_messages_per_call_) {
             // has more to do
             next_state_ = State::STREAM_IDLE;
@@ -391,7 +384,6 @@ void AsyncClient::ThreadFunc(int thread_idx) {
     if (!ctx->RunNextState(ok, thread_idx, &histograms_[thread_idx])) {
       ctx->StartNewClone();
       delete ctx;
-      // break; // end this thread
     } else {
     }
   }
