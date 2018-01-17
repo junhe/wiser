@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
       100000,  // messages per rpc
       n_threads,  // n threads
       1,  // thread per cq
-      10); // duration (seconds)
+      5); // duration (seconds)
   async_client->Wait();
   async_client->ShowStats();
   return 0;

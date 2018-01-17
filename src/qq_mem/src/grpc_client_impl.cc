@@ -1,6 +1,9 @@
 #include "grpc_client_impl.h"
 
+#include <iomanip>
+
 #include "utils.h"
+
 
 
 bool QQEngineSyncClient::AddDocument(const std::string &title, 
@@ -342,14 +345,19 @@ void AsyncClient::ShowStats() {
     << total_roundtrips / n_secs << std::endl;
   // std::cout << "Client stream write count: " << write_count << std::endl;
 
-
-  // histogram
+  // Merge histograms collected by all threads
+  Histogram hist_all;
   for (auto & histogram : histograms_) {
-    std::cout << "thread ----- : " << std::endl;
-    for (int percentile = 0; percentile <= 100; percentile += 10) {
-      std::cout << "Percentile " << percentile << ": " 
-        << histogram.Percentile(percentile) << std::endl;
-    }
+    hist_all.Merge(histogram);
+  }
+
+  std::cout << "---- Latency histogram (us) ----" << std::endl;
+  std::vector<int> percentiles{0, 25, 50, 75, 90, 95, 99, 100};
+  for (auto percentile : percentiles) {
+    std::cout << "Percentile " << std::setw(4) << percentile << ": " 
+      << std::setw(25) 
+      << utils::format_with_commas<int>(round(hist_all.Percentile(percentile))) 
+      << std::endl;
   }
 }
 

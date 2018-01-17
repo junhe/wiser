@@ -10,6 +10,7 @@
 #include <unordered_map>
 #include <string>
 #include <vector>
+#include <locale>
 
 #include "engine_services.h"
 #include "types.h"
@@ -165,6 +166,16 @@ class Staircase {
     return n_steps_ * step_width_;
   }
 };
+
+
+template<class T>
+std::string format_with_commas(T value)
+{
+	std::stringstream ss;
+	ss.imbue(std::locale(""));
+	ss << std::fixed << value;
+	return ss.str();
+}
 
 } // namespace util
 #endif

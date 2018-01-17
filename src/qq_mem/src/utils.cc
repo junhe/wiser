@@ -9,6 +9,7 @@
 #include <thread>
 #include <queue>
 #include <utility>
+#include <locale>
 
 
 namespace utils {
@@ -214,7 +215,6 @@ std::map<Term, OffsetPairs> construct_offset_pairs(const TermList & tokens,
   }
   return result;
 }
-
 
 
 
