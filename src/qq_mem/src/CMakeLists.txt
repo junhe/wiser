@@ -39,6 +39,7 @@ set(ENGINE_SRCS
     posting_list_raw.cc
     inverted_index.cc
     intersect.cc
+    query_pool.cc
     index_creator.cc
     qq_engine.cc
     search_engine_service.cc

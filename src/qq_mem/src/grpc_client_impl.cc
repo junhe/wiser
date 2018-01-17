@@ -5,7 +5,6 @@
 #include "utils.h"
 
 
-
 bool QQEngineSyncClient::AddDocument(const std::string &title, 
         const std::string &url, const std::string &body) {
     AddDocumentRequest request;
@@ -136,7 +135,11 @@ class RPCContext {
     context_.TryCancel();
   }
 
-  bool RunNextState(bool ok, int thread_idx, Histogram *hist) {
+  bool RunNextState(bool ok, int thread_idx, Histogram *hist, 
+      QueryPool *query_pool) {
+    TermList terms;
+    int i;
+
     while (true) {
       switch (next_state_) {
         case State::STREAM_IDLE:
@@ -149,6 +152,15 @@ class RPCContext {
           if (!ok) {
             return false;
           }
+          
+          req_.clear_terms();
+          terms = query_pool->Next();    
+          for (i = 0; i < terms.size(); i++) {
+            req_.add_terms(terms[i]);
+            std::cout << terms[i] << " ";
+          }
+          std::cout << std::endl;
+
           start_ = utils::now();
           next_state_ = State::WRITE_DONE;
           stream_->Write(req_, RPCContext::tag(this));
@@ -241,21 +253,22 @@ class RPCContext {
 
 AsyncClient::AsyncClient(const GeneralConfig config)
   :config_(config){
-  // int tpc = std::stoi(config.at("n_threads_per_cq")); 
   int tpc = config.GetInt("n_threads_per_cq");
-  // int num_async_threads = std::stoi(config.at("n_async_threads"));
   int num_async_threads = config.GetInt("n_async_threads");
-
-  // int n_client_channels = std::stoi(config.at("n_client_channels"));
   int n_client_channels = config.GetInt("n_client_channels");
-
-  // int n_rpcs_per_channel = std::stoi(config.at("n_rpcs_per_channel"));
   int n_rpcs_per_channel = config.GetInt("n_rpcs_per_channel");
 
   std::cout << "n_threads_per_cq: " << tpc << std::endl;
   std::cout << "num_async_threads: " << num_async_threads << std::endl;
   std::cout << "n_client_channels: " << n_client_channels << std::endl;
   std::cout << "n_rpcs_per_channel: " << n_rpcs_per_channel << std::endl;
+
+  // initialize query_pool
+  query_pool_array_.reset(new QueryPoolArray(num_async_threads));
+  for (int i = 0; i < num_async_threads; i++) {
+    query_pool_array_->Add(i, TermList{"query_on_" + std::to_string(i)});
+    query_pool_array_->Add(i, TermList{"query_onononon_" + std::to_string(i)});
+  }
 
   // initialize hitogram vector  
   for (int i = 0; i < num_async_threads; i++) {
@@ -396,11 +409,12 @@ void AsyncClient::ThreadFunc(int thread_idx) {
       break;
     }
     
-    if (!ctx->RunNextState(ok, thread_idx, &histograms_[thread_idx])) {
+    if (!ctx->RunNextState(ok, thread_idx, &histograms_[thread_idx], 
+                           query_pool_array_->GetPool(thread_idx))) 
+    {
       ctx->StartNewClone();
       delete ctx;
-    } else {
-    }
+    } 
   }
   // completion queue is shutdown.
   std::cout << "Thread " << thread_idx << " ends" << std::endl;
