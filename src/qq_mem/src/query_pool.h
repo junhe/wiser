@@ -87,7 +87,7 @@ void load_query_pool_array(QueryPoolArray *array,
 std::unique_ptr<QueryPoolArray> create_query_pool_array(const TermList &terms,
     const int n_pools);
 std::unique_ptr<QueryPoolArray> create_query_pool_array(
-    const std::string &query_log_path, const int n_pools);
+    const std::string &query_log_path, const int n_pools, const int n_queries=0);
 void load_query_pool_from_file(QueryPool *pool, 
                      const std::string &query_log_path, 
                      const int n_queries);

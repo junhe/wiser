@@ -33,11 +33,11 @@ int main(int argc, char** argv) {
   config.SetInt("n_threads_per_cq", 1);
   config.SetInt("benchmark_duration", 5);
 
-  // auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
-      // config.GetInt("n_async_threads"));
-  auto query_pool_array = create_query_pool_array(
-      "/mnt/ssd/downloads/wiki_QueryLog_tokenized",
+  auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
       config.GetInt("n_async_threads"));
+  // auto query_pool_array = create_query_pool_array(
+      // "/mnt/ssd/downloads/wiki_QueryLog_tokenized",
+      // config.GetInt("n_async_threads"));
 
   auto async_client = CreateAsyncClient(config, std::move(query_pool_array));
   async_client->Wait();

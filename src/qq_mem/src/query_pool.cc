@@ -61,10 +61,10 @@ std::unique_ptr<QueryPoolArray> create_query_pool_array(const TermList &query,
 }
 
 std::unique_ptr<QueryPoolArray> create_query_pool_array(
-    const std::string &query_log_path, const int n_pools) 
+    const std::string &query_log_path, const int n_pools, const int n_queries) 
 {
   std::unique_ptr<QueryPoolArray> array(new QueryPoolArray(n_pools));
-  load_query_pool_array(array.get(), query_log_path);
+  load_query_pool_array(array.get(), query_log_path, n_queries);
   return array;
 }
 

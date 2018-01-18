@@ -441,7 +441,7 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
   config.SetInt("benchmark_duration", 2);
 
   auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
-      config.GetInt("n_client_channels"));
+      config.GetInt("n_async_threads"));
   auto client = CreateAsyncClient(config, std::move(query_pool_array));
   client->Wait();
   client.release();

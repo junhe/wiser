@@ -157,9 +157,9 @@ class RPCContext {
           terms = query_pool->Next();    
           for (i = 0; i < terms.size(); i++) {
             req_.add_terms(terms[i]);
-            std::cout << terms[i] << " ";
+            // std::cout << terms[i] << " ";
           }
-          std::cout << std::endl;
+          // std::cout << std::endl;
 
           start_ = utils::now();
           next_state_ = State::WRITE_DONE;
@@ -175,6 +175,11 @@ class RPCContext {
         case State::READ_DONE:
           ++n_issued_;
           finished_roundtrips_[thread_idx]++;
+
+          // std::cout << "Done" << std::endl;
+          // for (i = 0; i < reply_.entries_size(); i++) {
+            // std::cout << "result: " << reply_.entries(i).snippet() << std::endl;
+          // }
 
           end_ = utils::now();
           duration_ = utils::duration(start_, end_);
