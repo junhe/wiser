@@ -412,4 +412,30 @@ TEST_CASE( "Query pool work", "[aux]" ) {
   }
 }
 
+TEST_CASE( "SearchResult copying works", "[engine]" ) {
+  SECTION("SearchResult") {
+    SearchResult result;
+    SearchResultEntry entry;
+
+    entry.doc_id = 10;
+    entry.snippet = "my snippet 001";
+    result.entries.push_back(entry);
+
+    qq::SearchReply reply;
+    result.CopyTo(&reply);
+
+    REQUIRE(reply.entries_size() == 1);
+    REQUIRE(reply.entries(0).doc_id() == 10);
+    REQUIRE(reply.entries(0).snippet() == "my snippet 001");
+
+    result.CopyTo(&reply);
+
+    REQUIRE(reply.entries_size() == 1);
+    REQUIRE(reply.entries(0).doc_id() == 10);
+    REQUIRE(reply.entries(0).snippet() == "my snippet 001");
+  }
+}
+
+
+
 

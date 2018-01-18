@@ -177,6 +177,9 @@ std::string format_with_commas(T value)
 	return ss.str();
 }
 
+
+std::string str_qq_search_reply(const qq::SearchReply &reply);
+
 } // namespace util
 #endif
 

@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <tuple>
+#include <sstream>
 
 #include "qq.pb.h"
 
@@ -78,6 +79,18 @@ struct SearchQuery {
   QueryProcessingCore query_processing_core = QueryProcessingCore::TOGETHER;
   int n_snippet_passages = 3;
 
+  std::string ToStr() const {
+    std::ostringstream oss;
+    for (auto &term : terms) {
+      oss << term << " ";
+    }
+    oss << "n_results(" << n_results << ") "
+        << "return_snippets(" << return_snippets << ") "
+        << "n_snippet_passages(" << n_snippet_passages << ") "
+        << std::endl;
+    return oss.str();
+  }
+
   void CopyFrom(const qq::SearchRequest &grpc_req) {
     int n = grpc_req.terms_size();
     terms.clear();
@@ -127,6 +140,7 @@ struct SearchResult {
     return ret;
   }
   void CopyTo(qq::SearchReply *grpc_reply) {
+    grpc_reply->clear_entries();
     for ( auto & result_entry : entries ) {
       qq::SearchReplyEntry *grpc_entry = grpc_reply->add_entries();
       result_entry.CopyTo(grpc_entry);
