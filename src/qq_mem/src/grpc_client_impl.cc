@@ -324,6 +324,14 @@ void AsyncClient::ShowStats() {
       << utils::format_with_commas<int>(round(hist_all.Percentile(percentile))) 
       << std::endl;
   }
+
+  if (save_reply_ == true) {
+    std::cout << "---- Reply Pool sizes ----" << std::endl;
+    for (auto &pool : reply_pools_) {
+      std::cout << pool.size() << " ";
+    }
+    std::cout << std::endl;
+  }
 }
 
 AsyncClient::~AsyncClient() {
