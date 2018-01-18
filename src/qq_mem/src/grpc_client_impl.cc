@@ -154,6 +154,7 @@ class RPCContext {
           }
           
           req_.clear_terms();
+          req_.set_n_results(10);
           terms = query_pool->Next();    
           for (i = 0; i < terms.size(); i++) {
             req_.add_terms(terms[i]);
