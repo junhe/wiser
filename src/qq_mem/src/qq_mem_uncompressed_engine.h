@@ -240,7 +240,6 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   }
 
   SearchResult Search(const SearchQuery &query) {
-    std::cout << query.ToStr() << std::endl;
     if (query.query_processing_core == QueryProcessingCore::TOGETHER) {
       return ProcessQueryTogether(query);
     } else if (query.query_processing_core == QueryProcessingCore::BY_PHASE) {

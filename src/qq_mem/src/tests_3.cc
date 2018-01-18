@@ -13,7 +13,7 @@
 #include <grpc/support/histogram.h>
 
 
-TEST_CASE( "GRPC Sync Client and Server", "[grpc]" ) {
+TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
   auto server = CreateServer(std::string("localhost:50051"), 1, 1, 0);
   utils::sleep(1); // warm up the server
 
@@ -58,10 +58,10 @@ TEST_CASE( "GRPC Sync Client and Server", "[grpc]" ) {
 
       GeneralConfig config;
       config.SetString("target", "localhost:50051");
-      config.SetInt("n_client_channels", 1);
-      config.SetInt("n_rpcs_per_channel", 1);
+      config.SetInt("n_client_channels", 100);
+      config.SetInt("n_rpcs_per_channel", 10);
       config.SetInt("n_messages_per_call", 1);
-      config.SetInt("n_async_threads", 8); 
+      config.SetInt("n_async_threads", 2); 
       config.SetInt("n_threads_per_cq", 1);
       config.SetInt("benchmark_duration", 2);
       config.SetBool("save_reply", true);
@@ -73,18 +73,25 @@ TEST_CASE( "GRPC Sync Client and Server", "[grpc]" ) {
       auto reply_pools = client->GetReplyPools();
 
       for (int i = 0; i < config.GetInt("n_async_threads"); i++) {
-        std::cout << "reply pool size: " << reply_pools->at(i).size() << std::endl;
+        LOG(INFO) << "reply pool size: " << reply_pools->at(i).size();
       }
 
-
       REQUIRE(reply_pools->size() == config.GetInt("n_async_threads"));
-      REQUIRE(reply_pools->at(0).size() > 0);
+      auto n_replies_in_this_pool = reply_pools->at(0).size();
+      auto this_pool = reply_pools->at(0);
+      REQUIRE(n_replies_in_this_pool > 0);
+      for (int i = 0; i < n_replies_in_this_pool; i++) {
+        REQUIRE(this_pool.at(i).entries_size() == 1);
+        REQUIRE(this_pool.at(i).entries(0).doc_id() == 0);
+      }
 
-
-      REQUIRE(reply_pools->at(0).at(0).entries_size() == 1);
-      REQUIRE(reply_pools->at(1).size() > 0);
-      REQUIRE(reply_pools->at(1).at(0).entries_size() == 1);
-
+      n_replies_in_this_pool = reply_pools->at(1).size();
+      this_pool = reply_pools->at(1);
+      REQUIRE(n_replies_in_this_pool > 0);
+      for (int i = 0; i < n_replies_in_this_pool; i++) {
+        REQUIRE(this_pool.at(i).entries_size() == 1);
+        REQUIRE(this_pool.at(i).entries(0).doc_id() == 0);
+      }
 
       client.release();
     }
