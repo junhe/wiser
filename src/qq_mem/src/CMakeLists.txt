@@ -44,8 +44,11 @@ set(ENGINE_SRCS
     qq_engine.cc
     search_engine_service.cc
     qq_mem_direct_search_engine.cc
+    qq_mem_uncompressed_engine.cc
     grpc_client_impl.cc
+    grpc_server_impl.cc
     utils.cc
+    engine_loader.cc
     ranking.cc
     unifiedhighlighter.cc
     flashreader.cc
@@ -106,6 +109,7 @@ add_library( CatchMain OBJECT catch_main.cc catch.hpp )
 add_executable( testmain 
     tests.cc 
     tests_2.cc
+    tests_3.cc
     grpc_client_impl.cc
     ${ENGINE_SRCS}
     ${PROTO_SRCS}

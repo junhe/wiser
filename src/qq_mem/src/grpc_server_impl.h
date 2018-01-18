@@ -42,6 +42,7 @@
 #include "qq_engine.h"
 #include "qq_mem_uncompressed_engine.h"
 #include "engine_loader.h"
+#include "utils.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -71,14 +72,6 @@ using std::chrono::system_clock;
 
 
 typedef std::map<std::string, std::string> ConfigType;
-
-
-void sleep(int n_secs) {
-  using namespace std::this_thread; // sleep_for, sleep_until
-  using namespace std::chrono; // nanoseconds, system_clock, seconds
-
-  sleep_for(seconds(n_secs));
-}
 
 
 // Service Inheritence:
@@ -224,7 +217,7 @@ class AsyncServer {
   }
 
   void Wait() {
-    sleep(std::stoi(config_.at("server_duration")));
+    utils::sleep(std::stoi(config_.at("server_duration")));
   }
 
 
@@ -305,7 +298,9 @@ class AsyncServer {
               next_state_ = State::WRITE_DONE;
 
               auto result = search_engine_->Search(SearchQuery(req_));
+              std::cout << result.ToStr();
               result.CopyTo(&response_);
+              std::cout << utils::str_qq_search_reply(response_) << std::endl;
 
               stream_.Write(response_, AsyncServer::tag(this));
             } else {  // client has sent writes done
@@ -379,45 +374,12 @@ class AsyncServer {
 };
 
 
+
+
 std::unique_ptr<AsyncServer> CreateServer(const std::string &target, 
-    int n_threads_per_cq, int n_server_threads, int n_secs) {
-
-  ConfigType config;
-  config["target"] = target;
-  config["n_threads_per_cq"] = std::to_string(n_threads_per_cq);
-  config["n_server_threads"] = std::to_string(n_server_threads);
-  config["server_duration"] = std::to_string(n_secs);
-  config["line_doc_path"] = "";
-  config["n_line_doc_rows"] = "";
-
-  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
-      "qq_mem_uncompressed");
-
-  std::unique_ptr<AsyncServer> server(new AsyncServer(config, std::move(engine)));
-  return server;
-}
-
-
+    int n_threads_per_cq, int n_server_threads, int n_secs);
 std::unique_ptr<AsyncServer> CreateServer(const std::string &target, 
     int n_threads_per_cq, int n_server_threads, int n_secs,
-    const std::string &line_doc_path, const int &n_rows) {
-
-  ConfigType config;
-  config["target"] = target;
-  config["n_threads_per_cq"] = std::to_string(n_threads_per_cq);
-  config["n_server_threads"] = std::to_string(n_server_threads);
-  config["server_duration"] = std::to_string(n_secs);
-  config["line_doc_path"] = line_doc_path;
-  config["n_line_doc_rows"] = std::to_string(n_rows);
-
-  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
-      "qq_mem_uncompressed");
-
-  std::unique_ptr<AsyncServer> server(new AsyncServer(config, std::move(engine)));
-  return server;
-}
-
-
-
+    const std::string &line_doc_path, const int &n_rows);
 
 #endif

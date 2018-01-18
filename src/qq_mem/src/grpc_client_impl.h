@@ -39,17 +39,70 @@ using qq::EchoData;
 // C++ native containers intead of protobuf objects when invoking
 // AddDocument().
 class QQEngineSyncClient {
-    public:
-        QQEngineSyncClient(std::shared_ptr<Channel> channel)
-            : stub_(QQEngine::NewStub(channel)) {}
+ public:
+  QQEngineSyncClient(std::shared_ptr<Channel> channel)
+    : stub_(QQEngine::NewStub(channel)) {}
 
-        bool AddDocument(const std::string &title, 
-                const std::string &url, const std::string &body);
-        bool Search(const std::string &term, std::vector<int> &doc_ids);
-        bool Echo(const EchoData &request, EchoData &reply);
+  bool AddDocument(const std::string &title, 
+      const std::string &url, const std::string &body) {
+    AddDocumentRequest request;
+    request.mutable_document()->set_title(title);
+    request.mutable_document()->set_url(url);
+    request.mutable_document()->set_body(body);
 
-    private:
-        std::unique_ptr<QQEngine::Stub> stub_;
+    request.mutable_options()->set_save(true);
+
+    StatusReply reply;
+
+    ClientContext context;
+
+    // Here we can the stub's newly available method we just added.
+    Status status = stub_->AddDocument(&context, request,  &reply);
+    return status.ok();
+  }
+
+  bool Search(const std::string &term, std::vector<int> &doc_ids) {
+    SearchRequest request;
+    SearchReply reply;
+    ClientContext context;
+
+    assert(doc_ids.size() == 0);
+
+    request.add_terms(term);
+    request.set_n_results(10);
+    request.set_return_snippets(true);
+    request.set_n_snippet_passages(3);
+    request.set_query_processing_core(
+        qq::SearchRequest_QueryProcessingCore_TOGETHER);
+
+    // Here we can the stub's newly available method we just added.
+    Status status = stub_->Search(&context, request,  &reply);
+
+    if (status.ok()) {
+      for (int i = 0; i < reply.entries_size(); i++) {
+        doc_ids.push_back(reply.entries(i).doc_id());
+      }
+    }
+
+    return status.ok();
+  }
+
+  bool Echo(const EchoData &request, EchoData &reply) {
+    ClientContext context;
+
+    Status status = stub_->Echo(&context, request,  &reply);
+    if (status.ok()) {
+      return true;
+    } else {
+      std::cout << status.error_code() 
+        << ": " << status.error_message()
+        << std::endl;
+      return false;
+    }
+  }
+
+ private:
+  std::unique_ptr<QQEngine::Stub> stub_;
 };
 
 

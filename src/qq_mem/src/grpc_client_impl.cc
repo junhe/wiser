@@ -4,70 +4,6 @@
 
 #include "utils.h"
 
-
-bool QQEngineSyncClient::AddDocument(const std::string &title, 
-        const std::string &url, const std::string &body) {
-    AddDocumentRequest request;
-    request.mutable_document()->set_title(title);
-    request.mutable_document()->set_url(url);
-    request.mutable_document()->set_body(body);
-
-    request.mutable_options()->set_save(true);
-
-    StatusReply reply;
-
-    ClientContext context;
-
-    // Here we can the stub's newly available method we just added.
-    Status status = stub_->AddDocument(&context, request,  &reply);
-    return status.ok();
-}
-
-
-bool QQEngineSyncClient::Search(const std::string &term, std::vector<int> &doc_ids) {
-    SearchRequest request;
-    SearchReply reply;
-    ClientContext context;
-
-    assert(doc_ids.size() == 0);
-
-    request.add_terms(term);
-    request.set_n_results(10);
-    request.set_return_snippets(true);
-    request.set_n_snippet_passages(3);
-    request.set_query_processing_core(
-      qq::SearchRequest_QueryProcessingCore_TOGETHER);
-
-    // Here we can the stub's newly available method we just added.
-    Status status = stub_->Search(&context, request,  &reply);
-    
-    if (status.ok()) {
-      for (int i = 0; i < reply.entries_size(); i++) {
-        doc_ids.push_back(reply.entries(i).doc_id());
-      }
-    }
-
-    return status.ok();
-}
-
-
-bool QQEngineSyncClient::Echo(const EchoData &request, EchoData &reply) {
-    ClientContext context;
-
-    Status status = stub_->Echo(&context, request,  &reply);
-    if (status.ok()) {
-        return true;
-    } else {
-        std::cout << status.error_code() 
-            << ": " << status.error_message()
-            << std::endl;
-        return false;
-    }
-}
-
-
-
-
 static std::mutex w_mutex;
 static int write_count = 0;
 
@@ -158,9 +94,9 @@ class RPCContext {
           terms = query_pool->Next();    
           for (i = 0; i < terms.size(); i++) {
             req_.add_terms(terms[i]);
-            // std::cout << terms[i] << " ";
+            std::cout << terms[i] << " ";
           }
-          // std::cout << std::endl;
+          std::cout << std::endl;
 
           start_ = utils::now();
           next_state_ = State::WRITE_DONE;
@@ -177,10 +113,10 @@ class RPCContext {
           ++n_issued_;
           finished_roundtrips_[thread_idx]++;
 
-          // std::cout << "Done" << std::endl;
-          // for (i = 0; i < reply_.entries_size(); i++) {
-            // std::cout << "result: " << reply_.entries(i).snippet() << std::endl;
-          // }
+          std::cout << "Done" << std::endl;
+          for (i = 0; i < reply_.entries_size(); i++) {
+            std::cout << "result: " << reply_.entries(i).snippet() << std::endl;
+          }
 
           end_ = utils::now();
           duration_ = utils::duration(start_, end_);
