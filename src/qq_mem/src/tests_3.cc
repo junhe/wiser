@@ -125,8 +125,8 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
 }
 
 
-TEST_CASE( "Skip list works", "[postinglist]" ) {
-  SECTION("HasSkip()") {
+TEST_CASE( "Skip list works", "[posting_list]" ) {
+  SECTION("10 postings") {
     PostingList_Vec<PostingSimple> pl("hello", 4);   
     for (int i = 0; i < 10; i++) {
       pl.AddPosting(PostingSimple(i, 88, Positions{28}));
@@ -147,15 +147,43 @@ TEST_CASE( "Skip list works", "[postinglist]" ) {
       }
     }
 
-    SECTION("Skip list is correctly constructed") {
-      auto *skip_list = pl.GetSkipList();
-      REQUIRE(skip_list->size() == 2);
-      REQUIRE(skip_list->at(0) == 4);
-      REQUIRE(skip_list->at(1) == 8);
+    SECTION("Skipforward works") {
+      for (int i = 0; i <= 8; i++) {
+        REQUIRE(pl.SkipForward(i, 8) == 8);
+      }
+
+      for (int i = 0; i < 10; i++) {
+        REQUIRE(pl.SkipForward(i, 0) == i);
+      }
+    }
+  }
+
+  SECTION("10 postings") {
+    PostingList_Vec<PostingSimple> pl("hello", 4);   
+    for (int i = 0; i < 1; i++) {
+      pl.AddPosting(PostingSimple(i, 88, Positions{28}));
+    }
+
+    SECTION("HasSkip()") {
+      auto span = pl.GetSkipSpan();
+      REQUIRE(span == 4);
+    
+      std::vector<int> not_has_skip{0};
+      for (auto i : not_has_skip) {
+        REQUIRE(pl.HasSkip(i) == false);
+      }
+    }
+
+    SECTION("Skipforward works") {
+      for (int i = 0; i < 1; i++) {
+        REQUIRE(pl.SkipForward(i, 8) == 1);
+      }
+
+      for (int i = 0; i < 1; i++) {
+        REQUIRE(pl.SkipForward(i, 0) == i);
+      }
     }
   }
 }
-
-
 
 

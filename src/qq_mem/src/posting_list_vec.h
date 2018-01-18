@@ -35,11 +35,11 @@ class PostingList_Vec {
     :term_(term), skip_span_(skip_span) {
   }
 
-  bool HasSkip(const iterator_t &it) {
+  const bool HasSkip(const iterator_t &it) const {
     return it % skip_span_ == 0 && it + skip_span_ < posting_store_.size();
   }
-  const int GetSkipSpan() { return skip_span_; }
-  const std::vector<int> *GetSkipList() { return &skip_list_; }
+  const int GetSkipSpan() const { return skip_span_; }
+  const std::vector<int> *GetSkipList() const { return &skip_list_; }
   const Term GetTerm() const {return term_;}
   std::size_t Size() const {return posting_store_.size();}
 
@@ -55,7 +55,13 @@ class PostingList_Vec {
       throw std::runtime_error(
           "New posting doc ID must be larger than the last existing one.");
     }
+
+    int insertion_index = posting_store_.size();
     posting_store_.push_back(posting);
+
+    if (insertion_index >= skip_span_ && insertion_index % skip_span_ == 0) {
+      skip_list_.push_back(posting.GetDocId());
+    }
   }
 
   const T& GetPosting(const iterator_t &it) const {
@@ -68,11 +74,19 @@ class PostingList_Vec {
     iterator_t i = it;
     const std::size_t n = posting_store_.size();
 
-    while (GetPosting(i).GetDocId() < doc_id) {
-      i++;
-      if ( i >= n ) {
-        return n;
+    while (i < n) {
+      // Worth skipping? (everything in the next span is less than doc_id)
+      if (HasSkip(i) && GetPosting(i + skip_span_).GetDocId() <= doc_id) {
+        i += skip_span_;
+        continue;
       }
+
+      // Check i's doc id
+      if (GetPosting(i).GetDocId() >= doc_id) {
+        return i; 
+      }
+
+      i++;
     }
 
     return i;
