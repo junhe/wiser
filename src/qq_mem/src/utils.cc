@@ -221,7 +221,7 @@ std::string str_qq_search_reply(const qq::SearchReply &reply) {
   std::ostringstream oss;
   oss << "Size: " << reply.entries_size() ;
   for (int i = 0; i < reply.entries_size(); i++) {
-    oss << "doc_id: " << reply.entries(i).doc_id() 
+    oss << " doc_id: " << reply.entries(i).doc_id() 
       << " snippet: " << reply.entries(i).snippet();
   }
   return oss.str(); 

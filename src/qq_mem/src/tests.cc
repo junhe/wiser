@@ -383,29 +383,6 @@ TEST_CASE( "Hash benchmark", "[benchmark]" ) {
 
 }
 
-TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
-  auto server = CreateServer(std::string("localhost:50051"), 1, 40, 0);
-  utils::sleep(1); // warm up the server
-
-  // Use another thread to create client
-  // std::thread client_thread(run_client);
-
-  GeneralConfig config;
-  config.SetString("target", "localhost:50051");
-  config.SetInt("n_client_channels", 64);
-  config.SetInt("n_rpcs_per_channel", 100);
-  config.SetInt("n_messages_per_call", 100);
-  config.SetInt("n_async_threads", 8); 
-  config.SetInt("n_threads_per_cq", 1);
-  config.SetInt("benchmark_duration", 2);
-
-  auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
-      config.GetInt("n_async_threads"));
-  auto client = CreateAsyncClient(config, std::move(query_pool_array));
-  client->Wait();
-  client.release();
-}
-
 TEST_CASE( "IndexCreator works over the network", "[grpc]" ) {
   if (FLAG_POSTINGS_ON_FLASH || FLAG_SNIPPETS_PRECOMPUTE)    //TODO client should add offsets
       return;

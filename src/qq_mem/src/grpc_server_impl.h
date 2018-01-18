@@ -90,15 +90,9 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
 
     Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
             StatusReply* reply) override {
-        // std::cout << "title" << request->document().title() << std::endl;
-        // std::cout << "url" << request->document().url() << std::endl;
-        // std::cout << "body" << request->document().body() << std::endl;
-
-        // search_engine_->AddDocument(request->document().title(),
-                // request->document().url(), request->document().body());
-
         // In this case, body must be already tokenized.
-        search_engine_->AddDocument(request->document().body(), request->document().body());
+        search_engine_->AddDocument(request->document().body(), 
+            request->document().body());
 
         count++;
 
@@ -298,9 +292,7 @@ class AsyncServer {
               next_state_ = State::WRITE_DONE;
 
               auto result = search_engine_->Search(SearchQuery(req_));
-              std::cout << result.ToStr();
               result.CopyTo(&response_);
-              std::cout << utils::str_qq_search_reply(response_) << std::endl;
 
               stream_.Write(response_, AsyncServer::tag(this));
             } else {  // client has sent writes done
