@@ -1,7 +1,6 @@
 #include "query_pool.h"
 
 
-
 void load_query_pool(QueryPool *pool, const GeneralConfig &config) {
   auto query_source_ = config.GetString("query_source");
 
@@ -20,6 +19,7 @@ void load_query_pool(QueryPool *pool, const GeneralConfig &config) {
   }
 }
 
+
 void load_query_pool_array(QueryPoolArray *array, 
                            const std::string &query_log_path) {
   QueryLogReader reader(query_log_path);
@@ -34,7 +34,7 @@ void load_query_pool_array(QueryPoolArray *array,
 
 
 std::unique_ptr<QueryPoolArray> create_query_pool_array(const TermList &query,
-    int n_pools) {
+    const int n_pools) {
   std::unique_ptr<QueryPoolArray> array(new QueryPoolArray(n_pools));
 
   for (int i = 0; i < n_pools; i++) {
@@ -43,4 +43,13 @@ std::unique_ptr<QueryPoolArray> create_query_pool_array(const TermList &query,
 
   return array;
 }
+
+std::unique_ptr<QueryPoolArray> create_query_pool_array(
+    const std::string &query_log_path, const int n_pools) 
+{
+  std::unique_ptr<QueryPoolArray> array(new QueryPoolArray(n_pools));
+  load_query_pool_array(array.get(), query_log_path);
+  return array;
+}
+
 
