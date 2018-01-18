@@ -158,7 +158,42 @@ TEST_CASE( "Skip list works", "[posting_list]" ) {
     }
   }
 
-  SECTION("10 postings") {
+  SECTION("3 postings, span is 1") {
+    PostingList_Vec<PostingSimple> pl("hello", 1);   
+    for (int i = 0; i < 3; i++) {
+      pl.AddPosting(PostingSimple(i, 88, Positions{28}));
+    }
+
+    SECTION("HasSkip()") {
+      auto span = pl.GetSkipSpan();
+      REQUIRE(span == 1);
+    
+      std::vector<int> has_skip{0, 1};
+      for (auto i : has_skip) {
+        REQUIRE(pl.HasSkip(i) == true);
+      }
+
+      std::vector<int> not_has_skip{2};
+      for (auto i : not_has_skip) {
+        REQUIRE(pl.HasSkip(i) == false);
+      }
+    }
+
+    SECTION("Skipforward works") {
+      for (int i = 0; i < 3; i++) {
+        REQUIRE(pl.SkipForward(i, 2) == 2);
+      }
+
+      for (int i = 0; i < 10; i++) {
+        REQUIRE(pl.SkipForward(i, 0) == i);
+      }
+    }
+  }
+
+ 
+
+
+  SECTION("1 postings") {
     PostingList_Vec<PostingSimple> pl("hello", 4);   
     for (int i = 0; i < 1; i++) {
       pl.AddPosting(PostingSimple(i, 88, Positions{28}));

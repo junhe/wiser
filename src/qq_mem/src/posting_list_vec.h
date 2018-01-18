@@ -20,7 +20,6 @@ class PostingList_Vec {
 
   Term term_;                          // term this posting list belongs to
   PostingStore posting_store_;         
-  std::vector<int> skip_list_;
   const int skip_span_;
 
  public:
@@ -39,7 +38,6 @@ class PostingList_Vec {
     return it % skip_span_ == 0 && it + skip_span_ < posting_store_.size();
   }
   const int GetSkipSpan() const { return skip_span_; }
-  const std::vector<int> *GetSkipList() const { return &skip_list_; }
   const Term GetTerm() const {return term_;}
   std::size_t Size() const {return posting_store_.size();}
 
@@ -55,13 +53,7 @@ class PostingList_Vec {
       throw std::runtime_error(
           "New posting doc ID must be larger than the last existing one.");
     }
-
-    int insertion_index = posting_store_.size();
     posting_store_.push_back(posting);
-
-    if (insertion_index >= skip_span_ && insertion_index % skip_span_ == 0) {
-      skip_list_.push_back(posting.GetDocId());
-    }
   }
 
   const T& GetPosting(const iterator_t &it) const {
