@@ -20,17 +20,27 @@ class PostingList_Vec {
 
   Term term_;                          // term this posting list belongs to
   PostingStore posting_store_;         
+  std::vector<int> skip_list_;
+  const int skip_span_;
 
  public:
   // Note that this is not the same as STL iterators
   typedef int iterator_t;
 
-
   PostingList_Vec(const std::string &term)
-    :term_(term) {
+    :term_(term), skip_span_(100) {
   }
 
-  Term GetTerm() const {return term_;}
+  PostingList_Vec(const std::string &term, const int &skip_span)
+    :term_(term), skip_span_(skip_span) {
+  }
+
+  bool HasSkip(const iterator_t &it) {
+    return it % skip_span_ == 0 && it + skip_span_ < posting_store_.size();
+  }
+  const int GetSkipSpan() { return skip_span_; }
+  const std::vector<int> *GetSkipList() { return &skip_list_; }
+  const Term GetTerm() const {return term_;}
   std::size_t Size() const {return posting_store_.size();}
 
   iterator_t cbegin() const {return 0;}

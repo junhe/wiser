@@ -125,6 +125,37 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
 }
 
 
+TEST_CASE( "Skip list works", "[postinglist]" ) {
+  SECTION("HasSkip()") {
+    PostingList_Vec<PostingSimple> pl("hello", 4);   
+    for (int i = 0; i < 10; i++) {
+      pl.AddPosting(PostingSimple(i, 88, Positions{28}));
+    }
+
+    SECTION("HasSkip()") {
+      auto span = pl.GetSkipSpan();
+      REQUIRE(span == 4);
+    
+      std::vector<int> has_skip{0, 4};
+      for (auto i : has_skip) {
+        REQUIRE(pl.HasSkip(i) == true);
+      }
+
+      std::vector<int> not_has_skip{1, 2, 3, 5, 6, 7, 8, 9};
+      for (auto i : not_has_skip) {
+        REQUIRE(pl.HasSkip(i) == false);
+      }
+    }
+
+    SECTION("Skip list is correctly constructed") {
+      auto *skip_list = pl.GetSkipList();
+      REQUIRE(skip_list->size() == 2);
+      REQUIRE(skip_list->at(0) == 4);
+      REQUIRE(skip_list->at(1) == 8);
+    }
+  }
+}
+
 
 
 
