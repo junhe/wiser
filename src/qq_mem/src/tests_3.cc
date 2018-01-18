@@ -64,11 +64,28 @@ TEST_CASE( "GRPC Sync Client and Server", "[grpc]" ) {
       config.SetInt("n_async_threads", 8); 
       config.SetInt("n_threads_per_cq", 1);
       config.SetInt("benchmark_duration", 2);
+      config.SetBool("save_reply", true);
 
       auto query_pool_array = create_query_pool_array(TermList{"body"}, 
           config.GetInt("n_async_threads"));
       auto client = CreateAsyncClient(config, std::move(query_pool_array));
       client->Wait();
+      auto reply_pools = client->GetReplyPools();
+
+      for (int i = 0; i < config.GetInt("n_async_threads"); i++) {
+        std::cout << "reply pool size: " << reply_pools->at(i).size() << std::endl;
+      }
+
+
+      REQUIRE(reply_pools->size() == config.GetInt("n_async_threads"));
+      REQUIRE(reply_pools->at(0).size() > 0);
+
+
+      REQUIRE(reply_pools->at(0).at(0).entries_size() == 1);
+      REQUIRE(reply_pools->at(1).size() > 0);
+      REQUIRE(reply_pools->at(1).at(0).entries_size() == 1);
+
+
       client.release();
     }
     // server will automatically destructed here.
@@ -91,6 +108,7 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
   config.SetInt("n_async_threads", 8); 
   config.SetInt("n_threads_per_cq", 1);
   config.SetInt("benchmark_duration", 2);
+  config.SetBool("save_reply", true);
 
   auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
       config.GetInt("n_async_threads"));

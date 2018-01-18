@@ -107,6 +107,8 @@ class QQEngineSyncClient {
 
 
 typedef std::map<std::string, std::string> ConfigType;
+typedef std::vector<qq::SearchReply> ReplyPool;
+typedef std::vector<ReplyPool> ReplyPools;
 class ChannelInfo;
 class PerThreadShutdownState;
 
@@ -121,6 +123,9 @@ class AsyncClient {
   void DestroyMultithreading();
   void Wait();
   void ShowStats();
+  const ReplyPools *GetReplyPools() {
+    return &reply_pools_;  
+  };
   ~AsyncClient();
 
   void ThreadFunc(int thread_idx);
@@ -138,6 +143,8 @@ class AsyncClient {
   std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
   std::vector<Histogram> histograms_;
   std::unique_ptr<QueryPoolArray> query_pool_array_;
+  ReplyPools reply_pools_;
+  bool save_reply_;
 };
 
 

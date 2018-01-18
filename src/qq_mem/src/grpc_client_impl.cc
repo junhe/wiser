@@ -72,7 +72,7 @@ class RPCContext {
   }
 
   bool RunNextState(bool ok, int thread_idx, Histogram *hist, 
-      QueryPool *query_pool) {
+      QueryPool *query_pool, ReplyPool *reply_pool, bool save_reply) {
     TermList terms;
     int i;
 
@@ -94,9 +94,7 @@ class RPCContext {
           terms = query_pool->Next();    
           for (i = 0; i < terms.size(); i++) {
             req_.add_terms(terms[i]);
-            std::cout << terms[i] << " ";
           }
-          std::cout << std::endl;
 
           start_ = utils::now();
           next_state_ = State::WRITE_DONE;
@@ -113,9 +111,8 @@ class RPCContext {
           ++n_issued_;
           finished_roundtrips_[thread_idx]++;
 
-          std::cout << "Done" << std::endl;
-          for (i = 0; i < reply_.entries_size(); i++) {
-            std::cout << "result: " << reply_.entries(i).snippet() << std::endl;
+          if (save_reply == true) {
+            reply_pool->push_back(reply_);
           }
 
           end_ = utils::now();
@@ -216,6 +213,12 @@ AsyncClient::AsyncClient(const GeneralConfig config,
   for (int i = 0; i < num_async_threads; i++) {
     histograms_.emplace_back();
   }
+
+  // initialize reply pools
+  for (int i = 0; i < num_async_threads; i++) {
+    reply_pools_.emplace_back();
+  }
+  save_reply_ = config.GetBool("save_reply");
 
   // create channels
   for (int i = 0; i < n_client_channels; i++) {
@@ -352,7 +355,8 @@ void AsyncClient::ThreadFunc(int thread_idx) {
     }
     
     if (!ctx->RunNextState(ok, thread_idx, &histograms_[thread_idx], 
-                           query_pool_array_->GetPool(thread_idx))) 
+                           query_pool_array_->GetPool(thread_idx),
+                           &reply_pools_[thread_idx], save_reply_)) 
     {
       ctx->StartNewClone();
       delete ctx;

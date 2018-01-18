@@ -32,6 +32,7 @@ int main(int argc, char** argv) {
   config.SetInt("n_async_threads", n_threads); 
   config.SetInt("n_threads_per_cq", 1);
   config.SetInt("benchmark_duration", 5);
+  config.SetBool("save_reply", false);
 
   auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
       config.GetInt("n_async_threads"));
