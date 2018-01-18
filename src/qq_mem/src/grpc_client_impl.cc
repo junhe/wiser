@@ -251,8 +251,10 @@ class RPCContext {
 };
 
 
-AsyncClient::AsyncClient(const GeneralConfig config)
-  :config_(config){
+AsyncClient::AsyncClient(const GeneralConfig config,
+    std::unique_ptr<QueryPoolArray> query_pool_array) 
+      :config_(config), query_pool_array_(std::move(query_pool_array))
+{
   int tpc = config.GetInt("n_threads_per_cq");
   int num_async_threads = config.GetInt("n_async_threads");
   int n_client_channels = config.GetInt("n_client_channels");
@@ -263,11 +265,9 @@ AsyncClient::AsyncClient(const GeneralConfig config)
   std::cout << "n_client_channels: " << n_client_channels << std::endl;
   std::cout << "n_rpcs_per_channel: " << n_rpcs_per_channel << std::endl;
 
-  // initialize query_pool
-  query_pool_array_.reset(new QueryPoolArray(num_async_threads));
-  for (int i = 0; i < num_async_threads; i++) {
-    query_pool_array_->Add(i, TermList{"query_on_" + std::to_string(i)});
-    query_pool_array_->Add(i, TermList{"query_onononon_" + std::to_string(i)});
+  if (query_pool_array_->Size() != num_async_threads) {
+    throw std::runtime_error(
+        "Query pool size is not the same as the number of threads");
   }
 
   // initialize hitogram vector  
@@ -421,9 +421,11 @@ void AsyncClient::ThreadFunc(int thread_idx) {
 }
 
 
-std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config) 
+std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
+    std::unique_ptr<QueryPoolArray> query_pool_array) 
 {
-  std::unique_ptr<AsyncClient> client(new AsyncClient(config));
+  std::unique_ptr<AsyncClient> client(
+      new AsyncClient(config, std::move(query_pool_array)));
   return client;
 }
 

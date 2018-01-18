@@ -423,19 +423,6 @@ TEST_CASE( "GRPC Sync Client and Server", "[grpc]" ) {
 
 }
 
-void run_client() {
-  GeneralConfig config;
-  config.SetString("target", "localhost:50051");
-  config.SetInt("n_client_channels", 64);
-  config.SetInt("n_rpcs_per_channel", 100);
-  config.SetInt("n_messages_per_call", 1000);
-  config.SetInt("n_async_threads", 8); 
-  config.SetInt("n_threads_per_cq", 1);
-  config.SetInt("benchmark_duration", 8);
-
-  auto client = CreateAsyncClient(config);
-  client->Wait();
-}
 
 TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
   auto server = CreateServer(std::string("localhost:50051"), 1, 40, 0);
@@ -453,7 +440,9 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
   config.SetInt("n_threads_per_cq", 1);
   config.SetInt("benchmark_duration", 2);
 
-  auto client = CreateAsyncClient(config);
+  auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
+      config.GetInt("n_client_channels"));
+  auto client = CreateAsyncClient(config, std::move(query_pool_array));
   client->Wait();
   client.release();
 }

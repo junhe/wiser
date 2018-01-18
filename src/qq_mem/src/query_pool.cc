@@ -33,3 +33,14 @@ void load_query_pool_array(QueryPoolArray *array,
 }
 
 
+std::unique_ptr<QueryPoolArray> create_query_pool_array(const TermList &query,
+    int n_pools) {
+  std::unique_ptr<QueryPoolArray> array(new QueryPoolArray(n_pools));
+
+  for (int i = 0; i < n_pools; i++) {
+    array->Add(i, query);
+  }
+
+  return array;
+}
+

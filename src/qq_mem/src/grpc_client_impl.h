@@ -63,7 +63,8 @@ class AsyncClient {
   AsyncClient(AsyncClient&&) = default;
   AsyncClient& operator=(AsyncClient&&) = default;
 
-  AsyncClient(const GeneralConfig config);
+  AsyncClient(const GeneralConfig config,
+    std::unique_ptr<QueryPoolArray> query_pool_array);
   void DestroyMultithreading();
   void Wait();
   void ShowStats();
@@ -88,7 +89,8 @@ class AsyncClient {
 
 
 std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target);
-std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config);
+std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
+    std::unique_ptr<QueryPoolArray> query_pool_array);
 
 #endif
 
