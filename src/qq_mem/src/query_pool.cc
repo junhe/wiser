@@ -9,19 +9,31 @@ void load_query_pool(QueryPool *pool, const GeneralConfig &config) {
     pool->Add(config.GetStringVec("terms"));
   } else if (query_source_ == "querylog") {
     // read in all querys
-    QueryLogReader reader(config.GetString("querylog_path"));
-    TermList query;
-    while (reader.NextQuery(query)) {
-      pool->Add(query);
-    }
+    load_query_pool_from_file(pool, config.GetString("querylog_path"), 0);
   } else {
     LOG(WARNING) << "Cannot determine query source";
   }
 }
 
 
+void load_query_pool_from_file(QueryPool *pool, 
+                     const std::string &query_log_path, 
+                     const int n_queries) 
+{
+  QueryLogReader reader(query_log_path);
+  TermList query;
+
+  while (reader.NextQuery(query)) {
+    pool->Add(query);
+  }
+}
+
+
+
+// if n_queries = 0, we load the whole file
 void load_query_pool_array(QueryPoolArray *array, 
-                           const std::string &query_log_path) {
+                           const std::string &query_log_path, 
+                           const int n_queries) {
   QueryLogReader reader(query_log_path);
   TermList query;
 
@@ -29,6 +41,10 @@ void load_query_pool_array(QueryPoolArray *array,
   while (reader.NextQuery(query)) {
     array->Add( i % array->Size(), query);
     i++;
+
+    if (i == n_queries) {
+      break;
+    }
   }
 }
 
