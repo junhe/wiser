@@ -290,29 +290,6 @@ void insert_to_heap(MinHeap *min_heap, const DocIdType &doc_id,
     const std::vector<typename PostingList_Vec<PostingWO>::iterator_t> &posting_iters,
     const int &n_lists);
 
-struct IntersectContext {
-  MinHeap min_heap;
-  std::vector<qq_float> idfs_of_terms;
-  const int &n_lists;
-  const int &k;
-  const int &n_total_docs_in_index;
-
-  const std::vector<const PostingList_Vec<PostingWO>*> &lists;
-  std::vector<typename PostingList_Vec<PostingWO>::iterator_t> posting_iters;
-
-  IntersectContext(
-      const std::vector<const PostingList_Vec<PostingWO>*> &lists_in,
-      const int &k_in,
-      const int &n_lists_in,
-      const int &n_total_docs_in_index_in
-      )
-    :idfs_of_terms(n_lists_in), n_lists(n_lists_in), k(k_in), 
-     n_total_docs_in_index(n_total_docs_in_index_in),
-     lists(lists_in), 
-     posting_iters(n_lists)
-  {}
-};
-
 
 template <class T>
 class QueryProcessor {
@@ -349,14 +326,13 @@ class QueryProcessor {
       // find max doc id
       max_doc_id = -1;
       for (int list_i = 0; list_i < n_lists_; list_i++) {
-        const PostingList_Vec<T> *postinglist = lists_[list_i];
-        typename PostingList_Vec<T>::iterator_t it = posting_iters_[list_i];
+        auto postinglist = lists_[list_i];
+        auto it = posting_iters_[list_i];
         if (it == postinglist->Size()) {
           finished = true;
           break;
         }
-        const DocIdType cur_doc_id = postinglist->GetPosting(it).GetDocId(); 
-
+        const DocIdType cur_doc_id = GetPostingDocId(postinglist, it); 
         if (cur_doc_id > max_doc_id) {
           max_doc_id = cur_doc_id; 
         }
@@ -369,8 +345,8 @@ class QueryProcessor {
       // Try to reach max_doc_id in all posting lists_
       int list_i;
       for (list_i = 0; list_i < n_lists_; list_i++) {
-        const PostingList_Vec<T> *postinglist = lists_[list_i];
-        typename PostingList_Vec<T>::iterator_t *p_it = &posting_iters_[list_i];
+        auto postinglist = lists_[list_i];
+        auto p_it = &posting_iters_[list_i];
 
         *p_it = postinglist->SkipForward(*p_it, max_doc_id);
         if (*p_it == postinglist->Size()) {
@@ -378,42 +354,45 @@ class QueryProcessor {
           break;
         }
 
-        const DocIdType cur_doc_id = postinglist->GetPosting(*p_it).GetDocId(); 
-        if (cur_doc_id != max_doc_id) {
+        if (GetPostingDocId(postinglist, *p_it) != max_doc_id) {
           break;
         }
-      }
 
-      if (list_i == n_lists_) {
-        // calc score
-        qq_float score_of_this_doc = calc_doc_score_for_a_query<T>(
-            lists_, 
-            posting_iters_,
-            idfs_of_terms_,
-            n_total_docs_in_index_,
-            doc_lengths_.GetAvgLength(),
-            doc_lengths_.GetLength(max_doc_id));
-
-        if (min_heap_.size() < k_) {
-          insert_to_heap(&min_heap_, max_doc_id, score_of_this_doc, lists_, 
-              posting_iters_, n_lists_);
-        } else {
-          if (score_of_this_doc > min_heap_.top().score) {
-            min_heap_.pop();
-            insert_to_heap(&min_heap_, max_doc_id, score_of_this_doc, lists_, 
-                posting_iters_, n_lists_);
+        if (list_i == n_lists_ - 1) {
+          HandleTheFoundDoc(max_doc_id);
+          // Advance iterators
+          for (int i = 0; i < n_lists_; i++) {
+            posting_iters_[i]++;
           }
-          assert(min_heap_.size() == k_);
-        }
-
-        // Advance iterators
-        for (int i = 0; i < n_lists_; i++) {
-          posting_iters_[i]++;
         }
       }
+
     } // while
 
     return SortHeap();
+  }
+
+ private:
+  void HandleTheFoundDoc(const DocIdType &max_doc_id) {
+    qq_float score_of_this_doc = calc_doc_score_for_a_query<T>(
+        lists_, 
+        posting_iters_,
+        idfs_of_terms_,
+        n_total_docs_in_index_,
+        doc_lengths_.GetAvgLength(),
+        doc_lengths_.GetLength(max_doc_id));
+
+    if (min_heap_.size() < k_) {
+      insert_to_heap(&min_heap_, max_doc_id, score_of_this_doc, lists_, 
+          posting_iters_, n_lists_);
+    } else {
+      if (score_of_this_doc > min_heap_.top().score) {
+        min_heap_.pop();
+        insert_to_heap(&min_heap_, max_doc_id, score_of_this_doc, lists_, 
+            posting_iters_, n_lists_);
+      }
+      assert(min_heap_.size() == k_);
+    }
   }
 
   std::vector<ResultDocEntry> SortHeap() {
@@ -429,7 +408,12 @@ class QueryProcessor {
     return ret;
   }
 
- private:
+  static const DocIdType GetPostingDocId(
+      const PostingList_Vec<T> *postinglist, 
+      typename PostingList_Vec<T>::iterator_t &it) {
+    return postinglist->GetPosting(it).GetDocId(); 
+  }
+
   const int n_lists_;
   std::vector<typename PostingList_Vec<T>::iterator_t> posting_iters_;
   const std::vector<const PostingList_Vec<T>*> &lists_;
