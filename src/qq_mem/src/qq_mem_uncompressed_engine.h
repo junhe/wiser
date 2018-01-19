@@ -208,9 +208,9 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
       return result;
     }
 
-    std::vector<ResultDocEntry> top_k = 
-      intersect_score_and_sort<RankingPostingWithOffsets>(
-        lists, doc_lengths_, doc_lengths_.Size(), query.n_results);  
+    QueryProcessor<RankingPostingWithOffsets> processor(lists, doc_lengths_, doc_lengths_.Size(), 
+                             query.n_results);  
+    auto top_k = processor.Process();
 
     for (auto & top_doc_entry : top_k) {
       SearchResultEntry result_entry;

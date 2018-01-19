@@ -226,18 +226,84 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
 
   PostingList_Vec<PostingWO> pl01("hello");
   PostingList_Vec<PostingWO> pl02("world");
+  PostingList_Vec<PostingWO> pl03("again");
 
   for (int i = 0; i < 5; i++) {
-    pl01.AddPosting(PostingWO(0, 3, offset_pairs));
-    pl02.AddPosting(PostingWO(0, 3, offset_pairs));
+    pl01.AddPosting(PostingWO(i, 3, offset_pairs));
+    pl02.AddPosting(PostingWO(i, 3, offset_pairs));
+    pl03.AddPosting(PostingWO(i, 3, offset_pairs));
   }
 
-  const std::vector<const PostingList_Vec<PostingWO>*> lists{&pl01, &pl02};
 
-  SECTION("Initialization") {
-
+  // Setting doc length this will give doc 4 the highest score 
+  // because the document is the shortest.
+  DocLengthStore store;
+  for (int i = 0; i < 5; i++) {
+    store.AddLength(i, (5 - i) * 10);
   }
+
+  SECTION("Find top 5") {
+    const std::vector<const PostingList_Vec<PostingWO>*> lists{&pl01, &pl02};
+
+    QueryProcessor<PostingWO> processor(lists, store, 100, 5);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 5);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3, 2, 1, 0});
+  }
+
+  SECTION("Find top 2") {
+    const std::vector<const PostingList_Vec<PostingWO>*> lists{&pl01, &pl02};
+
+    QueryProcessor<PostingWO> processor(lists, store, 100, 2);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 2);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
+  }
+
+  SECTION("Find top 2 within one postinglist") {
+    const std::vector<const PostingList_Vec<PostingWO>*> lists{&pl01};
+
+    QueryProcessor<PostingWO> processor(lists, store, 100, 2);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 2);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
+  }
+
+  SECTION("Find top 2 with three posting lists") {
+    const std::vector<const PostingList_Vec<PostingWO>*> lists{&pl01, &pl02, &pl03};
+
+    QueryProcessor<PostingWO> processor(lists, store, 100, 2);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 2);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
+  }
+
 }
+
 
 
 

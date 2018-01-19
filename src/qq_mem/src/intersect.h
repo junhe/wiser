@@ -323,16 +323,121 @@ class QueryProcessor {
     const int n_total_docs_in_index,
     const int k = 5)
   : n_lists_(lists.size()),
+    lists_(lists),
+    doc_lengths_(doc_lengths),
     posting_iters_(n_lists_),
-    k_(k) 
+    k_(k),
+    idfs_of_terms_(n_lists_),
+    n_total_docs_in_index_(n_total_docs_in_index)
   {
+    // initialize iterators
+    for (int i = 0; i < n_lists_; i++) {
+      posting_iters_[i] = 0;
+    }
 
+    for (int i = 0; i < n_lists_; i++) {
+      idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
+                                          lists_[i]->Size());
+    }
+  }
+
+  std::vector<ResultDocEntry> Process() {
+    bool finished = false;
+    DocIdType max_doc_id;
+
+    while (finished == false) {
+      // find max doc id
+      max_doc_id = -1;
+      for (int list_i = 0; list_i < n_lists_; list_i++) {
+        const PostingList_Vec<T> *postinglist = lists_[list_i];
+        typename PostingList_Vec<T>::iterator_t it = posting_iters_[list_i];
+        if (it == postinglist->Size()) {
+          finished = true;
+          break;
+        }
+        const DocIdType cur_doc_id = postinglist->GetPosting(it).GetDocId(); 
+
+        if (cur_doc_id > max_doc_id) {
+          max_doc_id = cur_doc_id; 
+        }
+      }
+
+      if (finished == true) {
+        break;
+      }
+
+      // Try to reach max_doc_id in all posting lists_
+      int list_i;
+      for (list_i = 0; list_i < n_lists_; list_i++) {
+        const PostingList_Vec<T> *postinglist = lists_[list_i];
+        typename PostingList_Vec<T>::iterator_t *p_it = &posting_iters_[list_i];
+
+        *p_it = postinglist->SkipForward(*p_it, max_doc_id);
+        if (*p_it == postinglist->Size()) {
+          finished = true;
+          break;
+        }
+
+        const DocIdType cur_doc_id = postinglist->GetPosting(*p_it).GetDocId(); 
+        if (cur_doc_id != max_doc_id) {
+          break;
+        }
+      }
+
+      if (list_i == n_lists_) {
+        // calc score
+        qq_float score_of_this_doc = calc_doc_score_for_a_query<T>(
+            lists_, 
+            posting_iters_,
+            idfs_of_terms_,
+            n_total_docs_in_index_,
+            doc_lengths_.GetAvgLength(),
+            doc_lengths_.GetLength(max_doc_id));
+
+        if (min_heap_.size() < k_) {
+          insert_to_heap(&min_heap_, max_doc_id, score_of_this_doc, lists_, 
+              posting_iters_, n_lists_);
+        } else {
+          if (score_of_this_doc > min_heap_.top().score) {
+            min_heap_.pop();
+            insert_to_heap(&min_heap_, max_doc_id, score_of_this_doc, lists_, 
+                posting_iters_, n_lists_);
+          }
+          assert(min_heap_.size() == k_);
+        }
+
+        // Advance iterators
+        for (int i = 0; i < n_lists_; i++) {
+          posting_iters_[i]++;
+        }
+      }
+    } // while
+
+    return SortHeap();
+  }
+
+  std::vector<ResultDocEntry> SortHeap() {
+    std::vector<ResultDocEntry> ret;
+
+    int kk = k_;
+    while(!min_heap_.empty() && kk != 0) {
+      ret.push_back(min_heap_.top());
+      min_heap_.pop();
+      kk--;
+    }
+    std::reverse(ret.begin(), ret.end());
+    return ret;
   }
 
  private:
   const int n_lists_;
   std::vector<typename PostingList_Vec<T>::iterator_t> posting_iters_;
+  const std::vector<const PostingList_Vec<T>*> &lists_;
   const int k_;
+  const int n_total_docs_in_index_;
+  std::vector<qq_float> idfs_of_terms_;
+  MinHeap min_heap_;
+  const DocLengthStore &doc_lengths_;
 };
 
 // lists must have at least one posting list in it.
