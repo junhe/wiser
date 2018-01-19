@@ -190,10 +190,7 @@ TEST_CASE( "Skip list works", "[posting_list]" ) {
     }
   }
 
- 
-
-
-  SECTION("1 postings") {
+  SECTION("One postings") {
     PostingList_Vec<PostingSimple> pl("hello", 4);   
     for (int i = 0; i < 1; i++) {
       pl.AddPosting(PostingSimple(i, 88, Positions{28}));
@@ -220,5 +217,29 @@ TEST_CASE( "Skip list works", "[posting_list]" ) {
     }
   }
 }
+
+TEST_CASE( "QueryProcessor works", "[engine]" ) {
+  OffsetPairs offset_pairs;
+  for (int i = 0; i < 10; i++) {
+    offset_pairs.push_back(std::make_tuple(1, 2)); 
+  }
+
+  PostingList_Vec<PostingWO> pl01("hello");
+  PostingList_Vec<PostingWO> pl02("world");
+
+  for (int i = 0; i < 5; i++) {
+    pl01.AddPosting(PostingWO(0, 3, offset_pairs));
+    pl02.AddPosting(PostingWO(0, 3, offset_pairs));
+  }
+
+  const std::vector<const PostingList_Vec<PostingWO>*> lists{&pl01, &pl02};
+
+  SECTION("Initialization") {
+
+  }
+}
+
+
+
 
 

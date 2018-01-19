@@ -228,5 +228,4 @@ std::string str_qq_search_reply(const qq::SearchReply &reply) {
 }
 
 
-
 } // namespace util

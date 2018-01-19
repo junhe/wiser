@@ -202,9 +202,7 @@ TEST_CASE( "Extract offset pairs from a string", "[utils]" ) {
     REQUIRE(result["h"][0] == std::make_tuple(0, 0));
     REQUIRE(result["h"][1] == std::make_tuple(3, 3));
   }
-
 }
-
 
 
 TEST_CASE( "score_terms_in_doc()", "[score]" ) {

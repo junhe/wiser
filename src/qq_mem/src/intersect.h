@@ -314,6 +314,27 @@ struct IntersectContext {
 };
 
 
+template <class T>
+class QueryProcessor {
+ public:
+  QueryProcessor(
+    const std::vector<const PostingList_Vec<T>*> &lists, 
+    const DocLengthStore &doc_lengths,
+    const int n_total_docs_in_index,
+    const int k = 5)
+  : n_lists_(lists.size()),
+    posting_iters_(n_lists_),
+    k_(k) 
+  {
+
+  }
+
+ private:
+  const int n_lists_;
+  std::vector<typename PostingList_Vec<T>::iterator_t> posting_iters_;
+  const int k_;
+};
+
 // lists must have at least one posting list in it.
 template <class T>
 std::vector<ResultDocEntry> intersect_score_and_sort(
