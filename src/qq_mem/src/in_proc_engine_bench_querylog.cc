@@ -126,13 +126,33 @@ void qq_uncompressed_bench_wiki(const GeneralConfig &config) {
   std::cout << table.ToStr();
 }
 
+GeneralConfig config_by_jun() {
+  GeneralConfig config;
+  config.SetInt("n_docs", 10000);
 
-int main(int argc, char **argv) {
-  google::InitGoogleLogging(argv[0]);
-  // FLAGS_logtostderr = 1; // print to stderr instead of file
-  FLAGS_stderrthreshold = 0; 
-  FLAGS_minloglevel = 0; 
+  // config.SetString("linedoc_path", 
+      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  // config.SetString("loader", "with-offsets");
 
+  config.SetString("linedoc_path", 
+      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  config.SetString("loader", "naive");
+
+  config.SetInt("n_repeats", 10000);
+  config.SetInt("n_passages", 3);
+  config.SetBool("enable_snippets", true);
+  //config.SetBool("enable_snippets", false);
+  
+  
+  config.SetString("query_source", "hardcoded");
+  config.SetStringVec("terms", std::vector<std::string>{"hello"});
+
+  // config.SetString("query_source", "querylog");
+  // config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
+  return config;
+}
+
+GeneralConfig config_by_kan() {
   GeneralConfig config;
   config.SetInt("n_docs", 10000);
   // config.SetString("linedoc_path", 
@@ -157,10 +177,22 @@ int main(int argc, char **argv) {
 
   // config.SetString("query_source", "querylog");
   // config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
+  return config;
+}
 
+
+
+int main(int argc, char **argv) {
+  google::InitGoogleLogging(argv[0]);
+  // FLAGS_logtostderr = 1; // print to stderr instead of file
+  FLAGS_stderrthreshold = 0; 
+  FLAGS_minloglevel = 0; 
+
+  // Separate our configurations to avoid messes
+  auto config = config_by_jun();
+  // auto config = config_by_kan();
+  
   qq_uncompressed_bench_wiki(config);
-
-  // qq_uncompressed_bench();
 }
 
 

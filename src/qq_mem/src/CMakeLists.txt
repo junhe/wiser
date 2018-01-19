@@ -131,6 +131,15 @@ add_executable(hash_benchmark
     utils.cc
 )
 
+target_link_libraries(hash_benchmark
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${BOOST_LIBS}
+    ${GLOG_LIB}
+)
+
+
+
 add_executable(in_proc_engine_bench_querylog
     in_proc_engine_bench_querylog.cc
     ${ENGINE_SRCS}

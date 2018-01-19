@@ -138,6 +138,8 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
     } else if (loader == "with-offsets") {
       ret = engine_loader::load_body_and_tokenized_body_and_token_offsets(
           this, line_doc_path, n_rows, 1, 2, 3);
+    } else {
+      throw std::runtime_error("Loader " + loader + " is not supported");
     }
 
     LOG(WARNING) << "Number of terms in inverted index: " << TermCount();
