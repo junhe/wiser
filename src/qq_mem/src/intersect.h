@@ -278,6 +278,42 @@ struct ResultDocEntry {
 };
 
 
+
+
+typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
+    std::greater<ResultDocEntry> > MinHeap;
+typedef RankingPostingWithOffsets PostingWO;
+
+void insert_to_heap(MinHeap *min_heap, const DocIdType &doc_id, 
+    const qq_float &score_of_this_doc, 
+    const std::vector<const PostingList_Vec<PostingWO>*> &lists, 
+    const std::vector<typename PostingList_Vec<PostingWO>::iterator_t> &posting_iters,
+    const int &n_lists);
+
+struct IntersectContext {
+  MinHeap min_heap;
+  std::vector<qq_float> idfs_of_terms;
+  const int &n_lists;
+  const int &k;
+  const int &n_total_docs_in_index;
+
+  const std::vector<const PostingList_Vec<PostingWO>*> &lists;
+  std::vector<typename PostingList_Vec<PostingWO>::iterator_t> posting_iters;
+
+  IntersectContext(
+      const std::vector<const PostingList_Vec<PostingWO>*> &lists_in,
+      const int &k_in,
+      const int &n_lists_in,
+      const int &n_total_docs_in_index_in
+      )
+    :idfs_of_terms(n_lists_in), n_lists(n_lists_in), k(k_in), 
+     n_total_docs_in_index(n_total_docs_in_index_in),
+     lists(lists_in), 
+     posting_iters(n_lists)
+  {}
+};
+
+
 // lists must have at least one posting list in it.
 template <class T>
 std::vector<ResultDocEntry> intersect_score_and_sort(
@@ -288,21 +324,20 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
   const int n_lists = lists.size();
   std::vector<typename PostingList_Vec<T>::iterator_t> posting_iters(n_lists);
   bool finished = false;
+
+  IntersectContext ctx(lists, k, n_lists, n_total_docs_in_index);
+
   DocIdType max_doc_id = -1;
   std::vector<ResultDocEntry> result_doc_entries;
-  std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
-    std::greater<ResultDocEntry> > min_heap;
+  MinHeap min_heap;
 
   // initialize iterators
   for (int list_i = 0; list_i < n_lists; list_i++) {
     posting_iters[list_i] = 0;
   }
 
-  // set doc count of each term
-  // std::vector<int> doc_freqs_of_terms(n_lists);
   std::vector<qq_float> idfs_of_terms(n_lists);
   for (int list_i = 0; list_i < n_lists; list_i++) {
-    // doc_freqs_of_terms[list_i] = lists[list_i]->Size();
     idfs_of_terms[list_i] = calc_es_idf(n_total_docs_in_index, 
                                         lists[list_i]->Size());
   }
@@ -323,7 +358,6 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
         max_doc_id = cur_doc_id; 
       }
     }
-    DLOG(INFO) << "max_doc_id: " << max_doc_id << std::endl;
 
     if (finished == true) {
       break;
@@ -342,39 +376,29 @@ std::vector<ResultDocEntry> intersect_score_and_sort(
       }
 
       const DocIdType cur_doc_id = postinglist->GetPosting(*p_it).GetDocId(); 
-      
       if (cur_doc_id != max_doc_id) {
         break;
       }
     }
     
     if (list_i == n_lists) {
-      // all posting lists are at max_doc_id 
-
       // calc score
       qq_float score_of_this_doc = calc_doc_score_for_a_query<T>(
           lists, 
           posting_iters,
-          // doc_freqs_of_terms,
           idfs_of_terms,
           n_total_docs_in_index,
           doc_lengths.GetAvgLength(),
           doc_lengths.GetLength(max_doc_id));
 
       if (min_heap.size() < k) {
-        std::vector<const RankingPostingWithOffsets *> postings;
-        for (int i = 0; i < n_lists; i++) {
-          postings.push_back(&lists[i]->GetPosting(posting_iters[i]));
-        }
-        min_heap.emplace(max_doc_id, score_of_this_doc, postings);
+        insert_to_heap(&min_heap, max_doc_id, score_of_this_doc, lists, 
+            posting_iters, n_lists);
       } else {
         if (score_of_this_doc > min_heap.top().score) {
           min_heap.pop();
-          std::vector<const RankingPostingWithOffsets *> postings;
-          for (int i = 0; i < n_lists; i++) {
-            postings.push_back(&lists[i]->GetPosting(posting_iters[i]));
-          }
-          min_heap.emplace(max_doc_id, score_of_this_doc, postings);
+          insert_to_heap(&min_heap, max_doc_id, score_of_this_doc, lists, 
+              posting_iters, n_lists);
         }
         assert(min_heap.size() == k);
       }
