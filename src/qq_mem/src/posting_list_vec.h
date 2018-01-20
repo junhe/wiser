@@ -39,7 +39,7 @@ class PostingList_Vec {
   }
   const int GetSkipSpan() const { return skip_span_; }
   const Term GetTerm() const {return term_;}
-  std::size_t Size() const {return posting_store_.size();}
+  int Size() const {return posting_store_.size();}
 
   iterator_t cbegin() const {return 0;}
   iterator_t cend() const {return posting_store_.size();}

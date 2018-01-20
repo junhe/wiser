@@ -81,7 +81,6 @@ class QueryPoolArray {
   std::vector<QueryPool> array_;
 };
 
-void load_query_pool(QueryPool *pool, const GeneralConfig &config);
 void load_query_pool_array(QueryPoolArray *array,
     const std::string &query_log_path, const int n_queries = 0);
 std::unique_ptr<QueryPoolArray> create_query_pool_array(const TermList &terms,

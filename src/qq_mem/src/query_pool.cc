@@ -1,21 +1,5 @@
 #include "query_pool.h"
 
-
-void load_query_pool(QueryPool *pool, const GeneralConfig &config) {
-  auto query_source_ = config.GetString("query_source");
-
-  // config according to different mode
-  if (query_source_ == "hardcoded") {
-    pool->Add(config.GetStringVec("terms"));
-  } else if (query_source_ == "querylog") {
-    // read in all querys
-    load_query_pool_from_file(pool, config.GetString("querylog_path"), 0);
-  } else {
-    LOG(WARNING) << "Cannot determine query source";
-  }
-}
-
-
 void load_query_pool_from_file(QueryPool *pool, 
                      const std::string &query_log_path, 
                      const int n_queries) 

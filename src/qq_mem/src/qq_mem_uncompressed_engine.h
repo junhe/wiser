@@ -35,6 +35,17 @@ class InvertedIndexQqMem {
     return postinglist_pointers;
   }
 
+  std::map<std::string, int> PostinglistSizes(const TermList &terms) {
+    std::map<std::string, int> ret;
+
+    auto pointers = FindPostinglists(terms);
+    for (auto p : pointers) {
+      ret[p->GetTerm()] = p->Size();
+    }
+
+    return ret;
+  }
+
   void AddDocument(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
     utils::CountMapType token_counts = utils::count_tokens(tokens);
@@ -178,6 +189,10 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
   std::size_t TermCount() {
     return inverted_index_.Size();
+  }
+
+  std::map<std::string, int> PostinglistSizes(const TermList &terms) {
+    return inverted_index_.PostinglistSizes(terms);
   }
 
   int GetDocLength(const DocIdType &doc_id) {
