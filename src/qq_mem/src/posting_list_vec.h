@@ -66,24 +66,16 @@ class PostingList_Vec {
     iterator_t i = it;
     const std::size_t n = posting_store_.size();
 
-    while (i < n) {
-      // Worth skipping? (everything in the next span is less than doc_id)
+    while (i < n && GetPosting(i).GetDocId() < doc_id) {
       if (HasSkip(i) && GetPosting(i + skip_span_).GetDocId() <= doc_id) {
         i += skip_span_;
-        continue;
+      } else {
+        i++;
       }
-
-      // Check i's doc id
-      if (GetPosting(i).GetDocId() >= doc_id) {
-        return i; 
-      }
-
-      i++;
     }
 
     return i;
   }
-
 };
 
 
