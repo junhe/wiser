@@ -181,15 +181,15 @@ GeneralConfig config_by_jun() {
       "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
   config.SetString("loader", "naive");
 
-  config.SetInt("n_repeats", 1000);
+  config.SetInt("n_repeats", 100000);
   config.SetInt("n_passages", 3);
-  // config.SetBool("enable_snippets", true);
-  config.SetBool("enable_snippets", false);
+  config.SetBool("enable_snippets", true);
+  // config.SetBool("enable_snippets", false);
   
   
   config.SetString("query_source", "hardcoded");
   // config.SetStringVec("terms", std::vector<std::string>{"hello", "world"});
-  config.SetStringVec("terms", std::vector<std::string>{"len"});
+  config.SetStringVec("terms", std::vector<std::string>{"hello"});
 
   // config.SetString("query_source", "querylog");
   // config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
