@@ -305,6 +305,12 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
 }
 
 
+TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
+
+}
+
+
+
 
 
 
