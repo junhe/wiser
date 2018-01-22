@@ -305,13 +305,34 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
 }
 
 
-TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
+TEST_CASE( "grpc SYNC client and server", "[grpc0]" ) {
+  GeneralConfig config;
+  config.SetString("server_type", "SYNC");
+  config.SetString("target", "localhost:50051");
+
+  SECTION("Start and shutdown") {
+    auto server = CreateServer(config);
+    server->Shutdown();
+    server->Wait();
+  }
+
+  SECTION("Serve echo") {
+    auto server = CreateServer(config);
+    utils::sleep(1);
+    auto client = CreateSyncClient("localhost:50051");
+
+    EchoData request;
+    request.set_message("hello");
+    EchoData reply;
+    auto ret = client->Echo(request, reply);
+
+    REQUIRE(ret == true);
+    REQUIRE(reply.message() == "hello");
+
+    server->Shutdown();
+    server->Wait();
+  }
 
 }
-
-
-
-
-
 
 

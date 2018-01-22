@@ -126,8 +126,14 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
 };
 
 
+class ServerService {
+ public:
+  virtual void Wait() = 0;  
+  virtual void Shutdown() = 0;  
+};
 
-class AsyncServer {
+
+class AsyncServer : public ServerService {
  public:
   AsyncServer(const GeneralConfig config, std::unique_ptr<SearchEngineServiceNew> engine)
       :config_(config), search_engine_(std::move(engine)) {
@@ -234,6 +240,10 @@ class AsyncServer {
       }
     }
     return;
+  }
+
+  void Shutdown() {
+    ShutdownThreadFunc();
   }
 
   void ShutdownThreadFunc() {
@@ -364,7 +374,7 @@ class AsyncServer {
 
 
 
-class SyncServer {
+class SyncServer : public ServerService {
  public:
   SyncServer(const GeneralConfig config, std::unique_ptr<SearchEngineServiceNew> engine)
       :config_(config), search_engine_(std::move(engine)) {
@@ -385,6 +395,10 @@ class SyncServer {
     server_->Wait();
   }
 
+  void Shutdown() {
+    server_->Shutdown();
+  }
+
  private:
   const GeneralConfig config_;
   std::unique_ptr<SearchEngineServiceNew> search_engine_;
@@ -399,5 +413,6 @@ std::unique_ptr<AsyncServer> CreateServer(const std::string &target,
 std::unique_ptr<AsyncServer> CreateServer(const std::string &target, 
     int n_threads_per_cq, int n_server_threads, int n_secs,
     const std::string &line_doc_path, const int &n_rows);
+std::unique_ptr<ServerService> CreateServer(const GeneralConfig config);
 
 #endif
