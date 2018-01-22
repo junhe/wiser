@@ -236,7 +236,10 @@ class SyncUnaryClient {
   };
   ~SyncUnaryClient() {}
 
-  void ThreadFunc(int thread_idx);
+  void ThreadFunc(int thread_idx) {
+
+
+  }
 
  private:
   const GeneralConfig config_;
