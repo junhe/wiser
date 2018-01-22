@@ -109,8 +109,40 @@ class QQEngineSyncClient {
 typedef std::map<std::string, std::string> ConfigType;
 typedef std::vector<qq::SearchReply> ReplyPool;
 typedef std::vector<ReplyPool> ReplyPools;
-class ChannelInfo;
 class PerThreadShutdownState;
+
+struct ChannelInfo {
+  ChannelInfo(const std::string &target, int shard) {
+    grpc::ChannelArguments args;    
+    args.SetString("grpc.optimization_target", "throughput");
+    args.SetInt("grpc.minimal_stack", 1);
+    args.SetInt("shard_to_ensure_no_subchannel_merges", shard);
+
+    channel_ = grpc::CreateChannel(target, grpc::InsecureChannelCredentials());
+
+    // auto start = utils::now();
+    // std::cout << "Waiting for chnnael to be conneted to "
+      // << target << std::endl;
+    channel_->WaitForConnected(
+        gpr_time_add(
+          gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(300, GPR_TIMESPAN)));
+    // auto end = utils::now();
+    // std::cout << "waited for " << utils::duration(start, end) << std::endl;
+    stub_ = QQEngine::NewStub(channel_);
+  }
+
+  Channel* get_channel() { return channel_.get(); }
+  QQEngine::Stub* get_stub() { return stub_.get(); }
+
+  std::shared_ptr<Channel> channel_;
+  std::unique_ptr<QQEngine::Stub> stub_;
+};
+
+struct PerThreadShutdownState {
+	mutable std::mutex mutex;
+	bool shutdown;
+	PerThreadShutdownState() : shutdown(false) {}
+};
 
 class AsyncClient {
  public:
@@ -146,6 +178,80 @@ class AsyncClient {
   ReplyPools reply_pools_;
   bool save_reply_;
 };
+
+
+class SyncUnaryClient {
+ public:
+  SyncUnaryClient() = default;
+  SyncUnaryClient(SyncUnaryClient&&) = default;
+  SyncUnaryClient& operator=(SyncUnaryClient&&) = default;
+
+  SyncUnaryClient(const GeneralConfig config,
+      std::unique_ptr<QueryPoolArray> query_pool_array) 
+    :config_(config), query_pool_array_(std::move(query_pool_array))
+  {
+    int num_threads = config.GetInt("n_threads");
+    int n_client_channels = config.GetInt("n_client_channels");
+    int n_rpcs_per_channel = config.GetInt("n_rpcs_per_channel");
+
+    std::cout << "num_threads: " << num_threads << std::endl;
+    std::cout << "n_client_channels: " << n_client_channels << std::endl;
+    std::cout << "n_rpcs_per_channel: " << n_rpcs_per_channel << std::endl;
+
+    if (query_pool_array_->Size() != num_threads) {
+      throw std::runtime_error(
+          "Query pool size is not the same as the number of threads");
+    }
+
+    // initialize hitogram vector  
+    for (int i = 0; i < num_threads; i++) {
+      histograms_.emplace_back();
+    }
+
+    // initialize reply pools
+    for (int i = 0; i < num_threads; i++) {
+      reply_pools_.emplace_back();
+    }
+    save_reply_ = config.GetBool("save_reply");
+
+    // create channels
+    for (int i = 0; i < n_client_channels; i++) {
+      channels_.emplace_back(config.GetString("target"), i); 
+    }
+    std::cout << channels_.size() << " channels created." << std::endl;
+
+    // create threads and counts
+    for(int i = 0; i < num_threads; i++)
+    {
+      threads_.push_back( std::thread(&SyncUnaryClient::ThreadFunc, this, i) );
+      finished_call_counts_.push_back(0);
+      finished_roundtrips_.push_back(0);
+    }
+  }
+  void DestroyMultithreading() {}
+  void Wait() {}
+  void ShowStats() {}
+  const ReplyPools *GetReplyPools() {
+    return &reply_pools_;  
+  };
+  ~SyncUnaryClient() {}
+
+  void ThreadFunc(int thread_idx);
+
+ private:
+  const GeneralConfig config_;
+  std::vector<ChannelInfo> channels_;
+  std::vector<std::thread> threads_;
+
+  std::vector<int> finished_call_counts_;
+  std::vector<int> finished_roundtrips_;
+  std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
+  std::vector<Histogram> histograms_;
+  std::unique_ptr<QueryPoolArray> query_pool_array_;
+  ReplyPools reply_pools_;
+  bool save_reply_;
+};
+
 
 
 std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target);

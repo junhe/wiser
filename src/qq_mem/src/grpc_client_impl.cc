@@ -7,39 +7,6 @@
 static std::mutex w_mutex;
 static int write_count = 0;
 
-struct ChannelInfo {
-  ChannelInfo(const std::string &target, int shard) {
-    grpc::ChannelArguments args;    
-    args.SetString("grpc.optimization_target", "throughput");
-    args.SetInt("grpc.minimal_stack", 1);
-    args.SetInt("shard_to_ensure_no_subchannel_merges", shard);
-
-    channel_ = grpc::CreateChannel(target, grpc::InsecureChannelCredentials());
-
-    // auto start = utils::now();
-    // std::cout << "Waiting for chnnael to be conneted to "
-      // << target << std::endl;
-    channel_->WaitForConnected(
-        gpr_time_add(
-          gpr_now(GPR_CLOCK_REALTIME), gpr_time_from_seconds(300, GPR_TIMESPAN)));
-    // auto end = utils::now();
-    // std::cout << "waited for " << utils::duration(start, end) << std::endl;
-    stub_ = QQEngine::NewStub(channel_);
-  }
-
-  Channel* get_channel() { return channel_.get(); }
-  QQEngine::Stub* get_stub() { return stub_.get(); }
-
-  std::shared_ptr<Channel> channel_;
-  std::unique_ptr<QQEngine::Stub> stub_;
-};
-
-struct PerThreadShutdownState {
-	mutable std::mutex mutex;
-	bool shutdown;
-	PerThreadShutdownState() : shutdown(false) {}
-};
-
 class RPCContext {
  public:
   RPCContext(CompletionQueue* cq, QQEngine::Stub* stub, 
