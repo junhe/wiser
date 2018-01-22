@@ -106,7 +106,6 @@ class QQEngineSyncClient {
 };
 
 
-typedef std::map<std::string, std::string> ConfigType;
 typedef std::vector<qq::SearchReply> ReplyPool;
 typedef std::vector<ReplyPool> ReplyPools;
 class PerThreadShutdownState;

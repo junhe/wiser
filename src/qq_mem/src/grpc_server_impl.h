@@ -72,9 +72,6 @@ using qq::EchoData;
 using std::chrono::system_clock;
 
 
-typedef std::map<std::string, std::string> ConfigType;
-
-
 // Service Inheritence:
 // Service
 //   |
@@ -132,12 +129,12 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
 
 class AsyncServer {
  public:
-  AsyncServer(const ConfigType config, std::unique_ptr<SearchEngineServiceNew> engine)
+  AsyncServer(const GeneralConfig config, std::unique_ptr<SearchEngineServiceNew> engine)
       :config_(config), search_engine_(std::move(engine)) {
 
-    std::string line_doc_path = config.at("line_doc_path");
+    std::string line_doc_path = config.GetString("line_doc_path");
     if (line_doc_path.size() > 0) {
-      int n_rows = std::stoi(config.at("n_line_doc_rows"));
+      int n_rows = config.GetInt("n_line_doc_rows");
       // int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows);
       int ret = engine_loader::load_body_and_tokenized_body(search_engine_.get(), 
                                                             line_doc_path, n_rows, 2, 2);
@@ -146,13 +143,13 @@ class AsyncServer {
 
     ServerBuilder builder;
 
-    std::cout << "listening on " << config.at("target") << std::endl;
-    builder.AddListeningPort(config.at("target"), grpc::InsecureServerCredentials());
+    std::cout << "listening on " << config.GetString("target") << std::endl;
+    builder.AddListeningPort(config.GetString("target"), grpc::InsecureServerCredentials());
     async_service_.Initialize(search_engine_.get());
     builder.RegisterService(&async_service_);
     
-    int num_threads = std::stoi(config.at("n_server_threads")); 
-    int tpc = std::stoi(config.at("n_threads_per_cq"));  // 1 if unspecified
+    int num_threads = config.GetInt("n_server_threads"); 
+    int tpc = config.GetInt("n_threads_per_cq");  // 1 if unspecified
     int num_cqs = (num_threads + tpc - 1) / tpc;     // ceiling operator
     for (int i = 0; i < num_cqs; i++) {
       srv_cqs_.emplace_back(builder.AddCompletionQueue());
@@ -179,7 +176,6 @@ class AsyncServer {
       shutdown_state_.emplace_back(new PerThreadShutdownState());
       threads_.emplace_back(&AsyncServer::ThreadFunc, this, i);
     }
-
   }
 
   ~AsyncServer() {
@@ -212,7 +208,7 @@ class AsyncServer {
   }
 
   void Wait() {
-    utils::sleep(std::stoi(config_.at("server_duration")));
+    utils::sleep(config_.GetInt("server_duration"));
   }
 
 
@@ -362,7 +358,7 @@ class AsyncServer {
   };
 
   std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
-  const ConfigType &config_;
+  const GeneralConfig &config_;
   std::unique_ptr<SearchEngineServiceNew> search_engine_;
 };
 

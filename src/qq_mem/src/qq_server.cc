@@ -35,8 +35,6 @@ using qq::QQEngine;
 using std::chrono::system_clock;
 
 
-typedef std::map<std::string, std::string> ConfigType;
-
 static bool got_sigint = false;
 
 
