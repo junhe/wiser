@@ -6,24 +6,7 @@
 #include "general_config.h"
 
 
-int main(int argc, char** argv) {
-  if (argc != 2) {
-    std::cout << "Usage: exefile threads" << std::endl;
-    exit(1);
-  }
-
-  int n_threads = std::atoi(argv[1]);
-
-  // Search synchroniously, as a sanity check
-  auto client = CreateSyncClient("localhost:50051");
-  std::vector<int> doc_ids;
-  bool ret;
-  ret = client->Search("multicellular", doc_ids);
-  assert(ret == true);
-  assert(doc_ids.size() >= 1);
-
-  utils::sleep(1);
-
+void bench_async_client(const int n_threads) {
   GeneralConfig config;
   config.SetString("target", "localhost:50051");
   config.SetInt("n_client_channels", 64);
@@ -43,6 +26,38 @@ int main(int argc, char** argv) {
   auto async_client = CreateAsyncClient(config, std::move(query_pool_array));
   async_client->Wait();
   async_client->ShowStats();
+}
+
+void bench_sync_client(const int n_threads) {
+  auto client = CreateSyncClient("localhost:50051");
+  std::vector<int> doc_ids;
+  bool ret;
+  ret = client->Search("multicellular", doc_ids);
+}
+
+void sanity_check() {
+  // Search synchroniously, as a sanity check
+  auto client = CreateSyncClient("localhost:50051");
+  std::vector<int> doc_ids;
+  bool ret;
+  ret = client->Search("multicellular", doc_ids);
+  assert(ret == true);
+  assert(doc_ids.size() >= 1);
+}
+
+int main(int argc, char** argv) {
+  if (argc != 2) {
+    std::cout << "Usage: exefile threads" << std::endl;
+    exit(1);
+  }
+
+  int n_threads = std::atoi(argv[1]);
+
+  sanity_check();
+  utils::sleep(1);
+
+  bench_async_client(n_threads);
+
   return 0;
 }
 
