@@ -251,7 +251,7 @@ class Client {
     }
   }
 
-  void Start() {
+  void StartThreads() {
     int num_threads = config_.GetInt("n_threads");
     for(int i = 0; i < num_threads; i++)
     {
@@ -351,7 +351,9 @@ class SyncStreamingClient: public Client {
   SyncStreamingClient(const GeneralConfig config,
       std::unique_ptr<QueryPoolArray> query_pool_array) 
     :Client(config, std::move(query_pool_array))
-  {}
+  {
+    StartThreads();
+  }
 
   void StreamingSearch(const int thread_idx,
                        ClientReaderWriter<SearchRequest, SearchReply> *stream,
@@ -476,7 +478,9 @@ class SyncUnaryClient: public Client {
   SyncUnaryClient(const GeneralConfig config,
       std::unique_ptr<QueryPoolArray> query_pool_array) 
     :Client(config, std::move(query_pool_array))
-  {}
+  {
+    StartThreads();
+  }
 
   void UnarySearch(const int thread_idx, const SearchRequest &request, SearchReply &reply) {
     ClientContext context;

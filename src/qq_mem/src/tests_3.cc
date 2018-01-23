@@ -413,7 +413,6 @@ TEST_CASE( "SyncStreamingClient", "[grpc0]" ) {
     client_config.SetString("target", target);
     SyncStreamingClient client(client_config, std::move(query_pools));
 
-    client.Start();
     client.Wait();
     auto reply_pools = client.GetReplyPools();
     REQUIRE(reply_pools->at(0).size() > 0);
@@ -440,7 +439,6 @@ TEST_CASE( "SyncStreamingClient", "[grpc0]" ) {
     client_config.SetString("target", target);
     SyncUnaryClient client(client_config, std::move(query_pools));
 
-    client.Start();
     client.Wait();
     auto reply_pools = client.GetReplyPools();
     REQUIRE(reply_pools->at(0).size() > 0);
