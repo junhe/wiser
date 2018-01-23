@@ -37,6 +37,9 @@ using qq::SearchRequest;
 using qq::SearchReply;
 using qq::EchoData;
 
+
+#define HISTOGRAM_TIME_SCALE 1e6
+
 // This is a wrapper around the gRPC stub to provide more convenient
 // Interface to interact with gRPC server. For example, you can use
 // C++ native containers intead of protobuf objects when invoking
@@ -264,6 +267,11 @@ class SyncUnaryClient {
       shutdown_state_.emplace_back(new PerThreadShutdownState());
     }
 
+    for (int i = 0; i < num_threads; i++) {
+      finished_call_counts_.push_back(0);
+      finished_roundtrips_.push_back(0);
+    }
+
     // create channels
     for (int i = 0; i < n_client_channels; i++) {
       channels_.emplace_back(config.GetString("target"), i); 
@@ -297,7 +305,31 @@ class SyncUnaryClient {
 
     std::for_each(threads_.begin(), threads_.end(), std::mem_fn(&std::thread::join));
   }
-  void ShowStats() {}
+  void ShowStats() {
+    std::cout << "Finished round trips: " << GetTotalRoundtrips() << std::endl;
+
+    Histogram hist_all;
+    for (auto & histogram : histograms_) {
+      hist_all.Merge(histogram);
+    }
+
+    std::cout << "---- Latency histogram (us) ----" << std::endl;
+    std::vector<int> percentiles{0, 25, 50, 75, 90, 95, 99, 100};
+    for (auto percentile : percentiles) {
+      std::cout << "Percentile " << std::setw(4) << percentile << ": " 
+        << std::setw(25) 
+        << utils::format_with_commas<int>(round(hist_all.Percentile(percentile))) 
+        << std::endl;
+    }
+
+    if (save_reply_ == true) {
+      std::cout << "---- Reply Pool sizes ----" << std::endl;
+      for (auto &pool : reply_pools_) {
+        std::cout << pool.size() << " ";
+      }
+      std::cout << std::endl;
+    }
+  }
   const ReplyPools *GetReplyPools() {
     return &reply_pools_;  
   };
@@ -308,8 +340,26 @@ class SyncUnaryClient {
     auto stub = channels_[thread_idx % channels_.size()].get_stub();
 
     std::cout << "Searching..." << std::endl;
+
+    auto start = utils::now();
     Status status = stub->Search(&context, request,  &reply);
+    auto end = utils::now();
+    auto duration = utils::duration(start, end);
+
+    histograms_[thread_idx].Add(duration * HISTOGRAM_TIME_SCALE);
+    finished_roundtrips_[thread_idx]++;
+
+    assert(status.ok());
+
     std::cout << "Done Searching: n entries: " << reply.entries_size() << std::endl;
+  }
+
+  int GetTotalRoundtrips() {
+    int total_roundtrips = 0;
+    for (auto count : finished_roundtrips_) {
+      total_roundtrips += count;
+    }
+    return total_roundtrips;
   }
 
   void ThreadFunc(int thread_idx) {

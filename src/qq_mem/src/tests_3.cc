@@ -419,6 +419,8 @@ TEST_CASE( "SyncUnaryClient", "[grpc0]" ) {
     REQUIRE(reply_pools->at(1).size() > 0);
     REQUIRE(reply_pools->at(1)[0].entries(0).doc_id() == 0);
 
+    client->ShowStats();
+
     server->Shutdown();
     server->Wait();
   }

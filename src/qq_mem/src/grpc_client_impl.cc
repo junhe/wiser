@@ -84,7 +84,7 @@ class RPCContext {
 
           end_ = utils::now();
           duration_ = utils::duration(start_, end_);
-          hist->Add(duration_ * 1e6);
+          hist->Add(duration_ * HISTOGRAM_TIME_SCALE);
 
           if (n_issued_ < n_messages_per_call_) {
             // has more to do
