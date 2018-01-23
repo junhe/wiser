@@ -340,7 +340,6 @@ class SyncUnaryClient {
                        ClientReaderWriter<SearchRequest, SearchReply> *stream,
                        const SearchRequest &request, SearchReply &reply) {
 
-    std::cout << "doing streaming search" << std::endl;
     auto start = utils::now();
     stream->Write(request);
     stream->Read(&reply);
@@ -355,8 +354,6 @@ class SyncUnaryClient {
     ClientContext context;
     auto stub = channels_[thread_idx % channels_.size()].get_stub();
 
-    std::cout << "Searching..." << std::endl;
-
     auto start = utils::now();
     Status status = stub->Search(&context, request,  &reply);
     auto end = utils::now();
@@ -366,8 +363,6 @@ class SyncUnaryClient {
     finished_roundtrips_[thread_idx]++;
 
     assert(status.ok());
-
-    std::cout << "Done Searching: n entries: " << reply.entries_size() << std::endl;
   }
 
   int GetTotalRoundtrips() {
@@ -406,7 +401,9 @@ class SyncUnaryClient {
         reply_pools_[thread_idx].push_back(reply);
       }
     }
-    context.TryCancel();
+    // context.TryCancel();
+    stream->WritesDone();
+    stream->Finish();
   }
 
   void ThreadFuncUnary(int thread_idx) {
@@ -436,8 +433,8 @@ class SyncUnaryClient {
   void ThreadFunc(int thread_idx) {
     std::cout << "Thread " << thread_idx << " running." << std::endl;
 
-    // ThreadFuncUnary(thread_idx);
-    ThreadFuncStreaming(thread_idx);
+    ThreadFuncUnary(thread_idx);
+    // ThreadFuncStreaming(thread_idx);
 
     std::cout << "Thread " << thread_idx << " finished." << std::endl;
   }
