@@ -12,11 +12,14 @@ from .Clients import ElasticSearchClient
 
 
 BENCH_EXE = "RediSearchBenchmark"
-# WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract1.xml"
+#WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml_1"
 WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml"
+#WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-latest-pages-articles1.xml"
 # WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-latest-abstract18.xml"
-SERVER_PATH = "/users/jhe/redis-4.0.2/src/redis-server"
-REDISEARCH_SO = "/users/jhe/RediSearch/src/redisearch.so"
+# SERVER_PATH = "/users/jhe/redis-4.0.2/src/redis-server"
+# REDISEARCH_SO = "/users/jhe/RediSearch/src/redisearch.so"
+SERVER_PATH = "/users/kanwu/redis-4.0.2/src/redis-server"
+REDISEARCH_SO = "/users/kanwu/RediSearch/src/redisearch.so"
 
 
 def build_index(n_shards, n_hosts, engine, start_port, host):
@@ -57,17 +60,22 @@ class ExperimentRsbenchGo(Experiment):
     make rs_bench_go
     """
     def __init__(self):
-        self._exp_name = "elastic-gobench-1shards-011"
+        self._exp_name = "gobench-3shards"
 
         self.paras = helpers.parameter_combinations({
-                    'worker_count': [1, 16, 32, 64, 128],
-                    'query': ['hello', 'barack obama'],
+                    #'worker_count': [1, 16, 32, 64, 128],
+                    'worker_count': [1],
+                    'query': ['hello'],
+                    #'query': ['hello', 'barack obama', 'wiki-query-log'],
+                    #'query': ['wiki-query-log'],
+                    #'engine': ['elastic'],
                     'engine': ['redis'],
                     'n_shards': [1],
+                    #'n_hosts': [10],
                     'n_hosts': [1],
                     'rebuild_index': [True]
                     })
-        self._n_treatments = 1#len(self.paras)
+        self._n_treatments = len(self.paras)
 
     def conf(self, i):
         para = self.paras[i]
@@ -83,34 +91,54 @@ class ExperimentRsbenchGo(Experiment):
                 'subexp_index': i,
                 'rebuild_index': para['rebuild_index']
                 }
-
+        '''
         if para['engine'] == "elastic":
-            es_client = ElasticSearchClient("wik")
+            es_client = ElasticSearchClient("wiki")   #TODO?
             conf['n_shards'] = es_client.get_number_of_shards()
-
+        '''
         update_address(conf)
         return conf
 
     def beforeEach(self, conf):
+	print conf
         if conf["engine"] == "redis" and not helpers.is_command_running("redis-4.0.2/src/redis-server"):
             raise RuntimeError("You have to have redis_server running")
-
+        
         if conf['subexp_index'] == 0 and conf['rebuild_index'] is True:
             build_index(conf['n_shards'], conf['n_hosts'], conf['engine'], conf['start_port'], conf['host'])
+            '''
+            if conf['engine'] == "elastic":
+                es_client = ElasticSearchClient("wik")   #TODO?
+                conf['n_shards'] = es_client.get_number_of_shards()
+            '''
 
     def treatment(self, conf):
-        helpers.shcmd("{bench_exe} -engine {engine} -shards {n_shards} " \
-                "-hosts \"{hosts}\" "\
-                "-benchmark search -queries \"{query}\" -c {n_clients} " \
-                "-o {outpath}".format(
-                    engine = conf['engine'],
-                    bench_exe = BENCH_EXE,
-                    n_clients = conf['n_clients'],
-                    hosts = hosts_string(conf['host'], conf['n_hosts'], conf['start_port']),
-                    n_shards = conf['n_shards'],
-                    query = conf['query'],
-                    outpath = os.path.join(self._subexpdir, "out.csv")
-                    ))
+        if conf['query'] == 'wiki-query-log':
+            helpers.shcmd("{bench_exe} -engine {engine} -shards {n_shards} " \
+                    "-hosts \"{hosts}\" "\
+                    "-benchmark search -querypath \"{querypath}\" -c {n_clients} " \
+                    "-o {outpath}".format(
+                        engine = conf['engine'],
+                        bench_exe = BENCH_EXE,
+                        n_clients = conf['n_clients'],
+                        hosts = hosts_string(conf['host'], conf['n_hosts'], conf['start_port']),
+                        n_shards = conf['n_shards'],
+                        querypath = '/mnt/ssd/downloads/wiki_QueryLog',
+                        outpath = os.path.join(self._subexpdir, "out.csv")
+                        ))
+        else:
+            helpers.shcmd("{bench_exe} -engine {engine} -shards {n_shards} " \
+                    "-hosts \"{hosts}\" "\
+                    "-benchmark search -queries \"{query}\" -c {n_clients} " \
+                    "-o {outpath}".format(
+                        engine = conf['engine'],
+                        bench_exe = BENCH_EXE,
+                        n_clients = conf['n_clients'],
+                        hosts = hosts_string(conf['host'], conf['n_hosts'], conf['start_port']),
+                        n_shards = conf['n_shards'],
+                        query = conf['query'],
+                        outpath = os.path.join(self._subexpdir, "out.csv")
+                        ))
 
     def afterEach(self, conf):
         helpers.dump_json(conf, os.path.join(self._subexpdir, "config.json"))
