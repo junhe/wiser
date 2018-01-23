@@ -221,23 +221,28 @@ class AsyncClient {
 };
 
 
+
 class SyncUnaryClient {
  public:
   SyncUnaryClient() = default;
   SyncUnaryClient(SyncUnaryClient&&) = default;
   SyncUnaryClient& operator=(SyncUnaryClient&&) = default;
 
+  // Must set the following items in config:
+  //  n_threads
+  //  n_client_channels
+  //  save_reply
+  //  target
+  //  benchmark_duration
   SyncUnaryClient(const GeneralConfig config,
       std::unique_ptr<QueryPoolArray> query_pool_array) 
     :config_(config), query_pool_array_(std::move(query_pool_array))
   {
     int num_threads = config.GetInt("n_threads");
     int n_client_channels = config.GetInt("n_client_channels");
-    int n_rpcs_per_channel = config.GetInt("n_rpcs_per_channel");
 
     std::cout << "num_threads: " << num_threads << std::endl;
     std::cout << "n_client_channels: " << n_client_channels << std::endl;
-    std::cout << "n_rpcs_per_channel: " << n_rpcs_per_channel << std::endl;
 
     if (query_pool_array_->Size() != num_threads) {
       throw std::runtime_error(
@@ -255,6 +260,10 @@ class SyncUnaryClient {
     }
     save_reply_ = config.GetBool("save_reply");
 
+    for (int i = 0; i < num_threads; i++) {
+      shutdown_state_.emplace_back(new PerThreadShutdownState());
+    }
+
     // create channels
     for (int i = 0; i < n_client_channels; i++) {
       channels_.emplace_back(config.GetString("target"), i); 
@@ -269,17 +278,66 @@ class SyncUnaryClient {
       finished_roundtrips_.push_back(0);
     }
   }
-  void DestroyMultithreading() {}
-  void Wait() {}
+
+  void DestroyMultithreading() {
+    std::cout << "Destroying threads..." << std::endl;
+    for (auto ss = shutdown_state_.begin(); ss != shutdown_state_.end(); ++ss) {
+      std::lock_guard<std::mutex> lock((*ss)->mutex);
+      (*ss)->shutdown = true;
+    }
+    std::cout << "Threads are destroyed." << std::endl;
+
+  }
+  void Wait() {
+    std::cout << "Waiting for " << config_.GetInt("benchmark_duration") << " seconds.\n";
+    utils::sleep(config_.GetInt("benchmark_duration"));
+    std::cout << "The wait is done" << std::endl;
+
+    DestroyMultithreading();
+
+    std::for_each(threads_.begin(), threads_.end(), std::mem_fn(&std::thread::join));
+  }
   void ShowStats() {}
   const ReplyPools *GetReplyPools() {
     return &reply_pools_;  
   };
   ~SyncUnaryClient() {}
 
+  void Search(const int thread_idx, const SearchRequest &request, SearchReply &reply) {
+    ClientContext context;
+    auto stub = channels_[thread_idx % channels_.size()].get_stub();
+
+    std::cout << "Searching..." << std::endl;
+    Status status = stub->Search(&context, request,  &reply);
+    std::cout << "Done Searching: n entries: " << reply.entries_size() << std::endl;
+  }
+
   void ThreadFunc(int thread_idx) {
+    std::cout << "Thread " << thread_idx << " running." << std::endl;
 
+    TermList terms;
+    SearchRequest grpc_request;
+    grpc_request.set_n_results(10);
+    grpc_request.set_return_snippets(true);
+    grpc_request.set_n_snippet_passages(3);
+    grpc_request.set_query_processing_core(qq::SearchRequest_QueryProcessingCore_TOGETHER);
+    SearchReply reply;
 
+    for (int i = 0; i < 10; i++) {
+      terms = query_pool_array_->Next(thread_idx);
+      grpc_request.clear_terms();
+      for (int i = 0; i < terms.size(); i++) {
+        grpc_request.add_terms(terms[i]);
+      }
+
+      Search(thread_idx, grpc_request, reply);
+
+      if (save_reply_) {
+        reply_pools_[thread_idx].push_back(reply);
+      }
+    }
+    // //
+    std::cout << "Thread " << thread_idx << " finished." << std::endl;
   }
 
  private:
@@ -300,6 +358,8 @@ class SyncUnaryClient {
 
 std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target);
 std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
+    std::unique_ptr<QueryPoolArray> query_pool_array);
+std::unique_ptr<SyncUnaryClient> CreateSyncUnaryClient(const GeneralConfig &config,
     std::unique_ptr<QueryPoolArray> query_pool_array);
 
 #endif

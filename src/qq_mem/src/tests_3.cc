@@ -305,6 +305,9 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
 }
 
 
+// We have to use different ports for this test, otherwise it
+// will get segment faults. The faults may be due to the delayed
+// cleanup of network status of the OS.
 TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
   GeneralConfig config;
   config.SetString("server_type", "SYNC");
@@ -383,11 +386,42 @@ TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
   }
 }
 
+TEST_CASE( "SyncUnaryClient", "[grpc0]" ) {
+  GeneralConfig server_config;
+  server_config.SetString("server_type", "SYNC");
 
+  GeneralConfig client_config;
+  client_config.SetInt("n_threads", 2);
+  client_config.SetInt("n_client_channels", 2);
+  client_config.SetBool("save_reply", true);
+  client_config.SetString("target", "localhost:50051");
+  client_config.SetInt("benchmark_duration", 3);
 
+  std::unique_ptr<QueryPoolArray> query_pools(new QueryPoolArray(2));
+  query_pools->Add(0, TermList{"body"});
+  query_pools->Add(1, TermList{"body"});
 
+  SECTION("initialization") {
+    server_config.SetString("target", "localhost:50051");
+    auto server = CreateServer(server_config);
+    utils::sleep(1);
 
+    auto simple_client = CreateSyncClient("localhost:50051");
+    simple_client->AddDocument("my title", "my url", "my body");
+    simple_client->AddDocument("my title", "my url", "my spirit");
 
+    auto client = CreateSyncUnaryClient(client_config, std::move(query_pools));
 
+    client->Wait();
+    auto reply_pools = client->GetReplyPools();
+    REQUIRE(reply_pools->at(0).size() > 0);
+    REQUIRE(reply_pools->at(0)[0].entries(0).doc_id() == 0);
+    REQUIRE(reply_pools->at(1).size() > 0);
+    REQUIRE(reply_pools->at(1)[0].entries(0).doc_id() == 0);
 
+    server->Shutdown();
+    server->Wait();
+  }
+
+}
 

@@ -350,6 +350,15 @@ std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
   return client;
 }
 
+std::unique_ptr<SyncUnaryClient> CreateSyncUnaryClient(const GeneralConfig &config,
+    std::unique_ptr<QueryPoolArray> query_pool_array) 
+{
+  std::unique_ptr<SyncUnaryClient> client(
+      new SyncUnaryClient(config, std::move(query_pool_array)));
+  return client;
+}
+
+
 
 std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target) {
   std::unique_ptr<QQEngineSyncClient> client(
