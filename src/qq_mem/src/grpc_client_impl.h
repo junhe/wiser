@@ -393,7 +393,7 @@ class SyncUnaryClient {
     std::unique_ptr<ClientReaderWriter<SearchRequest, SearchReply> > stream(
         stub->SyncStreamingSearch(&context));
 
-    for (int i = 0; i < 10; i++) {
+    while (shutdown_state_[thread_idx]->shutdown == false) {
       terms = query_pool_array_->Next(thread_idx);
       grpc_request.clear_terms();
       for (int i = 0; i < terms.size(); i++) {
@@ -406,6 +406,7 @@ class SyncUnaryClient {
         reply_pools_[thread_idx].push_back(reply);
       }
     }
+    context.TryCancel();
   }
 
   void ThreadFuncUnary(int thread_idx) {
@@ -417,7 +418,7 @@ class SyncUnaryClient {
     grpc_request.set_query_processing_core(qq::SearchRequest_QueryProcessingCore_TOGETHER);
     SearchReply reply;
 
-    for (int i = 0; i < 10; i++) {
+    while (shutdown_state_[thread_idx]->shutdown == false) {
       terms = query_pool_array_->Next(thread_idx);
       grpc_request.clear_terms();
       for (int i = 0; i < terms.size(); i++) {
