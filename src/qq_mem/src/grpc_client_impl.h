@@ -109,6 +109,26 @@ class QQEngineSyncClient {
     }
   }
 
+  bool DoSyncStreamingSearch(const SearchRequest &request, SearchReply &reply) {
+    ClientContext context;
+
+    std::unique_ptr<ClientReaderWriter<SearchRequest, SearchReply> > 
+      stream(stub_->SyncStreamingSearch(&context));
+    stream->Write(request);
+    stream->WritesDone();
+    stream->Read(&reply);
+    Status status = stream->Finish();
+
+    if (status.ok()) {
+      return true;
+    } else {
+      std::cout << status.error_code() 
+        << ": " << status.error_message()
+        << std::endl;
+      return false;
+    }
+  }
+
   bool Echo(const EchoData &request, EchoData &reply) {
     ClientContext context;
 
@@ -116,7 +136,7 @@ class QQEngineSyncClient {
     if (status.ok()) {
       return true;
     } else {
-      std::cout << status.error_code() 
+      std::cout << "In Echo, " << status.error_code() 
         << ": " << status.error_message()
         << std::endl;
       return false;

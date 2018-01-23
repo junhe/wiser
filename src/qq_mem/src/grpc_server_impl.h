@@ -120,6 +120,19 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
       return Status::OK;
     }
 
+    Status SyncStreamingSearch(ServerContext* context,
+                           ServerReaderWriter<SearchReply, SearchRequest>* stream) override {
+      SearchRequest request;
+      SearchReply reply;
+      while (stream->Read(&request)) {
+        SearchResult result = search_engine_->Search(SearchQuery(request));
+        result.CopyTo(&reply);
+
+        stream->Write(reply);
+      }
+      return Status::OK;
+    }
+
     Status Echo(ServerContext* context, const EchoData* request,
             EchoData* reply) override {
 
@@ -128,8 +141,6 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
         
         return Status::OK;
     }
-
- 
 
     private:
         int count = 0;

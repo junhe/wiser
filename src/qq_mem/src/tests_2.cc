@@ -315,6 +315,16 @@ TEST_CASE("GRPC query copying", "[engine]") {
   REQUIRE(local_query.n_results == 3);
   REQUIRE(local_query.n_snippet_passages == 5);
   REQUIRE(local_query.query_processing_core == QueryProcessingCore::TOGETHER);
+
+  qq::SearchRequest new_grpc_query;
+  local_query.CopyTo(&new_grpc_query);
+
+  REQUIRE(new_grpc_query.terms(0) == "hello");
+  REQUIRE(new_grpc_query.terms(1) == "world");
+  REQUIRE(new_grpc_query.n_results() == 3);
+  REQUIRE(new_grpc_query.n_snippet_passages() == 5);
+  REQUIRE(new_grpc_query.query_processing_core() 
+      == qq::SearchRequest_QueryProcessingCore_TOGETHER);
 }
 
 

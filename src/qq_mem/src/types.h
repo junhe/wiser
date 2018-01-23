@@ -91,6 +91,27 @@ struct SearchQuery {
     return oss.str();
   }
 
+  void CopyTo(qq::SearchRequest *request) {
+    for (auto &term : terms) {
+      request->add_terms(term);
+    }
+
+    request->set_n_results(n_results);
+    request->set_return_snippets(return_snippets);
+    request->set_n_snippet_passages(n_snippet_passages);
+    
+    switch (query_processing_core) {
+      case QueryProcessingCore::TOGETHER:
+        request->set_query_processing_core(qq::SearchRequest_QueryProcessingCore_TOGETHER);
+        break;
+      case QueryProcessingCore::BY_PHASE:
+        request->set_query_processing_core(qq::SearchRequest_QueryProcessingCore_BY_PHASE);
+        break;
+      default:
+        throw std::runtime_error("query processsing core not exists");
+    }
+  }
+
   void CopyFrom(const qq::SearchRequest &grpc_req) {
     int n = grpc_req.terms_size();
     terms.clear();

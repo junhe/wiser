@@ -305,21 +305,22 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
 }
 
 
-TEST_CASE( "grpc SYNC client and server", "[grpc0]" ) {
+TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
   GeneralConfig config;
   config.SetString("server_type", "SYNC");
-  config.SetString("target", "localhost:50051");
 
   SECTION("Start and shutdown") {
+    config.SetString("target", "localhost:50054");
     auto server = CreateServer(config);
     server->Shutdown();
     server->Wait();
   }
 
   SECTION("Serve echo") {
+    config.SetString("target", "localhost:50055");
     auto server = CreateServer(config);
     utils::sleep(1);
-    auto client = CreateSyncClient("localhost:50051");
+    auto client = CreateSyncClient("localhost:50055");
 
     EchoData request;
     request.set_message("hello");
@@ -334,9 +335,10 @@ TEST_CASE( "grpc SYNC client and server", "[grpc0]" ) {
   }
 
   SECTION("Serve streaming echo") {
+    config.SetString("target", "localhost:50056");
     auto server = CreateServer(config);
     utils::sleep(1);
-    auto client = CreateSyncClient("localhost:50051");
+    auto client = CreateSyncClient("localhost:50056");
 
     EchoData request;
     request.set_message("hello");
@@ -349,7 +351,38 @@ TEST_CASE( "grpc SYNC client and server", "[grpc0]" ) {
     server->Shutdown();
     server->Wait();
   }
+
+  SECTION("Serve search requests") {
+    std::vector<int> doc_ids;
+    bool ret;
+
+    config.SetString("target", "localhost:50057");
+    auto server = CreateServer(config);
+    utils::sleep(1);
+    auto client = CreateSyncClient("localhost:50057");
+
+    ret = client->Search("body", doc_ids);
+    REQUIRE(doc_ids.size() == 0);
+    REQUIRE(ret == true);
+
+    client->AddDocument("my title", "my url", "my body");
+    client->AddDocument("my title", "my url", "my spirit");
+
+    SearchRequest request;
+    SearchQuery query(TermList{"body"});
+    query.CopyTo(&request);
+
+    SearchReply reply;
+    client->DoSyncStreamingSearch(request, reply);
+    
+    REQUIRE(reply.entries_size() == 1);
+    REQUIRE(reply.entries(0).doc_id() == 0);
+
+    server->Shutdown();
+    server->Wait();
+  }
 }
+
 
 
 
