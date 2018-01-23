@@ -335,7 +335,23 @@ class SyncUnaryClient {
   };
   ~SyncUnaryClient() {}
 
-  void Search(const int thread_idx, const SearchRequest &request, SearchReply &reply) {
+
+  void StreamingSearch(const int thread_idx,
+                       ClientReaderWriter<SearchRequest, SearchReply> *stream,
+                       const SearchRequest &request, SearchReply &reply) {
+
+    std::cout << "doing streaming search" << std::endl;
+    auto start = utils::now();
+    stream->Write(request);
+    stream->Read(&reply);
+    auto end = utils::now();
+    auto duration = utils::duration(start, end);
+
+    histograms_[thread_idx].Add(duration * HISTOGRAM_TIME_SCALE);
+    finished_roundtrips_[thread_idx]++;
+  }
+
+  void UnarySearch(const int thread_idx, const SearchRequest &request, SearchReply &reply) {
     ClientContext context;
     auto stub = channels_[thread_idx % channels_.size()].get_stub();
 
@@ -362,9 +378,37 @@ class SyncUnaryClient {
     return total_roundtrips;
   }
 
-  void ThreadFunc(int thread_idx) {
-    std::cout << "Thread " << thread_idx << " running." << std::endl;
 
+  void ThreadFuncStreaming(int thread_idx) {
+    TermList terms;
+    SearchRequest grpc_request;
+    grpc_request.set_n_results(10);
+    grpc_request.set_return_snippets(true);
+    grpc_request.set_n_snippet_passages(3);
+    grpc_request.set_query_processing_core(qq::SearchRequest_QueryProcessingCore_TOGETHER);
+    SearchReply reply;
+
+    ClientContext context;
+    auto stub = channels_[thread_idx % channels_.size()].get_stub();
+    std::unique_ptr<ClientReaderWriter<SearchRequest, SearchReply> > stream(
+        stub->SyncStreamingSearch(&context));
+
+    for (int i = 0; i < 10; i++) {
+      terms = query_pool_array_->Next(thread_idx);
+      grpc_request.clear_terms();
+      for (int i = 0; i < terms.size(); i++) {
+        grpc_request.add_terms(terms[i]);
+      }
+
+      StreamingSearch(thread_idx, stream.get(), grpc_request, reply);
+
+      if (save_reply_) {
+        reply_pools_[thread_idx].push_back(reply);
+      }
+    }
+  }
+
+  void ThreadFuncUnary(int thread_idx) {
     TermList terms;
     SearchRequest grpc_request;
     grpc_request.set_n_results(10);
@@ -380,13 +424,20 @@ class SyncUnaryClient {
         grpc_request.add_terms(terms[i]);
       }
 
-      Search(thread_idx, grpc_request, reply);
+      UnarySearch(thread_idx, grpc_request, reply);
 
       if (save_reply_) {
         reply_pools_[thread_idx].push_back(reply);
       }
     }
-    // //
+  }
+
+  void ThreadFunc(int thread_idx) {
+    std::cout << "Thread " << thread_idx << " running." << std::endl;
+
+    // ThreadFuncUnary(thread_idx);
+    ThreadFuncStreaming(thread_idx);
+
     std::cout << "Thread " << thread_idx << " finished." << std::endl;
   }
 
@@ -402,6 +453,7 @@ class SyncUnaryClient {
   std::unique_ptr<QueryPoolArray> query_pool_array_;
   ReplyPools reply_pools_;
   bool save_reply_;
+  bool is_streaming;
 };
 
 
