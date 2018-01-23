@@ -5,14 +5,14 @@ package qq;
 service QQEngine {
   // Sends a greeting
   rpc SayHello (HelloRequest) returns (HelloReply) {}
-  // This is sync
+
   rpc Echo (EchoData) returns (EchoData) {}
+  rpc StreamingEcho (stream EchoData) returns (stream EchoData) {}
 
   // This is synchorous 
   rpc AddDocument (AddDocumentRequest) returns (StatusReply) {}
-  // This is synchorous 
+
   rpc Search (SearchRequest) returns (SearchReply) {}
-  // This is async
   rpc StreamingSearch (stream SearchRequest) returns (stream SearchReply) {}
 }
 

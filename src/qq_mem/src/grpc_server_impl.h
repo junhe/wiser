@@ -111,6 +111,15 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
         return Status::OK;
     }
 
+    Status StreamingEcho(ServerContext* context,
+                           ServerReaderWriter<EchoData, EchoData>* stream) override {
+      EchoData data;
+      while (stream->Read(&data)) {
+        stream->Write(data);
+      }
+      return Status::OK;
+    }
+
     Status Echo(ServerContext* context, const EchoData* request,
             EchoData* reply) override {
 
@@ -119,6 +128,8 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
         
         return Status::OK;
     }
+
+ 
 
     private:
         int count = 0;

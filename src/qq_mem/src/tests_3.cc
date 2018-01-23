@@ -333,6 +333,28 @@ TEST_CASE( "grpc SYNC client and server", "[grpc0]" ) {
     server->Wait();
   }
 
+  SECTION("Serve streaming echo") {
+    auto server = CreateServer(config);
+    utils::sleep(1);
+    auto client = CreateSyncClient("localhost:50051");
+
+    EchoData request;
+    request.set_message("hello");
+    EchoData reply;
+    auto ret = client->DoStreamingEcho(request, reply);
+
+    REQUIRE(ret == true);
+    REQUIRE(reply.message() == "hello");
+
+    server->Shutdown();
+    server->Wait();
+  }
 }
+
+
+
+
+
+
 
 

@@ -24,6 +24,9 @@
 
 using grpc::Channel;
 using grpc::ClientContext;
+using grpc::ClientReader;
+using grpc::ClientReaderWriter;
+using grpc::ClientWriter;
 using grpc::Status;
 using grpc::CompletionQueue;
 
@@ -85,6 +88,25 @@ class QQEngineSyncClient {
     }
 
     return status.ok();
+  }
+
+  bool DoStreamingEcho(const EchoData &request, EchoData &reply) {
+    ClientContext context;
+
+    std::unique_ptr<ClientReaderWriter<EchoData, EchoData> > stream(stub_->StreamingEcho(&context));
+    stream->Write(request);
+    stream->WritesDone();
+    stream->Read(&reply);
+    Status status = stream->Finish();
+
+    if (status.ok()) {
+      return true;
+    } else {
+      std::cout << status.error_code() 
+        << ": " << status.error_message()
+        << std::endl;
+      return false;
+    }
   }
 
   bool Echo(const EchoData &request, EchoData &reply) {
