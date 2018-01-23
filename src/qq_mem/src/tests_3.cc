@@ -401,7 +401,31 @@ TEST_CASE( "SyncUnaryClient", "[grpc0]" ) {
   query_pools->Add(0, TermList{"body"});
   query_pools->Add(1, TermList{"body"});
 
-  SECTION("initialization") {
+  // SECTION("initialization") {
+    // server_config.SetString("target", "localhost:50051");
+    // auto server = CreateServer(server_config);
+    // utils::sleep(1);
+
+    // auto simple_client = CreateSyncClient("localhost:50051");
+    // simple_client->AddDocument("my title", "my url", "my body");
+    // simple_client->AddDocument("my title", "my url", "my spirit");
+
+    // auto client = CreateSyncUnaryClient(client_config, std::move(query_pools));
+
+    // client->Wait();
+    // auto reply_pools = client->GetReplyPools();
+    // REQUIRE(reply_pools->at(0).size() > 0);
+    // REQUIRE(reply_pools->at(0)[0].entries(0).doc_id() == 0);
+    // REQUIRE(reply_pools->at(1).size() > 0);
+    // REQUIRE(reply_pools->at(1)[0].entries(0).doc_id() == 0);
+
+    // client->ShowStats();
+
+    // server->Shutdown();
+    // server->Wait();
+  // }
+
+  SECTION("SyncStreamingClient") {
     server_config.SetString("target", "localhost:50051");
     auto server = CreateServer(server_config);
     utils::sleep(1);
@@ -410,20 +434,22 @@ TEST_CASE( "SyncUnaryClient", "[grpc0]" ) {
     simple_client->AddDocument("my title", "my url", "my body");
     simple_client->AddDocument("my title", "my url", "my spirit");
 
-    auto client = CreateSyncUnaryClient(client_config, std::move(query_pools));
+    SyncStreamingClient client(client_config, std::move(query_pools));
 
-    client->Wait();
-    auto reply_pools = client->GetReplyPools();
+    client.Wait();
+    auto reply_pools = client.GetReplyPools();
     REQUIRE(reply_pools->at(0).size() > 0);
     REQUIRE(reply_pools->at(0)[0].entries(0).doc_id() == 0);
     REQUIRE(reply_pools->at(1).size() > 0);
     REQUIRE(reply_pools->at(1)[0].entries(0).doc_id() == 0);
 
-    client->ShowStats();
+    client.ShowStats();
 
     server->Shutdown();
     server->Wait();
   }
+
+
 
 }
 

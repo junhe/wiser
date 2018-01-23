@@ -188,6 +188,239 @@ struct PerThreadShutdownState {
 	PerThreadShutdownState() : shutdown(false) {}
 };
 
+
+
+class Client {
+ public:
+  Client() = default;
+  Client(Client&&) = default;
+  Client& operator=(Client&&) = default;
+
+  // Must set the following items in config:
+  //  n_threads
+  //  n_client_channels
+  //  save_reply
+  //  target
+  //  benchmark_duration
+  Client(const GeneralConfig config,
+      std::unique_ptr<QueryPoolArray> query_pool_array) 
+    :config_(config), query_pool_array_(std::move(query_pool_array))
+  {
+    int num_threads = config.GetInt("n_threads");
+    int n_client_channels = config.GetInt("n_client_channels");
+
+    std::cout << "num_threads: " << num_threads << std::endl;
+    std::cout << "n_client_channels: " << n_client_channels << std::endl;
+
+    if (query_pool_array_->Size() != num_threads) {
+      throw std::runtime_error(
+          "Query pool size is not the same as the number of threads");
+    }
+
+    // initialize hitogram vector  
+    for (int i = 0; i < num_threads; i++) {
+      histograms_.emplace_back();
+    }
+
+    // initialize reply pools
+    for (int i = 0; i < num_threads; i++) {
+      reply_pools_.emplace_back();
+    }
+    save_reply_ = config.GetBool("save_reply");
+
+    for (int i = 0; i < num_threads; i++) {
+      shutdown_state_.emplace_back(new PerThreadShutdownState());
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+      finished_call_counts_.push_back(0);
+      finished_roundtrips_.push_back(0);
+    }
+
+    // create channels
+    for (int i = 0; i < n_client_channels; i++) {
+      channels_.emplace_back(config.GetString("target"), i); 
+    }
+    std::cout << channels_.size() << " channels created." << std::endl;
+
+    // create threads and counts
+    for(int i = 0; i < num_threads; i++)
+    {
+      finished_call_counts_.push_back(0);
+      finished_roundtrips_.push_back(0);
+    }
+
+    for(int i = 0; i < num_threads; i++)
+    {
+      threads_.push_back( std::thread(&Client::ThreadFunc, this, i) );
+    }
+  }
+
+  void DestroyMultithreading() {
+    std::cout << "Destroying threads..." << std::endl;
+    for (auto ss = shutdown_state_.begin(); ss != shutdown_state_.end(); ++ss) {
+      std::lock_guard<std::mutex> lock((*ss)->mutex);
+      (*ss)->shutdown = true;
+    }
+    std::cout << "Threads are destroyed." << std::endl;
+
+  }
+
+  virtual void ThreadFunc(int thread_idx) = 0;
+
+  void Wait() {
+    std::cout << "Waiting for " << config_.GetInt("benchmark_duration") << " seconds.\n";
+    utils::sleep(config_.GetInt("benchmark_duration"));
+    std::cout << "The wait is done" << std::endl;
+
+    DestroyMultithreading();
+
+    std::for_each(threads_.begin(), threads_.end(), std::mem_fn(&std::thread::join));
+  }
+
+  void ShowStats() {
+    std::cout << "Finished round trips: " << GetTotalRoundtrips() << std::endl;
+
+    Histogram hist_all;
+    for (auto & histogram : histograms_) {
+      hist_all.Merge(histogram);
+    }
+
+    std::cout << "---- Latency histogram (us) ----" << std::endl;
+    std::vector<int> percentiles{0, 25, 50, 75, 90, 95, 99, 100};
+    for (auto percentile : percentiles) {
+      std::cout << "Percentile " << std::setw(4) << percentile << ": " 
+        << std::setw(25) 
+        << utils::format_with_commas<int>(round(hist_all.Percentile(percentile))) 
+        << std::endl;
+    }
+
+    if (save_reply_ == true) {
+      std::cout << "---- Reply Pool sizes ----" << std::endl;
+      for (auto &pool : reply_pools_) {
+        std::cout << pool.size() << " ";
+      }
+      std::cout << std::endl;
+    }
+  }
+  const ReplyPools *GetReplyPools() {
+    return &reply_pools_;  
+  };
+  ~Client() {}
+
+  int GetTotalRoundtrips() {
+    int total_roundtrips = 0;
+    for (auto count : finished_roundtrips_) {
+      total_roundtrips += count;
+    }
+    return total_roundtrips;
+  }
+
+ protected:
+  const GeneralConfig config_;
+  std::vector<ChannelInfo> channels_;
+  std::vector<std::thread> threads_;
+
+  std::vector<int> finished_call_counts_;
+  std::vector<int> finished_roundtrips_;
+  std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
+  std::vector<Histogram> histograms_;
+  std::unique_ptr<QueryPoolArray> query_pool_array_;
+  ReplyPools reply_pools_;
+  bool save_reply_;
+};
+
+
+
+
+class SyncStreamingClient: public Client {
+ public:
+  SyncStreamingClient() = default;
+  SyncStreamingClient(SyncStreamingClient&&) = default;
+  SyncStreamingClient& operator=(SyncStreamingClient&&) = default;
+
+  // Must set the following items in config:
+  //  n_threads
+  //  n_client_channels
+  //  save_reply
+  //  target
+  //  benchmark_duration
+  SyncStreamingClient(const GeneralConfig config,
+      std::unique_ptr<QueryPoolArray> query_pool_array) 
+    :Client(config, std::move(query_pool_array))
+  {}
+
+  void StreamingSearch(const int thread_idx,
+                       ClientReaderWriter<SearchRequest, SearchReply> *stream,
+                       const SearchRequest &request, SearchReply &reply) {
+
+    auto start = utils::now();
+    stream->Write(request);
+    stream->Read(&reply);
+    auto end = utils::now();
+    auto duration = utils::duration(start, end);
+
+    histograms_[thread_idx].Add(duration * HISTOGRAM_TIME_SCALE);
+    finished_roundtrips_[thread_idx]++;
+  }
+
+  void ThreadFuncStreaming(int thread_idx) {
+    TermList terms;
+    SearchRequest grpc_request;
+    grpc_request.set_n_results(10);
+    grpc_request.set_return_snippets(true);
+    grpc_request.set_n_snippet_passages(3);
+    grpc_request.set_query_processing_core(qq::SearchRequest_QueryProcessingCore_TOGETHER);
+    SearchReply reply;
+
+    ClientContext context;
+    auto stub = channels_[thread_idx % channels_.size()].get_stub();
+    std::unique_ptr<ClientReaderWriter<SearchRequest, SearchReply> > stream(
+        stub->SyncStreamingSearch(&context));
+
+    while (shutdown_state_[thread_idx]->shutdown == false) {
+      terms = query_pool_array_->Next(thread_idx);
+      grpc_request.clear_terms();
+      for (int i = 0; i < terms.size(); i++) {
+        grpc_request.add_terms(terms[i]);
+      }
+
+      StreamingSearch(thread_idx, stream.get(), grpc_request, reply);
+
+      if (save_reply_) {
+        reply_pools_[thread_idx].push_back(reply);
+      }
+    }
+    // context.TryCancel();
+    stream->WritesDone();
+    stream->Finish();
+  }
+
+  void ThreadFunc(int thread_idx) {
+    std::cout << "Thread " << thread_idx << " running." << std::endl;
+
+    ThreadFuncStreaming(thread_idx);
+
+    std::cout << "Thread " << thread_idx << " finished." << std::endl;
+  }
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 class AsyncClient {
  public:
   AsyncClient() = default;
@@ -451,7 +684,6 @@ class SyncUnaryClient {
   std::unique_ptr<QueryPoolArray> query_pool_array_;
   ReplyPools reply_pools_;
   bool save_reply_;
-  bool is_streaming;
 };
 
 
