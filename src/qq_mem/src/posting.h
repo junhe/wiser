@@ -97,6 +97,16 @@ class RankingPostingWithOffsets: public RankingPosting {
     :RankingPosting(doc_id, term_frequency), offset_pairs_(offset_pairs) {}
 
   const OffsetPairs *GetOffsetPairs() const {return &offset_pairs_;}
+
+  std::string ToString() {
+    std::ostringstream oss;
+    oss << "DocId: " << doc_id_ << " TF: " << term_frequency_ << " ";
+    for (auto & pair : offset_pairs_) {
+      oss << "(" << std::get<0>(pair) << "," << std::get<1>(pair) << "),";
+    }
+
+    return oss.str();
+  }
 };
 
 #endif

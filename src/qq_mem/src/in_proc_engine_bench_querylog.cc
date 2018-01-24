@@ -173,13 +173,14 @@ GeneralConfig config_by_jun() {
   GeneralConfig config;
   config.SetInt("n_docs", 10000000);
 
-  // config.SetString("linedoc_path", 
-      // "/mnt/ssd/downloads/enwiki_tookenized_200000.linedoc");
-  // config.SetString("loader", "with-offsets");
-
   config.SetString("linedoc_path", 
-      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  config.SetString("loader", "naive");
+      "/mnt/ssd/downloads/enwiki.linedoc_tokenized");
+      // "/mnt/ssd/downloads/enwiki_tookenized_200000.linedoc");
+  config.SetString("loader", "with-offsets");
+
+  // config.SetString("linedoc_path", 
+      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  // config.SetString("loader", "naive");
 
   config.SetInt("n_repeats", 100000);
   config.SetInt("n_passages", 3);
