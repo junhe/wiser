@@ -46,8 +46,8 @@ static void sigint_handler(int x) {
 
 
 int main(int argc, char** argv) {
-  if (argc != 5) {
-    std::cout << "Usage: exefile port secs threads n_docs" << std::endl;
+  if (argc != 6) {
+    std::cout << "Usage: exefile port secs threads n_docs sync_type" << std::endl;
     exit(1);
   }
 
@@ -57,19 +57,19 @@ int main(int argc, char** argv) {
   int n_secs = std::stoi(argv[2]);
   const int n_threads = std::atoi(argv[3]);
   const int n_docs = std::atoi(argv[4]);
+  auto sync_type = argv[5];
 
   GeneralConfig config;
   config.SetString("target", std::string("localhost:") + port);
-  // config.SetString("sync_type", "SYNC");
-  config.SetString("sync_type", "ASYNC");
+  config.SetString("sync_type", sync_type);
+  config.SetInt("n_line_doc_rows", n_docs);
+  config.SetString("line_doc_path", 
+      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
 
   if (config.GetString("sync_type") == "ASYNC") {
     config.SetInt("n_server_threads", n_threads);
     config.SetInt("server_duration", n_secs);
-    config.SetInt("n_line_doc_rows", n_docs);
     config.SetInt("n_threads_per_cq", 1);
-    config.SetString("line_doc_path", 
-        "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
   } else {
     // nothing to add
   }

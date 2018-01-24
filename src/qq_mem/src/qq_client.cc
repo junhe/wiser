@@ -18,6 +18,7 @@ void bench_async_client(const int n_threads) {
   config.SetInt("n_threads_per_cq", 1);
   config.SetInt("benchmark_duration", 5);
   config.SetBool("save_reply", false);
+  // config.SetBool("save_reply", true);
 
   auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
       config.GetInt("n_threads"));
@@ -30,14 +31,15 @@ void bench_async_client(const int n_threads) {
   async_client->ShowStats();
 }
 
-void bench_sync_client(const int n_threads) {
+void bench_sync_client(const int n_threads, std::string arity) {
   GeneralConfig config;
   config.SetString("synchronization", "SYNC");
-  config.SetString("rpc_arity", "STREAMING");
+  config.SetString("rpc_arity", arity);
   config.SetString("target", "localhost:50051");
   config.SetInt("n_client_channels", 64);
   config.SetInt("n_threads", n_threads); 
   config.SetInt("benchmark_duration", 5);
+  // config.SetBool("save_reply", true);
   config.SetBool("save_reply", false);
 
   auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
@@ -62,18 +64,25 @@ void sanity_check() {
 }
 
 int main(int argc, char** argv) {
-  if (argc != 2) {
-    std::cout << "Usage: exefile threads" << std::endl;
+  if (argc != 4) {
+    std::cout << "Usage: exefile threads sync_type arity" << std::endl;
     exit(1);
   }
 
   int n_threads = std::atoi(argv[1]);
+  std::string sync_type = argv[2];
+  auto arity = argv[3];
 
   sanity_check();
   utils::sleep(1);
 
-  // bench_async_client(n_threads);
-  bench_sync_client(n_threads);
+  if (sync_type == "ASYNC") {
+    bench_async_client(n_threads);
+  } else if (sync_type == "SYNC") {
+    bench_sync_client(n_threads, arity);
+  } else {
+    throw std::runtime_error("wrong sync type" + sync_type);
+  }
 
   return 0;
 }
