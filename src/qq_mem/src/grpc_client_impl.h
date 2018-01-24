@@ -524,7 +524,7 @@ class SyncStreamingClient: public Client {
     finished_roundtrips_[thread_idx]++;
   }
 
-  void ThreadFuncStreaming(int thread_idx) {
+  void ThreadFunc(int thread_idx) {
     TermList terms;
     SearchRequest grpc_request;
     grpc_request.set_n_results(10);
@@ -555,17 +555,7 @@ class SyncStreamingClient: public Client {
     stream->WritesDone();
     stream->Finish();
   }
-
-  void ThreadFunc(int thread_idx) {
-    std::cout << "Thread " << thread_idx << " running." << std::endl;
-
-    ThreadFuncStreaming(thread_idx);
-
-    std::cout << "Thread " << thread_idx << " finished." << std::endl;
-  }
 };
-
-
 
 
 
@@ -705,7 +695,7 @@ class SyncUnaryClient: public Client {
     assert(status.ok());
   }
 
-  void ThreadFuncUnary(int thread_idx) {
+  void ThreadFunc(int thread_idx) {
     TermList terms;
     SearchRequest grpc_request;
     grpc_request.set_n_results(10);
@@ -727,14 +717,6 @@ class SyncUnaryClient: public Client {
         reply_pools_[thread_idx].push_back(reply);
       }
     }
-  }
-
-  void ThreadFunc(int thread_idx) {
-    std::cout << "Thread " << thread_idx << " running." << std::endl;
-
-    ThreadFuncUnary(thread_idx);
-
-    std::cout << "Thread " << thread_idx << " finished." << std::endl;
   }
 };
 
