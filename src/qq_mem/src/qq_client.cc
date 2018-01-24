@@ -16,7 +16,7 @@ void bench_async_client(const int n_threads) {
   config.SetInt("n_messages_per_call", 100000);
   config.SetInt("n_threads", n_threads); 
   config.SetInt("n_threads_per_cq", 1);
-  config.SetInt("benchmark_duration", 5);
+  config.SetInt("benchmark_duration", 10);
   config.SetBool("save_reply", false);
   // config.SetBool("save_reply", true);
 
@@ -38,7 +38,7 @@ void bench_sync_client(const int n_threads, std::string arity) {
   config.SetString("target", "localhost:50051");
   config.SetInt("n_client_channels", 64);
   config.SetInt("n_threads", n_threads); 
-  config.SetInt("benchmark_duration", 5);
+  config.SetInt("benchmark_duration", 10);
   // config.SetBool("save_reply", true);
   config.SetBool("save_reply", false);
 
