@@ -727,6 +727,8 @@ std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
     std::unique_ptr<QueryPoolArray> query_pool_array);
 std::unique_ptr<SyncUnaryClient> CreateSyncUnaryClient(const GeneralConfig &config,
     std::unique_ptr<QueryPoolArray> query_pool_array);
+std::unique_ptr<Client> CreateClient(const GeneralConfig &config,
+    std::unique_ptr<QueryPoolArray> query_pool_array);
 
 #endif
 

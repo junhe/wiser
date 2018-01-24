@@ -43,6 +43,8 @@ static void sigint_handler(int x) {
   got_sigint = true; 
 }
 
+
+
 int main(int argc, char** argv) {
   if (argc != 5) {
     std::cout << "Usage: exefile port secs threads n_docs" << std::endl;
@@ -52,19 +54,29 @@ int main(int argc, char** argv) {
   signal(SIGINT, sigint_handler);
 
   std::string port(argv[1]);
-  std::string n_secs(argv[2]);
+  int n_secs = std::stoi(argv[2]);
   const int n_threads = std::atoi(argv[3]);
   const int n_docs = std::atoi(argv[4]);
 
-  auto server = CreateServer(std::string("localhost:") + port, 
-      1, // threads per cq
-      n_threads,  // n threads
-      0, // duration(seconds)
-      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc",
-      n_docs
-  );
+  GeneralConfig config;
+  config.SetString("target", std::string("localhost:") + port);
+  // config.SetString("sync_type", "SYNC");
+  config.SetString("sync_type", "ASYNC");
 
-  if (std::stoi(n_secs) == 0) {
+  if (config.GetString("sync_type") == "ASYNC") {
+    config.SetInt("n_server_threads", n_threads);
+    config.SetInt("server_duration", n_secs);
+    config.SetInt("n_line_doc_rows", n_docs);
+    config.SetInt("n_threads_per_cq", 1);
+    config.SetString("line_doc_path", 
+        "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  } else {
+    // nothing to add
+  }
+
+  auto server = CreateServer(config);
+
+  if (n_secs == 0) {
     while (!got_sigint) {
       gpr_sleep_until(gpr_time_add(gpr_now(GPR_CLOCK_REALTIME),
                                    gpr_time_from_seconds(5, GPR_TIMESPAN)));

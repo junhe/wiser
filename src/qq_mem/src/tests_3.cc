@@ -310,7 +310,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
 // cleanup of network status of the OS.
 TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
   GeneralConfig config;
-  config.SetString("server_type", "SYNC");
+  config.SetString("sync_type", "SYNC");
 
   SECTION("Start and shutdown") {
     config.SetString("target", "localhost:50054");
@@ -388,7 +388,7 @@ TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
 
 TEST_CASE( "SyncStreamingClient", "[grpc0]" ) {
   GeneralConfig server_config;
-  server_config.SetString("server_type", "SYNC");
+  server_config.SetString("sync_type", "SYNC");
 
   GeneralConfig client_config;
   client_config.SetInt("n_threads", 2);

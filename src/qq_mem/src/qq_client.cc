@@ -8,6 +8,8 @@
 
 void bench_async_client(const int n_threads) {
   GeneralConfig config;
+  config.SetString("synchronization", "ASYNC");
+  config.SetString("rpc_arity", "STREAMING");
   config.SetString("target", "localhost:50051");
   config.SetInt("n_client_channels", 64);
   config.SetInt("n_rpcs_per_channel", 100);
@@ -23,16 +25,30 @@ void bench_async_client(const int n_threads) {
       // "/mnt/ssd/downloads/wiki_QueryLog_tokenized",
       // config.GetInt("n_threads"));
 
-  auto async_client = CreateAsyncClient(config, std::move(query_pool_array));
+  auto async_client = CreateClient(config, std::move(query_pool_array));
   async_client->Wait();
   async_client->ShowStats();
 }
 
 void bench_sync_client(const int n_threads) {
-  auto client = CreateSyncClient("localhost:50051");
-  std::vector<int> doc_ids;
-  bool ret;
-  ret = client->Search("multicellular", doc_ids);
+  GeneralConfig config;
+  config.SetString("synchronization", "SYNC");
+  config.SetString("rpc_arity", "STREAMING");
+  config.SetString("target", "localhost:50051");
+  config.SetInt("n_client_channels", 64);
+  config.SetInt("n_threads", n_threads); 
+  config.SetInt("benchmark_duration", 5);
+  config.SetBool("save_reply", false);
+
+  auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
+      config.GetInt("n_threads"));
+  // auto query_pool_array = create_query_pool_array(
+      // "/mnt/ssd/downloads/wiki_QueryLog_tokenized",
+      // config.GetInt("n_threads"));
+
+  auto async_client = CreateClient(config, std::move(query_pool_array));
+  async_client->Wait();
+  async_client->ShowStats();
 }
 
 void sanity_check() {
@@ -56,7 +72,8 @@ int main(int argc, char** argv) {
   sanity_check();
   utils::sleep(1);
 
-  bench_async_client(n_threads);
+  // bench_async_client(n_threads);
+  bench_sync_client(n_threads);
 
   return 0;
 }

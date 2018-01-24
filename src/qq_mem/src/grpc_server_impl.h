@@ -398,6 +398,8 @@ class AsyncServer : public ServerService {
 
 class SyncServer : public ServerService {
  public:
+  // Required key of config:
+  //   target
   SyncServer(const GeneralConfig config, std::unique_ptr<SearchEngineServiceNew> engine)
       :config_(config), search_engine_(std::move(engine)) {
 

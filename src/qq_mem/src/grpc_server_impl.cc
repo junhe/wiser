@@ -42,7 +42,7 @@ std::unique_ptr<AsyncServer> CreateServer(const std::string &target,
 /*
 Async server config must provide:
     GeneralConfig config;
-    config.SetString("server_type", "ASYNC");
+    config.SetString("sync_type", "ASYNC");
     config.SetString("target", target);
     config.SetInt("n_threads_per_cq", n_threads_per_cq);
     config.SetInt("n_server_threads", n_server_threads);
@@ -52,21 +52,21 @@ Async server config must provide:
 
 Sync Server config musth provide: 
     GeneralConfig config;
-    config.SetString("server_type", "SYNC");
+    config.SetString("sync_type", "SYNC");
     config.SetString("target", target);
 */
 std::unique_ptr<ServerService> CreateServer(const GeneralConfig config) {
   std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
       "qq_mem_uncompressed");
 
-  if (config.GetString("server_type") == "SYNC") {
+  if (config.GetString("sync_type") == "SYNC") {
     std::unique_ptr<ServerService> server(new SyncServer(config, std::move(engine)));
     return server;
-  } else if (config.GetString("server_type") == "ASYNC") {
+  } else if (config.GetString("sync_type") == "ASYNC") {
     std::unique_ptr<ServerService> server(new AsyncServer(config, std::move(engine)));
     return server;
   } else {
-    throw std::runtime_error("server_type " + config.GetString("server_type") 
+    throw std::runtime_error("sync_type " + config.GetString("sync_type") 
         + " is not supported.");
   }
 }
