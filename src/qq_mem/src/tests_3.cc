@@ -61,22 +61,22 @@ TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
       config.SetInt("n_client_channels", 100);
       config.SetInt("n_rpcs_per_channel", 10);
       config.SetInt("n_messages_per_call", 1);
-      config.SetInt("n_async_threads", 2); 
+      config.SetInt("n_threads", 2); 
       config.SetInt("n_threads_per_cq", 1);
       config.SetInt("benchmark_duration", 2);
       config.SetBool("save_reply", true);
 
       auto query_pool_array = create_query_pool_array(TermList{"body"}, 
-          config.GetInt("n_async_threads"));
+          config.GetInt("n_threads"));
       auto client = CreateAsyncClient(config, std::move(query_pool_array));
       client->Wait();
       auto reply_pools = client->GetReplyPools();
 
-      for (int i = 0; i < config.GetInt("n_async_threads"); i++) {
+      for (int i = 0; i < config.GetInt("n_threads"); i++) {
         LOG(INFO) << "reply pool size: " << reply_pools->at(i).size();
       }
 
-      REQUIRE(reply_pools->size() == config.GetInt("n_async_threads"));
+      REQUIRE(reply_pools->size() == config.GetInt("n_threads"));
       auto n_replies_in_this_pool = reply_pools->at(0).size();
       auto this_pool = reply_pools->at(0);
       REQUIRE(n_replies_in_this_pool > 0);
@@ -112,13 +112,13 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
   config.SetInt("n_client_channels", 64);
   config.SetInt("n_rpcs_per_channel", 100);
   config.SetInt("n_messages_per_call", 100);
-  config.SetInt("n_async_threads", 8); 
+  config.SetInt("n_threads", 8); 
   config.SetInt("n_threads_per_cq", 1);
   config.SetInt("benchmark_duration", 2);
   config.SetBool("save_reply", true);
 
   auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
-      config.GetInt("n_async_threads"));
+      config.GetInt("n_threads"));
   auto client = CreateAsyncClient(config, std::move(query_pool_array));
   client->Wait();
   client.release();

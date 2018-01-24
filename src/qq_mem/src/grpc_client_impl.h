@@ -189,6 +189,158 @@ struct PerThreadShutdownState {
 };
 
 
+class RPCContext {
+ public:
+  RPCContext(CompletionQueue* cq, QQEngine::Stub* stub, 
+             int n_messages_per_call, std::vector<int> &finished_call_counts,
+             std::vector<int> &finished_roundtrips)
+    :cq_(cq), stub_(stub), next_state_(State::INITIALIZED), 
+    n_messages_per_call_(n_messages_per_call), 
+    n_issued_(0),
+    finished_call_counts_(finished_call_counts),
+    finished_roundtrips_(finished_roundtrips)
+  {
+      req_.add_terms("hello");
+      Start();
+  } 
+
+  void Start() {
+    // get a stream, start call, init state
+    stream_ = stub_->PrepareAsyncStreamingSearch(&context_, cq_);
+
+    // this must go before StartCall(), otherwise another thread
+    // may get an event about this context and call RunNextState()
+    // when next_state_ is still State::INITIALIZED
+    next_state_ = State::STREAM_IDLE; 
+
+    stream_->StartCall(RPCContext::tag(this));
+  }
+
+  void TryCancel() {
+    context_.TryCancel();
+  }
+
+  bool RunNextState(bool ok, int thread_idx, Histogram *hist, 
+      QueryPool *query_pool, ReplyPool *reply_pool, bool save_reply) {
+    TermList terms;
+    int i;
+
+    while (true) {
+      switch (next_state_) {
+        case State::STREAM_IDLE:
+          next_state_ = State::READY_TO_WRITE;
+          break;  // loop around, so we proceed to writing.
+        case State::WAIT:
+          // We do not wait in this client
+          GPR_ASSERT(false);
+        case State::READY_TO_WRITE:
+          if (!ok) {
+            return false;
+          }
+          
+          req_.clear_terms();
+          req_.set_n_results(10);
+          terms = query_pool->Next();    
+          for (i = 0; i < terms.size(); i++) {
+            req_.add_terms(terms[i]);
+          }
+
+          start_ = utils::now();
+          next_state_ = State::WRITE_DONE;
+          stream_->Write(req_, RPCContext::tag(this));
+          return true;
+        case State::WRITE_DONE:
+          if (!ok) {
+            return false;
+          }
+          next_state_ = State::READ_DONE;
+          stream_->Read(&reply_, RPCContext::tag(this));
+          return true;
+        case State::READ_DONE:
+          ++n_issued_;
+          finished_roundtrips_[thread_idx]++;
+
+          if (save_reply == true) {
+            reply_pool->push_back(reply_);
+          }
+
+          end_ = utils::now();
+          duration_ = utils::duration(start_, end_);
+          hist->Add(duration_ * HISTOGRAM_TIME_SCALE);
+
+          if (n_issued_ < n_messages_per_call_) {
+            // has more to do
+            next_state_ = State::STREAM_IDLE;
+            break; // loop around to the next state immediately
+          } else {
+            next_state_ = State::WRITES_DONE_DONE;
+            stream_->WritesDone(RPCContext::tag(this));
+            return true;
+          }
+        case State::WRITES_DONE_DONE:
+          next_state_ = State::FINISH_DONE;
+          stream_->Finish(&status_, RPCContext::tag(this));
+          return true;
+        case State::FINISH_DONE:
+          finished_call_counts_[thread_idx]++;
+          next_state_ = State::FINISH_DONE_DONE;
+          return false;
+        default:
+          std::cout << "State: INITIALIZED " 
+            << (next_state_ == State::INITIALIZED) << std::endl;
+          std::cout << "State: FINISH_DONE_DONE " 
+            << (next_state_ == State::FINISH_DONE_DONE) << std::endl;
+          GPR_ASSERT(false);
+          return false;
+      }
+    }
+    return true;
+  }
+
+  void StartNewClone() {
+    auto* clone = new RPCContext(cq_, stub_, n_messages_per_call_, 
+                                 finished_call_counts_, finished_roundtrips_);
+    // clone->Start();
+  }
+
+  static void* tag(RPCContext *c) { return reinterpret_cast<void*>(c); }
+  static RPCContext* detag(void* t) {
+    return reinterpret_cast<RPCContext*>(t);
+  }
+
+ private:
+  enum State {
+    INVALID,
+    STREAM_IDLE,
+    WAIT,
+    READY_TO_WRITE,
+    WRITE_DONE,
+    READ_DONE,
+    WRITES_DONE_DONE,
+    FINISH_DONE,
+    INITIALIZED,
+    FINISH_DONE_DONE
+  };
+
+  int n_messages_per_call_; 
+  int n_issued_;
+  QQEngine::Stub* stub_;
+  ClientContext context_;
+  CompletionQueue* cq_;
+  SearchRequest req_;
+  SearchReply reply_;
+  State next_state_;
+  Status status_;
+  std::unique_ptr<grpc::ClientAsyncReaderWriter<SearchRequest, SearchReply>> stream_;
+  std::vector<int> &finished_call_counts_;
+  std::vector<int> &finished_roundtrips_;
+  utils::time_point start_, end_;
+  double duration_;
+};
+
+
+
+
 
 class Client {
  public:
@@ -259,14 +411,13 @@ class Client {
     }
   }
 
-  void DestroyMultithreading() {
+  virtual void DestroyMultithreading() {
     std::cout << "Destroying threads..." << std::endl;
     for (auto ss = shutdown_state_.begin(); ss != shutdown_state_.end(); ++ss) {
       std::lock_guard<std::mutex> lock((*ss)->mutex);
       (*ss)->shutdown = true;
     }
     std::cout << "Threads are destroyed." << std::endl;
-
   }
 
   virtual void ThreadFunc(int thread_idx) = 0;
@@ -283,6 +434,12 @@ class Client {
 
   void ShowStats() {
     std::cout << "Finished round trips: " << GetTotalRoundtrips() << std::endl;
+
+    auto n_secs = config_.GetInt("benchmark_duration");
+    std::cout << "Duration: " << n_secs << std::endl;
+    std::cout << "Total roundtrips: " << GetTotalRoundtrips() << std::endl;
+    std::cout << "Roundtrip Per Second: " 
+      << GetTotalRoundtrips() / n_secs << std::endl;
 
     Histogram hist_all;
     for (auto & histogram : histograms_) {
@@ -332,8 +489,6 @@ class Client {
   ReplyPools reply_pools_;
   bool save_reply_;
 };
-
-
 
 
 class SyncStreamingClient: public Client {
@@ -414,53 +569,106 @@ class SyncStreamingClient: public Client {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-class AsyncClient {
+class AsyncClient: public Client {
  public:
   AsyncClient() = default;
   AsyncClient(AsyncClient&&) = default;
   AsyncClient& operator=(AsyncClient&&) = default;
 
   AsyncClient(const GeneralConfig config,
-    std::unique_ptr<QueryPoolArray> query_pool_array);
-  void DestroyMultithreading();
-  void Wait();
-  void ShowStats();
-  const ReplyPools *GetReplyPools() {
-    return &reply_pools_;  
-  };
-  ~AsyncClient();
+    std::unique_ptr<QueryPoolArray> query_pool_array)
+    :Client(config, std::move(query_pool_array))
+  {
+    int tpc = config.GetInt("n_threads_per_cq");
+    int num_async_threads = config.GetInt("n_threads");
+    int n_client_channels = config.GetInt("n_client_channels");
+    int n_rpcs_per_channel = config.GetInt("n_rpcs_per_channel");
 
-  void ThreadFunc(int thread_idx);
+    std::cout << "n_threads_per_cq: " << tpc << std::endl;
+    std::cout << "num_async_threads: " << num_async_threads << std::endl;
+    std::cout << "n_client_channels: " << n_client_channels << std::endl;
+    std::cout << "n_rpcs_per_channel: " << n_rpcs_per_channel << std::endl;
+
+    // Initialize completion queues
+    int num_cqs = (num_async_threads + tpc - 1) / tpc;  // ceiling operator
+    for (int i = 0; i < num_cqs; i++) {
+      std::cout << "Creating CQ " << i << std::endl;
+      cli_cqs_.emplace_back(new CompletionQueue);
+    }
+
+    // completion queue index for a thread
+    for (int i = 0; i < num_async_threads; i++) {
+      cq_.emplace_back(i % cli_cqs_.size());
+    }
+    
+    int t = 0;
+    for (int ch = 0; ch < n_client_channels; ch++) {
+      for (int i = 0; i < n_rpcs_per_channel; i++) {
+        auto* cq = cli_cqs_[t].get();
+        auto ctx = new RPCContext(
+            cq, 
+            channels_[ch].get_stub(),
+            config.GetInt("n_messages_per_call"), 
+            finished_call_counts_,
+            finished_roundtrips_);
+      }
+      t = (t + 1) % cli_cqs_.size();
+    }
+
+    StartThreads();
+  }
+
+  void DestroyMultithreading() {
+    for (auto ss = shutdown_state_.begin(); ss != shutdown_state_.end(); ++ss) {
+      std::lock_guard<std::mutex> lock((*ss)->mutex);
+      (*ss)->shutdown = true;
+    }
+
+    for (auto cq = cli_cqs_.begin(); cq != cli_cqs_.end(); cq++) {
+      (*cq)->Shutdown();
+    }
+  }
+
+  ~AsyncClient() {
+    for (auto cq = cli_cqs_.begin(); cq != cli_cqs_.end(); cq++) {
+      void* got_tag;
+      bool ok;
+      while ((*cq)->Next(&got_tag, &ok)) {
+        delete RPCContext::detag(got_tag);
+      }
+    }
+  }
+
+  void ThreadFunc(int thread_idx) {
+    void* got_tag;
+    bool ok;
+
+    while (cli_cqs_[cq_[thread_idx]]->Next(&got_tag, &ok)) {
+      RPCContext* ctx = RPCContext::detag(got_tag);
+
+      std::lock_guard<std::mutex> l(shutdown_state_[thread_idx]->mutex);
+      if (shutdown_state_[thread_idx]->shutdown == true) {
+        ctx->TryCancel();
+        delete ctx;
+        break;
+      }
+
+      if (!ctx->RunNextState(ok, thread_idx, &histograms_[thread_idx], 
+            query_pool_array_->GetPool(thread_idx),
+            &reply_pools_[thread_idx], save_reply_)) 
+      {
+        ctx->StartNewClone();
+        delete ctx;
+      } 
+    }
+
+    std::cout << "Thread " << thread_idx << " ends" << std::endl;
+  }
 
  private:
-  const GeneralConfig config_;
-  std::vector<ChannelInfo> channels_;
   std::vector<std::unique_ptr<CompletionQueue>> cli_cqs_;
-
-  std::vector<std::thread> threads_;
   std::vector<int> cq_; //cq_[thread id]
-
-  std::vector<int> finished_call_counts_;
-  std::vector<int> finished_roundtrips_;
-  std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
-  std::vector<Histogram> histograms_;
-  std::unique_ptr<QueryPoolArray> query_pool_array_;
-  ReplyPools reply_pools_;
-  bool save_reply_;
 };
-
 
 
 class SyncUnaryClient: public Client {

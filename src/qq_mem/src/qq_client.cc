@@ -12,16 +12,16 @@ void bench_async_client(const int n_threads) {
   config.SetInt("n_client_channels", 64);
   config.SetInt("n_rpcs_per_channel", 100);
   config.SetInt("n_messages_per_call", 100000);
-  config.SetInt("n_async_threads", n_threads); 
+  config.SetInt("n_threads", n_threads); 
   config.SetInt("n_threads_per_cq", 1);
   config.SetInt("benchmark_duration", 5);
   config.SetBool("save_reply", false);
 
   auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
-      config.GetInt("n_async_threads"));
+      config.GetInt("n_threads"));
   // auto query_pool_array = create_query_pool_array(
       // "/mnt/ssd/downloads/wiki_QueryLog_tokenized",
-      // config.GetInt("n_async_threads"));
+      // config.GetInt("n_threads"));
 
   auto async_client = CreateAsyncClient(config, std::move(query_pool_array));
   async_client->Wait();
