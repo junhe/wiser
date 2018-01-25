@@ -14,6 +14,7 @@
 #include "utils.h"
 #include "general_config.h"
 #include "query_pool.h"
+#include "posting_message.pb.h"
 
 
 typedef RankingPostingWithOffsets PostingWO;
@@ -27,7 +28,7 @@ class PostingGenerator {
 
   PostingWO Next() {
     int cur_doc_id = next_doc_id_;
-    next_doc_id_ += Rand(100);
+    next_doc_id_ += Rand(1, 100);
     int term_frequency = Rand(100);
     OffsetPairs offset_pairs = GeneratePairs();
     
@@ -54,14 +55,31 @@ class PostingGenerator {
     return pairs;
   }
 
-  int Rand(int limit) {
-    return rand() % limit;
+  int Rand(int low, int high) {
+    return low + rand() % (high - low);
+  }
+
+  int Rand(int high) {
+    return rand() % high;
   }
 
  private:
   int next_doc_id_ = 0;
 };
 
+void add_to_pb_posting(posting_message::PostingList *postinglist_pb,
+    PostingWO posting) {
+  posting_message::Posting *pb_posting = postinglist_pb->add_postings();
+  pb_posting->set_docid(posting.GetDocId());
+  pb_posting->set_term_frequency(posting.GetTermFreq());
+
+  const OffsetPairs *from_pairs = posting.GetOffsetPairs();
+  for (auto from_pair : *from_pairs) {
+    posting_message::Offset *pair = pb_posting->add_positions();
+    pair->set_start_offset(std::get<0>(from_pair));
+    pair->set_end_offset(std::get<1>(from_pair));
+  }
+}
 
 int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
@@ -71,12 +89,23 @@ int main(int argc, char **argv) {
 
   PostingGenerator gen;
   PostingList_Vec<PostingWO> postinglist_vec("hello");
-  for(int i = 0; i < 10; i++) {
+  posting_message::PostingList postinglist_pb;
+
+  for(int i = 0; i < 1000000; i++) {
     auto posting = gen.Next();
-    std::cout << posting.ToString() << std::endl;
-    postinglist_vec.AddPosting(posting);
+    // std::cout << posting.ToString() << std::endl;
+
+    // Add to Vec
+    // postinglist_vec.AddPosting(posting);
+
+    // Add to Protobuf
+    add_to_pb_posting(&postinglist_pb, posting);
   }
 
+  std::cout << "Size of posting list (vec): " << postinglist_vec.Size() << std::endl;
+  std::cout << "Size of posting list (pb) : " << postinglist_pb.postings_size() << std::endl;
+
+  std::cout << "Done, just waiting to be killed..." << std::endl;
 
   utils::sleep(10000);
 }
