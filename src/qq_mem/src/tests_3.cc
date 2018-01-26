@@ -234,7 +234,6 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     pl03.AddPosting(PostingWO(i, 3, offset_pairs));
   }
 
-
   // Setting doc length this will give doc 4 the highest score 
   // because the document is the shortest.
   DocLengthStore store;
