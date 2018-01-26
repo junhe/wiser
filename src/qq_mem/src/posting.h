@@ -112,7 +112,7 @@ class RankingPostingWithOffsets: public RankingPosting {
   }
 
   // content_size | doc_id_delta | TF | off1 | off2 | off1 | off2 | ...
-  std::string Encode() {
+  std::string Encode() const {
     VarintBuffer buf;
 
     buf.Append(doc_id_);

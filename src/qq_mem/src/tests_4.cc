@@ -140,9 +140,28 @@ TEST_CASE( "Encoding posting", "[encoding]" ) {
 
 
 TEST_CASE( "Posting List Delta", "[postinglist]" ) {
-  SECTION("Add posting") {
-    
+  OffsetPairs offset_pairs;
+  for (int i = 0; i < 10; i++) {
+    offset_pairs.push_back(std::make_tuple(1, 2)); 
   }
+
+  RankingPostingWithOffsets posting(3, 4, offset_pairs); 
+
+  SECTION("Add posting") {
+    PostingListDelta pl("hello");
+    REQUIRE(pl.Size() == 0);
+
+    pl.AddPosting(posting);
+
+    REQUIRE(pl.Size() == 1);
+    REQUIRE(pl.ByteCount() == posting.Encode().size());
+
+    pl.AddPosting(posting);
+
+    REQUIRE(pl.Size() == 2);
+    REQUIRE(pl.ByteCount() == posting.Encode().size() * 2);
+  }
+
 }
 
 

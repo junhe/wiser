@@ -39,6 +39,10 @@ class VarintBuffer {
     return std::string(data_, 0, end_);
   }
 
+  const std::string *DataPointer() {
+    return &data_;
+  }
+
  private:
   std::string data_;
   int end_ = 0;
