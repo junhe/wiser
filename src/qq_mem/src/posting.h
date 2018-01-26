@@ -105,7 +105,7 @@ class VarintBuffer {
   }
 
   std::string Data() {
-    return data_;
+    return std::string(data_, 0, end_);
   }
 
  private:
@@ -141,7 +141,7 @@ class RankingPostingWithOffsets: public RankingPosting {
     return oss.str();
   }
 
-  // num of bytes starting from doc_id_delta | doc_id_delta | TF | off1 | off2 | off1 | off2 | ...
+  // content_size | doc_id_delta | TF | off1 | off2 | off1 | off2 | ...
   std::string Encode() {
     VarintBuffer buf;
 
@@ -157,7 +157,6 @@ class RankingPostingWithOffsets: public RankingPosting {
 
     return buf.Data();
   }
-
 };
 
 #endif
