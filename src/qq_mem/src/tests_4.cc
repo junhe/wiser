@@ -1,8 +1,10 @@
 #include "catch.hpp"
 
 #include "utils.h"
+#include "compression.h"
 #include "posting.h"
 #include "posting_list_delta.h"
+
 
 
 void test_encoding(uint32_t val) {
@@ -74,7 +76,7 @@ TEST_CASE( "varint", "[varint]" ) {
 }
 
 TEST_CASE( "VarintBuffer", "[varint]" ) {
-  SECTION("Append and prepend") {
+  SECTION("Append and prepend number") {
     VarintBuffer buf;
     REQUIRE(buf.End() == 0);
 
@@ -91,6 +93,18 @@ TEST_CASE( "VarintBuffer", "[varint]" ) {
     REQUIRE(data[0] == 2);
 
     REQUIRE(data.size() == 2);
+  }
+
+  SECTION("Append and prepend string buffer") {
+    VarintBuffer buf;
+    buf.Append("abc");
+    buf.Append("def");
+    REQUIRE(buf.Size() == 6);
+    REQUIRE(buf.Data() == "abcdef");
+
+    buf.Prepend("01");
+    REQUIRE(buf.Size() == 8);
+    REQUIRE(buf.Data() == "01abcdef");
   }
 }
 
@@ -110,15 +124,16 @@ TEST_CASE( "Encoding posting", "[encoding]" ) {
       offset_pairs.push_back(std::make_tuple(1, 2)); 
     }
 
-    RankingPostingWithOffsets posting(3, 4); 
+    RankingPostingWithOffsets posting(3, 4, offset_pairs); 
     std::string buf = posting.Encode();
     REQUIRE(buf[0] == 22); // content size: 2 + 2 * 10 = 22
     REQUIRE(buf[1] == 3); // doc id
     REQUIRE(buf[2] == 4); //  TF
 
+    const auto PRE = 3; // size | doc_id | TF | 
     for (int i = 0; i < 10; i++) {
-      REQUIRE(buf[2 * i] == 1);
-      REQUIRE(buf[2 * i + 1] == 1);
+      REQUIRE(buf[PRE + 2 * i] == 1);
+      REQUIRE(buf[PRE + 2 * i + 1] == 2);
     }
   }
 }
@@ -126,7 +141,7 @@ TEST_CASE( "Encoding posting", "[encoding]" ) {
 
 TEST_CASE( "Posting List Delta", "[postinglist]" ) {
   SECTION("Add posting") {
-
+    
   }
 }
 

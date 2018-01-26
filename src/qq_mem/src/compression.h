@@ -17,6 +17,16 @@ class VarintBuffer {
     end_ += len;
   }
 
+  void Append(const std::string &buf) {
+    data_.insert(end_, buf);
+    end_ += buf.size();
+  }
+
+  void Prepend(const std::string &buf) {
+    data_.insert(0, buf);
+    end_ += buf.size();
+  }
+
   int Size() {
     return end_;
   }

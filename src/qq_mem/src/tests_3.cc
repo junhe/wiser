@@ -385,7 +385,7 @@ TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
   }
 }
 
-TEST_CASE( "SyncStreamingClient", "[grpc0]" ) {
+TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
   GeneralConfig server_config;
   server_config.SetString("sync_type", "SYNC");
 
