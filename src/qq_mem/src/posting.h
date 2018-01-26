@@ -1,8 +1,6 @@
 #ifndef POSTING_H
 #define POSTING_H
 
-#include "engine_services.h"
-#include "types.h"
 #include <unordered_map>
 #include <cereal/types/vector.hpp>
 #include <cereal/types/tuple.hpp>
@@ -10,6 +8,11 @@
 #include <cereal/types/unordered_map.hpp>
 #include <cereal/archives/binary.hpp>
 #include <sstream>
+
+#include "engine_services.h"
+#include "types.h"
+#include "utils.h"
+
 
 // TODO will delete them
 typedef int Position;
@@ -79,6 +82,36 @@ class RankingPosting : public QqMemPostingService {
   }
 };
 
+class VarintBuffer {
+ public:
+  void Append(uint32_t val) {
+    int len = utils::varint_expand_and_encode(val, &data_, end_);
+    end_ += len;
+  }
+
+  void Prepend(uint32_t val) {
+    std::string tmp_buf;
+    int len = utils::varint_expand_and_encode(val, &tmp_buf, 0);
+    data_.insert(0, tmp_buf, 0, len);
+    end_ += len;
+  }
+
+  int Size() {
+    return end_;
+  }
+
+  int End() {
+    return end_;
+  }
+
+  std::string Data() {
+    return data_;
+  }
+
+ private:
+  std::string data_;
+  int end_ = 0;
+};
 
 // This is class is created because I do not want to modify 
 // RankingPosting. The modifications would incur changes in many other places.
@@ -107,6 +140,24 @@ class RankingPostingWithOffsets: public RankingPosting {
 
     return oss.str();
   }
+
+  // num of bytes starting from doc_id_delta | doc_id_delta | TF | off1 | off2 | off1 | off2 | ...
+  std::string Encode() {
+    VarintBuffer buf;
+
+    buf.Append(doc_id_);
+    buf.Append(term_frequency_);
+
+    for (auto & pair : offset_pairs_) {
+      buf.Append(std::get<0>(pair));
+      buf.Append(std::get<1>(pair));
+    }
+
+    buf.Prepend(buf.Size());
+
+    return buf.Data();
+  }
+
 };
 
 #endif
