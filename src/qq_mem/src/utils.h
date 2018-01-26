@@ -179,8 +179,8 @@ std::string format_with_commas(T value)
 
 
 std::string str_qq_search_reply(const qq::SearchReply &reply);
-int varint_decode(char *buf, uint32_t *value);
-int varint_encode(uint32_t value, char *buf);
+int varint_encode(uint32_t value, std::string *buf, int offset);
+int varint_decode(const std::string &buf, int offset, uint32_t *value);
 
 } // namespace util
 #endif
