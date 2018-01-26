@@ -236,15 +236,13 @@ int varint_encode(uint32_t value, char *buf) {
   int i = 0;
   // inv: value has what left to be encoded
   //      buf[0, i) has encoded bytes
-  //      buf[i] is the location to put next byt
+  //      buf[i] is the location to put next byte
   //      i is the number of encoded bytes
   while (i == 0 || value > 0) {
-    // inv 
     buf[i] = (value & 0x7f) | 0x80; // always set MSB
     value >>= 7;
     i++;
   }
-  // post condition: i > 0 && value = 0
   buf[i - 1] &= 0x7f;
   return i;
 }
