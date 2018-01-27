@@ -32,6 +32,43 @@ class PostingDeltaReader {
 };
 
 
+
+class OffsetPairsIterator {
+ public:
+  OffsetPairsIterator(const VarintBuffer *data, int byte_offset, 
+      const int end_offset)
+    :data_(data), byte_offset_(byte_offset), end_offset_(end_offset),
+     pair_index_(0) {}
+
+  bool Advance(OffsetPair *pair) {
+    if (byte_offset_ == end_offset_) {
+      return false;
+    }
+    
+    uint32_t n;
+    int len;
+
+    const std::string *data = data_->DataPointer();
+
+    len = utils::varint_decode(*data, byte_offset_, &n);
+    byte_offset_ += len;
+    std::get<0>(*pair) = n;
+
+    len = utils::varint_decode(*data, byte_offset_, &n);
+    byte_offset_ += len;
+    std::get<1>(*pair) = n;
+
+    return true;
+  }
+
+ private:
+  const VarintBuffer *data_;
+  int byte_offset_; 
+  const int end_offset_; // the start offset of the next posting
+  int pair_index_;
+};
+
+
 class PostingListDeltaIterator {
  public:
   PostingListDeltaIterator(const VarintBuffer *data, 
@@ -50,11 +87,10 @@ class PostingListDeltaIterator {
   }
 
   bool Advance() {
-    if (cur_posting_index_ == total_postings_) {
+    if (IsEnd()) {
       return false;
     }
 
-    assert(cache_.next_posting_byte_offset_ != -1);
     byte_offset_ = cache_.next_posting_byte_offset_; 
     cur_posting_index_++;
 
@@ -76,6 +112,16 @@ class PostingListDeltaIterator {
 
   int OffsetPairStart() {
     return cache_.cur_offset_pairs_start_;
+  }
+
+  OffsetPairsIterator OffsetPairsBegin() {
+    if (IsEnd()) {
+      LOG(FATAL) 
+        << "Trying to get offset iterator from a empty posting iterator\n";
+    }
+    return OffsetPairsIterator(data_, 
+                               cache_.cur_offset_pairs_start_,
+                               cache_.next_posting_byte_offset_);
   }
 
   int CurContentBytes() {
