@@ -142,7 +142,7 @@ TEST_CASE( "Encoding posting", "[encoding]" ) {
 TEST_CASE( "Posting List Delta", "[postinglist]" ) {
   OffsetPairs offset_pairs;
   for (int i = 0; i < 10; i++) {
-    offset_pairs.push_back(std::make_tuple(1, 2)); 
+    offset_pairs.push_back(std::make_tuple(i * 2, i * 2 + 1)); 
   }
 
   RankingPostingWithOffsets postingA(3, 4, offset_pairs); 
@@ -164,16 +164,21 @@ TEST_CASE( "Posting List Delta", "[postinglist]" ) {
 
     SECTION("PostingDeltaIterator") {
       auto it = pl.Begin();
+      REQUIRE(it.IsEnd() == false);
       REQUIRE(it.DocId() == 3);
       REQUIRE(it.TermFreq() == 4);
       REQUIRE(it.OffsetPairStart() == 3); // size|id|tf|offset
       REQUIRE(it.CurContentBytes() == postingA.Encode().size() - 1); // size|id|tf|offset
 
       it.Advance();
+      REQUIRE(it.IsEnd() == false);
       REQUIRE(it.DocId() == 8);
       REQUIRE(it.TermFreq() == 9);
       REQUIRE(it.OffsetPairStart() == postingA.Encode().size() + 3); // size|id|tf|offset
       REQUIRE(it.CurContentBytes() == postingB.Encode().size() - 1); // size|id|tf|offset
+
+      it.Advance();
+      REQUIRE(it.IsEnd() == true);
     }
   }
 }

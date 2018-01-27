@@ -50,7 +50,7 @@ class PostingListDeltaIterator {
   }
 
   bool Advance() {
-    if (cur_posting_index_ == total_postings_ - 1) {
+    if (cur_posting_index_ == total_postings_) {
       return false;
     }
 
@@ -60,6 +60,10 @@ class PostingListDeltaIterator {
 
     DecodeToCache();
     return true;
+  }
+
+  bool IsEnd() {
+    return cur_posting_index_ == total_postings_;
   }
 
   DocIdType DocId() {
