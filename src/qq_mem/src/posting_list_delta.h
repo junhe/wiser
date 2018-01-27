@@ -42,6 +42,15 @@ class OffsetPairsIterator {
 };
 
 
+struct SpanMeta {
+  DocIdType start_doc_id;
+  int start_posting_index;
+  int start_offset;
+
+  SpanMeta(DocIdType id, int index, int offset)
+    : start_doc_id(id), start_posting_index(index), start_offset(offset) {}
+};
+
 class PostingListDeltaIterator {
  public:
   PostingListDeltaIterator(const VarintBuffer *data, 
@@ -69,6 +78,35 @@ class PostingListDeltaIterator {
 
     DecodeToCache();
     return true;
+  }
+
+  bool HasSkip() const {
+    // return cur_posting_index_ % skip_span_ == 0 && 
+      // cur_posting_index_ + skip_span_ < total_postings_;
+  }
+
+  DocIdType SkipDocId() const {
+    // assert(HasSkip());
+    // int span_index = cur_posting_index_ / skip_span_;  
+    
+  }
+
+  void SkipForward(DocIdType doc_id) {
+    // Move the iterator to a posting that has a doc id that is 
+    // larger or equal to doc_id
+    // It moves to the end if it cannout find such posting
+    // TODO: Advance() with less cost
+
+    // loop inv: 
+    //   posting[0, cur_posting_index_).doc_id < doc_id
+    //   byte_offset_ is the offset of posting[cur_posting_index_]
+    //   prev_doc_id_ is the doc id of posting[cur_posting_index_ - 1]
+    //   cache_ has the data of posting[cur_posting_index_]
+
+    // while (cur_posting_index_ < total_postings && cache_.cur_doc_id_ < doc_id) {
+      // if (HasSkip() && 
+    // }
+
   }
 
   bool IsEnd() {
