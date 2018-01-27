@@ -160,6 +160,12 @@ TEST_CASE( "Posting List Delta", "[postinglist]" ) {
 
     REQUIRE(pl.Size() == 2);
     REQUIRE(pl.ByteCount() == posting.Encode().size() * 2);
+
+    SECTION("PostingDeltaReader") {
+      auto it = pl.Begin();
+      // REQUIRE(it->DocId() == 3);
+      // REQUIRE(it->TermFreq() == 4);
+    }
   }
 
 }
