@@ -145,29 +145,37 @@ TEST_CASE( "Posting List Delta", "[postinglist]" ) {
     offset_pairs.push_back(std::make_tuple(1, 2)); 
   }
 
-  RankingPostingWithOffsets posting(3, 4, offset_pairs); 
+  RankingPostingWithOffsets postingA(3, 4, offset_pairs); 
+  RankingPostingWithOffsets postingB(8, 9, offset_pairs); 
 
   SECTION("Add posting") {
     PostingListDelta pl("hello");
     REQUIRE(pl.Size() == 0);
 
-    pl.AddPosting(posting);
+    pl.AddPosting(postingA);
 
     REQUIRE(pl.Size() == 1);
-    REQUIRE(pl.ByteCount() == posting.Encode().size());
+    REQUIRE(pl.ByteCount() == postingA.Encode().size());
 
-    pl.AddPosting(posting);
+    pl.AddPosting(postingB);
 
     REQUIRE(pl.Size() == 2);
-    REQUIRE(pl.ByteCount() == posting.Encode().size() * 2);
+    REQUIRE(pl.ByteCount() == postingB.Encode().size() * 2);
 
-    SECTION("PostingDeltaReader") {
+    SECTION("PostingDeltaIterator") {
       auto it = pl.Begin();
-      // REQUIRE(it->DocId() == 3);
-      // REQUIRE(it->TermFreq() == 4);
+      REQUIRE(it.DocId() == 3);
+      REQUIRE(it.TermFreq() == 4);
+      REQUIRE(it.OffsetPairStart() == 3); // size|id|tf|offset
+      REQUIRE(it.CurContentBytes() == postingA.Encode().size() - 1); // size|id|tf|offset
+
+      it.Advance();
+      REQUIRE(it.DocId() == 8);
+      REQUIRE(it.TermFreq() == 9);
+      REQUIRE(it.OffsetPairStart() == postingA.Encode().size() + 3); // size|id|tf|offset
+      REQUIRE(it.CurContentBytes() == postingB.Encode().size() - 1); // size|id|tf|offset
     }
   }
-
 }
 
 

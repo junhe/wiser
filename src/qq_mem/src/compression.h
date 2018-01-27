@@ -35,11 +35,12 @@ class VarintBuffer {
     return end_;
   }
 
+  // CAUTION! It returns a copy!
   std::string Data() {
     return std::string(data_, 0, end_);
   }
 
-  const std::string *DataPointer() {
+  const std::string *DataPointer() const {
     return &data_;
   }
 
