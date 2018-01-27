@@ -15,6 +15,7 @@
 #include "general_config.h"
 #include "query_pool.h"
 #include "posting_message.pb.h"
+#include "posting_list_delta.h"
 
 
 typedef RankingPostingWithOffsets PostingWO;
@@ -28,17 +29,19 @@ class PostingGenerator {
 
   PostingWO Next() {
     int cur_doc_id = next_doc_id_;
-    next_doc_id_ += Rand(1, 100);
+    int delta = Rand(1, 100);
+    next_doc_id_ += delta;
     int term_frequency = Rand(100);
     OffsetPairs offset_pairs = GeneratePairs();
     
-    PostingWO posting(cur_doc_id, term_frequency, offset_pairs);
+    PostingWO posting(next_doc_id_, term_frequency, offset_pairs);
 
     return posting;
   }
 
   OffsetPairs GeneratePairs() {
     OffsetPairs pairs;
+    return pairs;
 
     int n_pairs = Rand(100);
     int cur_offset = Rand(2000);
@@ -89,21 +92,26 @@ int main(int argc, char **argv) {
 
   PostingGenerator gen;
   PostingList_Vec<PostingWO> postinglist_vec("hello");
+  PostingListDelta postinglist_delta("hello", 1000);
   posting_message::PostingList postinglist_pb;
 
-  for(int i = 0; i < 1000000; i++) {
+  std::cout << "Indexing ... " << std::endl;
+  for(int i = 0; i < 10000000; i++) {
     auto posting = gen.Next();
     // std::cout << posting.ToString() << std::endl;
 
     // Add to Vec
-    // postinglist_vec.AddPosting(posting);
+    postinglist_vec.AddPosting(posting);
 
     // Add to Protobuf
-    add_to_pb_posting(&postinglist_pb, posting);
+    // add_to_pb_posting(&postinglist_pb, posting);
+
+    // postinglist_delta.AddPosting(posting);
   }
 
   std::cout << "Size of posting list (vec): " << postinglist_vec.Size() << std::endl;
   std::cout << "Size of posting list (pb) : " << postinglist_pb.postings_size() << std::endl;
+  std::cout << "Size of posting list (delta) : " << postinglist_delta.Size() << std::endl;
 
   std::cout << "Done, just waiting to be killed..." << std::endl;
 

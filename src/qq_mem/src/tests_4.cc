@@ -187,6 +187,7 @@ void test_posting_list_delta( RankingPostingWithOffsets postingA,
     test_offset_iterator(offset_it, original_pairs);
   }
 
+  // Iterate
   it.Advance();
   REQUIRE(it.IsEnd() == false);
   REQUIRE(it.DocId() == postingB.GetDocId());
@@ -194,6 +195,7 @@ void test_posting_list_delta( RankingPostingWithOffsets postingA,
   REQUIRE(it.OffsetPairStart() == postingA.Encode().size() + 3); // size|id|tf|offset
   REQUIRE(it.CurContentBytes() == postingB.Encode().size() - 1); // size|id|tf|offset
 
+  // check offsets
   {
     auto offset_it = it.OffsetPairsBegin();
     auto original_pairs = *postingB.GetOffsetPairs();

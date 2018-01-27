@@ -6,33 +6,6 @@
 #include "compression.h"
 
 
-class PostingDeltaReader {
- public:
-  PostingDeltaReader(const std::string *posting_list, const int offset)
-    :posting_list_(posting_list), offset_(offset) 
-  {}
-
-  DocIdType GetDocId() const {
-
-  }
-
-  int GetTermFreq() const {
-
-  }
-
-  // GetPosting(some iterator)
-  // GetOffsetPairs()
-
-  int GetByteCount() const {
-  }
-
- private:
-  const std::string *posting_list_;
-  const int offset_;
-};
-
-
-
 class OffsetPairsIterator {
  public:
   OffsetPairsIterator(const VarintBuffer *data, int byte_offset, 
