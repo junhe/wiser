@@ -43,18 +43,20 @@ class OffsetPairsIterator {
 
 
 struct SpanMeta {
-  DocIdType start_doc_id;
-  int start_posting_index;
+  DocIdType prev_doc_id; // doc ID right before this span
   int start_offset;
 
-  SpanMeta(DocIdType id, int index, int offset)
-    : start_doc_id(id), start_posting_index(index), start_offset(offset) {}
+  SpanMeta(DocIdType id, int offset)
+    : prev_doc_id(id), start_offset(offset) {}
 };
+
+// typedef std::vector<DocIdType> SkipIndex;
+typedef std::vector<SpanMeta> SkipIndex;
 
 class PostingListDeltaIterator {
  public:
   PostingListDeltaIterator(const VarintBuffer *data, 
-                           const std::vector<DocIdType> *skip_index,
+                           const SkipIndex *skip_index,
                            const int total_postings,
                            DocIdType prev_doc_id, 
                            int byte_offset)
@@ -161,7 +163,7 @@ class PostingListDeltaIterator {
   }
 
   const VarintBuffer * data_;
-  const std::vector<DocIdType> *skip_index_;
+  const SkipIndex *skip_index_;
   int byte_offset_; // start byte of the posting
   int cur_posting_index_;
   DocIdType prev_doc_id_;
@@ -195,7 +197,7 @@ class PostingListDelta {
     }
 
     if (posting_idx_ % skip_span_) {
-      skip_index_.push_back(last_doc_id_);
+      skip_index_.push_back(SpanMeta(last_doc_id_, data_.End()));
     }
 
     DocIdType delta = doc_id - last_doc_id_;
@@ -213,7 +215,7 @@ class PostingListDelta {
       LOG(FATAL) << "Posting List must have at least one posting" << std::endl;
     }
     return PostingListDeltaIterator(&data_, &skip_index_, Size(), 
-        skip_index_[0], 0);
+        skip_index_[0].prev_doc_id, 0);
   }
 
   int Size() {
@@ -233,7 +235,7 @@ class PostingListDelta {
   // [1]: doc id of posting[skip_span_ - 1] 
   // [2]: doc id of posting[skip_span_ * 2 - 1] 
   // ...
-  std::vector<DocIdType> skip_index_;
+  SkipIndex skip_index_;
   const int skip_span_;
 };
 
