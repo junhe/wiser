@@ -76,6 +76,7 @@ class PostingListDeltaIterator {
       return false;
     }
 
+    prev_doc_id_ = cache_.cur_doc_id_;
     byte_offset_ = cache_.next_posting_byte_offset_; 
     cur_posting_index_++;
 
