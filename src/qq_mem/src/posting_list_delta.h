@@ -64,9 +64,7 @@ class PostingListDeltaIterator {
      skip_index_(skip_index),
      skip_span_(skip_span),
      total_postings_(total_postings),
-     cur_posting_index_(0),
-     prev_doc_id_(prev_doc_id), 
-     byte_offset_(byte_offset)
+     cur_state_(byte_offset, 0, prev_doc_id)
   {
     DecodeToCache();
   }
@@ -76,33 +74,32 @@ class PostingListDeltaIterator {
       return false;
     }
 
-    prev_doc_id_ = cache_.cur_doc_id_;
-    byte_offset_ = cache_.next_posting_byte_offset_; 
-    cur_posting_index_++;
-
+    cur_state_.Update(cache_.next_posting_byte_offset_, 
+                  cur_state_.cur_posting_index_ + 1,
+                  cache_.cur_doc_id_);
+                  
     DecodeToCache();
     return true;
   }
 
   bool HasSkip() const {
-    return cur_posting_index_ % skip_span_ == 0 && 
-      cur_posting_index_ + skip_span_ < total_postings_;
+    return cur_state_.cur_posting_index_ % skip_span_ == 0 && 
+      cur_state_.cur_posting_index_ + skip_span_ < total_postings_;
   }
 
   // Only call this when the iterator HasSkip() == true
   DocIdType NextSpanDocId() const {
-    int index = (cur_posting_index_ / skip_span_) + 1;
+    int index = (cur_state_.cur_posting_index_ / skip_span_) + 1;
     return (*skip_index_)[index].prev_doc_id;
   }
   
   // Only call this when the iterator HasSkip() == true
   void SkipToNextSpan() {
-    int next_span_index = cur_posting_index_ / skip_span_ + 1;
+    int next_span_index = cur_state_.cur_posting_index_ / skip_span_ + 1;
 
     auto &meta = (*skip_index_)[next_span_index];
-    byte_offset_ = meta.start_offset;
-    prev_doc_id_ = meta.prev_doc_id;
-    cur_posting_index_ = next_span_index * skip_span_;
+    cur_state_.Update(meta.start_offset, next_span_index * skip_span_, 
+                  meta.prev_doc_id);
 
     DecodeToCache();
   }
@@ -119,7 +116,7 @@ class PostingListDeltaIterator {
     //   prev_doc_id_ is the doc id of posting[cur_posting_index_ - 1]
     //   cache_ has the data of posting[cur_posting_index_]
 
-    while (cur_posting_index_ < total_postings_ && cache_.cur_doc_id_ < doc_id) {
+    while (cur_state_.cur_posting_index_ < total_postings_ && cache_.cur_doc_id_ < doc_id) {
       if (HasSkip() && NextSpanDocId() < doc_id) {
         SkipToNextSpan();
       } else {
@@ -129,7 +126,7 @@ class PostingListDeltaIterator {
   }
 
   bool IsEnd() {
-    return cur_posting_index_ == total_postings_;
+    return cur_state_.cur_posting_index_ == total_postings_;
   }
 
   DocIdType DocId() {
@@ -160,7 +157,7 @@ class PostingListDeltaIterator {
   
  private:
   void DecodeToCache() {
-    int offset = byte_offset_;
+    int offset = cur_state_.byte_offset_;
     uint32_t delta;
     int len;
 
@@ -175,7 +172,7 @@ class PostingListDeltaIterator {
     len = utils::varint_decode(*data, offset, &cache_.cur_term_freq_);
     offset += len;
 
-    cache_.cur_doc_id_ = prev_doc_id_ + delta;
+    cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
     cache_.cur_offset_pairs_start_ = offset; 
   }
 
@@ -184,9 +181,21 @@ class PostingListDeltaIterator {
   const int total_postings_;
   const int skip_span_;
 
-  int byte_offset_; // start byte of posting[cur_posting_index_]
-  int cur_posting_index_;
-  DocIdType prev_doc_id_; // doc id of posting[cur_posting_index_ - 1]
+  struct State {
+    int byte_offset_; // start byte of posting[cur_posting_index_]
+    int cur_posting_index_;
+    DocIdType prev_doc_id_; // doc id of posting[cur_posting_index_ - 1]
+
+    State(int offset, int index, DocIdType id)
+      :byte_offset_(offset), cur_posting_index_(index), prev_doc_id_(id) {}
+
+    void Update(int offset, int index, DocIdType id) {
+      byte_offset_ = offset;
+      cur_posting_index_ = index;
+      prev_doc_id_ = id;
+    }
+  };
+  State cur_state_;
 
   struct PostingCache {
     int next_posting_byte_offset_;
