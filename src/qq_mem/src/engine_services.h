@@ -38,8 +38,12 @@ class SearchEngineServiceNew {
   // tokenized_body is stemmed and tokenized. It may have repeated token. 
   virtual void AddDocument(const std::string &body, const std::string &tokenized_body) = 0;
   // tokenized_body is stemmed and tokenized. It have unqie tokens. token_offsets represent apperances of each token
-  virtual void AddDocument(const std::string &body, const std::string &tokenized_body, const std::string &token_offsets) = 0;
-  // virtual Snippets Search(const TermList &terms, const SearchOperator &op) = 0; 
+  virtual void AddDocument(const std::string &body, const std::string &tokenized_body, 
+      const std::string &token_offsets) = 0;
+  virtual int LoadLocalDocuments(const std::string &line_doc_path, 
+      int n_rows, const std::string loader) = 0;
+  virtual int TermCount() const = 0;
+  virtual std::map<std::string, int> PostinglistSizes(const TermList &terms) = 0;
   virtual SearchResult Search(const SearchQuery &query) = 0; 
 };
 

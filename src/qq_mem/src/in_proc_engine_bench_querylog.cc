@@ -37,9 +37,9 @@ void load_query_pool(QueryPool *pool, const GeneralConfig &config) {
 
 
 
-std::unique_ptr<QqMemUncompressedEngine> create_engine(const int &step_height, 
+std::unique_ptr<SearchEngineServiceNew> create_engine(const int &step_height, 
     const int &step_width, const int &n_steps) {
-  std::unique_ptr<QqMemUncompressedEngine> engine(new QqMemUncompressedEngine);
+  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine("qq_mem_uncompressed");
 
   utils::Staircase staircase(step_height, step_width, n_steps);
 
@@ -59,24 +59,28 @@ std::unique_ptr<QqMemUncompressedEngine> create_engine(const int &step_height,
 }
 
 
-std::unique_ptr<QqMemUncompressedEngine> create_engine_from_file(
+std::unique_ptr<SearchEngineServiceNew> create_engine_from_file(
     const GeneralConfig &config) {
-  std::unique_ptr<QqMemUncompressedEngine> engine(new QqMemUncompressedEngine);
+  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(config.GetString("engine_type"));
   engine->LoadLocalDocuments(config.GetString("linedoc_path"), 
                              config.GetInt("n_docs"),
                              config.GetString("loader"));
   std::cout << "Term Count: " << engine->TermCount() << std::endl;
+
+  std::cout << "Sleeping 10000 sec..." << std::endl;
+  utils::sleep(10000);
+
   return engine;
 }
 
-void show_engine_stats(QqMemUncompressedEngine *engine, const TermList &terms) {
+void show_engine_stats(SearchEngineServiceNew *engine, const TermList &terms) {
   auto pl_sizes = engine->PostinglistSizes(terms); 
   for (auto pair : pl_sizes) {
     std::cout << pair.first << " : " << pair.second << std::endl;
   }
 }
 
-utils::ResultRow search(QqMemUncompressedEngine *engine, 
+utils::ResultRow search(SearchEngineServiceNew *engine, 
                         const GeneralConfig &config) {
   const int n_repeats = config.GetInt("n_repeats");
   utils::ResultRow row;
@@ -171,10 +175,13 @@ GeneralConfig config_by_jun() {
 */
 
   GeneralConfig config;
+  config.SetString("engine_type", "qq_mem_compressed");
+  // config.SetString("engine_type", "qq_mem_uncompressed");
+
   config.SetInt("n_docs", 10000000);
 
   config.SetString("linedoc_path", 
-      "/mnt/ssd/downloads/enwiki.linedoc_tokenized");
+      "/mnt/ssd/downloads/enwiki.linedoc_tokenized"); // full article
       // "/mnt/ssd/downloads/enwiki_tookenized_200000.linedoc");
   config.SetString("loader", "with-offsets");
 

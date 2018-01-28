@@ -27,16 +27,16 @@ class VarintBuffer {
     end_ += buf.size();
   }
 
-  int Size() {
+  int Size() const {
     return end_;
   }
 
-  int End() {
+  int End() const {
     return end_;
   }
 
   // CAUTION! It returns a copy!
-  std::string Data() {
+  std::string Data() const {
     return std::string(data_, 0, end_);
   }
 

@@ -227,15 +227,15 @@ class PostingListDelta {
         skip_index_[0].prev_doc_id, 0);
   }
 
-  int Size() {
+  int Size() const {
     return posting_idx_;
   }
 
-  int ByteCount() {
+  int ByteCount() const {
     return data_.Size();
   }
 
-  SkipIndex GetSkipIndex() {
+  SkipIndex GetSkipIndex() const {
     return skip_index_;
   }
 
