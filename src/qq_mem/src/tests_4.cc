@@ -295,6 +295,24 @@ TEST_CASE( "Skip list", "[postinglist0]" ) {
     auto ret = it.Advance();
     REQUIRE(ret == false);
   }
+
+  SECTION("Skip to next span") {
+    auto it = pl.Begin();
+
+    REQUIRE(it.HasSkip() == true); // at posting[0]
+
+    it.SkipToNextSpan();
+    REQUIRE(it.DocId() == 3);
+    REQUIRE(it.HasSkip() == true); // at posting[3]
+
+    it.SkipToNextSpan();
+    REQUIRE(it.DocId() == 6);
+    REQUIRE(it.HasSkip() == true); // at posting[6]
+
+    it.SkipToNextSpan();
+    REQUIRE(it.DocId() == 9);
+    REQUIRE(it.HasSkip() == false); // at posting[9]
+  }
 }
 
 

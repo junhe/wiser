@@ -89,9 +89,22 @@ class PostingListDeltaIterator {
       cur_posting_index_ + skip_span_ < total_postings_;
   }
 
+  // Only call this when the iterator HasSkip() == true
   DocIdType NextSpanDocId() const {
     int index = (cur_posting_index_ / skip_span_) + 1;
     return (*skip_index_)[index].prev_doc_id;
+  }
+  
+  // Only call this when the iterator HasSkip() == true
+  void SkipToNextSpan() {
+    int next_span_index = cur_posting_index_ / skip_span_ + 1;
+
+    auto &meta = (*skip_index_)[next_span_index];
+    byte_offset_ = meta.start_offset;
+    prev_doc_id_ = meta.prev_doc_id;
+    cur_posting_index_ = next_span_index * skip_span_;
+
+    DecodeToCache();
   }
 
   void SkipForward(DocIdType doc_id) {
