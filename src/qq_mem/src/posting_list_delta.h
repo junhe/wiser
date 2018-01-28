@@ -198,11 +198,12 @@ class PostingListDeltaIterator {
   State cur_state_;
 
   struct PostingCache {
-    int next_posting_byte_offset_;
+    uint32_t cur_content_bytes_;
     DocIdType cur_doc_id_;
     uint32_t cur_term_freq_;
     int cur_offset_pairs_start_;
-    uint32_t cur_content_bytes_;
+
+    int next_posting_byte_offset_;
   };
   // Cached data of cur_posting_index_
   PostingCache cache_;
