@@ -253,26 +253,48 @@ TEST_CASE( "Skip list", "[postinglist0]" ) {
     pl.AddPosting(create_posting(i, i + 1, 0));
   }
 
-  auto it = pl.Begin();
-  std::vector<int> HasSkip, NotHasSkip;
-  for (int i = 0; i < 10; i++) {
-    REQUIRE(it.DocId() == i);
-    REQUIRE(it.TermFreq() == i + 1);
+  SECTION("SkipIndex") {
+    auto skip_index = pl.GetSkipIndex();
 
-    if (it.HasSkip()) {
-      HasSkip.push_back(i);
-    } else {
-      NotHasSkip.push_back(i);
+    REQUIRE(skip_index.size() == 4);
+
+    std::vector<DocIdType> doc_ids;
+    std::vector<int> start_offsets;
+    for (auto meta : skip_index) {
+      doc_ids.push_back(meta.prev_doc_id);
+      start_offsets.push_back(meta.start_offset);
     }
 
-    auto ret = it.Advance();
-    REQUIRE(ret == true);
+    REQUIRE(doc_ids == std::vector<DocIdType>{0, 2, 5, 8});
+    REQUIRE(start_offsets == std::vector<int>{0, 9, 9*2, 9*3});
   }
 
-  REQUIRE(HasSkip == std::vector<int>{0, 3, 6});
-  REQUIRE(NotHasSkip == std::vector<int>{1, 2, 4, 5, 7, 8, 9});
-  auto ret = it.Advance();
-  REQUIRE(ret == false);
+  SECTION("Advance") {
+    auto it = pl.Begin();
+    std::vector<int> has_skip, not_has_skip;
+    std::vector<int> span_doc_ids;
+    for (int i = 0; i < 10; i++) {
+      REQUIRE(it.DocId() == i);
+      REQUIRE(it.TermFreq() == i + 1);
+
+      if (it.HasSkip()) {
+        has_skip.push_back(i);
+        span_doc_ids.push_back(it.NextSpanDocId());
+      } else {
+        not_has_skip.push_back(i);
+      }
+
+      auto ret = it.Advance();
+      REQUIRE(ret == true);
+    }
+
+    REQUIRE(has_skip == std::vector<int>{0, 3, 6});
+    REQUIRE(span_doc_ids == std::vector<int>{2, 5, 8});
+    REQUIRE(not_has_skip == std::vector<int>{1, 2, 4, 5, 7, 8, 9});
+
+    auto ret = it.Advance();
+    REQUIRE(ret == false);
+  }
 }
 
 

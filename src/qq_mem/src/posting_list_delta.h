@@ -204,7 +204,7 @@ class PostingListDelta {
         << "prev: " << last_doc_id_ << " this: " << doc_id;
     }
 
-    if (posting_idx_ % skip_span_) {
+    if (posting_idx_ % skip_span_ == 0) {
       skip_index_.push_back(SpanMeta(last_doc_id_, data_.End()));
     }
 
