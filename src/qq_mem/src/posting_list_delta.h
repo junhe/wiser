@@ -50,18 +50,19 @@ struct SpanMeta {
     : prev_doc_id(id), start_offset(offset) {}
 };
 
-// typedef std::vector<DocIdType> SkipIndex;
 typedef std::vector<SpanMeta> SkipIndex;
 
 class PostingListDeltaIterator {
  public:
   PostingListDeltaIterator(const VarintBuffer *data, 
                            const SkipIndex *skip_index,
+                           const int skip_span,
                            const int total_postings,
                            DocIdType prev_doc_id, 
                            int byte_offset)
     :data_(data), 
      skip_index_(skip_index),
+     skip_span_(skip_span),
      total_postings_(total_postings),
      cur_posting_index_(0),
      prev_doc_id_(prev_doc_id), 
@@ -83,14 +84,13 @@ class PostingListDeltaIterator {
   }
 
   bool HasSkip() const {
-    // return cur_posting_index_ % skip_span_ == 0 && 
-      // cur_posting_index_ + skip_span_ < total_postings_;
+    return cur_posting_index_ % skip_span_ == 0 && 
+      cur_posting_index_ + skip_span_ < total_postings_;
   }
 
-  DocIdType SkipDocId() const {
-    // assert(HasSkip());
-    // int span_index = cur_posting_index_ / skip_span_;  
-    
+  DocIdType NextSpanDocId() const {
+    int index = (cur_posting_index_ / skip_span_) + 1;
+    return (*skip_index_)[index].prev_doc_id;
   }
 
   void SkipForward(DocIdType doc_id) {
@@ -164,12 +164,13 @@ class PostingListDeltaIterator {
 
   const VarintBuffer * data_;
   const SkipIndex *skip_index_;
-  int byte_offset_; // start byte of the posting
-  int cur_posting_index_;
-  DocIdType prev_doc_id_;
   const int total_postings_;
+  const int skip_span_;
 
-  // cache
+  int byte_offset_; // start byte of posting[cur_posting_index_]
+  int cur_posting_index_;
+  DocIdType prev_doc_id_; // doc id of posting[cur_posting_index_ - 1]
+
   struct PostingCache {
     int next_posting_byte_offset_;
     DocIdType cur_doc_id_;
@@ -177,6 +178,7 @@ class PostingListDeltaIterator {
     int cur_offset_pairs_start_;
     uint32_t cur_content_bytes_;
   };
+  // Cached data of cur_posting_index_
   PostingCache cache_;
 };
 
@@ -194,6 +196,11 @@ class PostingListDelta {
     if (posting_idx_ == 0) {
       // initialize for the first posting
       last_doc_id_ = doc_id;
+    }
+
+    if ( posting_idx_ > 0 && doc_id <= last_doc_id_) {
+      LOG(FATAL) << "Doc id should not be less than the previous one. "
+        << "prev: " << last_doc_id_ << " this: " << doc_id;
     }
 
     if (posting_idx_ % skip_span_) {
@@ -214,7 +221,8 @@ class PostingListDelta {
     if (posting_idx_ == 0) {
       LOG(FATAL) << "Posting List must have at least one posting" << std::endl;
     }
-    return PostingListDeltaIterator(&data_, &skip_index_, Size(), 
+    return PostingListDeltaIterator(&data_, &skip_index_, 
+        skip_span_, Size(), 
         skip_index_[0].prev_doc_id, 0);
   }
 
@@ -224,6 +232,10 @@ class PostingListDelta {
 
   int ByteCount() {
     return data_.Size();
+  }
+
+  SkipIndex GetSkipIndex() {
+    return skip_index_;
   }
 
  private:

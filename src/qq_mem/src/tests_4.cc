@@ -206,6 +206,18 @@ void test_posting_list_delta( RankingPostingWithOffsets postingA,
   REQUIRE(it.IsEnd() == true);
 }
 
+RankingPostingWithOffsets create_posting(DocIdType doc_id, 
+                                         int term_freq,
+                                         int n_offset_pairs) {
+  OffsetPairs offset_pairs;
+  for (int i = 0; i < n_offset_pairs; i++) {
+    offset_pairs.push_back(std::make_tuple(i * 2, i * 2 + 1)); 
+  }
+
+  RankingPostingWithOffsets posting(doc_id, term_freq, offset_pairs); 
+  return posting;
+}
+
 TEST_CASE( "Posting List Delta", "[postinglist]" ) {
   SECTION("10 postings") {
     OffsetPairs offset_pairsA;
@@ -232,6 +244,35 @@ TEST_CASE( "Posting List Delta", "[postinglist]" ) {
 
     test_posting_list_delta(postingA, postingB);
   }
+}
+
+
+TEST_CASE( "Skip list", "[postinglist0]" ) {
+  PostingListDelta pl("hello", 3);
+  for (int i = 0; i < 10; i++) {
+    pl.AddPosting(create_posting(i, i + 1, 0));
+  }
+
+  auto it = pl.Begin();
+  std::vector<int> HasSkip, NotHasSkip;
+  for (int i = 0; i < 10; i++) {
+    REQUIRE(it.DocId() == i);
+    REQUIRE(it.TermFreq() == i + 1);
+
+    if (it.HasSkip()) {
+      HasSkip.push_back(i);
+    } else {
+      NotHasSkip.push_back(i);
+    }
+
+    auto ret = it.Advance();
+    REQUIRE(ret == true);
+  }
+
+  REQUIRE(HasSkip == std::vector<int>{0, 3, 6});
+  REQUIRE(NotHasSkip == std::vector<int>{1, 2, 4, 5, 7, 8, 9});
+  auto ret = it.Advance();
+  REQUIRE(ret == false);
 }
 
 
