@@ -119,10 +119,13 @@ class PostingListDeltaIterator {
     //   prev_doc_id_ is the doc id of posting[cur_posting_index_ - 1]
     //   cache_ has the data of posting[cur_posting_index_]
 
-    // while (cur_posting_index_ < total_postings && cache_.cur_doc_id_ < doc_id) {
-      // if (HasSkip() && 
-    // }
-
+    while (cur_posting_index_ < total_postings_ && cache_.cur_doc_id_ < doc_id) {
+      if (HasSkip() && NextSpanDocId() < doc_id) {
+        SkipToNextSpan();
+      } else {
+        Advance();
+      }
+    }
   }
 
   bool IsEnd() {

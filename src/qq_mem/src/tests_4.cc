@@ -313,6 +313,50 @@ TEST_CASE( "Skip list", "[postinglist0]" ) {
     REQUIRE(it.DocId() == 9);
     REQUIRE(it.HasSkip() == false); // at posting[9]
   }
+
+  SECTION("Skip forward") {
+    auto it = pl.Begin();
+
+    SECTION("One by one") {
+      for (int i = 0; i < 10; i++) {
+        it.SkipForward(i);
+        REQUIRE(it.DocId() == i);
+      }
+    }
+
+    SECTION("2 by 2") {
+      for (int i = 0; i < 10; i += 2) {
+        it.SkipForward(i);
+        REQUIRE(it.DocId() == i);
+      }
+    }
+
+    SECTION("Skip to itself") {
+      it.SkipForward(5);
+      REQUIRE(it.DocId() == 5);
+
+      it.SkipForward(1);
+      REQUIRE(it.DocId() == 5);
+    }
+
+    SECTION("doc_id is before iterator") {
+      it.SkipForward(5);
+      REQUIRE(it.DocId() == 5);
+
+      it.SkipForward(1);
+      REQUIRE(it.DocId() == 5);
+    }
+
+    SECTION("doc_id is beyodn the end") {
+      it.SkipForward(5);
+      REQUIRE(it.DocId() == 5);
+
+      it.SkipForward(100);
+      REQUIRE(it.IsEnd() == true);
+    }
+  }
+
+
 }
 
 
