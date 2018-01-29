@@ -13,8 +13,12 @@
 #include "doc_length_store.h"
 #include "engine_services.h"
 #include "posting_list_vec.h"
+#include "posting_list_delta.h"
 #include "ranking.h"
 #include "utils.h"
+
+
+typedef std::vector<PostingListDeltaIterator> PostingListIterators;
 
 
 class IntersectionResult {
@@ -250,6 +254,15 @@ inline qq_float calc_doc_score_for_a_query(
   return final_doc_score;
 }
 
+
+qq_float calc_doc_score_for_a_query(
+    const PostingListIterators pl_iterators,
+    const std::vector<qq_float> &idfs_of_terms,
+    const int &n_total_docs_in_index, 
+    const qq_float &avg_doc_length_in_index,
+    const int &length_of_this_doc);
+
+
 struct ResultDocEntry {
   DocIdType doc_id;
   qq_float score;
@@ -422,6 +435,137 @@ class QueryProcessor {
   MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
 };
+
+
+
+class QueryProcessorDelta {
+ public:
+  QueryProcessorDelta(
+    PostingListIterators pl_iterators, 
+    const DocLengthStore &doc_lengths,
+    const int n_total_docs_in_index,
+    const int k = 5)
+  : n_lists_(pl_iterators.size()),
+    doc_lengths_(doc_lengths),
+    pl_iterators_(pl_iterators),
+    k_(k),
+    idfs_of_terms_(n_lists_),
+    n_total_docs_in_index_(n_total_docs_in_index)
+  {
+    for (int i = 0; i < n_lists_; i++) {
+      idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
+                                          pl_iterators_[i].Size());
+    }
+  }
+
+  std::vector<ResultDocEntry> Process() {
+    bool finished = false;
+    DocIdType max_doc_id;
+
+    // loop inv: all intersections before iterators have been found
+    while (finished == false) {
+      // find max doc id
+      max_doc_id = -1;
+      for (int list_i = 0; list_i < n_lists_; list_i++) {
+        auto it = pl_iterators_[list_i];
+
+        if (it.IsEnd()) {
+          finished = true;
+          break;
+        }
+
+        const DocIdType cur_doc_id = it.DocId(); 
+        if (cur_doc_id > max_doc_id) {
+          max_doc_id = cur_doc_id; 
+        }
+      }
+
+      if (finished == true) {
+        break;
+      }
+
+      // Try to reach max_doc_id in all posting lists_
+      int list_i;
+      for (list_i = 0; list_i < n_lists_; list_i++) {
+        auto it = pl_iterators_[list_i];
+
+        it.SkipForward(max_doc_id);
+        if (it.IsEnd()) {
+          finished = true;
+          break;
+        }
+
+        if (it.DocId() != max_doc_id) {
+          break;
+        }
+
+        if (list_i == n_lists_ - 1) {
+          HandleTheFoundDoc(max_doc_id);
+          // Advance iterators
+          for (int i = 0; i < n_lists_; i++) {
+            pl_iterators_[i].Advance();
+          }
+        }
+      }
+    } // while
+
+    return SortHeap();
+  }
+
+ private:
+  void HandleTheFoundDoc(const DocIdType &max_doc_id) {
+    qq_float score_of_this_doc = calc_doc_score_for_a_query(
+        pl_iterators_,
+        idfs_of_terms_,
+        n_total_docs_in_index_,
+        doc_lengths_.GetAvgLength(),
+        doc_lengths_.GetLength(max_doc_id));
+
+    if (min_heap_.size() < k_) {
+      insert_to_heap(max_doc_id, score_of_this_doc);
+    } else {
+      if (score_of_this_doc > min_heap_.top().score) {
+        min_heap_.pop();
+        insert_to_heap(max_doc_id, score_of_this_doc);
+      }
+      assert(min_heap_.size() == k_);
+    }
+  }
+
+  std::vector<ResultDocEntry> SortHeap() {
+    std::vector<ResultDocEntry> ret;
+
+    int kk = k_;
+    while(!min_heap_.empty() && kk != 0) {
+      ret.push_back(min_heap_.top());
+      min_heap_.pop();
+      kk--;
+    }
+    std::reverse(ret.begin(), ret.end());
+    return ret;
+  }
+
+  void insert_to_heap( const DocIdType &doc_id, const qq_float &score_of_this_doc)
+  {
+    std::vector<const PostingWO*> postings;
+    // for (int i = 0; i < n_lists; i++) {
+      // postings.push_back(&lists[i]->GetPosting(posting_iters[i]));
+    // }
+    min_heap_.emplace(doc_id, score_of_this_doc, postings);
+  }
+
+  const int n_lists_;
+  PostingListIterators pl_iterators_;
+  const int k_;
+  const int n_total_docs_in_index_;
+  std::vector<qq_float> idfs_of_terms_;
+  MinHeap min_heap_;
+  const DocLengthStore &doc_lengths_;
+};
+
+
+
+
 
 
 #endif

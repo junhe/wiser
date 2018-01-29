@@ -69,6 +69,10 @@ class PostingListDeltaIterator {
     DecodeToCache();
   }
 
+  int Size() const {
+    return total_postings_;
+  }
+
   bool Advance() {
     if (IsEnd()) {
       return false;
@@ -125,15 +129,15 @@ class PostingListDeltaIterator {
     }
   }
 
-  bool IsEnd() {
+  bool IsEnd() const {
     return cur_state_.cur_posting_index_ == total_postings_;
   }
 
-  DocIdType DocId() {
+  DocIdType DocId() const {
     return cache_.cur_doc_id_;
   }
 
-  int TermFreq() {
+  int TermFreq() const {
     return cache_.cur_term_freq_;
   }
 
@@ -141,7 +145,7 @@ class PostingListDeltaIterator {
     return cache_.cur_offset_pairs_start_;
   }
 
-  OffsetPairsIterator OffsetPairsBegin() {
+  OffsetPairsIterator OffsetPairsBegin() const {
     if (IsEnd()) {
       LOG(FATAL) 
         << "Trying to get offset iterator from a empty posting iterator\n";
@@ -151,7 +155,7 @@ class PostingListDeltaIterator {
                                cache_.next_posting_byte_offset_);
   }
 
-  int CurContentBytes() {
+  int CurContentBytes() const {
     return cache_.cur_content_bytes_;
   }
   
