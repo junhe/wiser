@@ -156,6 +156,12 @@ void test_offset_iterator(OffsetPairsIterator offset_it,
   }
 }
 
+void test_if_two_postings_equal(RankingPostingWithOffsets a, RankingPostingWithOffsets b) {
+    REQUIRE(a.GetDocId() == b.GetDocId());
+    REQUIRE(a.GetTermFreq() == b.GetTermFreq());
+    REQUIRE(*a.GetOffsetPairs() == *b.GetOffsetPairs());
+}
+
 void test_posting_list_delta( RankingPostingWithOffsets postingA,
     RankingPostingWithOffsets postingB) {
   // Initialize posting list
@@ -180,6 +186,8 @@ void test_posting_list_delta( RankingPostingWithOffsets postingA,
   REQUIRE(it.OffsetPairStart() == 3); // size|id|tf|offset
   REQUIRE(it.CurContentBytes() == postingA.Encode().size() - 1); // size|id|tf|offset
 
+  test_if_two_postings_equal(it.GetPosting(), postingA);
+
   // check offsets
   {
     auto offset_it = it.OffsetPairsBegin();
@@ -194,6 +202,8 @@ void test_posting_list_delta( RankingPostingWithOffsets postingA,
   REQUIRE(it.TermFreq() == postingB.GetTermFreq());
   REQUIRE(it.OffsetPairStart() == postingA.Encode().size() + 3); // size|id|tf|offset
   REQUIRE(it.CurContentBytes() == postingB.Encode().size() - 1); // size|id|tf|offset
+
+  test_if_two_postings_equal(it.GetPosting(), postingB);
 
   // check offsets
   {

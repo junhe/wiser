@@ -13,6 +13,10 @@ class OffsetPairsIterator {
     :data_(data), byte_offset_(byte_offset), end_offset_(end_offset),
      pair_index_(0) {}
 
+  bool IsEnd() {
+    return byte_offset_ == end_offset_;
+  }
+
   bool Advance(OffsetPair *pair) {
     if (byte_offset_ == end_offset_) {
       return false;
@@ -143,6 +147,18 @@ class PostingListDeltaIterator {
 
   int OffsetPairStart() {
     return cache_.cur_offset_pairs_start_;
+  }
+
+  RankingPostingWithOffsets GetPosting() {
+    OffsetPairs pairs;
+    OffsetPairsIterator it = OffsetPairsBegin();
+    while (it.IsEnd() == false) {
+      pairs.emplace_back();
+      it.Advance(&pairs.back());
+    }
+
+    return RankingPostingWithOffsets(cache_.cur_doc_id_, cache_.cur_term_freq_,
+        pairs);
   }
 
   OffsetPairsIterator OffsetPairsBegin() const {
