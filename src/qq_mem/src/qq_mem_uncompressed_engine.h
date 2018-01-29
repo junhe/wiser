@@ -344,12 +344,12 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   }
 
   std::string GenerateSnippet(const DocIdType &doc_id, 
-      const std::vector<const RankingPostingWithOffsets *> &postings, 
+      const std::vector<RankingPostingWithOffsets> &postings, 
       const int n_passages) {
     OffsetsEnums res = {};
 
     for (int i = 0; i < postings.size(); i++) {
-      res.push_back(Offset_Iterator(*postings[i]->GetOffsetPairs()));
+      res.push_back(Offset_Iterator(*postings[i].GetOffsetPairs()));
     }
 
     return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));

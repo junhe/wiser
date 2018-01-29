@@ -266,13 +266,13 @@ qq_float calc_doc_score_for_a_query(
 struct ResultDocEntry {
   DocIdType doc_id;
   qq_float score;
-  std::vector<const RankingPostingWithOffsets *> postings;
+  std::vector<RankingPostingWithOffsets> postings;
 
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in)
     :doc_id(doc_id_in), score(score_in) {}
 
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
-      const std::vector<const RankingPostingWithOffsets *> &postings_in)
+      std::vector<RankingPostingWithOffsets> &postings_in)
     :doc_id(doc_id_in), score(score_in), postings(postings_in) {}
 
   friend bool operator<(ResultDocEntry a, ResultDocEntry b)
@@ -522,11 +522,11 @@ class QueryProcessorDelta {
         doc_lengths_.GetLength(max_doc_id));
 
     if (min_heap_.size() < k_) {
-      insert_to_heap(max_doc_id, score_of_this_doc);
+      InsertToHeap(max_doc_id, score_of_this_doc);
     } else {
       if (score_of_this_doc > min_heap_.top().score) {
         min_heap_.pop();
-        insert_to_heap(max_doc_id, score_of_this_doc);
+        InsertToHeap(max_doc_id, score_of_this_doc);
       }
       assert(min_heap_.size() == k_);
     }
@@ -545,12 +545,12 @@ class QueryProcessorDelta {
     return ret;
   }
 
-  void insert_to_heap( const DocIdType &doc_id, const qq_float &score_of_this_doc)
+  void InsertToHeap( const DocIdType &doc_id, const qq_float &score_of_this_doc)
   {
-    std::vector<const PostingWO*> postings;
-    // for (int i = 0; i < n_lists; i++) {
-      // postings.push_back(&lists[i]->GetPosting(posting_iters[i]));
-    // }
+    std::vector<PostingWO> postings;
+    for (int i = 0; i < n_lists_; i++) {
+      postings.push_back(pl_iterators_[i].GetPosting());
+    }
     min_heap_.emplace(doc_id, score_of_this_doc, postings);
   }
 
