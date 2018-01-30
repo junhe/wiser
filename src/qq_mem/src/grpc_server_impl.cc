@@ -57,7 +57,7 @@ Sync Server config musth provide:
 */
 std::unique_ptr<ServerService> CreateServer(const GeneralConfig config) {
   std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
-      "qq_mem_uncompressed");
+      config.GetString("engine_name"));
 
   if (config.GetString("sync_type") == "SYNC") {
     std::unique_ptr<ServerService> server(new SyncServer(config, std::move(engine)));

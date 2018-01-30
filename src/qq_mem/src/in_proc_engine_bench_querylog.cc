@@ -67,8 +67,8 @@ std::unique_ptr<SearchEngineServiceNew> create_engine_from_file(
                              config.GetString("loader"));
   std::cout << "Term Count: " << engine->TermCount() << std::endl;
 
-  std::cout << "Sleeping 10000 sec..." << std::endl;
-  utils::sleep(10000);
+  // std::cout << "Sleeping 10000 sec..." << std::endl;
+  // utils::sleep(10000);
 
   return engine;
 }
@@ -175,19 +175,19 @@ GeneralConfig config_by_jun() {
 */
 
   GeneralConfig config;
-  config.SetString("engine_type", "qq_mem_compressed");
-  // config.SetString("engine_type", "qq_mem_uncompressed");
+  // config.SetString("engine_type", "qq_mem_compressed");
+  config.SetString("engine_type", "qq_mem_uncompressed");
 
   config.SetInt("n_docs", 10000000);
 
-  config.SetString("linedoc_path", 
-      "/mnt/ssd/downloads/enwiki.linedoc_tokenized"); // full article
-      // "/mnt/ssd/downloads/enwiki_tookenized_200000.linedoc");
-  config.SetString("loader", "with-offsets");
-
   // config.SetString("linedoc_path", 
-      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  // config.SetString("loader", "naive");
+      // "/mnt/ssd/downloads/enwiki.linedoc_tokenized"); // full article
+      // "/mnt/ssd/downloads/enwiki_tookenized_200000.linedoc");
+  // config.SetString("loader", "with-offsets");
+
+  config.SetString("linedoc_path", 
+      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  config.SetString("loader", "naive");
 
   config.SetInt("n_repeats", 100000);
   config.SetInt("n_passages", 3);

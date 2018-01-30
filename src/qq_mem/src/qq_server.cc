@@ -61,6 +61,8 @@ int main(int argc, char** argv) {
 
   GeneralConfig config;
   config.SetString("target", std::string("localhost:") + port);
+  // config.SetString("engine_name", "qq_mem_compressed");
+  config.SetString("engine_name", "qq_mem_uncompressed");
   config.SetString("sync_type", sync_type);
   config.SetInt("n_line_doc_rows", n_docs);
   config.SetString("line_doc_path", 
