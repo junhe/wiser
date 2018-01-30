@@ -77,18 +77,6 @@ TEST_CASE( "Document store implemented by C++ map", "[docstore]" ) {
 }
 
 
-TEST_CASE( "Basic Posting", "[posting]" ) {
-    if (FLAG_SNIPPETS_PRECOMPUTE || FLAG_POSTINGS_ON_FLASH)
-        return;
-    Posting posting(100, 2, Offsets {std::make_tuple(1,3), std::make_tuple(5,8)});
-    REQUIRE(posting.docID_ == 100);
-    REQUIRE(posting.term_frequency_ == 2);
-    // TODO change from postions to offsets
-    REQUIRE(posting.positions_[0] == std::make_tuple(1,3));
-    REQUIRE(posting.positions_[1] == std::make_tuple(5,8));
-}
-
-
 TEST_CASE( "Utilities", "[utils]" ) {
     SECTION("Leading space and Two spaces") {
         std::vector<std::string> vec = utils::explode(" hello  world", ' ');
@@ -347,47 +335,6 @@ TEST_CASE("Precompute and store document sentence segments successfully", "[Prec
     }
 }
 
-// TODO: test cases for precomputed based snippet generating
-
-TEST_CASE("Serialization tools essential operations work", "[Serialization_Tools]") {
-    // protobuf, using posting
-  
-    if (!FLAG_SNIPPETS_PRECOMPUTE)
-        return;
-    Offsets positions = {std::make_tuple(1,3), std::make_tuple(4,5), std::make_tuple(6,8), std::make_tuple(-1,-1),
-                         std::make_tuple(1,1234567), std::make_tuple(0,2), std::make_tuple(3,8323232), std::make_tuple(2,1)};
-    Posting new_posting(5, 0, positions);
-/*    std::cout << new_posting.docID_ << std::endl;
-    std::cout << new_posting.term_frequency_ << std::endl;
-    std::cout << new_posting.passage_scores_.size() << ": " << new_posting.passage_scores_[0].first << "," <<  new_posting.passage_scores_[0].second << ";" << new_posting.passage_scores_[1].first <<","<< new_posting.passage_scores_[1].second << ";"<< std::endl;
-    std::cout << new_posting.passage_splits_.size() << ": " << new_posting.passage_splits_[1].first <<"," << new_posting.passage_splits_[1].second << ";" << new_posting.passage_splits_[3].first << "," << new_posting.passage_splits_[3].second << ";" << std::endl;
-*/
-    // serialize using protobuf 
-    Store_Segment store_position = Global_Posting_Store->append(new_posting.dump());
-    
-    std::string serialized = Global_Posting_Store->read(store_position);
-
-    // deserialize
-    posting_message::Posting_Precomputed_4_Snippets p_message;
-    p_message.ParseFromString(serialized);
-
- /*   std::cout << p_message.docid() << std::endl;
-    std::cout << p_message.term_frequency() << std::endl;
-    std::cout << p_message.offsets_size() << ": "
-              << p_message.offsets(0).start_offset() << "," << p_message.offsets(0).end_offset() << ";"
-              << p_message.offsets(1).start_offset() << "," << p_message.offsets(1).end_offset() << ";"
-              << p_message.offsets(2).start_offset() << "," << p_message.offsets(2).end_offset() << ";"
-              << std::endl;
-    std::cout << p_message.passage_scores_size() << ": " 
-              << p_message.passage_scores(0).passage_id() << "," << p_message.passage_scores(0).score() << ";"
-              << p_message.passage_scores(1).passage_id() << "," << p_message.passage_scores(1).score() << ";"
-              << std::endl;
-    std::cout << p_message.passage_splits_size() << ": " 
-              << p_message.passage_splits().at(1).start_offset() << "," << p_message.passage_splits().at(1).len() << ";"
-              << p_message.passage_splits().at(3).start_offset() << "," << p_message.passage_splits().at(3).len() << ";"
-              << std::endl;
-  */ 
-}
 
 TEST_CASE("String to char *, back to string works", "[String_To_Char*]") {
     std::string test_str= "hello world";
@@ -399,61 +346,6 @@ TEST_CASE("String to char *, back to string works", "[String_To_Char*]") {
 
     std::string str(buffer);
     REQUIRE(test_str.compare(str) == 0 );
-}
-
-
-
-TEST_CASE("Cereal serialization works", "[Cereal_Serialization]") {
-    if (!FLAG_SNIPPETS_PRECOMPUTE)
-        return;
-    Offsets positions = {std::make_tuple(1,3), std::make_tuple(4,5), std::make_tuple(6,8), std::make_tuple(-1,-1),
-                         std::make_tuple(1,1234567), std::make_tuple(0,2), std::make_tuple(3,8323232), std::make_tuple(2,1)};
-    Posting new_posting(5, 0, positions);
-    
-    // serialize using cereal
-    /*Store_Segment store_position = Global_Posting_Store->append(new_posting.dump());
-    
-    std::string serialized = Global_Posting_Store->read(store_position);
-
-    // deserialize
-    posting_message::Posting_Precomputed_4_Snippets p_message;
-    p_message.ParseFromString(serialized);
-    */
-
-
-    std::stringstream ss; // any stream can be used
-
-   {
-    cereal::BinaryOutputArchive oarchive(ss); // Create an output archive
-
-    //int m1, m2, m3;
-    //m1 = 1; m2 = 2; m3 = 3;
-    oarchive(new_posting); // Write the data to the archive
-   } // archive goes out of scope, ensuring all contents are flushed
-
-   {
-    cereal::BinaryInputArchive iarchive(ss); // Create an input archive
-
-    Posting tmp_posting;
-    iarchive(tmp_posting); // Read the data from the archive
-    /*std::cout << tmp_posting.docID_ << std::endl;
-    std::cout << tmp_posting.term_frequency_ << std::endl;
-    std::cout << tmp_posting.positions_.size() << std::endl;
-    std::cout << tmp_posting.positions_.size() << ": " 
-              << std::get<0>(tmp_posting.positions_[0]) << "," <<  std::get<1>(tmp_posting.positions_[0]) << ";"
-              << std::get<0>(tmp_posting.positions_[1]) << "," <<  std::get<1>(tmp_posting.positions_[1]) << ";"
-              << std::get<0>(tmp_posting.positions_[2]) << "," <<  std::get<1>(tmp_posting.positions_[2]) << ";"
-              << std::endl;
-    std::cout << tmp_posting.passage_scores_.size() << ": " 
-              << tmp_posting.passage_scores_[0].first << "," <<  tmp_posting.passage_scores_[0].second << ";"
-              << tmp_posting.passage_scores_[1].first << "," <<  tmp_posting.passage_scores_[1].second << ";"
-              << std::endl;
-    std::cout << tmp_posting.passage_splits_.size() << ": " 
-              << tmp_posting.passage_splits_[1].first << "," <<  tmp_posting.passage_splits_[1].second << ";"
-              << tmp_posting.passage_splits_[3].first << "," <<  tmp_posting.passage_splits_[3].second << ";"
-              << std::endl;
-    */
-   } 
 }
 
 TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
