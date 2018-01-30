@@ -42,40 +42,26 @@ class PostingSimple : public QqMemPostingService {
 };
 
 
-class RankingPosting : public QqMemPostingService {
- protected:
-  int doc_id_;
-  int term_frequency_;
-
- public:
-  RankingPosting(){}
-  RankingPosting(int doc_id, int term_frequency)
-    :doc_id_(doc_id), term_frequency_(term_frequency)
-  {}
-  const int GetDocId() const {return doc_id_;}
-  const int GetTermFreq() const {return term_frequency_;}
-  const OffsetPairs *GetOffsetPairs() const {
-    throw std::runtime_error("Not implemented"); 
-  }
-};
-
-// This is class is created because I do not want to modify 
-// RankingPosting. The modifications would incur changes in many other places.
-class StandardPosting: public RankingPosting {
+class StandardPosting: public QqMemPostingService {
  protected:
   OffsetPairs offset_pairs_;
+  int doc_id_;
+  int term_frequency_;
 
  public:
   StandardPosting(){}
   StandardPosting(const int &doc_id, 
                  const int &term_frequency)
-    :RankingPosting(doc_id, term_frequency) {}
+    :doc_id_(doc_id), term_frequency_(term_frequency){}
 
   StandardPosting(const int &doc_id, 
                  const int &term_frequency, 
                  const OffsetPairs &offset_pairs)
-    :RankingPosting(doc_id, term_frequency), offset_pairs_(offset_pairs) {}
+    :doc_id_(doc_id), term_frequency_(term_frequency), 
+     offset_pairs_(offset_pairs) {}
 
+  const int GetDocId() const {return doc_id_;}
+  const int GetTermFreq() const {return term_frequency_;}
   const OffsetPairs *GetOffsetPairs() const {return &offset_pairs_;}
 
   std::string ToString() {
