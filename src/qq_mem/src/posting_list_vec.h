@@ -10,6 +10,46 @@
 #include "engine_services.h"
 #include "posting.h"
 
+class OffsetPairsIteratorService {
+ public:
+  virtual bool IsEnd() const = 0;
+  virtual void Pop(OffsetPair *pair) = 0;
+};
+
+
+class PostingListIteratorService {
+ public:
+  virtual int Size() const = 0;
+
+  virtual bool IsEnd() const = 0;
+  virtual DocIdType DocId() const = 0;
+  virtual int TermFreq() const = 0;
+
+  virtual bool Advance() = 0;
+  virtual void SkipForward(const DocIdType doc_id) = 0;
+  virtual std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const = 0;
+};
+
+
+class PlVecOffsetIterator: public OffsetPairsIteratorService {
+ public:
+  PlVecOffsetIterator(const OffsetPairs *pairs)
+    :pairs_(pairs), it_(pairs->cbegin()) {}
+
+  bool IsEnd() {
+    return it_ == pairs_->cend();
+  }
+
+  void Pop(OffsetPair *pair) {
+    *pair = *it_; 
+    it_++;
+  }
+
+ private:
+  const OffsetPairs *pairs_;
+  OffsetPairs::const_iterator it_;
+};
+
 
 // Requirements for class T (a type for posting):
 //  - class T must have member function const DocIdType T::GetDocId() const
@@ -77,6 +117,54 @@ class PostingList_Vec {
     return i;
   }
 };
+
+
+
+
+class PostingListVecIterator: public PostingListIteratorService {
+ public:
+  PostingListVecIterator(const PostingList_Vec<StandardPosting> *posting_list)
+    : posting_list_(posting_list), it_(0) {}
+
+  int Size() const {
+    return posting_list_->Size();
+  }
+
+  bool IsEnd() const {
+    return it_ == posting_list_->Size();
+  }
+
+  DocIdType DocId() const {
+    return posting_list_->GetPosting(it_).GetDocId();
+  }
+
+  int TermFreq() const {
+    return posting_list_->GetPosting(it_).GetTermFreq();
+  }
+
+  bool Advance() {
+    if (IsEnd()) {
+      return false;
+    }
+
+    it_++;
+    return true;
+  }
+
+  void SkipForward(const DocIdType doc_id) {
+    it_ = posting_list_->SkipForward(it_, doc_id);
+  }
+
+  std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const {
+     
+  }
+
+ private:
+  const PostingList_Vec<StandardPosting> *posting_list_;
+  PostingList_Vec<StandardPosting>::iterator_t it_;
+};
+
+
 
 
 #endif
