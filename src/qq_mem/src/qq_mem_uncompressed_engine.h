@@ -14,13 +14,13 @@
 
 class InvertedIndexQqMem {
  private:
-  typedef PostingList_Vec<RankingPostingWithOffsets> PostingListType;
+  typedef PostingList_Vec<StandardPosting> PostingListType;
   typedef std::unordered_map<Term, PostingListType> IndexStore;
   IndexStore index_;
 
  public:
   typedef IndexStore::const_iterator const_iterator;
-  typedef std::vector<const PostingList_Vec<RankingPostingWithOffsets>*> PlPointers;
+  typedef std::vector<const PostingList_Vec<StandardPosting>*> PlPointers;
 
   PlPointers FindPostinglists(const TermList &terms) {
     PlPointers postinglist_pointers;
@@ -68,7 +68,7 @@ class InvertedIndexQqMem {
 
       PostingListType &postinglist = it->second;        
       postinglist.AddPosting(
-          RankingPostingWithOffsets(doc_id, token_it->second, term_offsets[term]));
+          StandardPosting(doc_id, token_it->second, term_offsets[term]));
     }
   }
 
@@ -93,7 +93,7 @@ class InvertedIndexQqMem {
       PostingListType &postinglist = it->second;
       //std::cout << i << ", " << token_vec[i];
       postinglist.AddPosting(
-          RankingPostingWithOffsets(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
+          StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
       //std::cout << ";" ;
     }
   }
@@ -106,7 +106,7 @@ class InvertedIndexQqMem {
       return result; // return an empty one
     }
 
-    intersect<RankingPostingWithOffsets>(postinglist_pointers, &result);
+    intersect<StandardPosting>(postinglist_pointers, &result);
     return result;
   }
 
@@ -118,7 +118,7 @@ class InvertedIndexQqMem {
     std::vector<DocIdType> doc_ids;
     PlPointers postinglist_pointers = FindPostinglists(terms);
 
-    return intersect<RankingPostingWithOffsets>(postinglist_pointers, nullptr);
+    return intersect<StandardPosting>(postinglist_pointers, nullptr);
   }
 
   // Return number of posting lists
@@ -183,7 +183,7 @@ class InvertedIndexQqMemDelta {
 
       PostingListType &postinglist = it->second;        
       postinglist.AddPosting(
-          RankingPostingWithOffsets(doc_id, token_it->second, term_offsets[term]));
+          StandardPosting(doc_id, token_it->second, term_offsets[term]));
     }
   }
 
@@ -208,7 +208,7 @@ class InvertedIndexQqMemDelta {
       PostingListType &postinglist = it->second;
       //std::cout << i << ", " << token_vec[i];
       postinglist.AddPosting(
-          RankingPostingWithOffsets(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
+          StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
       //std::cout << ";" ;
     }
   }
@@ -324,7 +324,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
       return result;
     }
 
-    QueryProcessor<RankingPostingWithOffsets> processor(lists, doc_lengths_, doc_lengths_.Size(), 
+    QueryProcessor<StandardPosting> processor(lists, doc_lengths_, doc_lengths_.Size(), 
                              query.n_results);  
     auto top_k = processor.Process();
 
@@ -344,7 +344,7 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   }
 
   std::string GenerateSnippet(const DocIdType &doc_id, 
-      const std::vector<RankingPostingWithOffsets> &postings, 
+      const std::vector<StandardPosting> &postings, 
       const int n_passages) {
     OffsetsEnums res = {};
 
@@ -514,7 +514,7 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
   }
 
   std::string GenerateSnippet(const DocIdType &doc_id, 
-      const std::vector<RankingPostingWithOffsets> &postings, 
+      const std::vector<StandardPosting> &postings, 
       const int n_passages) {
     OffsetsEnums res = {};
 

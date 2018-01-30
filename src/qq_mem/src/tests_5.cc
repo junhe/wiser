@@ -7,7 +7,7 @@
 #include "intersect.h"
 
 
-typedef RankingPostingWithOffsets PostingWO;
+typedef StandardPosting PostingWO;
 
 TEST_CASE( "QueryProcessorDelta works", "[engine0]" ) {
   OffsetPairs offset_pairs;

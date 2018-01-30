@@ -266,13 +266,13 @@ qq_float calc_doc_score_for_a_query(
 struct ResultDocEntry {
   DocIdType doc_id;
   qq_float score;
-  std::vector<RankingPostingWithOffsets> postings;
+  std::vector<StandardPosting> postings;
 
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in)
     :doc_id(doc_id_in), score(score_in) {}
 
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
-      std::vector<RankingPostingWithOffsets> &postings_in)
+      std::vector<StandardPosting> &postings_in)
     :doc_id(doc_id_in), score(score_in), postings(postings_in) {}
 
   friend bool operator<(ResultDocEntry a, ResultDocEntry b)
@@ -294,7 +294,7 @@ struct ResultDocEntry {
 
 typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
     std::greater<ResultDocEntry> > MinHeap;
-typedef RankingPostingWithOffsets PostingWO;
+typedef StandardPosting PostingWO;
 
 void insert_to_heap(MinHeap *min_heap, const DocIdType &doc_id, 
     const qq_float &score_of_this_doc, 

@@ -85,16 +85,16 @@ class RankingPosting : public QqMemPostingService {
 
 // This is class is created because I do not want to modify 
 // RankingPosting. The modifications would incur changes in many other places.
-class RankingPostingWithOffsets: public RankingPosting {
+class StandardPosting: public RankingPosting {
  protected:
   OffsetPairs offset_pairs_;
 
  public:
-  RankingPostingWithOffsets(const int &doc_id, 
+  StandardPosting(const int &doc_id, 
                  const int &term_frequency)
     :RankingPosting(doc_id, term_frequency) {}
 
-  RankingPostingWithOffsets(const int &doc_id, 
+  StandardPosting(const int &doc_id, 
                  const int &term_frequency, 
                  const OffsetPairs &offset_pairs)
     :RankingPosting(doc_id, term_frequency), offset_pairs_(offset_pairs) {}

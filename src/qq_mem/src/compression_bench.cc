@@ -18,7 +18,7 @@
 #include "posting_list_delta.h"
 
 
-typedef RankingPostingWithOffsets PostingWO;
+typedef StandardPosting PostingWO;
 
 // Next() will generate a posting
 class PostingGenerator {

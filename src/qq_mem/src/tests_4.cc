@@ -111,7 +111,7 @@ TEST_CASE( "VarintBuffer", "[varint]" ) {
 
 TEST_CASE( "Encoding posting", "[encoding]" ) {
   SECTION("No offsets") {
-    RankingPostingWithOffsets posting(3, 4); 
+    StandardPosting posting(3, 4); 
     std::string buf = posting.Encode();
     REQUIRE(buf[0] == 2); // num of bytes starting from doc id
     REQUIRE(buf[1] == 3); // doc id
@@ -124,7 +124,7 @@ TEST_CASE( "Encoding posting", "[encoding]" ) {
       offset_pairs.push_back(std::make_tuple(1, 2)); 
     }
 
-    RankingPostingWithOffsets posting(3, 4, offset_pairs); 
+    StandardPosting posting(3, 4, offset_pairs); 
     std::string buf = posting.Encode();
     REQUIRE(buf[0] == 22); // content size: 2 + 2 * 10 = 22
     REQUIRE(buf[1] == 3); // doc id
@@ -156,14 +156,14 @@ void test_offset_iterator(OffsetPairsIterator offset_it,
   }
 }
 
-void test_if_two_postings_equal(RankingPostingWithOffsets a, RankingPostingWithOffsets b) {
+void test_if_two_postings_equal(StandardPosting a, StandardPosting b) {
     REQUIRE(a.GetDocId() == b.GetDocId());
     REQUIRE(a.GetTermFreq() == b.GetTermFreq());
     REQUIRE(*a.GetOffsetPairs() == *b.GetOffsetPairs());
 }
 
-void test_posting_list_delta( RankingPostingWithOffsets postingA,
-    RankingPostingWithOffsets postingB) {
+void test_posting_list_delta( StandardPosting postingA,
+    StandardPosting postingB) {
   // Initialize posting list
   PostingListDelta pl("hello");
   REQUIRE(pl.Size() == 0);
@@ -216,7 +216,7 @@ void test_posting_list_delta( RankingPostingWithOffsets postingA,
   REQUIRE(it.IsEnd() == true);
 }
 
-RankingPostingWithOffsets create_posting(DocIdType doc_id, 
+StandardPosting create_posting(DocIdType doc_id, 
                                          int term_freq,
                                          int n_offset_pairs) {
   OffsetPairs offset_pairs;
@@ -224,7 +224,7 @@ RankingPostingWithOffsets create_posting(DocIdType doc_id,
     offset_pairs.push_back(std::make_tuple(i * 2, i * 2 + 1)); 
   }
 
-  RankingPostingWithOffsets posting(doc_id, term_freq, offset_pairs); 
+  StandardPosting posting(doc_id, term_freq, offset_pairs); 
   return posting;
 }
 
@@ -240,8 +240,8 @@ TEST_CASE( "Posting List Delta", "[postinglist]" ) {
       offset_pairsB.push_back(std::make_tuple(i * 2, i * 2 + 1)); 
     }
 
-    RankingPostingWithOffsets postingA(3, 4, offset_pairsA); 
-    RankingPostingWithOffsets postingB(8, 9, offset_pairsB); 
+    StandardPosting postingA(3, 4, offset_pairsA); 
+    StandardPosting postingB(8, 9, offset_pairsB); 
 
     test_posting_list_delta(postingA, postingB);
   }
@@ -249,8 +249,8 @@ TEST_CASE( "Posting List Delta", "[postinglist]" ) {
   SECTION("0 postings") {
     OffsetPairs offset_pairs;
 
-    RankingPostingWithOffsets postingA(3, 4, offset_pairs); 
-    RankingPostingWithOffsets postingB(8, 9, offset_pairs); 
+    StandardPosting postingA(3, 4, offset_pairs); 
+    StandardPosting postingB(8, 9, offset_pairs); 
 
     test_posting_list_delta(postingA, postingB);
   }

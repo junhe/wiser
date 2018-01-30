@@ -149,7 +149,7 @@ class PostingListDeltaIterator {
     return cache_.cur_offset_pairs_start_;
   }
 
-  RankingPostingWithOffsets GetPosting() {
+  StandardPosting GetPosting() {
     OffsetPairs pairs;
     OffsetPairsIterator it = OffsetPairsBegin();
     while (it.IsEnd() == false) {
@@ -157,7 +157,7 @@ class PostingListDeltaIterator {
       it.Advance(&pairs.back());
     }
 
-    return RankingPostingWithOffsets(cache_.cur_doc_id_, cache_.cur_term_freq_,
+    return StandardPosting(cache_.cur_doc_id_, cache_.cur_term_freq_,
         pairs);
   }
 
@@ -237,7 +237,7 @@ class PostingListDelta {
     :term_(term), skip_span_(skip_span) {}
 
   // Assume posting[-1] = posting[0], so delta[0] is always 0
-  void AddPosting(const RankingPostingWithOffsets &posting) {
+  void AddPosting(const StandardPosting &posting) {
     DocIdType doc_id = posting.GetDocId();
 
     if (posting_idx_ == 0) {
@@ -255,7 +255,7 @@ class PostingListDelta {
     }
 
     DocIdType delta = doc_id - last_doc_id_;
-    RankingPostingWithOffsets posting_with_delta(delta, 
+    StandardPosting posting_with_delta(delta, 
                                                  posting.GetTermFreq(), 
                                                  *posting.GetOffsetPairs());
     data_.Append(posting_with_delta.Encode());
