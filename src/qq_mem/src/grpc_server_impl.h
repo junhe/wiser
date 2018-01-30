@@ -160,13 +160,15 @@ class AsyncServer : public ServerService {
   AsyncServer(const GeneralConfig config, std::unique_ptr<SearchEngineServiceNew> engine)
       :config_(config), search_engine_(std::move(engine)) {
 
-    std::string line_doc_path = config.GetString("line_doc_path");
-    if (line_doc_path.size() > 0) {
-      int n_rows = config.GetInt("n_line_doc_rows");
-      // int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows);
-      int ret = engine_loader::load_body_and_tokenized_body(search_engine_.get(), 
-                                                            line_doc_path, n_rows, 2, 2);
-      // std::cout << ret << " docs indexed to search engine." << std::endl;
+    if (config.HasKey("line_doc_path"))  {
+      std::string line_doc_path = config.GetString("line_doc_path");
+      if (line_doc_path.size() > 0) {
+        int n_rows = config.GetInt("n_line_doc_rows");
+        // int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows);
+        int ret = engine_loader::load_body_and_tokenized_body(search_engine_.get(), 
+                                                              line_doc_path, n_rows, 2, 2);
+        // std::cout << ret << " docs indexed to search engine." << std::endl;
+      }
     }
 
     ServerBuilder builder;
@@ -403,13 +405,16 @@ class SyncServer : public ServerService {
   SyncServer(const GeneralConfig config, std::unique_ptr<SearchEngineServiceNew> engine)
       :config_(config), search_engine_(std::move(engine)) {
 
-    std::string line_doc_path = config.GetString("line_doc_path");
-    if (line_doc_path.size() > 0) {
-      int n_rows = config.GetInt("n_line_doc_rows");
-      // int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows);
-      int ret = engine_loader::load_body_and_tokenized_body(search_engine_.get(), 
-                                                            line_doc_path, n_rows, 2, 2);
-      // std::cout << ret << " docs indexed to search engine." << std::endl;
+    if (config.HasKey("line_doc_path"))  {
+      std::string line_doc_path = config.GetString("line_doc_path");
+
+      if (line_doc_path.size() > 0) {
+        int n_rows = config.GetInt("n_line_doc_rows");
+        // int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows);
+        int ret = engine_loader::load_body_and_tokenized_body(search_engine_.get(), 
+                                                              line_doc_path, n_rows, 2, 2);
+        // std::cout << ret << " docs indexed to search engine." << std::endl;
+      }
     }
 
     const std::string target = config.GetString("target");

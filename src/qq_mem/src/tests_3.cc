@@ -310,6 +310,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
 TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
   GeneralConfig config;
   config.SetString("sync_type", "SYNC");
+  config.SetString("engine_name", "qq_mem_uncompressed");
 
   SECTION("Start and shutdown") {
     config.SetString("target", "localhost:50054");
@@ -388,6 +389,7 @@ TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
 TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
   GeneralConfig server_config;
   server_config.SetString("sync_type", "SYNC");
+  server_config.SetString("engine_name", "qq_mem_uncompressed");
 
   GeneralConfig client_config;
   client_config.SetInt("n_threads", 2);
