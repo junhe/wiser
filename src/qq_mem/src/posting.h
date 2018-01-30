@@ -9,6 +9,7 @@
 #include <cereal/archives/binary.hpp>
 #include <sstream>
 
+#include "posting_message.pb.h"
 #include "engine_services.h"
 #include "types.h"
 #include "utils.h"

@@ -10,6 +10,8 @@
 #include "catch.hpp"
 #include <glog/logging.h>
 
+#include "posting_message.pb.h"
+
 #include "native_doc_store.h"
 #include "inverted_index.h"
 #include "qq_engine.h"
@@ -74,6 +76,7 @@ TEST_CASE( "Document store implemented by C++ map", "[docstore]" ) {
     REQUIRE(store.Has(doc_id) == false);
 }
 
+
 TEST_CASE( "Basic Posting", "[posting]" ) {
     if (FLAG_SNIPPETS_PRECOMPUTE || FLAG_POSTINGS_ON_FLASH)
         return;
@@ -83,87 +86,6 @@ TEST_CASE( "Basic Posting", "[posting]" ) {
     // TODO change from postions to offsets
     REQUIRE(posting.positions_[0] == std::make_tuple(1,3));
     REQUIRE(posting.positions_[1] == std::make_tuple(5,8));
-}
-
-TEST_CASE( "Direct Posting List essential operations are OK", "[posting_list_direct]" ) {
-    if (FLAG_SNIPPETS_PRECOMPUTE || FLAG_POSTINGS_ON_FLASH)
-        return;
-    PostingList_Direct pl("term001");
-    REQUIRE(pl.Size() == 0);
-
-    pl.AddPosting(111, 1,  Offsets {std::make_tuple(19,91)});
-    pl.AddPosting(232, 2,  Offsets {std::make_tuple(10,18), std::make_tuple(19,91)});
-
-    REQUIRE(pl.Size() == 2);
-
-    for (auto it = pl.cbegin(); it != pl.cend(); it++) {
-        auto p = pl.ExtractPosting(it); 
-        REQUIRE((p.docID_ == 111 || p.docID_ == 232));
-        if (p.docID_ == 111) {
-            REQUIRE(p.term_frequency_ == 1);
-            REQUIRE(p.positions_.size() == 1);
-            REQUIRE(p.positions_[0] == std::make_tuple(19,91));
-        } else {
-            // p.docID_ == 232
-            REQUIRE(p.term_frequency_ == 2);
-            REQUIRE(p.positions_.size() == 2);
-            REQUIRE(p.positions_[0] == std::make_tuple(10,18));
-            REQUIRE(p.positions_[1] == std::make_tuple(19,91));
-        }
-    }
-}
-
-TEST_CASE( "Raw String based Posting List essential operations are OK", "[posting_list_raw]" ) {
-    /*
-    PostingList_Raw pl("term001");
-    REQUIRE(pl.Size() == 0);
-
-    pl.AddPosting(111, 1,  Positions {19});
-    pl.AddPosting(232, 2,  Positions {10, 19});
-
-    REQUIRE(pl.Size() == 2);
-
-    std::string serialized = pl.Serialize();
-    PostingList_Raw pl1("term001", serialized);
-    Posting p1 = pl1.GetPosting();
-    REQUIRE(p1.docID_ == 111);
-    REQUIRE(p1.term_frequency_ == 1);
-    // TODO change from positions to offsets
-    //REQUIRE(p1.positions_.size() == 1);
-    
-    Posting p2 = pl1.GetPosting();
-    REQUIRE(p2.docID_ == 232);
-    REQUIRE(p2.term_frequency_ == 2);
-    // TODO change from positions to offsets
-    //REQUIRE(p2.positions_.size() == 2);
-    */
-}
-
-
-TEST_CASE( "Protobuf based Posting List essential operations are OK", "[posting_list_protobuf]" ) {
-    /*
-    PostingList_Protobuf pl("term001");
-    REQUIRE(pl.Size() == 0);
-
-    pl.AddPosting(111, 1,  Positions {19});
-    pl.AddPosting(232, 2,  Positions {10, 19});
-
-    REQUIRE(pl.Size() == 2);
-
-    std::string serialized = pl.Serialize();
-    PostingList_Protobuf pl1("term001", serialized);
-    Posting p1 = pl1.GetPosting();
-    REQUIRE(p1.docID_ == 111);
-    REQUIRE(p1.term_frequency_ == 1);
-    // TODO change from positions to offsets
-    //REQUIRE(p1.positions_.size() == 1);
-    
-    Posting p2 = pl1.GetPosting();
-    REQUIRE(p2.docID_ == 232);
-    REQUIRE(p2.term_frequency_ == 2);
-    // TODO change from positions to offsets
-    //REQUIRE(p2.positions_.size() == 2);
-    */
 }
 
 
