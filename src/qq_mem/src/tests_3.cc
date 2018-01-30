@@ -2,7 +2,7 @@
 
 #include "qq.pb.h"
 
-#include "unifiedhighlighter.h"
+#include "highlighter.h"
 #include "intersect.h"
 #include "utils.h"
 #include "general_config.h"

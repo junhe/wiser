@@ -7,7 +7,7 @@
 #include "intersect.h"
 #include "utils.h"
 #include "native_doc_store.h"
-#include "unifiedhighlighter.h"
+#include "highlighter.h"
 #include "engine_loader.h"
 #include "posting_list_delta.h"
 

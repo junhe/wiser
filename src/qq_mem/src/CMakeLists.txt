@@ -50,7 +50,7 @@ set(ENGINE_SRCS
     utils.cc
     engine_loader.cc
     scoring.cc
-    unifiedhighlighter.cc
+    highlighter.cc
     flashreader.cc
     )
 

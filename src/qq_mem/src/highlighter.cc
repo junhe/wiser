@@ -1,4 +1,4 @@
-#include "unifiedhighlighter.h"
+#include "highlighter.h"
 #include "posting.h"
 #include <iostream>
 #include <algorithm>

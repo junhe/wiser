@@ -1,5 +1,5 @@
-#ifndef UNIFIEDHIGHLIGHTER_H
-#define UNIFIEDHIGHLIGHTER_H
+#ifndef HIGHLIGHTER_H
+#define HIGHLIGHTER_H
 
 #include <queue>
 #include <math.h> 

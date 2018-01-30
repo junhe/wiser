@@ -30,7 +30,7 @@
 #include "intersect.h"
 #include "scoring.h"
 
-#include "unifiedhighlighter.h"
+#include "highlighter.h"
 
 #include "lrucache.h"
 

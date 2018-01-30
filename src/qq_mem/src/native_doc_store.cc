@@ -2,7 +2,7 @@
 
 #include <string>
 #include <iostream>
-#include "unifiedhighlighter.h"  // To change the API
+#include "highlighter.h"  // To change the API
 
 void NativeDocStore::Add(int id, std::string document) {
     if (FLAG_DOCUMENTS_ON_FLASH) {

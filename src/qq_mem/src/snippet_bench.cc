@@ -4,7 +4,7 @@
 
 #include "types.h"
 #include "utils.h"
-#include "unifiedhighlighter.h"
+#include "highlighter.h"
 #include <boost/locale.hpp>
 
 
