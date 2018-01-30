@@ -264,7 +264,7 @@ class PostingListDelta {
     posting_idx_++;
   }
 
-  PostingListDeltaIterator Begin() {
+  PostingListDeltaIterator Begin() const {
     if (posting_idx_ == 0) {
       LOG(FATAL) << "Posting List must have at least one posting" << std::endl;
     }

@@ -401,17 +401,6 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
 
 class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
- private:
-  int next_doc_id_ = 0;
-  SimpleDocStore doc_store_;
-  InvertedIndexQqMemDelta inverted_index_;
-  DocLengthStore doc_lengths_;
-  SimpleHighlighter highlighter_;
-
-  int NextDocId() {
-    return next_doc_id_++;
-  }
-
  public:
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
@@ -486,16 +475,51 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
   }
 
   SearchResult ProcessQueryTogether(const SearchQuery &query) {
-    LOG(FATAL) << "not implemented" << std::endl;
+    SearchResult result;
+
+    if (query.n_results == 0) {
+      return result;
+    }
+
+    InvertedIndexQqMemDelta::PlPointers lists = 
+      inverted_index_.FindPostinglists(query.terms);
+
+    if (lists.size() == 0) {
+      return result;
+    }
+
+    PostingListIterators iterators;
+    for (auto p : lists) {
+      iterators.push_back(p->Begin());
+    }
+
+    QueryProcessorDelta processor(iterators, doc_lengths_, doc_lengths_.Size(), 
+                             query.n_results);  
+    auto top_k = processor.Process();
+
+    for (auto & top_doc_entry : top_k) {
+      SearchResultEntry result_entry;
+      result_entry.doc_id = top_doc_entry.doc_id;
+
+      if (query.return_snippets == true) {
+        result_entry.snippet = GenerateSnippet(top_doc_entry.doc_id,
+            top_doc_entry.postings, query.n_snippet_passages);
+      }
+
+      result.entries.push_back(result_entry);
+    }
+
+    return result;
+ 
   }
 
   std::string GenerateSnippet(const DocIdType &doc_id, 
-      const std::vector<const RankingPostingWithOffsets *> &postings, 
+      const std::vector<RankingPostingWithOffsets> &postings, 
       const int n_passages) {
     OffsetsEnums res = {};
 
     for (int i = 0; i < postings.size(); i++) {
-      res.push_back(Offset_Iterator(*postings[i]->GetOffsetPairs()));
+      res.push_back(Offset_Iterator(*postings[i].GetOffsetPairs()));
     }
 
     return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));
@@ -543,6 +567,19 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
 
     return highlighter_.highlightOffsetsEnums(res,  n_passages, doc_store_.Get(doc_id));
   }
+
+ private:
+  int next_doc_id_ = 0;
+  SimpleDocStore doc_store_;
+  InvertedIndexQqMemDelta inverted_index_;
+  DocLengthStore doc_lengths_;
+  SimpleHighlighter highlighter_;
+
+  int NextDocId() {
+    return next_doc_id_++;
+  }
+
+
 };
 
 
