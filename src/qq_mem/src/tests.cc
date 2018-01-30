@@ -216,29 +216,6 @@ TEST_CASE( "Hash benchmark", "[benchmark]" ) {
 
 }
 
-TEST_CASE( "IndexCreator works over the network", "[grpc]" ) {
-  if (FLAG_POSTINGS_ON_FLASH || FLAG_SNIPPETS_PRECOMPUTE)    //TODO client should add offsets
-      return;
-  auto server = CreateServer(std::string("localhost:50051"), 1, 40, 0);
-  utils::sleep(1); // warm up the server
-
-  auto client = CreateSyncClient("localhost:50051");
-
-  IndexCreator index_creator(
-        "src/testdata/enwiki-abstract_tokenized.linedoc.sample", *client);
-  index_creator.DoIndex();
-  // Search synchroniously
-  std::vector<int> doc_ids;
-  bool ret;
-  ret = client->Search("multicellular", doc_ids);
-/*
-// TODO Kan: not worked now
-  REQUIRE(ret == true);
-  REQUIRE(doc_ids.size() == 1);
-*/
-  // client_thread.join();
-}
-
 TEST_CASE( "Offsets Parser essential operations are OK", "[offsets_parser]" ) {
     std::string offsets = "1,2;.3,4;5,6;.7,8;.";
     std::vector<Offsets> offset_parsed = utils::parse_offsets(offsets);
