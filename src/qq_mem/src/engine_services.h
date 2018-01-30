@@ -15,7 +15,9 @@
 class SearchEngineService {
  public:
   // Generate unique id for each document
-  int NextDocId();
+  int NextDocId() {
+    return next_doc_id_++;
+  }
   // Add one more document into this search engine document base
   void AddDocument(const std::string &title, const std::string &url, 
                    const std::string &body){}

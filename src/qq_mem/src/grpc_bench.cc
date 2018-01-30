@@ -3,7 +3,6 @@
 #include <cassert>
 
 #include "grpc_client_impl.h"
-#include "index_creator.h"
 #include "utils.h"
 
 //////////////////////////////////////

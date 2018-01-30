@@ -1,5 +1,4 @@
 #include "engine_services.h"
-#include "posting_list_protobuf.h"
 #include <fcntl.h>
 #include <iostream>
 #include <stdio.h>

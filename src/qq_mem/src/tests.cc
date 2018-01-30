@@ -13,18 +13,11 @@
 #include "posting_message.pb.h"
 
 #include "native_doc_store.h"
-#include "inverted_index.h"
-#include "qq_engine.h"
-#include "qq_mem_direct_search_engine.h"
-#include "index_creator.h"
 #include "utils.h"
 #include "hash_benchmark.h"
 #include "grpc_server_impl.h"
 #include "qq_mem_uncompressed_engine.h"
 
-#include "posting_list_direct.h"
-#include "posting_list_raw.h"
-#include "posting_list_protobuf.h"
 #include "posting_list_vec.h"
 
 #include "intersect.h"

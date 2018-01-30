@@ -34,16 +34,8 @@ grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 set(ENGINE_SRCS 
     native_doc_store.cc
     posting.cc
-    posting_list_direct.cc
-    posting_list_protobuf.cc
-    posting_list_raw.cc
-    inverted_index.cc
     intersect.cc
     query_pool.cc
-    index_creator.cc
-    qq_engine.cc
-    search_engine_service.cc
-    qq_mem_direct_search_engine.cc
     qq_mem_uncompressed_engine.cc
     grpc_client_impl.cc
     grpc_server_impl.cc
