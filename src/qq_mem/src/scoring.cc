@@ -1,4 +1,4 @@
-#include "ranking.h"
+#include "scoring.h"
 
 #include <cmath>
 

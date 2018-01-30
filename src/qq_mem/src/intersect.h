@@ -14,7 +14,7 @@
 #include "engine_services.h"
 #include "posting_list_vec.h"
 #include "posting_list_delta.h"
-#include "ranking.h"
+#include "scoring.h"
 #include "utils.h"
 
 

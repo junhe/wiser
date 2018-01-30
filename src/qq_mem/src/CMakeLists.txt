@@ -49,7 +49,7 @@ set(ENGINE_SRCS
     grpc_server_impl.cc
     utils.cc
     engine_loader.cc
-    ranking.cc
+    scoring.cc
     unifiedhighlighter.cc
     flashreader.cc
     )

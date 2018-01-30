@@ -10,7 +10,7 @@
 
 #include "doc_length_store.h"
 #include "intersect.h"
-#include "ranking.h"
+#include "scoring.h"
 #include "utils.h"
 #include "posting_list_vec.h"
 #include "qq_mem_uncompressed_engine.h"

@@ -28,7 +28,7 @@
 #include "posting_list_vec.h"
 
 #include "intersect.h"
-#include "ranking.h"
+#include "scoring.h"
 
 #include "unifiedhighlighter.h"
 
