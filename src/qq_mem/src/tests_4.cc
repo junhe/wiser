@@ -142,17 +142,15 @@ void test_offset_iterator(OffsetPairsIterator offset_it,
     OffsetPairs original_pairs) {
   OffsetPairs pairs(original_pairs.size());
   for (int i = 0; i < original_pairs.size(); i++) {
-    auto ret = offset_it.Advance(&pairs[i]);
-    REQUIRE(ret == true);
+    REQUIRE(offset_it.IsEnd() == false);
+    offset_it.Pop(&pairs[i]);
     REQUIRE(std::get<0>(pairs[i]) == std::get<0>(original_pairs[i]));
     REQUIRE(std::get<1>(pairs[i]) == std::get<1>(original_pairs[i]));
   }
 
-  // check advancing last one
+  // check the end
   {
-    OffsetPair tmp_pair;
-    auto ret = offset_it.Advance(&tmp_pair);
-    REQUIRE(ret == false);
+    REQUIRE(offset_it.IsEnd() == true);
   }
 }
 

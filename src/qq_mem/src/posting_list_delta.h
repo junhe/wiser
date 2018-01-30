@@ -17,9 +17,11 @@ class OffsetPairsIterator {
     return byte_offset_ == end_offset_;
   }
 
-  bool Advance(OffsetPair *pair) {
+  // Make sure you are not at the end by IsEnd() before calling
+  // this function.
+  void Pop(OffsetPair *pair) {
     if (byte_offset_ == end_offset_) {
-      return false;
+      LOG(FATAL) << "You just tried to advance when you are already at the end\n";
     }
     
     uint32_t n;
@@ -34,8 +36,6 @@ class OffsetPairsIterator {
     len = utils::varint_decode(*data, byte_offset_, &n);
     byte_offset_ += len;
     std::get<1>(*pair) = n;
-
-    return true;
   }
 
  private:
@@ -154,7 +154,7 @@ class PostingListDeltaIterator {
     OffsetPairsIterator it = OffsetPairsBegin();
     while (it.IsEnd() == false) {
       pairs.emplace_back();
-      it.Advance(&pairs.back());
+      it.Pop(&pairs.back());
     }
 
     return StandardPosting(cache_.cur_doc_id_, cache_.cur_term_freq_,
