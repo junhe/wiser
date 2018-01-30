@@ -6,7 +6,7 @@
 #include "doc_length_store.h"
 #include "intersect.h"
 #include "utils.h"
-#include "native_doc_store.h"
+#include "doc_store.h"
 #include "highlighter.h"
 #include "engine_loader.h"
 #include "posting_list_delta.h"

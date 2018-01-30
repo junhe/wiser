@@ -32,7 +32,7 @@ grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 
 
 set(ENGINE_SRCS 
-    native_doc_store.cc
+    doc_store.cc
     posting.cc
     intersect.cc
     query_pool.cc

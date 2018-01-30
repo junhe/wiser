@@ -12,7 +12,7 @@
 
 #include "posting_message.pb.h"
 
-#include "native_doc_store.h"
+#include "doc_store.h"
 #include "utils.h"
 #include "hash_benchmark.h"
 #include "grpc_server_impl.h"

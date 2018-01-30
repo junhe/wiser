@@ -1,5 +1,5 @@
-#ifndef NATIVE_DOC_STORE_HH
-#define NATIVE_DOC_STORE_HH
+#ifndef DOC_STORE_HH
+#define DOC_STORE_HH
 
 #include <map>
 #include <cereal/types/vector.hpp>
