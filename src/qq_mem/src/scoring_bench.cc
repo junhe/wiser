@@ -20,12 +20,12 @@ utils::ResultRow score_bench(const int &n_terms, const int &n_docs) {
   const int n_repeats = 100000;
 
   IntersectionResult result;
-  std::vector<RankingPosting> postings(n_docs * n_terms);
+  std::vector<StandardPosting> postings(n_docs * n_terms);
 
   int i = 0;
   for (int doc_id = 0; doc_id < n_docs; doc_id++) {
     for (int term_id = 0; term_id < n_terms; term_id++) {
-      postings[i] = RankingPosting(doc_id, 3); // term freq is 3
+      postings[i] = StandardPosting(doc_id, 3); // term freq is 3
       result.SetPosting(doc_id, std::to_string(term_id), &postings[i]);
 
       i++;

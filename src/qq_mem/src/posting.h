@@ -48,7 +48,7 @@ class RankingPosting : public QqMemPostingService {
   int term_frequency_;
 
  public:
-  RankingPosting(){};
+  RankingPosting(){}
   RankingPosting(int doc_id, int term_frequency)
     :doc_id_(doc_id), term_frequency_(term_frequency)
   {}
@@ -66,6 +66,7 @@ class StandardPosting: public RankingPosting {
   OffsetPairs offset_pairs_;
 
  public:
+  StandardPosting(){}
   StandardPosting(const int &doc_id, 
                  const int &term_frequency)
     :RankingPosting(doc_id, term_frequency) {}

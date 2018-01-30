@@ -523,19 +523,19 @@ TEST_CASE( "Intersection", "[intersect]" ) {
   }
 
   SECTION("It returns term freqs") {
-    PostingList_Vec<RankingPosting> pl01("hello");   
-    pl01.AddPosting(RankingPosting(8, 1));
-    pl01.AddPosting(RankingPosting(10, 2));
+    PostingList_Vec<StandardPosting> pl01("hello");   
+    pl01.AddPosting(StandardPosting(8, 1));
+    pl01.AddPosting(StandardPosting(10, 2));
 
-    PostingList_Vec<RankingPosting> pl02("world");   
-    pl02.AddPosting(RankingPosting(7, 1));
-    pl02.AddPosting(RankingPosting(10, 8));
-    pl02.AddPosting(RankingPosting(15, 1));
+    PostingList_Vec<StandardPosting> pl02("world");   
+    pl02.AddPosting(StandardPosting(7, 1));
+    pl02.AddPosting(StandardPosting(10, 8));
+    pl02.AddPosting(StandardPosting(15, 1));
 
-    std::vector<const PostingList_Vec<RankingPosting>*> lists{&pl01, &pl02};
+    std::vector<const PostingList_Vec<StandardPosting>*> lists{&pl01, &pl02};
     IntersectionResult result;
 
-    std::vector<DocIdType> ret = intersect<RankingPosting>(lists, &result);
+    std::vector<DocIdType> ret = intersect<StandardPosting>(lists, &result);
 
     REQUIRE(ret == std::vector<DocIdType>{10});
     REQUIRE(result.GetPosting(10, "hello")->GetTermFreq() == 2);
@@ -543,19 +543,19 @@ TEST_CASE( "Intersection", "[intersect]" ) {
   }
 
   SECTION("It returns term freqs (new)") {
-    PostingList_Vec<RankingPosting> pl01("hello");   
-    pl01.AddPosting(RankingPosting(8, 1));
-    pl01.AddPosting(RankingPosting(10, 2));
+    PostingList_Vec<StandardPosting> pl01("hello");   
+    pl01.AddPosting(StandardPosting(8, 1));
+    pl01.AddPosting(StandardPosting(10, 2));
 
-    PostingList_Vec<RankingPosting> pl02("world");   
-    pl02.AddPosting(RankingPosting(7, 1));
-    pl02.AddPosting(RankingPosting(10, 8));
-    pl02.AddPosting(RankingPosting(15, 1));
+    PostingList_Vec<StandardPosting> pl02("world");   
+    pl02.AddPosting(StandardPosting(7, 1));
+    pl02.AddPosting(StandardPosting(10, 8));
+    pl02.AddPosting(StandardPosting(15, 1));
 
-    std::vector<const PostingList_Vec<RankingPosting>*> lists{&pl01, &pl02};
+    std::vector<const PostingList_Vec<StandardPosting>*> lists{&pl01, &pl02};
     IntersectionResult result;
 
-    std::vector<DocIdType> ret = intersect<RankingPosting>(lists, &result);
+    std::vector<DocIdType> ret = intersect<StandardPosting>(lists, &result);
 
     REQUIRE(ret == std::vector<DocIdType>{10});
     REQUIRE(result.GetPosting(10, "hello")->GetTermFreq() == 2);
@@ -615,7 +615,7 @@ TEST_CASE( "Scoring", "[ranking]" ) {
 TEST_CASE( "We can get score for each document", "[ranking]" ) {
   SECTION("It gets the same score as ES, for one term") {
     IntersectionResult result;
-    RankingPosting posting(0, 1); // id=0, term_freq=1
+    StandardPosting posting(0, 1); // id=0, term_freq=1
 
     result.SetPosting(0, "term1", &posting);
     result.SetDocCount("term1", 1);
@@ -628,7 +628,7 @@ TEST_CASE( "We can get score for each document", "[ranking]" ) {
   }
 
   SECTION("It gets the same score as ES, for two terms") {
-    RankingPosting p0(0, 1), p1(0, 1);
+    StandardPosting p0(0, 1), p1(0, 1);
     IntersectionResult result;
 
     result.SetPosting(0, "term1", &p0);
