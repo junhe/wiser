@@ -318,7 +318,7 @@ TEST_CASE( "Flash based LRUCache Template essential put/get opeartions are OK", 
 }
 
 TEST_CASE("Precompute and store document sentence segments successfully", "[Precompute_StorePassages]") {
-    NativeDocStore store;
+    SimpleDocStore store;
     int doc_id = 88;
     std::string doc = "it is a doc. We are the second sentence. I'm the third sentence! ";
     store.Add(doc_id, doc);
@@ -327,11 +327,6 @@ TEST_CASE("Precompute and store document sentence segments successfully", "[Prec
         store.Add(doc_id, doc);
         // check document body
         REQUIRE(store.Get(doc_id) == doc);
-        // check document passages
-        REQUIRE(store.GetPassages(doc_id).size() == 3 );
-        REQUIRE(store.GetPassages(doc_id)[0] == Passage_Segment(0,13) );
-        REQUIRE(store.GetPassages(doc_id)[1] == Passage_Segment(13,28) );
-        REQUIRE(store.GetPassages(doc_id)[2] == Passage_Segment(41,24) );
     }
 }
 
