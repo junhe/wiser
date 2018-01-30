@@ -74,62 +74,6 @@ TEST_CASE( "Document store implemented by C++ map", "[docstore]" ) {
     REQUIRE(store.Has(doc_id) == false);
 }
 
-TEST_CASE( "Inverted Index essential operations are OK", "[inverted_index]" ) {
-    if (FLAG_SNIPPETS_PRECOMPUTE || FLAG_POSTINGS_ON_FLASH)
-        return ;
-    InvertedIndex index;     
-    index.AddDocument(100, TermList{"hello", "world"});
-    index.AddDocument(101, TermList{"hello", "earth"});
-
-    // Get just the iterator
-    {
-      IndexStore::const_iterator ci = index.Find(Term("hello"));
-      REQUIRE(index.ConstEnd() != ci);
-
-      ci = index.Find(Term("hellox"));
-      REQUIRE(index.ConstEnd() == ci);
-    }
-
-    // Get non-exist
-    {
-        std::vector<int> ids = index.GetDocumentIds("notexist");
-        REQUIRE(ids.size() == 0);
-    }
-
-    // Get existing
-    {
-        std::vector<int> ids = index.GetDocumentIds("hello");
-        REQUIRE(ids.size() == 2);
-        
-        std::set<int> s1(ids.begin(), ids.end());
-        REQUIRE(s1 == std::set<int>{100, 101});
-    }
-
-    // Search "hello"
-    {
-        auto doc_ids = index.Search(TermList{"hello"}, SearchOperator::AND);
-        REQUIRE(doc_ids.size() == 2);
-
-        std::set<int> s(doc_ids.begin(), doc_ids.end());
-        REQUIRE(s == std::set<int>{100, 101});
-    }
-
-    // Search "world"
-    {
-        auto doc_ids = index.Search(TermList{"earth"}, SearchOperator::AND);
-        REQUIRE(doc_ids.size() == 1);
-
-        std::set<int> s(doc_ids.begin(), doc_ids.end());
-        REQUIRE(s == std::set<int>{101});
-    }
-
-    // Search non-existing
-    {
-        auto doc_ids = index.Search(TermList{"nonexist"}, SearchOperator::AND);
-        REQUIRE(doc_ids.size() == 0);
-    }
-}
-
 TEST_CASE( "Basic Posting", "[posting]" ) {
     if (FLAG_SNIPPETS_PRECOMPUTE || FLAG_POSTINGS_ON_FLASH)
         return;
@@ -221,39 +165,6 @@ TEST_CASE( "Protobuf based Posting List essential operations are OK", "[posting_
     //REQUIRE(p2.positions_.size() == 2);
     */
 }
-
-TEST_CASE( "QQSearchEngine", "[engine]" ) {
-    if (FLAG_SNIPPETS_PRECOMPUTE || FLAG_POSTINGS_ON_FLASH)
-        return;
-
-    QQSearchEngine engine;
-
-    REQUIRE(engine.NextDocId() == 0);
-
-    engine.AddDocument("my title", "my url", "my body");
-
-    std::vector<int> doc_ids = engine.Search(TermList{"my"}, SearchOperator::AND);
-    REQUIRE(doc_ids.size() == 1);
-
-    std::string doc = engine.GetDocument(doc_ids[0]);
-    REQUIRE(doc == "my body");
-}
-
-
-TEST_CASE( "QQSearchEngine can Find() a term", "[engine, benchmark]" ) {
-    if (FLAG_SNIPPETS_PRECOMPUTE || FLAG_POSTINGS_ON_FLASH)
-        return;
-    
-    QQSearchEngine engine;
-    engine.AddDocument("my title", "my url", "my body");
-
-
-    InvertedIndex::const_iterator it = engine.Find(Term("my"));
-
-    // We do not do any assertion here. 
-    // Just want to make sure it runs. 
-}
-
 
 
 TEST_CASE( "Utilities", "[utils]" ) {
@@ -406,18 +317,6 @@ TEST_CASE( "IndexCreator works over the network", "[grpc]" ) {
   // client_thread.join();
 }
 
-
-TEST_CASE( "Search engine can load document and index them locally", "[engine]" ) {
-  if (FLAG_POSTINGS_ON_FLASH || FLAG_SNIPPETS_PRECOMPUTE)    //TODO client should add offsets
-      return;
-  QQSearchEngine engine;
-  int ret = engine.LoadLocalDocuments("src/testdata/enwiki-abstract_tokenized.linedoc.sample", 90);
-  REQUIRE(ret == 90);
-
-  std::vector<int> doc_ids = engine.Search(TermList{"multicellular"}, SearchOperator::AND);
-  REQUIRE(doc_ids.size() == 1);
-}
-
 TEST_CASE( "Offsets Parser essential operations are OK", "[offsets_parser]" ) {
     std::string offsets = "1,2;.3,4;5,6;.7,8;.";
     std::vector<Offsets> offset_parsed = utils::parse_offsets(offsets);
@@ -429,88 +328,6 @@ TEST_CASE( "Offsets Parser essential operations are OK", "[offsets_parser]" ) {
     REQUIRE(offset_parsed[1][0]  == std::make_tuple(3,4));
     REQUIRE(offset_parsed[1][1]  == std::make_tuple(5,6));
     REQUIRE(offset_parsed[2][0]  == std::make_tuple(7,8));
-}
-
-TEST_CASE( "Search Engine with offsets essential operations are OK", "[search_engine_offsets]" ) {
-    if (FLAG_SNIPPETS_PRECOMPUTE || FLAG_POSTINGS_ON_FLASH)
-        return;
-    
-    QQSearchEngine engine;
-    
-    // read in the linedoc
-    utils::LineDoc linedoc("src/testdata/line_doc_offset");
-    std::vector<std::string> items;
-    linedoc.GetRow(items);
-    linedoc.GetRow(items);
-    
-    // adddocument
-    engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
-
-    // search for "rule"
-    std::vector<int> doc_ids = engine.Search(TermList{"rule"}, SearchOperator::AND);
-    REQUIRE(doc_ids.size() == 1);
-
-    // check doc
-    std::string doc = engine.GetDocument(doc_ids[0]);
-    REQUIRE(doc == items[1]);
-
-    // check posting
-    Posting result = engine.inverted_index_.GetPosting("rule", doc_ids[0]);
-    REQUIRE(result.docID_ == doc_ids[0]);
-    REQUIRE(result.term_frequency_ == 21);
-    REQUIRE(result.positions_.size() == 21);
-    // check Offsets
-    std::string res = "";
-    for (auto offset:result.positions_) {
-        int startoffset = std::get<0>(offset);
-        int endoffset = std::get<1>(offset);
-
-        res += std::to_string(startoffset) + "," + std::to_string(endoffset) + ";";
-        // check string
-        //std::cout << items[1].substr(startoffset, endoffset-startoffset+1) << std::endl;
-    }
-    res += ".";
-    REQUIRE(res == "29,34;94,99;124,129;178,183;196,201;490,495;622,626;1525,1529;1748,1753;2119,2124;2168,2172;2623,2627;4164,4168;4784,4788;6425,6429;7507,7511;9090,9094;9894,9898;11375,11379;12093,12097;12695,12700;.");
-
-
-    
-}
-
-TEST_CASE( "OffsetsEnums of Unified Highlighter essential operations are OK", "[offsetsenums_unified_highlighter]" ) {
-    if (FLAG_SNIPPETS_PRECOMPUTE || FLAG_POSTINGS_ON_FLASH)
-        return;
-
-    QQSearchEngine engine;
-    
-    // read in the linedoc
-    utils::LineDoc linedoc("src/testdata/line_doc_offset");
-    std::vector<std::string> items;
-    linedoc.GetRow(items);
-    linedoc.GetRow(items);
-    
-    
-    // adddocument
-    engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
-    UnifiedHighlighter test_highlighter(engine);
-    Query query = {"rule"};
-    
-    OffsetsEnums offsetsEnums = test_highlighter.getOffsetsEnums(query, 0);
-    REQUIRE(offsetsEnums.size() == 1);
-
-    // check iterator
-    Offset_Iterator cur_iter = offsetsEnums[0];
-    std::string res = "";
-    while (1) {
-        // judge whether end
-        if (cur_iter.startoffset == -1) {
-            break;
-        }
-        // print current position
-        res += std::to_string(cur_iter.startoffset) +  "," + std::to_string(cur_iter.endoffset) + ";";
-        cur_iter.next_position();
-    } 
-    res += ".";
-    REQUIRE(res == "29,34;94,99;124,129;178,183;196,201;490,495;622,626;1525,1529;1748,1753;2119,2124;2168,2172;2623,2627;4164,4168;4784,4788;6425,6429;7507,7511;9090,9094;9894,9898;11375,11379;12093,12097;12695,12700;.");
 }
 
 TEST_CASE( "Passage of Unified Highlighter essential operations are OK", "[passage_unified_highlighter]" ) {
@@ -535,109 +352,6 @@ TEST_CASE( "Passage of Unified Highlighter essential operations are OK", "[passa
     // reset
     test_passage.reset();
     REQUIRE(test_passage.matches.size() == 0);
-}
-
-TEST_CASE( "Unified Highlighter essential operations are OK", "[unified_highlighter]" ) {
-    QQSearchEngine engine;
-    
-    // read in the linedoc
-    utils::LineDoc linedoc("src/testdata/line_doc_offset");
-    std::vector<std::string> items;
-    linedoc.GetRow(items);   // 884B
-    linedoc.GetRow(items);   // 15KB
-    linedoc.GetRow(items);   // 177KB
-    linedoc.GetRow(items);   // 1MB
-    //linedoc.GetRow(items); // 8KB
-    
-    // adddocument
-    engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
-
-    //start highlighter
-    //Query query = {"park"}; // attack build knife zoo
-    //Query query = {"rule"}; // we doctor incorrect problem
-    //Query query = {"author"}; // similar life accord code
-    Query query = {"mondai"}; // support student report telephon
-    //Query query = {"polic"};  // bulletin inform law system
-    
-    // terms
-    //Query query = {"park", "attack", "build", "knife", "zoo"};
-    //Query query = {"rule", "we", "doctor", "incorrect", "problem"};
-    //Query query = {"author", "similar", "life", "accord", "code"};
-    //Query query = {"mondai", "support", "student", "report", "telephon"};
-    //Query query = {"polic", "bulletin", "inform", "law", "system"};  // bulletin
-    TopDocs topDocs = {0}; 
-    UnifiedHighlighter test_highlighter(engine);
-    
-
-    int maxPassages = 5;
-    //int maxPassages = 10;
-    //int maxPassages = 20;
-    //int maxPassages = 30;
-    //int maxPassages = 40;
-    //int maxPassages = 50;
-   
-    // warm up
-    //test_highlighter.highlight({"support"}, topDocs, maxPassages);
-
-    struct timeval t1,t2;
-    double timeuse;
-    std::vector<std::string> res;
-    
-    for (int i = 0; i < 4; i++) { 
-        // clear the cache
-        engine.inverted_index_.clear_posting_cache();
-        engine.doc_store_.clear_caches();
-
-        gettimeofday(&t1,NULL);
-        //TopDocs topDocs = engine.Search(query, SearchOperator::AND);
-        res = test_highlighter.highlight(query, topDocs, maxPassages);
-        gettimeofday(&t2,NULL);
-        timeuse = t2.tv_sec - t1.tv_sec + (t2.tv_usec - t1.tv_usec)/1000000.0;
-        printf("Use Time:%fms\n",timeuse*1000);
-        REQUIRE(res.size() == topDocs.size());
-        std::cout << res[0] <<std::endl;
-    }
-    
-}
-// TODO test case for repcompute score:
-
-
-TEST_CASE( "ScoreEnums of Pre-computation based Unified Highlighter essential operations are OK", "[scoresenums_precompute_unified_highlighter]" ) {
-    if (!FLAG_SNIPPETS_PRECOMPUTE)
-        return;
-    if (FLAG_POSTINGS_ON_FLASH)
-        return;   //TODO
-    QQSearchEngine engine;
-    
-    // read in the linedoc
-    utils::LineDoc linedoc("src/testdata/line_doc_offset");
-    std::vector<std::string> items;
-    linedoc.GetRow(items);
-    linedoc.GetRow(items);
-    
-    
-    // adddocument
-    engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
-    UnifiedHighlighter test_highlighter(engine);
-    Query query = {"problem"};
-   
-    ScoresEnums scoresEnums = test_highlighter.get_passages_scoresEnums(query, 0);
-    REQUIRE(scoresEnums.size() == 1);
-
-    // check iterator
-    PassageScore_Iterator cur_iter = scoresEnums[0];
-    std::string res = "";
-    while (1) {
-        // judge whether end
-        if (cur_iter.cur_passage_id_ == -1) {
-            break;
-        }
-        // print current position
-        res += std::to_string(cur_iter.cur_passage_id_) +  "," + std::to_string(cur_iter.score_) + ";";
-        cur_iter.next_passage();
-    } 
-    res += ".";
-    REQUIRE(res == "38,0.428823;39,0.609594;113,0.351342;.");
 }
 
 TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_breakiterator]" ) {
@@ -714,16 +428,6 @@ TEST_CASE( "Flash based LRUCache Template essential put/get opeartions are OK", 
     // miss
     REQUIRE(cache_lru.exists(17) == false);
     REQUIRE_THROWS_AS(cache_lru.get(17), std::range_error);
-}
-
-TEST_CASE( "UnifiedHighlighter snippets cache key constructor  essential opeartions are OK", "[UnifiedHighlighter_ConstructKey]") {
-    // create cache
-    QQSearchEngine engine;
-    UnifiedHighlighter test_highlighter(engine);
-
-    // construct key
-    std::string res = test_highlighter.construct_key({"hello", "world"}, 3);
-    REQUIRE(res == "3:hello,world,");
 }
 
 TEST_CASE("Precompute and store document sentence segments successfully", "[Precompute_StorePassages]") {
@@ -851,20 +555,6 @@ TEST_CASE("Cereal serialization works", "[Cereal_Serialization]") {
               << std::endl;
     */
    } 
-}
-
-TEST_CASE("QQMemDirectSearchEngine works", "[QQMemDirectSearchEngine]") {
-    QQMemDirectSearchEngine engine;
-
-    REQUIRE(engine.NextDocId() == 0);
-    utils::LineDoc linedoc("src/testdata/line_doc_offset");
-    std::vector<std::string> items;
-    linedoc.GetRow(items);   // 884B
-    engine.AddDocument(items[0], "http://wiki", items[1], items[2], items[3]);
-
-    std::vector<int> doc_ids = engine.Search(TermList{"my"}, SearchOperator::AND);
-    REQUIRE(doc_ids.size() == 1);
-
 }
 
 TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
