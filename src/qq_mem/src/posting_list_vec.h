@@ -11,9 +11,9 @@
 #include "posting.h"
 
 
-class PlVecOffsetIterator: public OffsetPairsIteratorService {
+class OffsetPairsVecIterator: public OffsetPairsIteratorService {
  public:
-  PlVecOffsetIterator(const OffsetPairs *pairs)
+  OffsetPairsVecIterator(const OffsetPairs *pairs)
     :pairs_(pairs), it_(pairs->cbegin()) {}
 
   bool IsEnd() const {
@@ -141,8 +141,8 @@ class PostingListStandardVec: public PostingList_Vec<StandardPosting> {
 
     std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const {
       const OffsetPairs *pairs = posting_list_->GetPosting(it_).GetOffsetPairs();
-      auto p = new PlVecOffsetIterator(pairs);
-      std::unique_ptr<PlVecOffsetIterator> it(p);
+      auto p = new OffsetPairsVecIterator(pairs);
+      std::unique_ptr<OffsetPairsVecIterator> it(p);
       return it;
     }
 

@@ -7,9 +7,9 @@
 #include "engine_services.h"
 
 
-class OffsetPairsIterator: public OffsetPairsIteratorService {
+class OffsetPairsDeltaIterator: public OffsetPairsIteratorService {
  public:
-  OffsetPairsIterator(const VarintBuffer *data, int byte_offset, 
+  OffsetPairsDeltaIterator(const VarintBuffer *data, int byte_offset, 
       const int end_offset)
     :data_(data), byte_offset_(byte_offset), end_offset_(end_offset),
      pair_index_(0) {}
@@ -167,7 +167,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
       LOG(FATAL) 
         << "Trying to get offset iterator from a empty posting iterator\n";
     }
-    std::unique_ptr<OffsetPairsIteratorService> p(new OffsetPairsIterator(data_, 
+    std::unique_ptr<OffsetPairsIteratorService> p(new OffsetPairsDeltaIterator(data_, 
                                cache_.cur_offset_pairs_start_,
                                cache_.next_posting_byte_offset_));
     return p;
