@@ -22,6 +22,21 @@ class InvertedIndexQqMem: public InvertedIndexService {
   typedef IndexStore::const_iterator const_iterator;
   typedef std::vector<const PostingListType*> PlPointers;
 
+  PlPointers FindPostinglists(const TermList &terms) const {
+    PlPointers postinglist_pointers;
+
+    for (auto term : terms) {
+      auto it = index_.find(term);
+      if (it == index_.end()) {
+        break;
+      }
+
+      postinglist_pointers.push_back(&it->second);
+    }
+
+    return postinglist_pointers;
+  }
+
   IteratorPointers FindIterators(const TermList &terms) const {
     IteratorPointers it_pointers;
     PlPointers pl_pointers = FindPostinglists(terms);
@@ -96,21 +111,6 @@ class InvertedIndexQqMem: public InvertedIndexService {
   int Size() const {
     return index_.size();
   }
-
-  PlPointers FindPostinglists(const TermList &terms) const {
-    PlPointers postinglist_pointers;
-
-    for (auto term : terms) {
-      auto it = index_.find(term);
-      if (it == index_.end()) {
-        break;
-      }
-
-      postinglist_pointers.push_back(&it->second);
-    }
-
-    return postinglist_pointers;
-  }
 };
 
 class InvertedIndexQqMemDelta {
@@ -180,7 +180,6 @@ class InvertedIndexQqMemDelta {
     
     assert(token_vec.size() == offsets_parsed.size());
 
-    //std::cout << "Add document " << doc_id << ": " << token_vec.size() << " : ";
     for (int i = 0; i < token_vec.size(); i++) {
       IndexStore::iterator it = index_.find(token_vec[i]);
 
@@ -192,10 +191,8 @@ class InvertedIndexQqMemDelta {
       } 
       
       PostingListType &postinglist = it->second;
-      //std::cout << i << ", " << token_vec[i];
       postinglist.AddPosting(
           StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
-      //std::cout << ";" ;
     }
   }
 
