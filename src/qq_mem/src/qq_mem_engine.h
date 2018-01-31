@@ -313,7 +313,7 @@ class QqMemEngine : public SearchEngineServiceNew {
       return result;
     }
 
-    QueryProcessorDelta processor(&iterators, doc_lengths_, doc_lengths_.Size(), 
+    QueryProcessor processor(&iterators, doc_lengths_, doc_lengths_.Size(), 
                              query.n_results);  
     auto top_k = processor.Process();
 

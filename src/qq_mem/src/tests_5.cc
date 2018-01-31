@@ -12,7 +12,7 @@
 
 typedef StandardPosting PostingWO;
 
-TEST_CASE( "QueryProcessorDelta works", "[engine0]" ) {
+TEST_CASE( "QueryProcessor works", "[engine0]" ) {
   OffsetPairs offset_pairs;
   for (int i = 0; i < 10; i++) {
     offset_pairs.push_back(std::make_tuple(1, 2)); 
@@ -38,7 +38,7 @@ TEST_CASE( "QueryProcessorDelta works", "[engine0]" ) {
     iterators.push_back(std::move(pl01.Begin()));
     iterators.push_back(std::move(pl02.Begin()));
 
-    QueryProcessorDelta processor(&iterators, store, 100, 5);
+    QueryProcessor processor(&iterators, store, 100, 5);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -55,7 +55,7 @@ TEST_CASE( "QueryProcessorDelta works", "[engine0]" ) {
     iterators.push_back(std::move(pl01.Begin()));
     iterators.push_back(std::move(pl02.Begin()));
 
-    QueryProcessorDelta processor(&iterators, store, 100, 2);
+    QueryProcessor processor(&iterators, store, 100, 2);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -71,7 +71,7 @@ TEST_CASE( "QueryProcessorDelta works", "[engine0]" ) {
     IteratorPointers iterators;
     iterators.push_back(std::move(pl01.Begin()));
 
-    QueryProcessorDelta processor(&iterators, store, 100, 2);
+    QueryProcessor processor(&iterators, store, 100, 2);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -89,7 +89,7 @@ TEST_CASE( "QueryProcessorDelta works", "[engine0]" ) {
     iterators.push_back(std::move(pl02.Begin()));
     iterators.push_back(std::move(pl03.Begin()));
 
-    QueryProcessorDelta processor(&iterators, store, 100, 2);
+    QueryProcessor processor(&iterators, store, 100, 2);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
