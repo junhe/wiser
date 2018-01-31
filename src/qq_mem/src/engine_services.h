@@ -98,13 +98,13 @@ class PostingListIteratorService {
 typedef std::vector<std::unique_ptr<PostingListIteratorService>> IteratorPointers;
 class InvertedIndexService {
  public:
-  virtual IteratorPointers FindIterators(const TermList &terms) = 0;
-  virtual std::map<std::string, int> PostinglistSizes(const TermList &terms) = 0;
+  virtual IteratorPointers FindIterators(const TermList &terms) const = 0;
+  virtual std::map<std::string, int> PostinglistSizes(const TermList &terms) const = 0;
   virtual void AddDocument(const int &doc_id, const std::string &body, 
       const std::string &tokens) = 0;
   virtual void AddDocument(const int &doc_id, const std::string &body, 
       const std::string &tokens, const std::string &token_offsets) = 0;
-  virtual int Size() = 0;
+  virtual int Size() const = 0;
 };
 
 

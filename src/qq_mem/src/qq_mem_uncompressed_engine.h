@@ -12,10 +12,7 @@
 #include "posting_list_delta.h"
 
 
-
-
-
-class InvertedIndexQqMem {
+class InvertedIndexQqMem: public InvertedIndexService {
  private:
   typedef PostingList_Vec<StandardPosting> PostingListType;
   typedef std::unordered_map<Term, PostingListType> IndexStore;
@@ -25,7 +22,10 @@ class InvertedIndexQqMem {
   typedef IndexStore::const_iterator const_iterator;
   typedef std::vector<const PostingList_Vec<StandardPosting>*> PlPointers;
 
-  PlPointers FindPostinglists(const TermList &terms) {
+  IteratorPointers FindIterators(const TermList &terms) const {
+  }
+
+  PlPointers FindPostinglists(const TermList &terms) const {
     PlPointers postinglist_pointers;
 
     for (auto term : terms) {
@@ -40,7 +40,7 @@ class InvertedIndexQqMem {
     return postinglist_pointers;
   }
 
-  std::map<std::string, int> PostinglistSizes(const TermList &terms) {
+  std::map<std::string, int> PostinglistSizes(const TermList &terms) const {
     std::map<std::string, int> ret;
 
     auto pointers = FindPostinglists(terms);
@@ -125,7 +125,7 @@ class InvertedIndexQqMem {
   }
 
   // Return number of posting lists
-  std::size_t Size() const {
+  int Size() const {
     return index_.size();
   }
 };
