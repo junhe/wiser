@@ -1,3 +1,4 @@
+# encoding=utf8  
 import sys
 import requests, json
 import codecs
@@ -108,6 +109,9 @@ if __name__=='__main__':
     if len(sys.argv)!=2:
         print('Usage: python tokenize_wiki_linedoc.py [input_name]  (results stored in input_name_tokenized)')
         exit(1)
+    
+    reload(sys)  
+    sys.setdefaultencoding('utf8')
     
     # do analysis
     #line_doc = open(sys.argv[1])

@@ -13,7 +13,10 @@ from .Clients import ElasticSearchClient
 
 BENCH_EXE = "RediSearchBenchmark"
 #WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml_1"
-WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml"
+#WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml"
+#WIKI_ABSTRACT = "/mnt/ssd/downloads/test.xml"
+WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki.linedoc.xml"
+#WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-latest-pages-articles.xml"
 #WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-latest-pages-articles1.xml"
 # WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-latest-abstract18.xml"
 # SERVER_PATH = "/users/jhe/redis-4.0.2/src/redis-server"
@@ -60,20 +63,21 @@ class ExperimentRsbenchGo(Experiment):
     make rs_bench_go
     """
     def __init__(self):
-        self._exp_name = "gobench-3shards"
+        self._exp_name = "test"
 
         self.paras = helpers.parameter_combinations({
                     #'worker_count': [1, 16, 32, 64, 128],
                     'worker_count': [1],
-                    'query': ['hello'],
-                    #'query': ['hello', 'barack obama', 'wiki-query-log'],
-                    #'query': ['wiki-query-log'],
-                    #'engine': ['elastic'],
-                    'engine': ['redis'],
+                    'query': ['wiki-query-log'],
+                    #'query': ['hello', 'barack obama', 'unit state america', 'wiki-query-log'],
+                    #'query': ['unit state america', 'wiki-query-log'],
+                    'engine': ['elastic'],
+                    #'engine': ['redis'],
                     'n_shards': [1],
-                    #'n_hosts': [10],
                     'n_hosts': [1],
-                    'rebuild_index': [True]
+                    #'n_hosts': [1],
+                    #'rebuild_index': [True]
+                    'rebuild_index': [False]
                     })
         self._n_treatments = len(self.paras)
 
