@@ -10,26 +10,6 @@
 #include "engine_services.h"
 #include "posting.h"
 
-class OffsetPairsIteratorService {
- public:
-  virtual bool IsEnd() const = 0;
-  virtual void Pop(OffsetPair *pair) = 0;
-};
-
-
-class PostingListIteratorService {
- public:
-  virtual int Size() const = 0;
-
-  virtual bool IsEnd() const = 0;
-  virtual DocIdType DocId() const = 0;
-  virtual int TermFreq() const = 0;
-
-  virtual bool Advance() = 0;
-  virtual void SkipForward(const DocIdType doc_id) = 0;
-  virtual std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const = 0;
-};
-
 
 class PlVecOffsetIterator: public OffsetPairsIteratorService {
  public:
@@ -176,9 +156,6 @@ class PostingListStandardVec: public PostingList_Vec<StandardPosting> {
     return p;
   }
 };
-
-
-
 
 
 #endif

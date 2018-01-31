@@ -8,33 +8,6 @@
 #include <tuple>
 #include "types.h"
 
-// This class is the basic abstract for
-// different kinds of search engine implementations:
-//   1. QQMemDirectSearchEngine: all contents directly(no serialization) stored in memory
-//   2.
-class SearchEngineService {
- public:
-  // Generate unique id for each document
-  int NextDocId() {
-    return next_doc_id_++;
-  }
-  // Add one more document into this search engine document base
-  void AddDocument(const std::string &title, const std::string &url, 
-                   const std::string &body){}
-  void AddDocument(const std::string &title, const std::string &url, 
-                   const std::string &body, const std::string &tokens,
-                   const std::string &offsets){} // with analyzed info(tokens, offsets) about this doc
-  // Get document content according to unique doc_id
-  const std::string & GetDocument(const int &doc_id){}
-  // Search a query, get top-related document ids 
-  std::vector<int> Search(const TermList &terms, const SearchOperator &op){}
-  // Batch-load local documents into this search engine document base
-  int LoadLocalDocuments(const std::string &line_doc_path, int n_rows){}
-  
- private:
-  int next_doc_id_ = 0;
-};
-
 class SearchEngineServiceNew {
  public:
   // tokenized_body is stemmed and tokenized. It may have repeated token. 
@@ -81,7 +54,6 @@ typedef std::vector<DocScore> DocScoreVec;
 typedef std::map<Term, qq_float> TermScoreMap;
 
 
-
 class InvertedIndexService {
     public:
         virtual void AddDocument(const int &doc_id, const TermList &termlist) = 0;
@@ -89,30 +61,12 @@ class InvertedIndexService {
         virtual std::vector<int> Search(const TermList &terms, const SearchOperator &op) = 0;
 };
 
-class PostingService {
-};
 
 class QqMemPostingService {
  public:
   virtual const int GetDocId() const = 0;
   virtual const int GetTermFreq() const = 0;
   virtual const OffsetPairs *GetOffsetPairs() const = 0;
-};
-
-
-// Posting_List Class
-class PostingListService {
-    public:
-// Get size
-        virtual std::size_t Size() = 0;
-// Get next posting for query processing
-        // virtual PostingService GetPosting() = 0;                          // exactly next
-        // virtual PostingService GetPosting(const int &next_doc_ID) = 0;    // next Posting whose docID>next_doc_ID
-// Add a doc for creating index
-        // virtual void AddPosting(int docID, int term_frequency, const Positions positions) = 0;
-// Serialize the posting list to store 
-        virtual std::string Serialize() = 0;    // serialize the posting list, return a string
-
 };
 
 class FlashReader {
@@ -128,7 +82,26 @@ class FlashReader {
         int _last_offset_; // append from it
 };
 
-// TODO: this design is not good!
-extern FlashReader * Global_Posting_Store;  //defined in qq_engine.cc
-extern FlashReader * Global_Document_Store; //defined in qq_engine.cc
+
+class OffsetPairsIteratorService {
+ public:
+  virtual bool IsEnd() const = 0;
+  virtual void Pop(OffsetPair *pair) = 0;
+};
+
+
+class PostingListIteratorService {
+ public:
+  virtual int Size() const = 0;
+
+  virtual bool IsEnd() const = 0;
+  virtual DocIdType DocId() const = 0;
+  virtual int TermFreq() const = 0;
+
+  virtual bool Advance() = 0;
+  virtual void SkipForward(const DocIdType doc_id) = 0;
+  virtual std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const = 0;
+};
+
+
 #endif
