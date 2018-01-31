@@ -656,22 +656,24 @@ TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
   REQUIRE(inverted_index.Size() == 3);
 
   SECTION("Postings are constructed correctly") {
-    auto postinglists = inverted_index.FindPostinglists(TermList{"hello"});
-    auto p_postinglist = postinglists[0];
+    auto iterators = inverted_index.FindIterators(TermList{"hello"});
+    auto it = iterators[0].get();
+    {
+      REQUIRE(it->DocId() == 0);
+      auto pairs_it = it->OffsetPairsBegin();
+      OffsetPair pair;
+      pairs_it->Pop(&pair);
+      REQUIRE(pair == std::make_tuple(0, 4)); // in doc 0
+    }
 
-    auto it = p_postinglist->cbegin();
-    auto posting = (*p_postinglist).GetPosting(it);
-    REQUIRE(posting.GetDocId() == 0);
-    auto pairs = posting.GetOffsetPairs();
-    REQUIRE(pairs->size() == 1);
-    REQUIRE((*pairs)[0] == std::make_tuple(0, 4)); // in doc 0
-
-    it++;
-    posting = (*p_postinglist).GetPosting(it);
-    REQUIRE(posting.GetDocId() == 1);
-    pairs = posting.GetOffsetPairs();
-    REQUIRE(pairs->size() == 1);
-    REQUIRE((*pairs)[0] == std::make_tuple(0, 4)); // in doc 1
+    it->Advance();
+    {
+      REQUIRE(it->DocId() == 1);
+      auto pairs_it = it->OffsetPairsBegin();
+      OffsetPair pair;
+      pairs_it->Pop(&pair);
+      REQUIRE(pair == std::make_tuple(0, 4)); // in doc 0
+    }
   }
 }
 
