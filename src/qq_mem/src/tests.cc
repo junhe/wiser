@@ -648,14 +648,14 @@ TEST_CASE( "Utilities work", "[utils]" ) {
   }
 }
 
-TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
-  InvertedIndexQqMem inverted_index;
 
+void setup_inverted_index(InvertedIndexService &inverted_index) {
   inverted_index.AddDocument(0, "hello world", "hello world");
   inverted_index.AddDocument(1, "hello wisconsin", "hello wisconsin");
   REQUIRE(inverted_index.Size() == 3);
+}
 
-  SECTION("Postings are constructed correctly") {
+void test_inverted_index(InvertedIndexService &inverted_index) {
     auto iterators = inverted_index.FindIterators(TermList{"hello"});
     auto it = iterators[0].get();
     {
@@ -674,6 +674,21 @@ TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
       pairs_it->Pop(&pair);
       REQUIRE(pair == std::make_tuple(0, 4)); // in doc 0
     }
+}
+
+TEST_CASE( "Inverted index", "[engine]" ) {
+  SECTION("Unompressed") {
+    InvertedIndexQqMem inverted_index;
+
+    setup_inverted_index(inverted_index);
+    test_inverted_index(inverted_index);
+  }
+
+  SECTION("Compressed") {
+    InvertedIndexQqMemDelta inverted_index;
+
+    setup_inverted_index(inverted_index);
+    test_inverted_index(inverted_index);
   }
 }
 
