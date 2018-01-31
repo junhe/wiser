@@ -179,41 +179,37 @@ void test_posting_list_delta( StandardPosting postingA,
   REQUIRE(pl.ByteCount() == postingA.Encode().size() + postingB.Encode().size() );
 
   // Iterate
-  auto it = pl.Begin();
-  REQUIRE(it.IsEnd() == false);
-  REQUIRE(it.DocId() == postingA.GetDocId());
-  REQUIRE(it.TermFreq() == postingA.GetTermFreq());
-  REQUIRE(it.OffsetPairStart() == 3); // size|id|tf|offset
-  REQUIRE(it.CurContentBytes() == postingA.Encode().size() - 1); // size|id|tf|offset
-
-  test_if_two_postings_equal(it.GetPosting(), postingA);
+  auto it = pl.NativeBegin();
+  REQUIRE(it->IsEnd() == false);
+  REQUIRE(it->DocId() == postingA.GetDocId());
+  REQUIRE(it->TermFreq() == postingA.GetTermFreq());
+  // REQUIRE(it->OffsetPairStart() == 3); // size|id|tf|offset
+  // REQUIRE(it->CurContentBytes() == postingA.Encode().size() - 1); // size|id|tf|offset
 
   // check offsets
   {
-    auto offset_it = it.OffsetPairsBegin();
+    auto offset_it = it->OffsetPairsBegin();
     auto original_pairs = *postingA.GetOffsetPairs();
     test_offset_iterator(std::move(offset_it), original_pairs);
   }
 
   // Iterate
-  it.Advance();
-  REQUIRE(it.IsEnd() == false);
-  REQUIRE(it.DocId() == postingB.GetDocId());
-  REQUIRE(it.TermFreq() == postingB.GetTermFreq());
-  REQUIRE(it.OffsetPairStart() == postingA.Encode().size() + 3); // size|id|tf|offset
-  REQUIRE(it.CurContentBytes() == postingB.Encode().size() - 1); // size|id|tf|offset
-
-  test_if_two_postings_equal(it.GetPosting(), postingB);
+  it->Advance();
+  REQUIRE(it->IsEnd() == false);
+  REQUIRE(it->DocId() == postingB.GetDocId());
+  REQUIRE(it->TermFreq() == postingB.GetTermFreq());
+  // REQUIRE(it->OffsetPairStart() == postingA.Encode().size() + 3); // size|id|tf|offset
+  // REQUIRE(it->CurContentBytes() == postingB.Encode().size() - 1); // size|id|tf|offset
 
   // check offsets
   {
-    auto offset_it = it.OffsetPairsBegin();
+    auto offset_it = it->OffsetPairsBegin();
     auto original_pairs = *postingB.GetOffsetPairs();
     test_offset_iterator(std::move(offset_it), original_pairs);
   }
 
-  it.Advance();
-  REQUIRE(it.IsEnd() == true);
+  it->Advance();
+  REQUIRE(it->IsEnd() == true);
 }
 
 TEST_CASE( "Posting List Delta", "[postinglist]" ) {
@@ -268,21 +264,21 @@ TEST_CASE( "Skip list", "[postinglist0]" ) {
   }
 
   SECTION("Advance") {
-    auto it = pl.Begin();
+    auto it = pl.NativeBegin();
     std::vector<int> has_skip, not_has_skip;
     std::vector<int> span_doc_ids;
     for (int i = 0; i < 10; i++) {
-      REQUIRE(it.DocId() == i);
-      REQUIRE(it.TermFreq() == i + 1);
+      REQUIRE(it->DocId() == i);
+      REQUIRE(it->TermFreq() == i + 1);
 
-      if (it.HasSkip()) {
+      if (it->HasSkip()) {
         has_skip.push_back(i);
-        span_doc_ids.push_back(it.NextSpanDocId());
+        span_doc_ids.push_back(it->NextSpanDocId());
       } else {
         not_has_skip.push_back(i);
       }
 
-      auto ret = it.Advance();
+      auto ret = it->Advance();
       REQUIRE(ret == true);
     }
 
@@ -290,67 +286,67 @@ TEST_CASE( "Skip list", "[postinglist0]" ) {
     REQUIRE(span_doc_ids == std::vector<int>{2, 5, 8});
     REQUIRE(not_has_skip == std::vector<int>{1, 2, 4, 5, 7, 8, 9});
 
-    auto ret = it.Advance();
+    auto ret = it->Advance();
     REQUIRE(ret == false);
   }
 
   SECTION("Skip to next span") {
-    auto it = pl.Begin();
+    auto it = pl.NativeBegin();
 
-    REQUIRE(it.HasSkip() == true); // at posting[0]
+    REQUIRE(it->HasSkip() == true); // at posting[0]
 
-    it.SkipToNextSpan();
-    REQUIRE(it.DocId() == 3);
-    REQUIRE(it.HasSkip() == true); // at posting[3]
+    it->SkipToNextSpan();
+    REQUIRE(it->DocId() == 3);
+    REQUIRE(it->HasSkip() == true); // at posting[3]
 
-    it.SkipToNextSpan();
-    REQUIRE(it.DocId() == 6);
-    REQUIRE(it.HasSkip() == true); // at posting[6]
+    it->SkipToNextSpan();
+    REQUIRE(it->DocId() == 6);
+    REQUIRE(it->HasSkip() == true); // at posting[6]
 
-    it.SkipToNextSpan();
-    REQUIRE(it.DocId() == 9);
-    REQUIRE(it.HasSkip() == false); // at posting[9]
+    it->SkipToNextSpan();
+    REQUIRE(it->DocId() == 9);
+    REQUIRE(it->HasSkip() == false); // at posting[9]
   }
 
   SECTION("Skip forward") {
-    auto it = pl.Begin();
+    auto it = pl.NativeBegin();
 
     SECTION("One by one") {
       for (int i = 0; i < 10; i++) {
-        it.SkipForward(i);
-        REQUIRE(it.DocId() == i);
+        it->SkipForward(i);
+        REQUIRE(it->DocId() == i);
       }
     }
 
     SECTION("2 by 2") {
       for (int i = 0; i < 10; i += 2) {
-        it.SkipForward(i);
-        REQUIRE(it.DocId() == i);
+        it->SkipForward(i);
+        REQUIRE(it->DocId() == i);
       }
     }
 
-    SECTION("Skip to itself") {
-      it.SkipForward(5);
-      REQUIRE(it.DocId() == 5);
+    SECTION("Skip to it->elf") {
+      it->SkipForward(5);
+      REQUIRE(it->DocId() == 5);
 
-      it.SkipForward(1);
-      REQUIRE(it.DocId() == 5);
+      it->SkipForward(1);
+      REQUIRE(it->DocId() == 5);
     }
 
-    SECTION("doc_id is before iterator") {
-      it.SkipForward(5);
-      REQUIRE(it.DocId() == 5);
+    SECTION("doc_id is before it->rator") {
+      it->SkipForward(5);
+      REQUIRE(it->DocId() == 5);
 
-      it.SkipForward(1);
-      REQUIRE(it.DocId() == 5);
+      it->SkipForward(1);
+      REQUIRE(it->DocId() == 5);
     }
 
     SECTION("doc_id is beyodn the end") {
-      it.SkipForward(5);
-      REQUIRE(it.DocId() == 5);
+      it->SkipForward(5);
+      REQUIRE(it->DocId() == 5);
 
-      it.SkipForward(100);
-      REQUIRE(it.IsEnd() == true);
+      it->SkipForward(100);
+      REQUIRE(it->IsEnd() == true);
     }
   }
 

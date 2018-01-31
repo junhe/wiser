@@ -150,18 +150,6 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     return cache_.cur_offset_pairs_start_;
   }
 
-  StandardPosting GetPosting() {
-    OffsetPairs pairs;
-    auto it = OffsetPairsBegin();
-    while (it->IsEnd() == false) {
-      pairs.emplace_back();
-      it->Pop(&pairs.back());
-    }
-
-    return StandardPosting(cache_.cur_doc_id_, cache_.cur_term_freq_,
-        pairs);
-  }
-
   std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const {
     if (IsEnd()) {
       LOG(FATAL) 
@@ -266,14 +254,33 @@ class PostingListDelta {
     posting_idx_++;
   }
 
-  PostingListDeltaIterator Begin() const {
+  std::unique_ptr<PostingListIteratorService> Begin() const {
     if (posting_idx_ == 0) {
       LOG(FATAL) << "Posting List must have at least one posting" << std::endl;
     }
-    return PostingListDeltaIterator(&data_, &skip_index_, 
-        skip_span_, Size(), 
-        skip_index_[0].prev_doc_id, 0);
+    return std::unique_ptr<PostingListIteratorService>(new PostingListDeltaIterator(
+          &data_, 
+          &skip_index_, 
+          skip_span_, 
+          Size(), 
+          skip_index_[0].prev_doc_id, 
+          0));
   }
+
+  std::unique_ptr<PostingListDeltaIterator> NativeBegin() const {
+    if (posting_idx_ == 0) {
+      LOG(FATAL) << "Posting List must have at least one posting" << std::endl;
+    }
+    return std::unique_ptr<PostingListDeltaIterator>(new PostingListDeltaIterator(
+          &data_, 
+          &skip_index_, 
+          skip_span_, 
+          Size(), 
+          skip_index_[0].prev_doc_id, 
+          0));
+  }
+
+
 
   int Size() const {
     return posting_idx_;

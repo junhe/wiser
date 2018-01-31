@@ -28,17 +28,17 @@ TEST_CASE( "QueryProcessorDelta works", "[engine0]" ) {
     pl03.AddPosting(PostingWO(i, 3, offset_pairs));
   }
 
-  // Setting doc length this will give doc 4 the highest score 
-  // because the document is the shortest.
   DocLengthStore store;
   for (int i = 0; i < 5; i++) {
     store.AddLength(i, (5 - i) * 10);
   }
 
   SECTION("Find top 5") {
-    PostingListIterators iterators{pl01.Begin(), pl02.Begin()};
+    IteratorPointers iterators;
+    iterators.push_back(std::move(pl01.Begin()));
+    iterators.push_back(std::move(pl02.Begin()));
 
-    QueryProcessorDelta processor(iterators, store, 100, 5);
+    QueryProcessorDelta processor(&iterators, store, 100, 5);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -51,9 +51,11 @@ TEST_CASE( "QueryProcessorDelta works", "[engine0]" ) {
   }
 
   SECTION("Find top 2") {
-    PostingListIterators iterators{pl01.Begin(), pl02.Begin()};
+    IteratorPointers iterators;
+    iterators.push_back(std::move(pl01.Begin()));
+    iterators.push_back(std::move(pl02.Begin()));
 
-    QueryProcessorDelta processor(iterators, store, 100, 2);
+    QueryProcessorDelta processor(&iterators, store, 100, 2);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -66,9 +68,10 @@ TEST_CASE( "QueryProcessorDelta works", "[engine0]" ) {
   }
 
   SECTION("Find top 2 within one postinglist") {
-    PostingListIterators iterators{pl01.Begin()};
+    IteratorPointers iterators;
+    iterators.push_back(std::move(pl01.Begin()));
 
-    QueryProcessorDelta processor(iterators, store, 100, 2);
+    QueryProcessorDelta processor(&iterators, store, 100, 2);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -81,9 +84,12 @@ TEST_CASE( "QueryProcessorDelta works", "[engine0]" ) {
   }
 
   SECTION("Find top 2 with three posting lists") {
-    PostingListIterators iterators{pl01.Begin(), pl02.Begin(), pl03.Begin()};
+    IteratorPointers iterators;
+    iterators.push_back(std::move(pl01.Begin()));
+    iterators.push_back(std::move(pl02.Begin()));
+    iterators.push_back(std::move(pl03.Begin()));
 
-    QueryProcessorDelta processor(iterators, store, 100, 2);
+    QueryProcessorDelta processor(&iterators, store, 100, 2);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 

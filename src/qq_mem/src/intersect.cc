@@ -105,7 +105,7 @@ void insert_to_heap(MinHeap *min_heap, const DocIdType &doc_id,
 
 
 qq_float calc_doc_score_for_a_query(
-    const PostingListIterators pl_iterators,
+    const IteratorPointers &pl_iterators,
     const std::vector<qq_float> &idfs_of_terms,
     const int &n_total_docs_in_index, 
     const qq_float &avg_doc_length_in_index,
@@ -116,7 +116,7 @@ qq_float calc_doc_score_for_a_query(
   for (int list_i = 0; list_i < pl_iterators.size(); list_i++) {
     // calc score of a term in one loop
 
-    const int cur_term_freq = pl_iterators[list_i].TermFreq(); 
+    const int cur_term_freq = pl_iterators[list_i]->TermFreq(); 
 
     qq_float idf = idfs_of_terms[list_i];
     qq_float tfnorm = calc_es_tfnorm(cur_term_freq, length_of_this_doc, 

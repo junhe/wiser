@@ -256,7 +256,7 @@ inline qq_float calc_doc_score_for_a_query(
 
 
 qq_float calc_doc_score_for_a_query(
-    const PostingListIterators pl_iterators,
+    const IteratorPointers &pl_iterators,
     const std::vector<qq_float> &idfs_of_terms,
     const int &n_total_docs_in_index, 
     const qq_float &avg_doc_length_in_index,
@@ -441,11 +441,11 @@ class QueryProcessor {
 class QueryProcessorDelta {
  public:
   QueryProcessorDelta(
-    PostingListIterators pl_iterators, 
+    IteratorPointers *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5)
-  : n_lists_(pl_iterators.size()),
+  : n_lists_(pl_iterators->size()),
     doc_lengths_(doc_lengths),
     pl_iterators_(pl_iterators),
     k_(k),
@@ -454,7 +454,7 @@ class QueryProcessorDelta {
   {
     for (int i = 0; i < n_lists_; i++) {
       idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
-                                          pl_iterators_[i].Size());
+                                      pl_iterators_->at(i)->Size());
     }
   }
 
@@ -467,14 +467,14 @@ class QueryProcessorDelta {
       // find max doc id
       max_doc_id = -1;
       for (int list_i = 0; list_i < n_lists_; list_i++) {
-        auto it = pl_iterators_[list_i];
+        auto it = pl_iterators_->at(list_i).get();
 
-        if (it.IsEnd()) {
+        if (it->IsEnd()) {
           finished = true;
           break;
         }
 
-        const DocIdType cur_doc_id = it.DocId(); 
+        const DocIdType cur_doc_id = it->DocId(); 
         if (cur_doc_id > max_doc_id) {
           max_doc_id = cur_doc_id; 
         }
@@ -487,15 +487,15 @@ class QueryProcessorDelta {
       // Try to reach max_doc_id in all posting lists_
       int list_i;
       for (list_i = 0; list_i < n_lists_; list_i++) {
-        auto it = pl_iterators_[list_i];
+        auto it = pl_iterators_->at(list_i).get();
 
-        it.SkipForward(max_doc_id);
-        if (it.IsEnd()) {
+        it->SkipForward(max_doc_id);
+        if (it->IsEnd()) {
           finished = true;
           break;
         }
 
-        if (it.DocId() != max_doc_id) {
+        if (it->DocId() != max_doc_id) {
           break;
         }
 
@@ -503,7 +503,7 @@ class QueryProcessorDelta {
           HandleTheFoundDoc(max_doc_id);
           // Advance iterators
           for (int i = 0; i < n_lists_; i++) {
-            pl_iterators_[i].Advance();
+            pl_iterators_->at(i)->Advance();
           }
         }
       }
@@ -515,7 +515,7 @@ class QueryProcessorDelta {
  private:
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
     qq_float score_of_this_doc = calc_doc_score_for_a_query(
-        pl_iterators_,
+        *pl_iterators_,
         idfs_of_terms_,
         n_total_docs_in_index_,
         doc_lengths_.GetAvgLength(),
@@ -549,13 +549,25 @@ class QueryProcessorDelta {
   {
     std::vector<PostingWO> postings;
     for (int i = 0; i < n_lists_; i++) {
-      postings.push_back(pl_iterators_[i].GetPosting());
+      postings.push_back(GetPosting(pl_iterators_->at(i).get()));
     }
     min_heap_.emplace(doc_id, score_of_this_doc, postings);
   }
 
+  StandardPosting GetPosting(const PostingListIteratorService *pl_it) {
+    OffsetPairs pairs;
+    auto it = pl_it->OffsetPairsBegin();
+
+    while (it->IsEnd() == false) {
+      pairs.emplace_back();
+      it->Pop(&pairs.back());
+    }
+
+    return StandardPosting(pl_it->DocId(), pl_it->TermFreq(), pairs);
+  }
+
   const int n_lists_;
-  PostingListIterators pl_iterators_;
+  IteratorPointers *pl_iterators_;
   const int k_;
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;

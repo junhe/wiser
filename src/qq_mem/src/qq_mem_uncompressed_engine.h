@@ -123,7 +123,17 @@ class InvertedIndexQqMemDelta {
   typedef IndexStore::const_iterator const_iterator;
   typedef std::vector<const PostingListType*> PlPointers;
 
-  PlPointers FindPostinglists(const TermList &terms) {
+  IteratorPointers FindIterators(const TermList &terms) const {
+    IteratorPointers it_pointers;
+    PlPointers pl_pointers = FindPostinglists(terms);
+    for (auto &pl : pl_pointers) {
+      it_pointers.push_back(std::move(pl->Begin()));
+    }
+
+    return it_pointers;
+  }
+
+  PlPointers FindPostinglists(const TermList &terms) const {
     PlPointers postinglist_pointers;
 
     for (auto term : terms) {
@@ -465,12 +475,12 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
       return result;
     }
 
-    PostingListIterators iterators;
+    IteratorPointers iterators;
     for (auto p : lists) {
-      iterators.push_back(p->Begin());
+      iterators.push_back(std::move(p->Begin()));
     }
 
-    QueryProcessorDelta processor(iterators, doc_lengths_, doc_lengths_.Size(), 
+    QueryProcessorDelta processor(&iterators, doc_lengths_, doc_lengths_.Size(), 
                              query.n_results);  
     auto top_k = processor.Process();
 
