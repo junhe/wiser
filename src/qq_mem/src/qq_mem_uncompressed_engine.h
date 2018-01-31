@@ -392,17 +392,19 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
 class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
  public:
-  // QqMemUncompressedEngineDelta(const GeneralConfig config) {
-    // if (config.HasKey("inverted_index") == false || 
-        // config.GetString("inverted_index") == "compressed") {
-      // inverted_index_.reset(new InvertedIndexQqMemDelta);
-    // } else if (config.GetString("inverted_index") == "uncompressed") {
-      // inverted_index_.reset(new InvertedIndexQqMem);
-    // } else {
-      // LOG(FATAL) << "inverted_index: " << config.GetString("inverted_index") 
-        // << " not supported" << std::endl;
-    // }
-  // }
+  QqMemUncompressedEngineDelta() {
+    GeneralConfig config;
+  
+    if (config.HasKey("inverted_index") == false || 
+        config.GetString("inverted_index") == "compressed") {
+      inverted_index_.reset(new InvertedIndexQqMemDelta);
+    } else if (config.GetString("inverted_index") == "uncompressed") {
+      inverted_index_.reset(new InvertedIndexQqMem);
+    } else {
+      LOG(FATAL) << "inverted_index: " << config.GetString("inverted_index") 
+        << " not supported" << std::endl;
+    }
+  }
 
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
@@ -434,7 +436,7 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
     int doc_id = NextDocId();
 
     doc_store_.Add(doc_id, body);
-    inverted_index_.AddDocument(doc_id, body, tokens);
+    inverted_index_->AddDocument(doc_id, body, tokens);
     doc_lengths_.AddLength(doc_id, utils::count_terms(body));
     return doc_id;
   }
@@ -443,7 +445,7 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
     int doc_id = NextDocId();
 
     doc_store_.Add(doc_id, body);
-    inverted_index_.AddDocument(doc_id, body, tokens, token_offsets);
+    inverted_index_->AddDocument(doc_id, body, tokens, token_offsets);
     doc_lengths_.AddLength(doc_id, utils::count_terms(body)); // TODO modify to count on offsets?
     return doc_id;
   }
@@ -453,11 +455,11 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
   }
 
   int TermCount() const {
-    return inverted_index_.Size();
+    return inverted_index_->Size();
   }
 
   std::map<std::string, int> PostinglistSizes(const TermList &terms) {
-    return inverted_index_.PostinglistSizes(terms);
+    return inverted_index_->PostinglistSizes(terms);
   }
 
   int GetDocLength(const DocIdType &doc_id) {
@@ -482,16 +484,10 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
       return result;
     }
 
-    InvertedIndexQqMemDelta::PlPointers lists = 
-      inverted_index_.FindPostinglists(query.terms);
+    IteratorPointers iterators = inverted_index_->FindIterators(query.terms);
 
-    if (lists.size() == 0) {
+    if (iterators.size() == 0) {
       return result;
-    }
-
-    IteratorPointers iterators;
-    for (auto p : lists) {
-      iterators.push_back(std::move(p->Begin()));
     }
 
     QueryProcessorDelta processor(&iterators, doc_lengths_, doc_lengths_.Size(), 
@@ -511,7 +507,6 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
     }
 
     return result;
- 
   }
 
   std::string GenerateSnippet(const DocIdType &doc_id, 
@@ -572,8 +567,8 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
  private:
   int next_doc_id_ = 0;
   SimpleDocStore doc_store_;
-  InvertedIndexQqMemDelta inverted_index_;
-  // std::unique_ptr<InvertedIndexService> inverted_index_;
+  // InvertedIndexQqMemDelta inverted_index_;
+  std::unique_ptr<InvertedIndexService> inverted_index_;
   DocLengthStore doc_lengths_;
   SimpleHighlighter highlighter_;
 
