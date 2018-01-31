@@ -36,7 +36,7 @@ set(ENGINE_SRCS
     posting.cc
     intersect.cc
     query_pool.cc
-    qq_mem_uncompressed_engine.cc
+    qq_mem_engine.cc
     grpc_client_impl.cc
     grpc_server_impl.cc
     utils.cc

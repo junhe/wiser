@@ -39,7 +39,7 @@
 #include "qq.grpc.pb.h"
 
 #include "types.h"
-#include "qq_mem_uncompressed_engine.h"
+#include "qq_mem_engine.h"
 #include "engine_loader.h"
 #include "utils.h"
 #include "general_config.h"

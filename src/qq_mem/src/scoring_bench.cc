@@ -13,7 +13,7 @@
 #include "scoring.h"
 #include "utils.h"
 #include "posting_list_vec.h"
-#include "qq_mem_uncompressed_engine.h"
+#include "qq_mem_engine.h"
 
 
 utils::ResultRow score_bench(const int &n_terms, const int &n_docs) {

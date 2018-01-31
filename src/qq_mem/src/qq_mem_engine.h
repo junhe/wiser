@@ -1,5 +1,5 @@
-#ifndef QQ_MEM_UNCOMPRESSED_ENGINE_H
-#define QQ_MEM_UNCOMPRESSED_ENGINE_H
+#ifndef QQ_MEM_ENGINE_H
+#define QQ_MEM_ENGINE_H
 
 #include <assert.h>
 
@@ -215,9 +215,9 @@ class InvertedIndexQqMemDelta: public InvertedIndexService {
 };
 
 
-class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
+class QqMemEngine : public SearchEngineServiceNew {
  public:
-  QqMemUncompressedEngineDelta(GeneralConfig config) {
+  QqMemEngine(GeneralConfig config) {
     if (config.HasKey("inverted_index") == false || 
         config.GetString("inverted_index") == "compressed") {
       inverted_index_.reset(new InvertedIndexQqMemDelta);

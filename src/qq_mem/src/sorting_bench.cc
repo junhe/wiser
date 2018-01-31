@@ -12,7 +12,7 @@
 #include "scoring.h"
 #include "utils.h"
 #include "posting_list_vec.h"
-#include "qq_mem_uncompressed_engine.h"
+#include "qq_mem_engine.h"
 
 
 utils::ResultRow sorting_bench(const int &n_docs, const int &k) {

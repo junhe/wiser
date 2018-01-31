@@ -16,7 +16,7 @@
 #include "utils.h"
 #include "hash_benchmark.h"
 #include "grpc_server_impl.h"
-#include "qq_mem_uncompressed_engine.h"
+#include "qq_mem_engine.h"
 
 #include "posting_list_vec.h"
 
@@ -681,7 +681,7 @@ TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
 TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
   GeneralConfig config;
   config.SetString("inverted_index", "uncompressed");
-  QqMemUncompressedEngineDelta engine(config);
+  QqMemEngine engine(config);
 
   auto doc_id = engine.AddDocumentReturnId("hello world", "hello world");
   REQUIRE(engine.GetDocument(doc_id) == "hello world");

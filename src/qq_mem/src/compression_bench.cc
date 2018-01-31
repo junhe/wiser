@@ -9,7 +9,7 @@
 #define NDEBUG
 #include <glog/logging.h>
 
-#include "qq_mem_uncompressed_engine.h"
+#include "qq_mem_engine.h"
 #include "utils.h"
 #include "general_config.h"
 #include "query_pool.h"
