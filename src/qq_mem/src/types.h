@@ -139,13 +139,17 @@ struct SearchQuery {
 struct SearchResultEntry {
   std::string snippet;
   DocIdType doc_id;
+  qq_float doc_score;
 
   std::string ToStr() {
-    return "DocId: " + std::to_string(doc_id) + " Snippet: " + snippet;
+    return "DocId: " + std::to_string(doc_id) 
+      + " Doc Score: " + std::to_string(doc_score)
+      + " Snippet: " + snippet;
   }
   void CopyTo(qq::SearchReplyEntry *grpc_entry) {
     grpc_entry->set_doc_id(doc_id);
     grpc_entry->set_snippet(snippet);
+    grpc_entry->set_doc_score(doc_score);
   }
 };
 

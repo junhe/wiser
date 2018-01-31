@@ -51,6 +51,7 @@ message SearchRequest {
 message SearchReplyEntry {
     int32 doc_id = 1;
     string snippet = 2;
+    float doc_score = 3;
 }
 
 message SearchReply {
