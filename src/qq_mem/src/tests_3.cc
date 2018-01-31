@@ -218,15 +218,23 @@ TEST_CASE( "Skip list works", "[posting_list]" ) {
   }
 }
 
+IteratorPointers create_iterator_pointers(std::vector<PostingListStandardVec> *posting_lists) {
+  IteratorPointers pointers;
+  for (auto &pl : *posting_lists) {
+    pointers.push_back(std::move(pl.Begin()));
+  }
+  return pointers;
+}
+
 TEST_CASE( "QueryProcessor works", "[engine]" ) {
   OffsetPairs offset_pairs;
   for (int i = 0; i < 10; i++) {
     offset_pairs.push_back(std::make_tuple(1, 2)); 
   }
 
-  PostingList_Vec<PostingWO> pl01("hello");
-  PostingList_Vec<PostingWO> pl02("world");
-  PostingList_Vec<PostingWO> pl03("again");
+  PostingListStandardVec pl01("hello");
+  PostingListStandardVec pl02("world");
+  PostingListStandardVec pl03("again");
 
   for (int i = 0; i < 5; i++) {
     pl01.AddPosting(PostingWO(i, 3, offset_pairs));
@@ -242,9 +250,10 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
   }
 
   SECTION("Find top 5") {
-    const std::vector<const PostingList_Vec<PostingWO>*> lists{&pl01, &pl02};
+    std::vector<PostingListStandardVec> lists{pl01, pl02};
+    IteratorPointers iterators = create_iterator_pointers(&lists);
 
-    QueryProcessor<PostingWO> processor(lists, store, 100, 5);
+    QueryProcessorDelta processor(&iterators, store, 100, 5);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -257,9 +266,10 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
   }
 
   SECTION("Find top 2") {
-    const std::vector<const PostingList_Vec<PostingWO>*> lists{&pl01, &pl02};
+    std::vector<PostingListStandardVec> lists{pl01, pl02};
+    IteratorPointers iterators = create_iterator_pointers(&lists);
 
-    QueryProcessor<PostingWO> processor(lists, store, 100, 2);
+    QueryProcessorDelta processor(&iterators, store, 100, 2);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -272,9 +282,10 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
   }
 
   SECTION("Find top 2 within one postinglist") {
-    const std::vector<const PostingList_Vec<PostingWO>*> lists{&pl01};
+    std::vector<PostingListStandardVec> lists{pl01};
+    IteratorPointers iterators = create_iterator_pointers(&lists);
 
-    QueryProcessor<PostingWO> processor(lists, store, 100, 2);
+    QueryProcessorDelta processor(&iterators, store, 100, 2);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -287,9 +298,10 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
   }
 
   SECTION("Find top 2 with three posting lists") {
-    const std::vector<const PostingList_Vec<PostingWO>*> lists{&pl01, &pl02, &pl03};
+    std::vector<PostingListStandardVec> lists{pl01, pl02, pl03};
+    IteratorPointers iterators = create_iterator_pointers(&lists);
 
-    QueryProcessor<PostingWO> processor(lists, store, 100, 2);
+    QueryProcessorDelta processor(&iterators, store, 100, 2);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -300,7 +312,6 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
 
     REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
   }
-
 }
 
 
