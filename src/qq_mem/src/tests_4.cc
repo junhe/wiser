@@ -140,19 +140,19 @@ TEST_CASE( "Encoding posting", "[encoding]" ) {
   }
 }
 
-void test_offset_iterator(OffsetPairsIterator offset_it, 
+void test_offset_iterator(std::unique_ptr<OffsetPairsIteratorService> offset_it, 
     OffsetPairs original_pairs) {
   OffsetPairs pairs(original_pairs.size());
   for (int i = 0; i < original_pairs.size(); i++) {
-    REQUIRE(offset_it.IsEnd() == false);
-    offset_it.Pop(&pairs[i]);
+    REQUIRE(offset_it->IsEnd() == false);
+    offset_it->Pop(&pairs[i]);
     REQUIRE(std::get<0>(pairs[i]) == std::get<0>(original_pairs[i]));
     REQUIRE(std::get<1>(pairs[i]) == std::get<1>(original_pairs[i]));
   }
 
   // check the end
   {
-    REQUIRE(offset_it.IsEnd() == true);
+    REQUIRE(offset_it->IsEnd() == true);
   }
 }
 
@@ -192,7 +192,7 @@ void test_posting_list_delta( StandardPosting postingA,
   {
     auto offset_it = it.OffsetPairsBegin();
     auto original_pairs = *postingA.GetOffsetPairs();
-    test_offset_iterator(offset_it, original_pairs);
+    test_offset_iterator(std::move(offset_it), original_pairs);
   }
 
   // Iterate
@@ -209,7 +209,7 @@ void test_posting_list_delta( StandardPosting postingA,
   {
     auto offset_it = it.OffsetPairsBegin();
     auto original_pairs = *postingB.GetOffsetPairs();
-    test_offset_iterator(offset_it, original_pairs);
+    test_offset_iterator(std::move(offset_it), original_pairs);
   }
 
   it.Advance();

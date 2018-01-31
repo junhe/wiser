@@ -4,16 +4,17 @@
 #include <glog/logging.h>
 
 #include "compression.h"
+#include "engine_services.h"
 
 
-class OffsetPairsIterator {
+class OffsetPairsIterator: public OffsetPairsIteratorService {
  public:
   OffsetPairsIterator(const VarintBuffer *data, int byte_offset, 
       const int end_offset)
     :data_(data), byte_offset_(byte_offset), end_offset_(end_offset),
      pair_index_(0) {}
 
-  bool IsEnd() {
+  bool IsEnd() const {
     return byte_offset_ == end_offset_;
   }
 
@@ -56,7 +57,7 @@ struct SpanMeta {
 
 typedef std::vector<SpanMeta> SkipIndex;
 
-class PostingListDeltaIterator {
+class PostingListDeltaIterator: public PostingListIteratorService {
  public:
   PostingListDeltaIterator(const VarintBuffer *data, 
                            const SkipIndex *skip_index,
@@ -151,24 +152,25 @@ class PostingListDeltaIterator {
 
   StandardPosting GetPosting() {
     OffsetPairs pairs;
-    OffsetPairsIterator it = OffsetPairsBegin();
-    while (it.IsEnd() == false) {
+    auto it = OffsetPairsBegin();
+    while (it->IsEnd() == false) {
       pairs.emplace_back();
-      it.Pop(&pairs.back());
+      it->Pop(&pairs.back());
     }
 
     return StandardPosting(cache_.cur_doc_id_, cache_.cur_term_freq_,
         pairs);
   }
 
-  OffsetPairsIterator OffsetPairsBegin() const {
+  std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const {
     if (IsEnd()) {
       LOG(FATAL) 
         << "Trying to get offset iterator from a empty posting iterator\n";
     }
-    return OffsetPairsIterator(data_, 
+    std::unique_ptr<OffsetPairsIteratorService> p(new OffsetPairsIterator(data_, 
                                cache_.cur_offset_pairs_start_,
-                               cache_.next_posting_byte_offset_);
+                               cache_.next_posting_byte_offset_));
+    return p;
   }
 
   int CurContentBytes() const {
