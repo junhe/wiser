@@ -677,10 +677,10 @@ TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
   }
 }
 
-
-TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
+// compressed or uncompressed
+QqMemEngine test_get_engine(std::string inverted_index) {
   GeneralConfig config;
-  config.SetString("inverted_index", "uncompressed");
+  config.SetString("inverted_index", inverted_index);
   QqMemEngine engine(config);
 
   auto doc_id = engine.AddDocumentReturnId("hello world", "hello world");
@@ -698,16 +698,18 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
   REQUIRE(engine.GetDocLength(doc_id) == 4);
   REQUIRE(engine.TermCount() == 4);
 
-  SECTION("The engine can serve single-term queries") {
-    // IntersectionResult result = engine.Query(TermList{"wisconsin"}); 
+  return engine;
+}
+
+void test_01(SearchEngineServiceNew &engine) {
     SearchResult result = engine.Search(SearchQuery(TermList{"wisconsin"}));
 
     REQUIRE(result.Size() == 1);
     REQUIRE(result.entries[0].doc_id == 1);
     REQUIRE(utils::format_double(result.entries[0].doc_score, 3) == "1.09");
-  }
+}
 
-  SECTION("The engine can serve single-term queries with multiple results") {
+void test_02(SearchEngineServiceNew &engine) {
     SearchResult result = engine.Search(SearchQuery(TermList{"hello"}));
     REQUIRE(result.Size() == 3);
 
@@ -718,9 +720,9 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     REQUIRE(utils::format_double(result.entries[0].doc_score, 3) == "0.149");
     REQUIRE(utils::format_double(result.entries[1].doc_score, 3) == "0.149");
     REQUIRE(utils::format_double(result.entries[2].doc_score, 3) == "0.111");
-  }
+}
 
-  SECTION("The engine can server two-term queries") {
+void test_03(SearchEngineServiceNew &engine) {
     SearchResult result = engine.Search(SearchQuery(TermList{"hello", "world"}));
 
     REQUIRE(result.Size() == 2);
@@ -730,40 +732,90 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     // commit and run `python tools/es_index_docs.py`.
     REQUIRE(utils::format_double(result.entries[0].doc_score, 3) == "0.677");
     REQUIRE(utils::format_double(result.entries[1].doc_score, 3) == "0.672");
-  }
+}
 
-  SECTION("It can generate snippets") {
+void test_04(SearchEngineServiceNew &engine) {
     auto result = engine.Search(SearchQuery(TermList{"hello"}, true));
     REQUIRE(result.Size() == 3);
     // We cannot test the snippets of the first entries because we do not know
     // their order (the first two entries have the same score).
     REQUIRE(result.entries[2].snippet == "<b>hello<\\b> world big world\n");
-  }
+}
 
-  SECTION("It can generate snippets for two-term query") {
+void test_05(SearchEngineServiceNew &engine) {
     auto result = engine.Search(SearchQuery(TermList{"hello", "world"}, true));
     REQUIRE(result.Size() == 2);
 
     REQUIRE(result.entries[0].snippet == "<b>hello<\\b> <b>world<\\b> big <b>world<\\b>\n");
     REQUIRE(result.entries[1].snippet == "<b>hello<\\b> <b>world<\\b>\n");
-  }
+}
 
-  SECTION("The engine behaves correct when n_results is 0") {
+void test_06(SearchEngineServiceNew &engine) {
     auto query = SearchQuery(TermList{"hello", "world"}, true);
     query.n_results = 0;
     auto result = engine.Search(query);
     REQUIRE(result.Size() == 0);
+}
+
+TEST_CASE( "QQ Mem Compressed Engine works", "[engine]" ) {
+  auto engine = test_get_engine("compressed");
+
+  SECTION("The engine can serve single-term queries") {
+    test_01(engine);
   }
 
-  SECTION("It can do it together)") {
-    std::cout << "This --------------" << std::endl;
-    auto query_result = engine.ProcessQueryTogether(
-        SearchQuery(TermList{"hello"}, true));
+  SECTION("The engine can serve single-term queries with multiple results") {
+    test_02(engine);
+  }
 
-    std::cout << "Query result:" << std::endl;
-    std::cout << query_result.ToStr() << std::endl;
+  SECTION("The engine can server two-term queries") {
+    test_03(engine);
+  }
+
+  SECTION("It can generate snippets") {
+    test_04(engine);
+  }
+
+  SECTION("It can generate snippets for two-term query") {
+    test_05(engine);
+  }
+
+  SECTION("The engine behaves correct when n_results is 0") {
+    test_06(engine);
   }
 }
+
+TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
+  auto engine = test_get_engine("uncompressed");
+
+  SECTION("The engine can serve single-term queries") {
+    test_01(engine);
+  }
+
+  SECTION("The engine can serve single-term queries with multiple results") {
+    test_02(engine);
+  }
+
+  SECTION("The engine can server two-term queries") {
+    test_03(engine);
+  }
+
+  SECTION("It can generate snippets") {
+    test_04(engine);
+  }
+
+  SECTION("It can generate snippets for two-term query") {
+    test_05(engine);
+  }
+
+  SECTION("The engine behaves correct when n_results is 0") {
+    test_06(engine);
+  }
+}
+
+
+
+
 
 
 TEST_CASE( "Sorting document works", "[ranking]" ) {
