@@ -10,6 +10,7 @@
 #include "highlighter.h"
 #include "engine_loader.h"
 #include "posting_list_delta.h"
+#include "general_config.h"
 
 
 class InvertedIndexQqMem: public InvertedIndexService {
@@ -113,7 +114,8 @@ class InvertedIndexQqMem: public InvertedIndexService {
   }
 };
 
-class InvertedIndexQqMemDelta {
+
+class InvertedIndexQqMemDelta: public InvertedIndexService {
  private:
   typedef PostingListDelta PostingListType;
   typedef std::unordered_map<Term, PostingListType> IndexStore;
@@ -148,7 +150,7 @@ class InvertedIndexQqMemDelta {
     return postinglist_pointers;
   }
 
-  std::map<std::string, int> PostinglistSizes(const TermList &terms) {
+  std::map<std::string, int> PostinglistSizes(const TermList &terms) const {
     std::map<std::string, int> ret;
 
     auto pointers = FindPostinglists(terms);
@@ -207,7 +209,7 @@ class InvertedIndexQqMemDelta {
   }
 
   // Return number of posting lists
-  std::size_t Size() const {
+  int Size() const {
     return index_.size();
   }
 };
@@ -390,6 +392,18 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
 
 class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
  public:
+  // QqMemUncompressedEngineDelta(const GeneralConfig config) {
+    // if (config.HasKey("inverted_index") == false || 
+        // config.GetString("inverted_index") == "compressed") {
+      // inverted_index_.reset(new InvertedIndexQqMemDelta);
+    // } else if (config.GetString("inverted_index") == "uncompressed") {
+      // inverted_index_.reset(new InvertedIndexQqMem);
+    // } else {
+      // LOG(FATAL) << "inverted_index: " << config.GetString("inverted_index") 
+        // << " not supported" << std::endl;
+    // }
+  // }
+
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
       int n_rows, const std::string loader) {
@@ -559,6 +573,7 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
   int next_doc_id_ = 0;
   SimpleDocStore doc_store_;
   InvertedIndexQqMemDelta inverted_index_;
+  // std::unique_ptr<InvertedIndexService> inverted_index_;
   DocLengthStore doc_lengths_;
   SimpleHighlighter highlighter_;
 
