@@ -14,30 +14,22 @@
 
 class InvertedIndexQqMem: public InvertedIndexService {
  private:
-  typedef PostingList_Vec<StandardPosting> PostingListType;
+  typedef PostingListStandardVec PostingListType;
   typedef std::unordered_map<Term, PostingListType> IndexStore;
   IndexStore index_;
 
  public:
   typedef IndexStore::const_iterator const_iterator;
-  typedef std::vector<const PostingList_Vec<StandardPosting>*> PlPointers;
+  typedef std::vector<const PostingListType*> PlPointers;
 
   IteratorPointers FindIterators(const TermList &terms) const {
-  }
-
-  PlPointers FindPostinglists(const TermList &terms) const {
-    PlPointers postinglist_pointers;
-
-    for (auto term : terms) {
-      auto it = index_.find(term);
-      if (it == index_.end()) {
-        break;
-      }
-
-      postinglist_pointers.push_back(&it->second);
+    IteratorPointers it_pointers;
+    PlPointers pl_pointers = FindPostinglists(terms);
+    for (auto &pl : pl_pointers) {
+      it_pointers.push_back(std::move(pl->Begin()));
     }
 
-    return postinglist_pointers;
+    return it_pointers;
   }
 
   std::map<std::string, int> PostinglistSizes(const TermList &terms) const {
@@ -101,20 +93,23 @@ class InvertedIndexQqMem: public InvertedIndexService {
     }
   }
 
-  std::vector<DocIdType> Search(const TermList &terms, const SearchOperator &op) {
-    if (op != SearchOperator::AND) {
-        throw std::runtime_error("NotImplementedError");
-    }
-
-    std::vector<DocIdType> doc_ids;
-    PlPointers postinglist_pointers = FindPostinglists(terms);
-
-    return intersect<StandardPosting>(postinglist_pointers, nullptr);
-  }
-
-  // Return number of posting lists
   int Size() const {
     return index_.size();
+  }
+
+  PlPointers FindPostinglists(const TermList &terms) const {
+    PlPointers postinglist_pointers;
+
+    for (auto term : terms) {
+      auto it = index_.find(term);
+      if (it == index_.end()) {
+        break;
+      }
+
+      postinglist_pointers.push_back(&it->second);
+    }
+
+    return postinglist_pointers;
   }
 };
 
@@ -297,36 +292,36 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   }
 
   SearchResult ProcessQueryTogether(const SearchQuery &query) {
-    SearchResult result;
+    // SearchResult result;
 
-    if (query.n_results == 0) {
-      return result;
-    }
+    // if (query.n_results == 0) {
+      // return result;
+    // }
 
-    InvertedIndexQqMem::PlPointers lists = 
-      inverted_index_.FindPostinglists(query.terms);
+    // InvertedIndexQqMem::PlPointers lists = 
+      // inverted_index_.FindPostinglists(query.terms);
 
-    if (lists.size() == 0) {
-      return result;
-    }
+    // if (lists.size() == 0) {
+      // return result;
+    // }
 
-    QueryProcessor<StandardPosting> processor(lists, doc_lengths_, doc_lengths_.Size(), 
-                             query.n_results);  
-    auto top_k = processor.Process();
+    // QueryProcessor<StandardPosting> processor(lists, doc_lengths_, doc_lengths_.Size(), 
+                             // query.n_results);  
+    // auto top_k = processor.Process();
 
-    for (auto & top_doc_entry : top_k) {
-      SearchResultEntry result_entry;
-      result_entry.doc_id = top_doc_entry.doc_id;
+    // for (auto & top_doc_entry : top_k) {
+      // SearchResultEntry result_entry;
+      // result_entry.doc_id = top_doc_entry.doc_id;
 
-      if (query.return_snippets == true) {
-        result_entry.snippet = GenerateSnippet(top_doc_entry.doc_id,
-            top_doc_entry.postings, query.n_snippet_passages);
-      }
+      // if (query.return_snippets == true) {
+        // result_entry.snippet = GenerateSnippet(top_doc_entry.doc_id,
+            // top_doc_entry.postings, query.n_snippet_passages);
+      // }
 
-      result.entries.push_back(result_entry);
-    }
+      // result.entries.push_back(result_entry);
+    // }
 
-    return result;
+    // return result;
   }
 
   std::string GenerateSnippet(const DocIdType &doc_id, 

@@ -151,7 +151,7 @@ class PostingListStandardVec: public PostingList_Vec<StandardPosting> {
     PostingListStandardVec::iterator_t it_;
   };
 
-  std::unique_ptr<PostingListIteratorService> Begin() {
+  std::unique_ptr<PostingListIteratorService> Begin() const {
     std::unique_ptr<PostingListIteratorService> p(new PostingListVecIterator(this));
     return p;
   }
