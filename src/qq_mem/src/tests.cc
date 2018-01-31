@@ -673,22 +673,6 @@ TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
     REQUIRE(pairs->size() == 1);
     REQUIRE((*pairs)[0] == std::make_tuple(0, 4)); // in doc 1
   }
-
-  SECTION("It can find an intersection for single-term queries") {
-    IntersectionResult store = inverted_index.FindIntersection(TermList{"hello"});
-    REQUIRE(store.Size() == 2);
-    auto it = store.row_cbegin();
-    REQUIRE(IntersectionResult::GetCurDocId(it) == 0);
-    it++;
-    REQUIRE(IntersectionResult::GetCurDocId(it) == 1);
-  }
-
-  SECTION("It can find an intersection for two-term queries") {
-    IntersectionResult store = inverted_index.FindIntersection(TermList{"hello", "world"});
-    REQUIRE(store.Size() == 1);
-    auto it = store.row_cbegin();
-    REQUIRE(IntersectionResult::GetCurDocId(it) == 0);
-  }
 }
 
 

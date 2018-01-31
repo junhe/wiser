@@ -101,18 +101,6 @@ class InvertedIndexQqMem: public InvertedIndexService {
     }
   }
 
-  // terms must have unique terms.
-  IntersectionResult FindIntersection(const TermList &terms) {
-    PlPointers postinglist_pointers = FindPostinglists(terms);
-    IntersectionResult result;
-    if (postinglist_pointers.size() < terms.size()) {
-      return result; // return an empty one
-    }
-
-    intersect<StandardPosting>(postinglist_pointers, &result);
-    return result;
-  }
-
   std::vector<DocIdType> Search(const TermList &terms, const SearchOperator &op) {
     if (op != SearchOperator::AND) {
         throw std::runtime_error("NotImplementedError");
@@ -216,10 +204,6 @@ class InvertedIndexQqMemDelta {
     }
   }
 
-  IntersectionResult FindIntersection(const TermList &terms) {
-    LOG(FATAL) << "FindIntersection not implemented in this inverted index" << std::endl;
-  }
-
   // Return number of posting lists
   std::size_t Size() const {
     return index_.size();
@@ -302,7 +286,6 @@ class QqMemUncompressedEngine : public SearchEngineServiceNew {
   }
 
   IntersectionResult Query(const TermList &terms) {
-    return inverted_index_.FindIntersection(terms);
   }
 
   DocScoreVec Score(const IntersectionResult &result) {
@@ -466,7 +449,6 @@ class QqMemUncompressedEngineDelta : public SearchEngineServiceNew {
   }
 
   IntersectionResult Query(const TermList &terms) {
-    return inverted_index_.FindIntersection(terms);
   }
 
   DocScoreVec Score(const IntersectionResult &result) {
