@@ -440,9 +440,12 @@ class QueryProcessor {
   const DocLengthStore &doc_lengths_;
 };
 
-
-
-
+namespace qq_search {
+  std::vector<ResultDocEntry> ProcessQuery(IteratorPointers *pl_iterators, 
+                                           const DocLengthStore &doc_lengths,
+                                           const int n_total_docs_in_index,
+                                           const int k = 5);
+}
 
 
 #endif
