@@ -78,8 +78,6 @@ class QQEngineSyncClient {
     request.set_n_results(10);
     request.set_return_snippets(true);
     request.set_n_snippet_passages(3);
-    request.set_query_processing_core(
-        qq::SearchRequest_QueryProcessingCore_TOGETHER);
 
     // Here we can the stub's newly available method we just added.
     Status status = stub_->Search(&context, request,  &reply);
@@ -530,7 +528,6 @@ class SyncStreamingClient: public Client {
     grpc_request.set_n_results(10);
     grpc_request.set_return_snippets(true);
     grpc_request.set_n_snippet_passages(3);
-    grpc_request.set_query_processing_core(qq::SearchRequest_QueryProcessingCore_TOGETHER);
     SearchReply reply;
 
     ClientContext context;
@@ -701,7 +698,6 @@ class SyncUnaryClient: public Client {
     grpc_request.set_n_results(10);
     grpc_request.set_return_snippets(true);
     grpc_request.set_n_snippet_passages(3);
-    grpc_request.set_query_processing_core(qq::SearchRequest_QueryProcessingCore_TOGETHER);
     SearchReply reply;
 
     while (shutdown_state_[thread_idx]->shutdown == false) {

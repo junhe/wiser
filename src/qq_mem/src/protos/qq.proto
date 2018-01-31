@@ -41,11 +41,6 @@ message SearchRequest {
     int32 n_results = 2;
     bool return_snippets = 3;
     int32 n_snippet_passages = 4;
-  	enum QueryProcessingCore {
-		TOGETHER = 0;
-        BY_PHASE = 1;
-    }
-	QueryProcessingCore query_processing_core = 5;
 }
 
 message SearchReplyEntry {

@@ -303,8 +303,6 @@ TEST_CASE("GRPC query copying", "[engine]") {
   qq::SearchRequest grpc_query;
   grpc_query.set_n_results(3);
   grpc_query.set_n_snippet_passages(5);
-  grpc_query.set_query_processing_core(
-      qq::SearchRequest_QueryProcessingCore_TOGETHER);
   grpc_query.add_terms("hello");
   grpc_query.add_terms("world");
 
@@ -314,7 +312,6 @@ TEST_CASE("GRPC query copying", "[engine]") {
   REQUIRE(local_query.terms == TermList{"hello", "world"});
   REQUIRE(local_query.n_results == 3);
   REQUIRE(local_query.n_snippet_passages == 5);
-  REQUIRE(local_query.query_processing_core == QueryProcessingCore::TOGETHER);
 
   qq::SearchRequest new_grpc_query;
   local_query.CopyTo(&new_grpc_query);
@@ -323,8 +320,6 @@ TEST_CASE("GRPC query copying", "[engine]") {
   REQUIRE(new_grpc_query.terms(1) == "world");
   REQUIRE(new_grpc_query.n_results() == 3);
   REQUIRE(new_grpc_query.n_snippet_passages() == 5);
-  REQUIRE(new_grpc_query.query_processing_core() 
-      == qq::SearchRequest_QueryProcessingCore_TOGETHER);
 }
 
 

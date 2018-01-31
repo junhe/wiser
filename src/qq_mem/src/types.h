@@ -63,7 +63,6 @@ class TermWithOffset { // class Term_With_Offset
 typedef std::vector<TermWithOffset> TermWithOffsetList;
 
 
-enum class QueryProcessingCore {TOGETHER, BY_PHASE};
 struct SearchQuery {
   SearchQuery(){}
   SearchQuery(const qq::SearchRequest &grpc_req){
@@ -76,7 +75,6 @@ struct SearchQuery {
   TermList terms;
   int n_results = 5;
   bool return_snippets = false;
-  QueryProcessingCore query_processing_core = QueryProcessingCore::TOGETHER;
   int n_snippet_passages = 3;
 
   std::string ToStr() const {
@@ -99,17 +97,6 @@ struct SearchQuery {
     request->set_n_results(n_results);
     request->set_return_snippets(return_snippets);
     request->set_n_snippet_passages(n_snippet_passages);
-    
-    switch (query_processing_core) {
-      case QueryProcessingCore::TOGETHER:
-        request->set_query_processing_core(qq::SearchRequest_QueryProcessingCore_TOGETHER);
-        break;
-      case QueryProcessingCore::BY_PHASE:
-        request->set_query_processing_core(qq::SearchRequest_QueryProcessingCore_BY_PHASE);
-        break;
-      default:
-        throw std::runtime_error("query processsing core not exists");
-    }
   }
 
   void CopyFrom(const qq::SearchRequest &grpc_req) {
@@ -122,17 +109,6 @@ struct SearchQuery {
     n_results = grpc_req.n_results();
     return_snippets = grpc_req.return_snippets();
     n_snippet_passages = grpc_req.n_snippet_passages();
-
-    switch (grpc_req.query_processing_core()) {
-      case qq::SearchRequest_QueryProcessingCore_TOGETHER:
-        query_processing_core = QueryProcessingCore::TOGETHER;
-        break;
-      case qq::SearchRequest_QueryProcessingCore_BY_PHASE:
-        query_processing_core = QueryProcessingCore::BY_PHASE;
-        break;
-      default:
-        throw std::runtime_error("query processsing core not exists");
-    }
   }
 };
 
