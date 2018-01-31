@@ -678,7 +678,7 @@ void test_inverted_index(InvertedIndexService &inverted_index) {
 
 TEST_CASE( "Inverted index", "[engine]" ) {
   SECTION("Unompressed") {
-    InvertedIndexQqMem inverted_index;
+    InvertedIndexQqMemVec inverted_index;
 
     setup_inverted_index(inverted_index);
     test_inverted_index(inverted_index);

@@ -13,7 +13,7 @@
 #include "general_config.h"
 
 
-class InvertedIndexQqMem: public InvertedIndexService {
+class InvertedIndexQqMemVec: public InvertedIndexService {
  private:
   typedef PostingListStandardVec PostingListType;
   typedef std::unordered_map<Term, PostingListType> IndexStore;
@@ -222,7 +222,7 @@ class QqMemEngine : public SearchEngineServiceNew {
         config.GetString("inverted_index") == "compressed") {
       inverted_index_.reset(new InvertedIndexQqMemDelta);
     } else if (config.GetString("inverted_index") == "uncompressed") {
-      inverted_index_.reset(new InvertedIndexQqMem);
+      inverted_index_.reset(new InvertedIndexQqMemVec);
     } else {
       LOG(FATAL) << "inverted_index: " << config.GetString("inverted_index") 
         << " not supported" << std::endl;
