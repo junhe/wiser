@@ -1,6 +1,9 @@
 # This Makefile is for organizing frequently used commands, not for compilation.
 .ONESHELL:
 
+all:
+	./build.sh
+
 hash_benchmark:
 	./build.sh
 	./build/hash_benchmark

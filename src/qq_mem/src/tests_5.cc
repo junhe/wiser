@@ -4,7 +4,10 @@
 #include "compression.h"
 #include "posting.h"
 #include "posting_list_delta.h"
+#include "posting_list_vec.h"
 #include "intersect.h"
+
+#include "test_helpers.h"
 
 
 typedef StandardPosting PostingWO;
@@ -92,5 +95,24 @@ TEST_CASE( "QueryProcessorDelta works", "[engine0]" ) {
     REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
   }
 }
+
+
+TEST_CASE( "PostingList_Vec iterator", "[posting_list]" ) {
+  auto pl = create_posting_list_standard(10); 
+
+  PostingListStandardVec::PostingListVecIterator it = pl.Begin();
+
+  for (int i = 0; i < 10; i++, it.Advance()) {
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.DocId() == i);
+    REQUIRE(it.TermFreq() == i * 2);
+  }
+  REQUIRE(it.IsEnd() == true);
+
+
+}
+
+
+
 
 

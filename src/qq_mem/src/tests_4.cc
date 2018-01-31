@@ -5,6 +5,8 @@
 #include "posting.h"
 #include "posting_list_delta.h"
 
+#include "test_helpers.h"
+
 
 
 void test_encoding(uint32_t val) {
@@ -212,18 +214,6 @@ void test_posting_list_delta( StandardPosting postingA,
 
   it.Advance();
   REQUIRE(it.IsEnd() == true);
-}
-
-StandardPosting create_posting(DocIdType doc_id, 
-                                         int term_freq,
-                                         int n_offset_pairs) {
-  OffsetPairs offset_pairs;
-  for (int i = 0; i < n_offset_pairs; i++) {
-    offset_pairs.push_back(std::make_tuple(i * 2, i * 2 + 1)); 
-  }
-
-  StandardPosting posting(doc_id, term_freq, offset_pairs); 
-  return posting;
 }
 
 TEST_CASE( "Posting List Delta", "[postinglist]" ) {

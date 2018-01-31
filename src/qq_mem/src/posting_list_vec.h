@@ -36,7 +36,7 @@ class PlVecOffsetIterator: public OffsetPairsIteratorService {
   PlVecOffsetIterator(const OffsetPairs *pairs)
     :pairs_(pairs), it_(pairs->cbegin()) {}
 
-  bool IsEnd() {
+  bool IsEnd() const {
     return it_ == pairs_->cend();
   }
 
@@ -81,6 +81,7 @@ class PostingList_Vec {
   const Term GetTerm() const {return term_;}
   int Size() const {return posting_store_.size();}
 
+
   iterator_t cbegin() const {return 0;}
   iterator_t cend() const {return posting_store_.size();}
 
@@ -119,50 +120,62 @@ class PostingList_Vec {
 };
 
 
-
-
-class PostingListVecIterator: public PostingListIteratorService {
+class PostingListStandardVec: public PostingList_Vec<StandardPosting> {
  public:
-  PostingListVecIterator(const PostingList_Vec<StandardPosting> *posting_list)
-    : posting_list_(posting_list), it_(0) {}
+  PostingListStandardVec(Term term): PostingList_Vec<StandardPosting>(term){}
+  PostingListStandardVec(Term term, const int skip_span)
+    : PostingList_Vec<StandardPosting>(term, skip_span){}
+  class PostingListVecIterator: public PostingListIteratorService {
+   public:
+    PostingListVecIterator(const PostingListStandardVec *posting_list)
+      : posting_list_(posting_list), it_(0) {}
 
-  int Size() const {
-    return posting_list_->Size();
-  }
-
-  bool IsEnd() const {
-    return it_ == posting_list_->Size();
-  }
-
-  DocIdType DocId() const {
-    return posting_list_->GetPosting(it_).GetDocId();
-  }
-
-  int TermFreq() const {
-    return posting_list_->GetPosting(it_).GetTermFreq();
-  }
-
-  bool Advance() {
-    if (IsEnd()) {
-      return false;
+    int Size() const {
+      return posting_list_->Size();
     }
 
-    it_++;
-    return true;
-  }
+    bool IsEnd() const {
+      return it_ == posting_list_->Size();
+    }
 
-  void SkipForward(const DocIdType doc_id) {
-    it_ = posting_list_->SkipForward(it_, doc_id);
-  }
+    DocIdType DocId() const {
+      return posting_list_->GetPosting(it_).GetDocId();
+    }
 
-  std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const {
-     
-  }
+    int TermFreq() const {
+      return posting_list_->GetPosting(it_).GetTermFreq();
+    }
 
- private:
-  const PostingList_Vec<StandardPosting> *posting_list_;
-  PostingList_Vec<StandardPosting>::iterator_t it_;
+    bool Advance() {
+      if (IsEnd()) {
+        return false;
+      }
+
+      it_++;
+      return true;
+    }
+
+    void SkipForward(const DocIdType doc_id) {
+      it_ = posting_list_->SkipForward(it_, doc_id);
+    }
+
+    std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const {
+      const OffsetPairs *pairs = posting_list_->GetPosting(it_).GetOffsetPairs();
+      auto p = new PlVecOffsetIterator(pairs);
+      std::unique_ptr<PlVecOffsetIterator> it(p);
+      return it;
+    }
+
+   protected:
+    const PostingListStandardVec *posting_list_;
+    PostingListStandardVec::iterator_t it_;
+  };
+
+  PostingListVecIterator Begin() {
+    return PostingListVecIterator(this);
+  }
 };
+
 
 
 
