@@ -320,6 +320,7 @@ class QqMemEngine : public SearchEngineServiceNew {
     for (auto & top_doc_entry : top_k) {
       SearchResultEntry result_entry;
       result_entry.doc_id = top_doc_entry.doc_id;
+      result_entry.doc_score = top_doc_entry.score;
 
       if (query.return_snippets == true) {
         result_entry.snippet = GenerateSnippet(top_doc_entry.doc_id,
