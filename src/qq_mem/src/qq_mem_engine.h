@@ -289,17 +289,6 @@ class QqMemEngine : public SearchEngineServiceNew {
     return doc_lengths_.GetLength(doc_id);
   }
 
-  IntersectionResult Query(const TermList &terms) {
-  }
-
-  DocScoreVec Score(const IntersectionResult &result) {
-    return score_docs(result, doc_lengths_);
-  }
-
-  std::vector<DocIdType> FindTopK(const DocScoreVec &doc_scores, int k) {
-    return utils::find_top_k(doc_scores, k);
-  }
-
   SearchResult ProcessQueryTogether(const SearchQuery &query) {
     SearchResult result;
 
@@ -344,46 +333,7 @@ class QqMemEngine : public SearchEngineServiceNew {
   }
 
   SearchResult Search(const SearchQuery &query) {
-    if (query.query_processing_core == QueryProcessingCore::TOGETHER) {
-      return ProcessQueryTogether(query);
-    } else if (query.query_processing_core == QueryProcessingCore::BY_PHASE) {
-      return ProcessQueryStepByStep(query);
-    }
-  }
-
-  SearchResult ProcessQueryStepByStep(const SearchQuery &query) {
-    SearchResult result;
-
-    auto intersection_result = Query(query.terms);
-    auto scores = Score(intersection_result);
-    std::vector<DocIdType> top_k = FindTopK(scores, query.n_results);
-
-    for (auto doc_id : top_k) {
-      SearchResultEntry entry;
-      entry.doc_id = doc_id;
-
-      if (query.return_snippets == true) {
-        auto row = intersection_result.GetRow(doc_id);
-        entry.snippet = GenerateSnippet(doc_id, row, query.n_snippet_passages);
-      }
-
-      result.entries.push_back(entry);
-    }
-
-    return result;
-  }
-
-  std::string GenerateSnippet(const DocIdType &doc_id, 
-                              const IntersectionResult::row_dict_t *row,
-                              const int n_passages) {
-    OffsetsEnums res = {};
-    
-    for (auto col_it = row->cbegin() ; col_it != row->cend(); col_it++) {
-      auto p_posting = IntersectionResult::GetPosting(col_it);
-      res.push_back(Offset_Iterator(*p_posting->GetOffsetPairs()));
-    }
-
-    return highlighter_.highlightOffsetsEnums(res,  n_passages, doc_store_.Get(doc_id));
+    return ProcessQueryTogether(query);
   }
 
  private:
