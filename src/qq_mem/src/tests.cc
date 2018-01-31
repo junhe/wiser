@@ -679,7 +679,9 @@ TEST_CASE( "Inverted index used by QQ memory uncompressed works", "[engine]" ) {
 
 
 TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
-  QqMemUncompressedEngine engine;
+  GeneralConfig config;
+  config.SetString("inverted_index", "uncompressed");
+  QqMemUncompressedEngineDelta engine(config);
 
   auto doc_id = engine.AddDocumentReturnId("hello world", "hello world");
   REQUIRE(engine.GetDocument(doc_id) == "hello world");
