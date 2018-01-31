@@ -699,55 +699,37 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
   REQUIRE(engine.TermCount() == 4);
 
   SECTION("The engine can serve single-term queries") {
-    IntersectionResult result = engine.Query(TermList{"wisconsin"}); 
-    REQUIRE(result.Size() == 1);
+    // IntersectionResult result = engine.Query(TermList{"wisconsin"}); 
+    SearchResult result = engine.Search(SearchQuery(TermList{"wisconsin"}));
 
-    DocScoreVec doc_scores = engine.Score(result);
-    REQUIRE(doc_scores.size() == 1);
-    REQUIRE(doc_scores[0].doc_id == 1);
-    REQUIRE(utils::format_double(doc_scores[0].score, 3) == "1.09");
+    REQUIRE(result.Size() == 1);
+    REQUIRE(result.entries[0].doc_id == 1);
+    REQUIRE(utils::format_double(result.entries[0].doc_score, 3) == "1.09");
   }
 
   SECTION("The engine can serve single-term queries with multiple results") {
-    IntersectionResult result = engine.Query(TermList{"hello"}); 
+    SearchResult result = engine.Search(SearchQuery(TermList{"hello"}));
     REQUIRE(result.Size() == 3);
-
-    DocScoreVec doc_scores = engine.Score(result);
-    REQUIRE(doc_scores.size() == 3);
 
     // The score below is produced by ../tools/es_index_docs.py in this
     // same git commit
     // You can reproduce the elasticsearch score by checking out this
     // commit and run `python tools/es_index_docs.py`.
-    REQUIRE(utils::format_double(doc_scores[0].score, 3) == "0.149");
-    REQUIRE(utils::format_double(doc_scores[1].score, 3) == "0.149");
-    REQUIRE(utils::format_double(doc_scores[2].score, 3) == "0.111");
+    REQUIRE(utils::format_double(result.entries[0].doc_score, 3) == "0.149");
+    REQUIRE(utils::format_double(result.entries[1].doc_score, 3) == "0.149");
+    REQUIRE(utils::format_double(result.entries[2].doc_score, 3) == "0.111");
   }
 
   SECTION("The engine can server two-term queries") {
-    IntersectionResult result = engine.Query(TermList{"hello", "world"}); 
+    SearchResult result = engine.Search(SearchQuery(TermList{"hello", "world"}));
+
     REQUIRE(result.Size() == 2);
-    auto it = result.row_cbegin();
-    REQUIRE(IntersectionResult::GetCurDocId(it) == 0);
-    it++;
-    REQUIRE(IntersectionResult::GetCurDocId(it) == 2);
-
-    DocScoreVec doc_scores = engine.Score(result);
-    REQUIRE(doc_scores.size() == 2);
-
-    for (auto score : doc_scores) {
-      std::cout << score.ToStr() ;
-    }
-
     // The scores below are produced by ../tools/es_index_docs.py in this
     // same git commit
     // You can reproduce the elasticsearch scores by checking out this
     // commit and run `python tools/es_index_docs.py`.
-    REQUIRE(utils::format_double(doc_scores[0].score, 3) == "0.672");
-    REQUIRE(utils::format_double(doc_scores[1].score, 3) == "0.677");
-
-    std::vector<DocIdType> doc_ids = engine.FindTopK(doc_scores, 10);
-    REQUIRE(doc_ids.size() == 2);
+    REQUIRE(utils::format_double(result.entries[0].doc_score, 3) == "0.677");
+    REQUIRE(utils::format_double(result.entries[1].doc_score, 3) == "0.672");
   }
 
   SECTION("It can generate snippets") {
