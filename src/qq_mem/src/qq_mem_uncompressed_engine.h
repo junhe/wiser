@@ -12,6 +12,9 @@
 #include "posting_list_delta.h"
 
 
+
+
+
 class InvertedIndexQqMem {
  private:
   typedef PostingList_Vec<StandardPosting> PostingListType;

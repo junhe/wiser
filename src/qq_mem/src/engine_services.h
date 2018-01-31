@@ -54,14 +54,6 @@ typedef std::vector<DocScore> DocScoreVec;
 typedef std::map<Term, qq_float> TermScoreMap;
 
 
-class InvertedIndexService {
-    public:
-        virtual void AddDocument(const int &doc_id, const TermList &termlist) = 0;
-        virtual std::vector<int> GetDocumentIds(const Term &term) = 0;
-        virtual std::vector<int> Search(const TermList &terms, const SearchOperator &op) = 0;
-};
-
-
 class QqMemPostingService {
  public:
   virtual const int GetDocId() const = 0;
@@ -101,6 +93,18 @@ class PostingListIteratorService {
   virtual bool Advance() = 0;
   virtual void SkipForward(const DocIdType doc_id) = 0;
   virtual std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const = 0;
+};
+
+typedef std::vector<std::unique_ptr<PostingListIteratorService>> IteratorPointers;
+class InvertedIndexService {
+ public:
+  virtual IteratorPointers FindIterators(const TermList &terms) = 0;
+  virtual std::map<std::string, int> PostinglistSizes(const TermList &terms) = 0;
+  virtual void AddDocument(const int &doc_id, const std::string &body, 
+      const std::string &tokens) = 0;
+  virtual void AddDocument(const int &doc_id, const std::string &body, 
+      const std::string &tokens, const std::string &token_offsets) = 0;
+  virtual int Size() = 0;
 };
 
 
