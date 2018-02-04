@@ -440,6 +440,42 @@ class QueryProcessor {
   const DocLengthStore &doc_lengths_;
 };
 
+
+class VarintIterator {
+ public:
+  VarintIterator(const std::string *data, const int start_offset, const int count)
+    :data_(data), start_offset_(start_offset), cur_offset_(start_offset), 
+     count_(count) {}
+
+  VarintIterator(const VarintBuffer &varint_buf, int count)
+    :data_(varint_buf.DataPointer()), start_offset_(0), 
+     cur_offset_(0), count_(count) {}
+
+  bool IsEnd() {
+    return index_ == count_;
+  }
+
+  // Must check if it is the end before Pop() is called!
+  uint32_t Pop() {
+    int len;
+    uint32_t n;
+
+    len = utils::varint_decode(*data_, cur_offset_, &n);
+    cur_offset_ += len;
+    index_++;
+
+    return n;
+  }
+
+ private:
+  const std::string *data_;
+  int cur_offset_; 
+  int index_ = 0;
+  const int start_offset_;
+  const int count_;
+};
+
+
 namespace qq_search {
   std::vector<ResultDocEntry> ProcessQuery(IteratorPointers *pl_iterators, 
                                            const DocLengthStore &doc_lengths,

@@ -131,6 +131,27 @@ TEST_CASE( "PostingList_Vec iterator", "[posting_list]" ) {
   }
 }
 
+TEST_CASE( "VarintIterator", "[compression]" ) {
+  VarintBuffer buf;
+  buf.Append(1);
+  buf.Append(5);
+  buf.Append(9);
+
+  VarintIterator it(buf, 3);
+
+  REQUIRE(it.IsEnd() == false);
+  REQUIRE(it.Pop() == 1);
+
+  REQUIRE(it.IsEnd() == false);
+  REQUIRE(it.Pop() == 5);
+
+  REQUIRE(it.IsEnd() == false);
+  REQUIRE(it.Pop() == 9);
+
+  REQUIRE(it.IsEnd() == true);
+}
+
+
 
 
 
