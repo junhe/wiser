@@ -44,6 +44,7 @@ class PostingSimple : public QqMemPostingService {
 class StandardPosting: public QqMemPostingService {
  protected:
   OffsetPairs offset_pairs_;
+  Positions positions_;
   int doc_id_;
   int term_frequency_;
 
@@ -59,9 +60,17 @@ class StandardPosting: public QqMemPostingService {
     :doc_id_(doc_id), term_frequency_(term_frequency), 
      offset_pairs_(offset_pairs) {}
 
+  StandardPosting(const int &doc_id, 
+                 const int &term_frequency, 
+                 const OffsetPairs &offset_pairs, 
+                 const Positions &positions)
+    :doc_id_(doc_id), term_frequency_(term_frequency), 
+     offset_pairs_(offset_pairs), positions_(positions) {}
+
   const int GetDocId() const {return doc_id_;}
   const int GetTermFreq() const {return term_frequency_;}
   const OffsetPairs *GetOffsetPairs() const {return &offset_pairs_;}
+  const Positions *GetPositions() const {return &positions_;}
 
   std::string ToString() {
     std::ostringstream oss;
@@ -73,21 +82,34 @@ class StandardPosting: public QqMemPostingService {
     return oss.str();
   }
 
-  // content_size | doc_id_delta | TF | off1 | off2 | off1 | off2 | ...
+  // content_size | doc_id_delta | TF | off_size | off1 | off2 | off1 | off2 | ... | pos 1 | pos 2 | ...
   std::string Encode() const {
-    VarintBuffer buf;
+    VarintBuffer info_buf;
+    info_buf.Append(doc_id_);
+    info_buf.Append(term_frequency_);
 
-    buf.Append(doc_id_);
-    buf.Append(term_frequency_);
-
+    VarintBuffer offset_buf;
     for (auto & pair : offset_pairs_) {
-      buf.Append(std::get<0>(pair));
-      buf.Append(std::get<1>(pair));
+      offset_buf.Append(std::get<0>(pair));
+      offset_buf.Append(std::get<1>(pair));
+    }
+    int off_size = offset_buf.Size(); 
+    offset_buf.Prepend(off_size);
+
+    VarintBuffer pos_buf;
+    for (auto &pos : positions_) {
+      pos_buf.Append(pos);
     }
 
-    buf.Prepend(buf.Size());
+    int content_size = info_buf.Size() + offset_buf.Size() + pos_buf.Size();
 
-    return buf.Data();
+    VarintBuffer merge_buf;
+    merge_buf.Append(content_size);
+    merge_buf.Append(info_buf.Data());
+    merge_buf.Append(offset_buf.Data());
+    merge_buf.Append(pos_buf.Data());
+
+    return merge_buf.Data();
   }
 };
 

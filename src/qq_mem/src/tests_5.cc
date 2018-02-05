@@ -152,6 +152,21 @@ TEST_CASE( "VarintIterator", "[compression]" ) {
 
     REQUIRE(it.IsEnd() == true);
   }
+
+  SECTION("End offset bound") {
+    VarintIteratorEndBound it(buf);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 1);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 5);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 9);
+
+    REQUIRE(it.IsEnd() == true);
+  }
 }
 
 VarintBuffer create_varint_buffer(std::vector<uint32_t> vec) {

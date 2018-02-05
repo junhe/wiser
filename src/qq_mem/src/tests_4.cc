@@ -112,27 +112,32 @@ TEST_CASE( "VarintBuffer", "[varint]" ) {
 
 
 TEST_CASE( "Encoding posting", "[encoding]" ) {
-  SECTION("No offsets") {
+  SECTION("No offsets and no position") {
+    // content_size | doc id delta | freq | offset size |
+    //            3 |            3 |    4 |           0 |
     StandardPosting posting(3, 4); 
     std::string buf = posting.Encode();
-    REQUIRE(buf[0] == 2); // num of bytes starting from doc id
+    REQUIRE(buf[0] == 3); // num of bytes starting from doc id
     REQUIRE(buf[1] == 3); // doc id
     REQUIRE(buf[2] == 4); //  TF
   }
 
-  SECTION("With offset pairs") {
+  SECTION("With offset pairs but no positions") {
     OffsetPairs offset_pairs;
     for (int i = 0; i < 10; i++) {
       offset_pairs.push_back(std::make_tuple(1, 2)); 
     }
 
     StandardPosting posting(3, 4, offset_pairs); 
+    // content_size | doc id delta | freq | offset size | ... 
+    //           23 |            3 |    4 |          20 | ... 10 x 2
     std::string buf = posting.Encode();
-    REQUIRE(buf[0] == 22); // content size: 2 + 2 * 10 = 22
+    REQUIRE(buf[0] == 23); // content size: 2 + 2 * 10 = 22
     REQUIRE(buf[1] == 3); // doc id
     REQUIRE(buf[2] == 4); //  TF
+    REQUIRE(buf[3] == 20); //  offset size
 
-    const auto PRE = 3; // size | doc_id | TF | 
+    const auto PRE = 4; // size | doc_id | TF | off size|
     for (int i = 0; i < 10; i++) {
       REQUIRE(buf[PRE + 2 * i] == 1);
       REQUIRE(buf[PRE + 2 * i + 1] == 2);
@@ -260,7 +265,9 @@ TEST_CASE( "Skip list", "[postinglist0]" ) {
     }
 
     REQUIRE(doc_ids == std::vector<DocIdType>{0, 2, 5, 8});
-    REQUIRE(start_offsets == std::vector<int>{0, 9, 9*2, 9*3});
+    // each posting takes cont_size | doc id | freq | offset size|
+    // Each span is then 4 * 3 = 12
+    REQUIRE(start_offsets == std::vector<int>{0, 12, 12*2, 12*3});
   }
 
   SECTION("Advance") {

@@ -150,6 +150,10 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     return cache_.cur_offset_pairs_start_;
   }
 
+  int PositionStart() {
+    return cache_.cur_position_start_;
+  }
+
   std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const {
     if (IsEnd()) {
       LOG(FATAL) 
@@ -157,7 +161,13 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     }
     std::unique_ptr<OffsetPairsIteratorService> p(new OffsetPairsDeltaIterator(data_, 
                                cache_.cur_offset_pairs_start_,
-                               cache_.next_posting_byte_offset_));
+                               cache_.cur_position_start_));
+    return p;
+  }
+
+  std::unique_ptr<VarintIteratorService> PositionBegin() const {
+    std::unique_ptr<VarintIteratorService> p(new VarintIteratorEndBound(
+          data_->DataPointer(), cache_.cur_position_start_, cache_.next_posting_byte_offset_));
     return p;
   }
 
@@ -182,8 +192,12 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     len = utils::varint_decode(*data, offset, &cache_.cur_term_freq_);
     offset += len;
 
-    cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
+    len = utils::varint_decode(*data, offset, &cache_.offset_size_);
+    offset += len;
     cache_.cur_offset_pairs_start_ = offset; 
+    cache_.cur_position_start_ = offset + cache_.offset_size_;
+
+    cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
   }
 
   const VarintBuffer * data_;
@@ -211,7 +225,9 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     uint32_t cur_content_bytes_;
     DocIdType cur_doc_id_;
     uint32_t cur_term_freq_;
+    uint32_t offset_size_;
     int cur_offset_pairs_start_;
+    int cur_position_start_;
 
     int next_posting_byte_offset_;
   };
@@ -247,7 +263,9 @@ class PostingListDelta {
     DocIdType delta = doc_id - last_doc_id_;
     StandardPosting posting_with_delta(delta, 
                                                  posting.GetTermFreq(), 
-                                                 *posting.GetOffsetPairs());
+                                                 *posting.GetOffsetPairs(),
+                                                 *posting.GetPositions()
+                                                 );
     data_.Append(posting_with_delta.Encode());
 
     last_doc_id_ = doc_id;
