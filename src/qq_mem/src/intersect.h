@@ -19,6 +19,131 @@
 
 
 typedef std::vector<PostingListDeltaIterator> PostingListIterators;
+typedef std::vector<std::unique_ptr<PopIteratorService>> PositionIterators;
+
+class PhraseQueryProcessor {
+ public:
+  // Order matters in iterators. If "hello world" is 
+  // the phrase query, iterator for "hello" should 
+  // be the first iterator in iterators;
+  PhraseQueryProcessor(PositionIterators *iterators)
+    :iterators_(*iterators), last_orig_popped_(iterators->size()) {
+  }
+
+  Position FindMaxAdjustedLastPopped() {
+    Position max = 0;
+    Position adjusted_pos;
+
+    // original - i = adjusted
+    //
+    //      hello world program
+    // orig:    0     1       2
+    // adj:     0     0       0
+    //
+    // if the adjusted pos are the same, it is a phrase match
+    for(int i = 0; i < last_orig_popped_.size(); i++) {
+      adjusted_pos = last_orig_popped_[i] - i;
+      if (adjusted_pos > max) {
+        max = adjusted_pos;
+      }
+    }
+    return max;
+  }
+
+  // Return false if any of the lists has no pos larger than or equal to
+  // max_adjusted_pos
+  bool MovePoppedBeyond(Position max_adjusted_pos) {
+    bool ret;
+    for (int i = 0; i < iterators_.size(); i++) {
+      ret = MovePoppedBeyond(i, max_adjusted_pos);
+      if (ret == false) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  bool MovePoppedBeyond(int i, Position max_adjusted_pos) {
+    // the last popped will be larger than or equal to max_pos
+    // If the last popped is larger than or equal to max_adjusted_pos
+    auto &it = iterators_[i];
+
+    while (it->IsEnd() == false && last_orig_popped_[i] - i < max_adjusted_pos) {
+      last_orig_popped_[i] = it->Pop();
+    }
+    
+    if (it->IsEnd() == true && last_orig_popped_[i] - i < max_adjusted_pos) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  bool IsPoppedMatch(Position max_adjusted_pos) {
+    Position adjusted_pos;
+
+    for(int i = 0; i < last_orig_popped_.size(); i++) {
+      adjusted_pos = last_orig_popped_[i] - i;
+      if (adjusted_pos != max_adjusted_pos) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool InitializeLastPopped() {
+    for (int i = 0; i < last_orig_popped_.size(); i++) {
+      if (iterators_[i]->IsEnd()) {
+        // one list is empty
+        return false;
+      }
+      last_orig_popped_[i] = iterators_[i]->Pop();
+    }
+    return true;
+  }
+
+  Positions Process() {
+    bool any_list_exhausted = false;
+    Positions matched_pos_vec;
+
+    if (InitializeLastPopped() == false) {
+      return matched_pos_vec;
+    }
+
+    while (any_list_exhausted == false) {
+      Position max_adjusted_pos = FindMaxAdjustedLastPopped(); 
+      bool found = MovePoppedBeyond(max_adjusted_pos);
+
+      if (found == false) {
+        any_list_exhausted = true;
+        continue;
+      } 
+
+      bool match = IsPoppedMatch(max_adjusted_pos);        
+      if (match == true) {
+        matched_pos_vec.push_back(max_adjusted_pos);
+
+        bool found = MovePoppedBeyond(max_adjusted_pos + 1);
+        if (found == false) {
+          any_list_exhausted = true;
+        }
+      }
+    }
+
+    return matched_pos_vec;
+  }
+
+ private:
+  PositionIterators &iterators_;
+  // We need signed int because adjusted pos can be negative
+  std::vector<int> last_orig_popped_;
+  bool list_exhausted_ = false;
+};
+
+
+
+
 
 
 class IntersectionResult {
@@ -331,53 +456,74 @@ class QueryProcessor {
     while (finished == false) {
       // find max doc id
       max_doc_id = -1;
-      for (int list_i = 0; list_i < n_lists_; list_i++) {
-        auto it = pl_iterators_[list_i].get();
-
-        if (it->IsEnd()) {
-          finished = true;
-          break;
-        }
-
-        const DocIdType cur_doc_id = it->DocId(); 
-        if (cur_doc_id > max_doc_id) {
-          max_doc_id = cur_doc_id; 
-        }
-      }
+      finished = FindMax(&max_doc_id);
 
       if (finished == true) {
         break;
       }
 
-      // Try to reach max_doc_id in all posting lists_
-      int list_i;
-      for (list_i = 0; list_i < n_lists_; list_i++) {
-        auto it = pl_iterators_[list_i].get();
-
-        it->SkipForward(max_doc_id);
-        if (it->IsEnd()) {
-          finished = true;
-          break;
-        }
-
-        if (it->DocId() != max_doc_id) {
-          break;
-        }
-
-        if (list_i == n_lists_ - 1) {
-          HandleTheFoundDoc(max_doc_id);
-          // Advance iterators
-          for (int i = 0; i < n_lists_; i++) {
-            pl_iterators_[i]->Advance();
-          }
-        }
-      }
+      finished = MoveForward(max_doc_id);
     } // while
 
     return SortHeap();
   }
 
  private:
+  // return true: end reached
+  bool FindMax(DocIdType * max_doc_id) {
+    for (int list_i = 0; list_i < n_lists_; list_i++) {
+      auto it = pl_iterators_[list_i].get();
+
+      if (it->IsEnd()) {
+        return true;
+      }
+
+      const DocIdType cur_doc_id = it->DocId(); 
+      if (cur_doc_id > *max_doc_id) {
+        *max_doc_id = cur_doc_id; 
+      }
+    }
+    return false;
+  }
+
+  // return true: end reached
+  bool MoveForward(DocIdType max_doc_id) {
+    // Try to reach max_doc_id in all posting lists_
+    int list_i;
+    for (list_i = 0; list_i < n_lists_; list_i++) {
+      auto it = pl_iterators_[list_i].get();
+
+      it->SkipForward(max_doc_id);
+      if (it->IsEnd()) {
+        return true;
+      }
+
+      if (it->DocId() != max_doc_id) {
+        break;
+      }
+
+      if (list_i == n_lists_ - 1) {
+        HandleTheFoundDoc(max_doc_id);
+        // Advance iterators
+        for (int i = 0; i < n_lists_; i++) {
+          pl_iterators_[i]->Advance();
+        }
+      }
+    }
+    return false;
+  }
+
+  Positions FindPhrase() {
+    // All iterators point to the same posting at this point
+    PositionIterators iterators;
+    for (int i = 0; i < pl_iterators_.size(); i++) {
+      iterators.push_back(std::move(pl_iterators_[i]->PositionBegin()));
+    }
+
+    PhraseQueryProcessor phrase_qp(&iterators);
+    return phrase_qp.Process();
+  }
+
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
     qq_float score_of_this_doc = calc_doc_score_for_a_query(
         pl_iterators_,
@@ -438,128 +584,6 @@ class QueryProcessor {
   std::vector<qq_float> idfs_of_terms_;
   MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
-};
-
-
-typedef std::vector<std::unique_ptr<PopIteratorService>> PositionIterators;
-class PhraseQueryProcessor {
- public:
-  // Order matters in iterators. If "hello world" is 
-  // the phrase query, iterator for "hello" should 
-  // be the first iterator in iterators;
-  PhraseQueryProcessor(PositionIterators *iterators)
-    :iterators_(*iterators), last_orig_popped_(iterators->size()) {
-  }
-
-  Position FindMaxAdjustedLastPopped() {
-    Position max = 0;
-    Position adjusted_pos;
-
-    // original - i = adjusted
-    //
-    //      hello world program
-    // orig:    0     1       2
-    // adj:     0     0       0
-    //
-    // if the adjusted pos are the same, it is a phrase match
-    for(int i = 0; i < last_orig_popped_.size(); i++) {
-      adjusted_pos = last_orig_popped_[i] - i;
-      if (adjusted_pos > max) {
-        max = adjusted_pos;
-      }
-    }
-    return max;
-  }
-
-  // Return false if any of the lists has no pos larger than or equal to
-  // max_adjusted_pos
-  bool MovePoppedBeyond(Position max_adjusted_pos) {
-    bool ret;
-    for (int i = 0; i < iterators_.size(); i++) {
-      ret = MovePoppedBeyond(i, max_adjusted_pos);
-      if (ret == false) {
-        return false;
-      }
-    }
-
-    return true;
-  }
-
-  bool MovePoppedBeyond(int i, Position max_adjusted_pos) {
-    // the last popped will be larger than or equal to max_pos
-    // If the last popped is larger than or equal to max_adjusted_pos
-    auto &it = iterators_[i];
-
-    while (it->IsEnd() == false && last_orig_popped_[i] - i < max_adjusted_pos) {
-      last_orig_popped_[i] = it->Pop();
-    }
-    
-    if (it->IsEnd() == true && last_orig_popped_[i] - i < max_adjusted_pos) {
-      return false;
-    } else {
-      return true;
-    }
-  }
-
-  bool IsPoppedMatch(Position max_adjusted_pos) {
-    Position adjusted_pos;
-
-    for(int i = 0; i < last_orig_popped_.size(); i++) {
-      adjusted_pos = last_orig_popped_[i] - i;
-      if (adjusted_pos != max_adjusted_pos) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  bool InitializeLastPopped() {
-    for (int i = 0; i < last_orig_popped_.size(); i++) {
-      if (iterators_[i]->IsEnd()) {
-        // one list is empty
-        return false;
-      }
-      last_orig_popped_[i] = iterators_[i]->Pop();
-    }
-    return true;
-  }
-
-  Positions Process() {
-    bool any_list_exhausted = false;
-    Positions matched_pos_vec;
-
-    if (InitializeLastPopped() == false) {
-      return matched_pos_vec;
-    }
-
-    while (any_list_exhausted == false) {
-      Position max_adjusted_pos = FindMaxAdjustedLastPopped(); 
-      bool found = MovePoppedBeyond(max_adjusted_pos);
-
-      if (found == false) {
-        any_list_exhausted = true;
-        continue;
-      } 
-
-      bool match = IsPoppedMatch(max_adjusted_pos);        
-      if (match == true) {
-        matched_pos_vec.push_back(max_adjusted_pos);
-
-        bool found = MovePoppedBeyond(max_adjusted_pos + 1);
-        if (found == false) {
-          any_list_exhausted = true;
-        }
-      }
-    }
-
-    return matched_pos_vec;
-  }
-
- private:
-  PositionIterators &iterators_;
-  // We need signed int because adjusted pos can be negative
-  std::vector<int> last_orig_popped_;
-  bool list_exhausted_ = false;
 };
 
 
