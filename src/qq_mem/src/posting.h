@@ -16,8 +16,6 @@
 #include "compression.h"
 
 
-typedef int Position;
-typedef std::vector<Position> Positions;
 
 
 class PostingSimple : public QqMemPostingService {

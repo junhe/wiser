@@ -299,17 +299,22 @@ TEST_CASE( "PhraseQueryProcessor", "[engine]" ) {
 
 TEST_CASE( "DocInfo", "[engine]" ) {
   // hello, this is the hello         hello  this      0-4,19-23;7-10;.    1;5;.2;.
-  DocInfo info("hello, this is the hello", "hello this", 
+  DocInfo doc_info("hello, this is the hello", "hello this", 
                "0,4;19,23.7-10;.", "1;5;.2;.");
 
-  auto pos_table = info.GetPositions();
-  REQUIRE(pos_table.size() == 2);
-  REQUIRE(pos_table[0] == Positions{1, 5});
-  REQUIRE(pos_table[1] == Positions{2});
+  SECTION("Position parsing") {
+    auto pos_table = doc_info.GetPositions();
+    REQUIRE(pos_table.size() == 2);
+    REQUIRE(pos_table[0] == Positions{1, 5});
+    REQUIRE(pos_table[1] == Positions{2});
+  }
+
+  SECTION("Load line docs with positions") {
+    auto engine = CreateSearchEngine("qq_mem_compressed");
+    engine->AddDocument(doc_info);
+    REQUIRE(engine->TermCount() == 2);
+  }
 }
-
-
-
 
 
 

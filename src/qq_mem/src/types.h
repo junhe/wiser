@@ -49,6 +49,8 @@ typedef std::tuple<int, int> Offset;  // (startoffset, endoffset)
 typedef Offset OffsetPair; // Alias for Offset, more intuitive
 typedef std::vector<Offset> Offsets;
 typedef Offsets OffsetPairs; // Alias for Offsets, more intuitive
+typedef int Position;
+typedef std::vector<Position> Positions;
 typedef std::vector<std::string> Snippets;
 
 typedef unsigned long byte_cnt_t;
@@ -61,6 +63,33 @@ class TermWithOffset { // class Term_With_Offset
         TermWithOffset(Term term_in, Offsets offsets_in) : term_(term_in), offsets_(offsets_in) {} 
 };
 typedef std::vector<TermWithOffset> TermWithOffsetList;
+
+
+class DocInfo {
+ public:
+  DocInfo(std::string body, std::string tokens, std::string token_offsets, 
+          std::string token_positions) 
+    :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
+     token_positions_(token_positions) {}
+
+  TermList GetTokens() const;
+
+  // return a table of offset pairs
+  // Each row is for a term
+  std::vector<OffsetPairs> GetOffsetPairsVec() const;
+
+  // return a table of positions
+  // Each row is for a term
+  std::vector<Positions> GetPositions() const;
+  const std::string Body() const;
+  const int BodyLength() const;
+
+ private:
+  const std::string body_;
+  const std::string tokens_;
+  const std::string token_offsets_;
+  const std::string token_positions_;
+};
 
 
 struct SearchQuery {

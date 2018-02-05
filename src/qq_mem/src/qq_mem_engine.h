@@ -13,50 +13,6 @@
 #include "general_config.h"
 
 
-class DocInfo {
- public:
-  DocInfo(std::string body, std::string tokens, std::string token_offsets, 
-          std::string token_positions) 
-    :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
-     token_positions_(token_positions) {}
-
-  TermList GetTokens() const {
-    return utils::explode(tokens_, ' ');
-  }
-
-  // return a table of offset pairs
-  // Each row is for a term
-  std::vector<OffsetPairs> GetOffsetPairsVec() const {
-    return utils::parse_offsets(token_offsets_);
-  }
-
-  // return a table of positions
-  // Each row is for a term
-  std::vector<Positions> GetPositions() const {
-    std::vector<std::string> groups = utils::explode(token_positions_, '.');
-    
-    std::vector<Positions> table(groups.size());
-
-    for (int i = 0; i < groups.size(); i++) {
-      // group: 1;3;8
-      std::vector<std::string> pos_strs = utils::explode(groups[i], ';');
-      for (auto & pos_str : pos_strs) {
-        std::cout << "pos_str: " << pos_str << std::endl;
-        table[i].push_back(std::stoi(pos_str));
-      }
-    }
-
-    return table;
-  }
-
- private:
-  const std::string body_;
-  const std::string tokens_;
-  const std::string token_offsets_;
-  const std::string token_positions_;
-};
-
-
 class InvertedIndexQqMemVec: public InvertedIndexService {
  private:
   typedef PostingListStandardVec PostingListType;
@@ -104,25 +60,7 @@ class InvertedIndexQqMemVec: public InvertedIndexService {
   }
 
   void AddDocument(const int doc_id, const DocInfo doc_info) {
-    TermList token_vec = doc_info.GetTokens();
-    std::vector<Offsets> offsets_parsed = doc_info.GetOffsetPairsVec();
-    
-    assert(token_vec.size() == offsets_parsed.size());
-
-    for (int i = 0; i < token_vec.size(); i++) {
-      IndexStore::iterator it = index_.find(token_vec[i]);
-
-      if (it == index_.cend()) {
-        // term does not exist
-        std::pair<IndexStore::iterator, bool> ret;
-        ret = index_.insert( std::make_pair(token_vec[i], PostingListType(token_vec[i])) );
-        it = ret.first;
-      } 
-      
-      PostingListType &postinglist = it->second;
-      postinglist.AddPosting(
-          StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
-    }
+    LOG(WARNING) << "AddDocument() in InvertedIndexQqMemVec is not implemented.\n";
   }
 
   void AddDocument(const int &doc_id, const std::string &body, 
@@ -227,6 +165,28 @@ class InvertedIndexQqMemDelta: public InvertedIndexService {
     return ret;
   }
 
+  void AddDocument(const int doc_id, const DocInfo doc_info) {
+    TermList token_vec = doc_info.GetTokens();
+    std::vector<Offsets> offsets_parsed = doc_info.GetOffsetPairsVec();
+    
+    assert(token_vec.size() == offsets_parsed.size());
+
+    for (int i = 0; i < token_vec.size(); i++) {
+      IndexStore::iterator it = index_.find(token_vec[i]);
+
+      if (it == index_.cend()) {
+        std::pair<IndexStore::iterator, bool> ret;
+        ret = index_.insert( std::make_pair(token_vec[i], PostingListType(token_vec[i])) );
+        it = ret.first;
+      } 
+      
+      PostingListType &postinglist = it->second;
+      postinglist.AddPosting(
+          StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
+    }
+  }
+
+
   void AddDocument(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
     utils::CountMapType token_counts = utils::count_tokens(tokens);
@@ -311,6 +271,14 @@ class QqMemEngine : public SearchEngineServiceNew {
 
     LOG(WARNING) << "Number of terms in inverted index: " << TermCount();
     return ret;
+  }
+
+  void AddDocument(const DocInfo doc_info) {
+    int doc_id = NextDocId();
+
+    doc_store_.Add(doc_id, doc_info.Body());
+    inverted_index_->AddDocument(doc_id, doc_info);
+    doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); // TODO modify to count on offsets?
   }
 
   void AddDocument(const std::string &body, const std::string &tokenized_body) {
