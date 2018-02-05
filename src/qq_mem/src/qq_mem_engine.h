@@ -20,19 +20,19 @@ class DocInfo {
     :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
      token_positions_(token_positions) {}
 
-  TermList GetTokens() {
+  TermList GetTokens() const {
     return utils::explode(tokens_, ' ');
   }
 
   // return a table of offset pairs
   // Each row is for a term
-  std::vector<OffsetPairs> GetOffsetPairsVec() {
+  std::vector<OffsetPairs> GetOffsetPairsVec() const {
     return utils::parse_offsets(token_offsets_);
   }
 
   // return a table of positions
   // Each row is for a term
-  std::vector<Positions> GetPositions() {
+  std::vector<Positions> GetPositions() const {
     std::vector<std::string> groups = utils::explode(token_positions_, '.');
     
     std::vector<Positions> table(groups.size());
@@ -104,7 +104,25 @@ class InvertedIndexQqMemVec: public InvertedIndexService {
   }
 
   void AddDocument(const int doc_id, const DocInfo doc_info) {
+    TermList token_vec = doc_info.GetTokens();
+    std::vector<Offsets> offsets_parsed = doc_info.GetOffsetPairsVec();
     
+    assert(token_vec.size() == offsets_parsed.size());
+
+    for (int i = 0; i < token_vec.size(); i++) {
+      IndexStore::iterator it = index_.find(token_vec[i]);
+
+      if (it == index_.cend()) {
+        // term does not exist
+        std::pair<IndexStore::iterator, bool> ret;
+        ret = index_.insert( std::make_pair(token_vec[i], PostingListType(token_vec[i])) );
+        it = ret.first;
+      } 
+      
+      PostingListType &postinglist = it->second;
+      postinglist.AddPosting(
+          StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
+    }
   }
 
   void AddDocument(const int &doc_id, const std::string &body, 
