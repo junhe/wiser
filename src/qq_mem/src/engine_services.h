@@ -82,6 +82,13 @@ class OffsetPairsIteratorService {
 };
 
 
+class VarintIteratorService {
+ public:
+  virtual bool IsEnd() const = 0;
+  virtual uint32_t Pop() = 0;
+};
+
+
 class PostingListIteratorService {
  public:
   virtual int Size() const = 0;
@@ -93,7 +100,9 @@ class PostingListIteratorService {
   virtual bool Advance() = 0;
   virtual void SkipForward(const DocIdType doc_id) = 0;
   virtual std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const = 0;
+  virtual std::unique_ptr<VarintIteratorService> PositionBegin() const = 0;
 };
+
 
 typedef std::vector<std::unique_ptr<PostingListIteratorService>> IteratorPointers;
 class InvertedIndexService {

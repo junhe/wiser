@@ -9,6 +9,7 @@
 
 #include "engine_services.h"
 #include "posting.h"
+#include "compression.h"
 
 
 class OffsetPairsVecIterator: public OffsetPairsIteratorService {
@@ -144,6 +145,10 @@ class PostingListStandardVec: public PostingList_Vec<StandardPosting> {
       auto p = new OffsetPairsVecIterator(pairs);
       std::unique_ptr<OffsetPairsVecIterator> it(p);
       return it;
+    }
+
+    std::unique_ptr<VarintIteratorService> PositionBegin() const {
+      LOG(WARNING) << "PositionBegin() has not been implemented in PostListStandardVec\n";
     }
 
    protected:

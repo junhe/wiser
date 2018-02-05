@@ -50,13 +50,6 @@ class VarintBuffer {
 };
 
 
-class VarintIteratorService {
- public:
-  virtual bool IsEnd() const = 0;
-  virtual uint32_t Pop() = 0;
-};
-
-
 class VarintIterator: public VarintIteratorService {
  public:
   VarintIterator(const std::string *data, const int start_offset, const int count)

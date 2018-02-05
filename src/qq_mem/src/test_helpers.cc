@@ -37,7 +37,7 @@ PostingList_Vec<StandardPosting> create_posting_list_vec(int n_postings) {
 PostingListStandardVec create_posting_list_standard(int n_postings) {
   PostingListStandardVec pl("hello");
   for (int i = 0; i < n_postings; i++) {
-    pl.AddPosting(create_posting(i, i * 2, 5));
+    pl.AddPosting(create_posting(i, i * 2, 5, 6));
   }
   return pl;
 }
