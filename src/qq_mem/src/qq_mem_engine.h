@@ -381,8 +381,6 @@ class QqMemEngine : public SearchEngineServiceNew {
   int NextDocId() {
     return next_doc_id_++;
   }
-
-
 };
 
 

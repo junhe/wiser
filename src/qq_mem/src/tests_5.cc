@@ -314,6 +314,14 @@ TEST_CASE( "DocInfo", "[engine]" ) {
     engine->AddDocument(doc_info);
     REQUIRE(engine->TermCount() == 2);
   }
+
+  SECTION("Load documents to inverted index") {
+    InvertedIndexQqMemDelta index;
+    index.AddDocument(0, doc_info);
+    auto size_map = index.PostinglistSizes({"hello"});
+    REQUIRE(size_map["hello"] == 1);
+    REQUIRE(index.Size() == 2);
+  }
 }
 
 
