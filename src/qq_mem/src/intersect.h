@@ -524,20 +524,14 @@ class PhraseQueryProcessor {
     // the last popped will be larger than or equal to max_pos
     // If the last popped is larger than or equal to max_adjusted_pos
     auto &it = iterators_[i];
-    std::cout << "moving for " << i << " max_adjusted_pos: " << max_adjusted_pos <<  std::endl;
 
-    std::cout << "IsEnd:" << it.IsEnd() 
-      << "less: " << (last_orig_popped_[i] - i < max_adjusted_pos) << std::endl;
     while (it.IsEnd() == false && last_orig_popped_[i] - i < max_adjusted_pos) {
       last_orig_popped_[i] = it.Pop();
-      std::cout << "Popped: " << last_orig_popped_[i] << std::endl;
     }
     
     if (it.IsEnd() == true && last_orig_popped_[i] - i < max_adjusted_pos) {
-      std::cout << "return false\n";
       return false;
     } else {
-      std::cout << "return true\n";
       return true;
     }
   }
