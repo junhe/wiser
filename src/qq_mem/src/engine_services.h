@@ -82,7 +82,7 @@ class OffsetPairsIteratorService {
 };
 
 
-class VarintIteratorService {
+class PopIteratorService {
  public:
   virtual bool IsEnd() const = 0;
   virtual uint32_t Pop() = 0;
@@ -100,7 +100,7 @@ class PostingListIteratorService {
   virtual bool Advance() = 0;
   virtual void SkipForward(const DocIdType doc_id) = 0;
   virtual std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const = 0;
-  virtual std::unique_ptr<VarintIteratorService> PositionBegin() const = 0;
+  virtual std::unique_ptr<PopIteratorService> PositionBegin() const = 0;
 };
 
 

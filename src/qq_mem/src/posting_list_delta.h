@@ -165,8 +165,8 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     return p;
   }
 
-  std::unique_ptr<VarintIteratorService> PositionBegin() const {
-    std::unique_ptr<VarintIteratorService> p(new VarintIteratorEndBound(
+  std::unique_ptr<PopIteratorService> PositionBegin() const {
+    std::unique_ptr<PopIteratorService> p(new VarintIteratorEndBound(
           data_->DataPointer(), cache_.cur_position_start_, cache_.next_posting_byte_offset_));
     return p;
   }

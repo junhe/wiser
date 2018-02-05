@@ -50,7 +50,7 @@ class VarintBuffer {
 };
 
 
-class VarintIterator: public VarintIteratorService {
+class VarintIterator: public PopIteratorService {
  public:
   VarintIterator(const std::string *data, const int start_offset, const int count)
     :data_(data), start_offset_(start_offset), cur_offset_(start_offset), 
@@ -84,7 +84,7 @@ class VarintIterator: public VarintIteratorService {
   const int count_;
 };
 
-class VarintIteratorEndBound: public VarintIteratorService {
+class VarintIteratorEndBound: public PopIteratorService {
  public:
   VarintIteratorEndBound(const std::string *data, const int start_offset, 
                  const int end_offset)

@@ -133,7 +133,7 @@ TEST_CASE( "PostingList_Vec iterator", "[posting_list]" ) {
 
   SECTION("Test position iterator") {
     auto it = pl.Begin();
-    std::unique_ptr<VarintIteratorService> pos_it = it->PositionBegin();
+    std::unique_ptr<PopIteratorService> pos_it = it->PositionBegin();
     for (int i = 0; i < 6; i++) {
       REQUIRE(pos_it->IsEnd() == false);
       Position pos = pos_it->Pop();

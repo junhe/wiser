@@ -147,7 +147,7 @@ class PostingListStandardVec: public PostingList_Vec<StandardPosting> {
       return it;
     }
 
-    std::unique_ptr<VarintIteratorService> PositionBegin() const {
+    std::unique_ptr<PopIteratorService> PositionBegin() const {
       LOG(WARNING) << "PositionBegin() has not been implemented in PostListStandardVec\n";
     }
 
