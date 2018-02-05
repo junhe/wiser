@@ -11,8 +11,6 @@
 #include "test_helpers.h"
 
 
-typedef StandardPosting PostingWO;
-
 TEST_CASE( "QueryProcessor works", "[engine0]" ) {
   OffsetPairs offset_pairs;
   for (int i = 0; i < 10; i++) {
@@ -24,9 +22,9 @@ TEST_CASE( "QueryProcessor works", "[engine0]" ) {
   PostingListDelta pl03("again");
 
   for (int i = 0; i < 5; i++) {
-    pl01.AddPosting(PostingWO(i, 3, offset_pairs));
-    pl02.AddPosting(PostingWO(i, 3, offset_pairs));
-    pl03.AddPosting(PostingWO(i, 3, offset_pairs));
+    pl01.AddPosting(StandardPosting(i, 3, offset_pairs, {1, 5, 11, 19}));
+    pl02.AddPosting(StandardPosting(i, 3, offset_pairs, {2, 8,     20}));
+    pl03.AddPosting(StandardPosting(i, 3, offset_pairs, {200, 488}));
   }
 
   DocLengthStore store;
@@ -39,7 +37,7 @@ TEST_CASE( "QueryProcessor works", "[engine0]" ) {
     iterators.push_back(std::move(pl01.Begin()));
     iterators.push_back(std::move(pl02.Begin()));
 
-    QueryProcessor processor(&iterators, store, 100, 5);
+    QueryProcessor processor(&iterators, store, 100, 5, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -51,12 +49,39 @@ TEST_CASE( "QueryProcessor works", "[engine0]" ) {
     REQUIRE(doc_ids == std::vector<DocIdType>{4, 3, 2, 1, 0});
   }
 
+  SECTION("Do phrase query of 'hello world'") {
+    IteratorPointers iterators;
+    iterators.push_back(std::move(pl01.Begin()));
+    iterators.push_back(std::move(pl02.Begin()));
+
+    QueryProcessor processor(&iterators, store, 100, 5, true);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 5);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3, 2, 1, 0});
+  }
+
+  SECTION("Do phrase query of 'world again'") {
+    IteratorPointers iterators;
+    iterators.push_back(std::move(pl02.Begin()));
+    iterators.push_back(std::move(pl03.Begin()));
+
+    QueryProcessor processor(&iterators, store, 100, 5, true);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 0);
+  }
+
   SECTION("Find top 2") {
     IteratorPointers iterators;
     iterators.push_back(std::move(pl01.Begin()));
     iterators.push_back(std::move(pl02.Begin()));
 
-    QueryProcessor processor(&iterators, store, 100, 2);
+    QueryProcessor processor(&iterators, store, 100, 2, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -72,7 +97,7 @@ TEST_CASE( "QueryProcessor works", "[engine0]" ) {
     IteratorPointers iterators;
     iterators.push_back(std::move(pl01.Begin()));
 
-    QueryProcessor processor(&iterators, store, 100, 2);
+    QueryProcessor processor(&iterators, store, 100, 2, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -90,7 +115,7 @@ TEST_CASE( "QueryProcessor works", "[engine0]" ) {
     iterators.push_back(std::move(pl02.Begin()));
     iterators.push_back(std::move(pl03.Begin()));
 
-    QueryProcessor processor(&iterators, store, 100, 2);
+    QueryProcessor processor(&iterators, store, 100, 2, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
