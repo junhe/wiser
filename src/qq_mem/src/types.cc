@@ -2,7 +2,7 @@
 #include "utils.h"
 
 
-TermList GetTokens() const {
+TermList DocInfo::GetTokens() const {
   return utils::explode(tokens_, ' ');
 }
 
