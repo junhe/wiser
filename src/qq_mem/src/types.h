@@ -105,6 +105,7 @@ struct SearchQuery {
   int n_results = 5;
   bool return_snippets = false;
   int n_snippet_passages = 3;
+  bool is_phrase = false;
 
   std::string ToStr() const {
     std::ostringstream oss;
@@ -114,6 +115,7 @@ struct SearchQuery {
     oss << "n_results(" << n_results << ") "
         << "return_snippets(" << return_snippets << ") "
         << "n_snippet_passages(" << n_snippet_passages << ") "
+        << "is_phrase(" << is_phrase << ") "
         << std::endl;
     return oss.str();
   }
@@ -126,6 +128,7 @@ struct SearchQuery {
     request->set_n_results(n_results);
     request->set_return_snippets(return_snippets);
     request->set_n_snippet_passages(n_snippet_passages);
+    request->set_is_phrase(is_phrase);
   }
 
   void CopyFrom(const qq::SearchRequest &grpc_req) {
@@ -138,8 +141,10 @@ struct SearchQuery {
     n_results = grpc_req.n_results();
     return_snippets = grpc_req.return_snippets();
     n_snippet_passages = grpc_req.n_snippet_passages();
+    is_phrase = grpc_req.is_phrase();
   }
 };
+
 
 struct SearchResultEntry {
   std::string snippet;
