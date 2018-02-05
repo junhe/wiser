@@ -189,10 +189,10 @@ VarintBuffer create_varint_buffer(std::vector<uint32_t> vec) {
   return buf;
 }
 
-VarintIterators create_iterators(std::vector<VarintBuffer *> buffers, std::vector<int> sizes) {
-  VarintIterators iterators;
+PositionIterators create_iterators(std::vector<VarintBuffer *> buffers, std::vector<int> sizes) {
+  PositionIterators iterators;
   for (int i = 0; i < buffers.size(); i++) {
-    iterators.emplace_back(*buffers[i], sizes[i]);
+    iterators.emplace_back(new VarintIterator(*buffers[i], sizes[i]));
   }
   return iterators;
 }

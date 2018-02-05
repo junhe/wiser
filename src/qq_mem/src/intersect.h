@@ -441,14 +441,14 @@ class QueryProcessor {
 };
 
 
-
-typedef std::vector<VarintIterator> VarintIterators;
+typedef std::vector<std::unique_ptr<PopIteratorService>> PositionIterators;
+// typedef std::vector<VarintIterator> VarintIterators;
 class PhraseQueryProcessor {
  public:
   // Order matters in iterators. If "hello world" is 
   // the phrase query, iterator for "hello" should 
   // be the first iterator in iterators;
-  PhraseQueryProcessor(VarintIterators *iterators)
+  PhraseQueryProcessor(PositionIterators *iterators)
     :iterators_(*iterators), last_orig_popped_(iterators->size()) {
   }
 
@@ -491,11 +491,11 @@ class PhraseQueryProcessor {
     // If the last popped is larger than or equal to max_adjusted_pos
     auto &it = iterators_[i];
 
-    while (it.IsEnd() == false && last_orig_popped_[i] - i < max_adjusted_pos) {
-      last_orig_popped_[i] = it.Pop();
+    while (it->IsEnd() == false && last_orig_popped_[i] - i < max_adjusted_pos) {
+      last_orig_popped_[i] = it->Pop();
     }
     
-    if (it.IsEnd() == true && last_orig_popped_[i] - i < max_adjusted_pos) {
+    if (it->IsEnd() == true && last_orig_popped_[i] - i < max_adjusted_pos) {
       return false;
     } else {
       return true;
@@ -516,11 +516,11 @@ class PhraseQueryProcessor {
 
   bool InitializeLastPopped() {
     for (int i = 0; i < last_orig_popped_.size(); i++) {
-      if (iterators_[i].IsEnd()) {
+      if (iterators_[i]->IsEnd()) {
         // one list is empty
         return false;
       }
-      last_orig_popped_[i] = iterators_[i].Pop();
+      last_orig_popped_[i] = iterators_[i]->Pop();
     }
     return true;
   }
@@ -557,7 +557,7 @@ class PhraseQueryProcessor {
   }
 
  private:
-  VarintIterators &iterators_;
+  PositionIterators &iterators_;
   // We need signed int because adjusted pos can be negative
   std::vector<int> last_orig_popped_;
   bool list_exhausted_ = false;
