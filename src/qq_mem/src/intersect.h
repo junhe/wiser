@@ -434,11 +434,13 @@ class QueryProcessor {
     IteratorPointers *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
-    const int k = 5)
+    const int k = 5,
+    const bool is_phrase = false)
   : n_lists_(pl_iterators->size()),
     doc_lengths_(doc_lengths),
     pl_iterators_(*pl_iterators),
     k_(k),
+    is_phrase_(is_phrase),
     idfs_of_terms_(n_lists_),
     n_total_docs_in_index_(n_total_docs_in_index)
   {
@@ -462,7 +464,7 @@ class QueryProcessor {
         break;
       }
 
-      finished = MoveForward(max_doc_id);
+      finished = FindMatch(max_doc_id);
     } // while
 
     return SortHeap();
@@ -487,7 +489,7 @@ class QueryProcessor {
   }
 
   // return true: end reached
-  bool MoveForward(DocIdType max_doc_id) {
+  bool FindMatch(DocIdType max_doc_id) {
     // Try to reach max_doc_id in all posting lists_
     int list_i;
     for (list_i = 0; list_i < n_lists_; list_i++) {
@@ -525,6 +527,17 @@ class QueryProcessor {
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
+    if (is_phrase_ == true) {
+      auto positions = FindPhrase();
+      if (positions.size() > 0) {
+        RankDoc(max_doc_id);
+      }
+    } else {
+      RankDoc(max_doc_id);
+    }
+  }
+
+  void RankDoc(const DocIdType &max_doc_id) {
     qq_float score_of_this_doc = calc_doc_score_for_a_query(
         pl_iterators_,
         idfs_of_terms_,
@@ -584,6 +597,7 @@ class QueryProcessor {
   std::vector<qq_float> idfs_of_terms_;
   MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
+  bool is_phrase_;
 };
 
 
