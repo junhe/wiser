@@ -16,7 +16,6 @@
 #include "compression.h"
 
 
-// TODO will delete them
 typedef int Position;
 typedef std::vector<Position> Positions;
 

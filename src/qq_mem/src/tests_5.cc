@@ -137,22 +137,137 @@ TEST_CASE( "VarintIterator", "[compression]" ) {
   buf.Append(5);
   buf.Append(9);
 
-  VarintIterator it(buf, 3);
+  SECTION("Regular operations") {
+    VarintIterator it(buf, 3);
 
-  REQUIRE(it.IsEnd() == false);
-  REQUIRE(it.Pop() == 1);
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 1);
 
-  REQUIRE(it.IsEnd() == false);
-  REQUIRE(it.Pop() == 5);
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 5);
 
-  REQUIRE(it.IsEnd() == false);
-  REQUIRE(it.Pop() == 9);
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 9);
 
-  REQUIRE(it.IsEnd() == true);
+    REQUIRE(it.IsEnd() == true);
+  }
 }
 
+VarintBuffer create_varint_buffer(std::vector<uint32_t> vec) {
+  VarintBuffer buf;
+  for (auto k : vec) {
+    buf.Append(k);
+  }
 
+  return buf;
+}
 
+VarintIterators create_iterators(std::vector<VarintBuffer *> buffers, std::vector<int> sizes) {
+  VarintIterators iterators;
+  for (int i = 0; i < buffers.size(); i++) {
+    iterators.emplace_back(*buffers[i], sizes[i]);
+  }
+  return iterators;
+}
+
+TEST_CASE( "PhraseQueryProcessor", "[engine]" ) {
+  SECTION("Simple 001") {
+    // 3, 4 is a match
+    VarintBuffer buf01 = create_varint_buffer(std::vector<uint32_t>{1, 3, 5});
+    VarintBuffer buf02 = create_varint_buffer(std::vector<uint32_t>{4});
+    auto iterators = create_iterators({&buf01, &buf02}, {3, 1});
+
+    PhraseQueryProcessor qp(&iterators);
+   
+    SECTION("Regular simple case") {
+      auto positions = qp.Process();
+      REQUIRE(positions == Positions{3});
+    }
+
+    SECTION("FindMaxAdjustedLastPopped() and MovePoppedBeyond()") {
+      bool found;
+      qp.InitializeLastPopped();
+      auto max = qp.FindMaxAdjustedLastPopped();  
+      REQUIRE(max == 3);
+
+      found = qp.MovePoppedBeyond(1);
+      REQUIRE(found == true);
+      max = qp.FindMaxAdjustedLastPopped();  
+      REQUIRE(max == 3);
+
+      // stay where you are
+      found = qp.MovePoppedBeyond(1);
+      REQUIRE(found == true);
+      max = qp.FindMaxAdjustedLastPopped();  
+      REQUIRE(max == 3);
+
+      found = qp.MovePoppedBeyond(3);
+      REQUIRE(found == true);
+      max = qp.FindMaxAdjustedLastPopped();  
+      REQUIRE(max == 3);
+      REQUIRE(qp.IsPoppedMatch(3) == true);
+
+      found = qp.MovePoppedBeyond(5);
+      REQUIRE(found == false); // coundn't find 5 in the second list
+    }
+  }
+
+  SECTION("Two empty lists") {
+    VarintBuffer buf01 = create_varint_buffer(std::vector<uint32_t>{});
+    VarintBuffer buf02 = create_varint_buffer(std::vector<uint32_t>{});
+    auto iterators = create_iterators({&buf01, &buf02}, {0, 0});
+
+    PhraseQueryProcessor qp(&iterators);
+    auto positions = qp.Process();
+
+    REQUIRE(positions == Positions{});
+  }
+
+  SECTION("No matches") {
+    VarintBuffer buf01 = create_varint_buffer({1, 8, 20});
+    VarintBuffer buf02 = create_varint_buffer({0, 7, 19});
+    auto iterators = create_iterators({&buf01, &buf02}, {3, 3});
+
+    PhraseQueryProcessor qp(&iterators);
+    auto positions = qp.Process();
+
+    REQUIRE(positions == Positions{});
+  }
+ 
+  SECTION("Bad positions") {
+    // Two terms cannot be at the same position
+    VarintBuffer buf01 = create_varint_buffer({0});
+    VarintBuffer buf02 = create_varint_buffer({0});
+    auto iterators = create_iterators({&buf01, &buf02}, {1, 1});
+
+    PhraseQueryProcessor qp(&iterators);
+    auto positions = qp.Process();
+
+    REQUIRE(positions == Positions{});
+  }
+ 
+  SECTION("One list is empty") {
+    VarintBuffer buf01 = create_varint_buffer({10});
+    VarintBuffer buf02 = create_varint_buffer({});
+    auto iterators = create_iterators({&buf01, &buf02}, {1, 0});
+
+    PhraseQueryProcessor qp(&iterators);
+    auto positions = qp.Process();
+
+    REQUIRE(positions == Positions{});
+  }
+
+  SECTION("Multiple matches") {
+    VarintBuffer buf01 = create_varint_buffer({10, 20,     100, 1000});
+    VarintBuffer buf02 = create_varint_buffer({11, 21, 88, 101});
+    auto iterators = create_iterators({&buf01, &buf02}, {4, 4});
+
+    PhraseQueryProcessor qp(&iterators);
+    auto positions = qp.Process();
+
+    REQUIRE(positions == Positions{10, 20, 100});
+  }
+}
 
 
 

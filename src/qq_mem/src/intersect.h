@@ -476,11 +476,141 @@ class VarintIterator {
 };
 
 
+typedef std::vector<VarintIterator> VarintIterators;
+class PhraseQueryProcessor {
+ public:
+  // Order matters in iterators. If "hello world" is 
+  // the phrase query, iterator for "hello" should 
+  // be the first iterator in iterators;
+  PhraseQueryProcessor(VarintIterators *iterators)
+    :iterators_(*iterators), last_orig_popped_(iterators->size()) {
+  }
+
+  Position FindMaxAdjustedLastPopped() {
+    Position max = 0;
+    Position adjusted_pos;
+
+    // original - i = adjusted
+    //
+    //      hello world program
+    // orig:    0     1       2
+    // adj:     0     0       0
+    //
+    // if the adjusted pos are the same, it is a phrase match
+    for(int i = 0; i < last_orig_popped_.size(); i++) {
+      adjusted_pos = last_orig_popped_[i] - i;
+      if (adjusted_pos > max) {
+        max = adjusted_pos;
+      }
+    }
+    return max;
+  }
+
+  // Return false if any of the lists has no pos larger than or equal to
+  // max_adjusted_pos
+  bool MovePoppedBeyond(Position max_adjusted_pos) {
+    bool ret;
+    for (int i = 0; i < iterators_.size(); i++) {
+      ret = MovePoppedBeyond(i, max_adjusted_pos);
+      if (ret == false) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  bool MovePoppedBeyond(int i, Position max_adjusted_pos) {
+    // the last popped will be larger than or equal to max_pos
+    // If the last popped is larger than or equal to max_adjusted_pos
+    auto &it = iterators_[i];
+    std::cout << "moving for " << i << " max_adjusted_pos: " << max_adjusted_pos <<  std::endl;
+
+    std::cout << "IsEnd:" << it.IsEnd() 
+      << "less: " << (last_orig_popped_[i] - i < max_adjusted_pos) << std::endl;
+    while (it.IsEnd() == false && last_orig_popped_[i] - i < max_adjusted_pos) {
+      last_orig_popped_[i] = it.Pop();
+      std::cout << "Popped: " << last_orig_popped_[i] << std::endl;
+    }
+    
+    if (it.IsEnd() == true && last_orig_popped_[i] - i < max_adjusted_pos) {
+      std::cout << "return false\n";
+      return false;
+    } else {
+      std::cout << "return true\n";
+      return true;
+    }
+  }
+
+  bool IsPoppedMatch(Position max_adjusted_pos) {
+    Position adjusted_pos;
+
+    for(int i = 0; i < last_orig_popped_.size(); i++) {
+      adjusted_pos = last_orig_popped_[i] - i;
+      if (adjusted_pos != max_adjusted_pos) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool InitializeLastPopped() {
+    for (int i = 0; i < last_orig_popped_.size(); i++) {
+      if (iterators_[i].IsEnd()) {
+        // one list is empty
+        return false;
+      }
+      last_orig_popped_[i] = iterators_[i].Pop();
+    }
+    return true;
+  }
+
+  Positions Process() {
+    bool any_list_exhausted = false;
+    Positions matched_pos_vec;
+
+    if (InitializeLastPopped() == false) {
+      return matched_pos_vec;
+    }
+
+    while (any_list_exhausted == false) {
+      Position max_adjusted_pos = FindMaxAdjustedLastPopped(); 
+      bool found = MovePoppedBeyond(max_adjusted_pos);
+
+      if (found == false) {
+        any_list_exhausted = true;
+        continue;
+      } 
+
+      bool match = IsPoppedMatch(max_adjusted_pos);        
+      if (match == true) {
+        matched_pos_vec.push_back(max_adjusted_pos);
+
+        bool found = MovePoppedBeyond(max_adjusted_pos + 1);
+        if (found == false) {
+          any_list_exhausted = true;
+        }
+      }
+    }
+
+    return matched_pos_vec;
+  }
+
+ private:
+  VarintIterators &iterators_;
+  // We need signed int because adjusted pos can be negative
+  std::vector<int> last_orig_popped_;
+  bool list_exhausted_ = false;
+};
+
+
 namespace qq_search {
-  std::vector<ResultDocEntry> ProcessQuery(IteratorPointers *pl_iterators, 
+std::vector<ResultDocEntry> ProcessQuery(IteratorPointers *pl_iterators, 
                                            const DocLengthStore &doc_lengths,
                                            const int n_total_docs_in_index,
                                            const int k = 5);
+
+
 }
 
 
