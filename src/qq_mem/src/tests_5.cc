@@ -6,6 +6,7 @@
 #include "posting_list_delta.h"
 #include "posting_list_vec.h"
 #include "intersect.h"
+#include "qq_mem_engine.h"
 
 #include "test_helpers.h"
 
@@ -268,6 +269,22 @@ TEST_CASE( "PhraseQueryProcessor", "[engine]" ) {
     REQUIRE(positions == Positions{10, 20, 100});
   }
 }
+
+
+TEST_CASE( "DocInfo", "[engine]" ) {
+  // hello, this is the hello         hello  this      0-4,19-23;7-10;.    1;5;.2;.
+  DocInfo info("hello, this is the hello", "hello this", 
+               "0,4;19,23.7-10;.", "1;5;.2;.");
+
+  auto pos_table = info.GetPositions();
+  REQUIRE(pos_table.size() == 2);
+  REQUIRE(pos_table[0] == Positions{1, 5});
+  REQUIRE(pos_table[1] == Positions{2});
+}
+
+
+
+
 
 
 

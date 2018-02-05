@@ -118,7 +118,6 @@ const std::vector<Offsets> parse_offsets(const std::string& s) {
 
     for(auto n:s)
     {
-    // split by .
         if(n != '.') buff+=n; else
         if(n == '.' && buff != "") {
             Offsets this_term;

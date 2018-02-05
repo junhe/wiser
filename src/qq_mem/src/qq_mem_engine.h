@@ -13,6 +13,50 @@
 #include "general_config.h"
 
 
+class DocInfo {
+ public:
+  DocInfo(std::string body, std::string tokens, std::string token_offsets, 
+          std::string token_positions) 
+    :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
+     token_positions_(token_positions) {}
+
+  TermList GetTokens() {
+    return utils::explode(tokens_, ' ');
+  }
+
+  // return a table of offset pairs
+  // Each row is for a term
+  std::vector<OffsetPairs> GetOffsetPairsVec() {
+    return utils::parse_offsets(token_offsets_);
+  }
+
+  // return a table of positions
+  // Each row is for a term
+  std::vector<Positions> GetPositions() {
+    std::vector<std::string> groups = utils::explode(token_positions_, '.');
+    
+    std::vector<Positions> table(groups.size());
+
+    for (int i = 0; i < groups.size(); i++) {
+      // group: 1;3;8
+      std::vector<std::string> pos_strs = utils::explode(groups[i], ';');
+      for (auto & pos_str : pos_strs) {
+        std::cout << "pos_str: " << pos_str << std::endl;
+        table[i].push_back(std::stoi(pos_str));
+      }
+    }
+
+    return table;
+  }
+
+ private:
+  const std::string body_;
+  const std::string tokens_;
+  const std::string token_offsets_;
+  const std::string token_positions_;
+};
+
+
 class InvertedIndexQqMemVec: public InvertedIndexService {
  private:
   typedef PostingListStandardVec PostingListType;
@@ -57,6 +101,10 @@ class InvertedIndexQqMemVec: public InvertedIndexService {
     }
 
     return ret;
+  }
+
+  void AddDocument(const int doc_id, const DocInfo doc_info) {
+    
   }
 
   void AddDocument(const int &doc_id, const std::string &body, 

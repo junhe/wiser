@@ -44,7 +44,8 @@ int load_body_and_tokenized_body_and_token_offsets(SearchEngineServiceNew * engi
   for (int i = 0; i < n_rows; i++) {
     has_it = linedoc.GetRow(items);
     if (has_it) {
-      engine->AddDocument(items[col_body], items[col_tokenized_body], items[col_token_offsets]);
+      engine->AddDocument(items[col_body], items[col_tokenized_body], 
+                          items[col_token_offsets]);
       count++;
     } else {
       break;
