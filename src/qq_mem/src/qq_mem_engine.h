@@ -60,7 +60,7 @@ class InvertedIndexQqMemVec: public InvertedIndexService {
   }
 
   void AddDocument(const int doc_id, const DocInfo doc_info) {
-    LOG(WARNING) << "AddDocument() in InvertedIndexQqMemVec is not implemented.\n";
+    LOG(FATAL) << "AddDocument() in InvertedIndexQqMemVec is not implemented.\n";
   }
 
   void AddDocument(const int &doc_id, const std::string &body, 
@@ -168,6 +168,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexService {
   void AddDocument(const int doc_id, const DocInfo doc_info) {
     TermList token_vec = doc_info.GetTokens();
     std::vector<Offsets> offsets_parsed = doc_info.GetOffsetPairsVec();
+    std::vector<Positions> positions_table = doc_info.GetPositions();
     
     assert(token_vec.size() == offsets_parsed.size());
 
@@ -182,7 +183,8 @@ class InvertedIndexQqMemDelta: public InvertedIndexService {
       
       PostingListType &postinglist = it->second;
       postinglist.AddPosting(
-          StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
+          StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i],
+                          positions_table[i]));
     }
   }
 
