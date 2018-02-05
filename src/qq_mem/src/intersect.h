@@ -312,14 +312,14 @@ class QueryProcessor {
     const int k = 5)
   : n_lists_(pl_iterators->size()),
     doc_lengths_(doc_lengths),
-    pl_iterators_(pl_iterators),
+    pl_iterators_(*pl_iterators),
     k_(k),
     idfs_of_terms_(n_lists_),
     n_total_docs_in_index_(n_total_docs_in_index)
   {
     for (int i = 0; i < n_lists_; i++) {
       idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
-                                      pl_iterators_->at(i)->Size());
+                                      pl_iterators_[i]->Size());
     }
   }
 
@@ -332,7 +332,7 @@ class QueryProcessor {
       // find max doc id
       max_doc_id = -1;
       for (int list_i = 0; list_i < n_lists_; list_i++) {
-        auto it = pl_iterators_->at(list_i).get();
+        auto it = pl_iterators_[list_i].get();
 
         if (it->IsEnd()) {
           finished = true;
@@ -352,7 +352,7 @@ class QueryProcessor {
       // Try to reach max_doc_id in all posting lists_
       int list_i;
       for (list_i = 0; list_i < n_lists_; list_i++) {
-        auto it = pl_iterators_->at(list_i).get();
+        auto it = pl_iterators_[list_i].get();
 
         it->SkipForward(max_doc_id);
         if (it->IsEnd()) {
@@ -368,7 +368,7 @@ class QueryProcessor {
           HandleTheFoundDoc(max_doc_id);
           // Advance iterators
           for (int i = 0; i < n_lists_; i++) {
-            pl_iterators_->at(i)->Advance();
+            pl_iterators_[i]->Advance();
           }
         }
       }
@@ -380,7 +380,7 @@ class QueryProcessor {
  private:
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
     qq_float score_of_this_doc = calc_doc_score_for_a_query(
-        *pl_iterators_,
+        pl_iterators_,
         idfs_of_terms_,
         n_total_docs_in_index_,
         doc_lengths_.GetAvgLength(),
@@ -414,7 +414,7 @@ class QueryProcessor {
   {
     std::vector<PostingWO> postings;
     for (int i = 0; i < n_lists_; i++) {
-      postings.push_back(GetPosting(pl_iterators_->at(i).get()));
+      postings.push_back(GetPosting(pl_iterators_[i].get()));
     }
     min_heap_.emplace(doc_id, score_of_this_doc, postings);
   }
@@ -432,7 +432,7 @@ class QueryProcessor {
   }
 
   const int n_lists_;
-  IteratorPointers *pl_iterators_;
+  IteratorPointers &pl_iterators_;
   const int k_;
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
@@ -442,7 +442,6 @@ class QueryProcessor {
 
 
 typedef std::vector<std::unique_ptr<PopIteratorService>> PositionIterators;
-// typedef std::vector<VarintIterator> VarintIterators;
 class PhraseQueryProcessor {
  public:
   // Order matters in iterators. If "hello world" is 
