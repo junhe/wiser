@@ -3,6 +3,7 @@
 
 #include "posting.h"
 #include "posting_list_vec.h"
+#include "posting_list_delta.h"
 
 StandardPosting create_posting(DocIdType doc_id, 
                                int term_freq, 
@@ -13,5 +14,6 @@ StandardPosting create_posting(DocIdType doc_id,
                                int n_postings);
 PostingList_Vec<StandardPosting> create_posting_list_vec(int n_postings);
 PostingListStandardVec create_posting_list_standard(int n_postings);
+PostingListDelta create_posting_list_delta(int n_postings);
 
 #endif

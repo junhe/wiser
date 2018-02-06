@@ -42,4 +42,12 @@ PostingListStandardVec create_posting_list_standard(int n_postings) {
   return pl;
 }
 
+PostingListDelta create_posting_list_delta(int n_postings) {
+  PostingListDelta pl("hello");
+  for (int i = 0; i < n_postings; i++) {
+    pl.AddPosting(create_posting(i, i * 2, 5, 6));
+  }
+  return pl;
+}
+
 
