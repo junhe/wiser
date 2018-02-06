@@ -16,7 +16,7 @@ def create_database(line_doc, output):
     length = len(li)
 
     # print index
-    output.write('len: ' + str(length) + '\n')
+    output.write('OVERALL: ' + str(length) + '\n')
     # print database
     for word in li:
         output.write(word[0] + ' ' +str(word[1])+ '\n')
