@@ -24,7 +24,6 @@ class SearchEngineServiceNew {
 };
 
 
-
 class DocumentStoreService {
     public:
         virtual void Add(int id, std::string document) = 0;

@@ -698,19 +698,13 @@ QqMemEngine test_get_engine(std::string inverted_index) {
   config.SetString("inverted_index", inverted_index);
   QqMemEngine engine(config);
 
-  auto doc_id = engine.AddDocumentReturnId("hello world", "hello world");
-  REQUIRE(engine.GetDocument(doc_id) == "hello world");
-  REQUIRE(engine.GetDocLength(doc_id) == 2);
+  engine.AddDocument("hello world", "hello world");
   REQUIRE(engine.TermCount() == 2);
 
-  doc_id = engine.AddDocumentReturnId("hello wisconsin", "hello wisconsin");
-  REQUIRE(engine.GetDocument(doc_id) == "hello wisconsin");
-  REQUIRE(engine.GetDocLength(doc_id) == 2);
+  engine.AddDocument("hello wisconsin", "hello wisconsin");
   REQUIRE(engine.TermCount() == 3);
 
-  doc_id = engine.AddDocumentReturnId("hello world big world", "hello world big world");
-  REQUIRE(engine.GetDocument(doc_id) == "hello world big world");
-  REQUIRE(engine.GetDocLength(doc_id) == 4);
+  engine.AddDocument("hello world big world", "hello world big world");
   REQUIRE(engine.TermCount() == 4);
 
   return engine;

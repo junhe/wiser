@@ -283,32 +283,22 @@ class QqMemEngine : public SearchEngineServiceNew {
     doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); // TODO modify to count on offsets?
   }
 
-  void AddDocument(const std::string &body, const std::string &tokenized_body) {
-    AddDocumentReturnId(body, tokenized_body);
-  }
-
-  void AddDocument(const std::string &body, const std::string &tokenized_body, const std::string &token_offsets) {
-    AddDocumentReturnId(body, tokenized_body, token_offsets);
-  }
-
-  DocIdType AddDocumentReturnId(const std::string &body, const std::string &tokens) {
+  void AddDocument(const std::string &body, const std::string &tokens) {
     int doc_id = NextDocId();
 
     doc_store_.Add(doc_id, body);
     inverted_index_->AddDocument(doc_id, body, tokens);
     doc_lengths_.AddLength(doc_id, utils::count_terms(body));
-    return doc_id;
   }
 
-  DocIdType AddDocumentReturnId(const std::string &body, const std::string &tokens, const std::string &token_offsets) {
+  void AddDocument(const std::string &body, const std::string &tokens, const std::string &token_offsets) {
     int doc_id = NextDocId();
 
     doc_store_.Add(doc_id, body);
     inverted_index_->AddDocument(doc_id, body, tokens, token_offsets);
     doc_lengths_.AddLength(doc_id, utils::count_terms(body)); // TODO modify to count on offsets?
-    return doc_id;
   }
-  
+
   std::string GetDocument(const DocIdType &doc_id) {
     return doc_store_.Get(doc_id);
   }
