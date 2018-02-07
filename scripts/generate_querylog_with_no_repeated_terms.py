@@ -3,9 +3,10 @@ import itertools
 from random import *
 
 def generate_querylog(database, output):
-    num_terms = 1000000
+    num_terms = 100000
     
     length = int(database.readline().split(' ')[1])
+    length = 300000
     lines = database.readlines()
     
     # hint
@@ -19,7 +20,7 @@ def generate_querylog(database, output):
             print i, "queris generated"
         
         # decide how many terms k
-        n_terms = randint(1,5)
+        n_terms = randint(1,3)
 
         if (i in terms_occured) :
             print("Error")

@@ -1,0 +1,18 @@
+redis,search: hello,32,7831.35,4.08
+redis,search: hello world,32,7685.76,4.16
+redis,search: hello,32,7708.56,4.15
+redis,search: hello world,32,7618.86,4.20
+redis,search: ./test,32,7753.76,4.12
+redis,search: ./test,32,7737.50,4.13
+redis,search: /mnt/ssd/downloads/wiki_QueryLog,32,4167.60,7.36
+redis,search: /mnt/ssd/downloads/wiki_QueryLog_short,32,4544.65,7.03
+redis,search: /mnt/ssd/downloads/wiki_QueryLog_short,32,3492.79,9.16
+redis,search: hello,32,7781.24,4.11
+redis,search: hello,32,8399.24,3.81
+redis,search: /mnt/ssd/downloads/wiki_QueryLog_short,32,10469.03,3.06
+redis,search: /mnt/ssd/downloads/wiki_QueryLog,32,10207.16,3.13
+elastic,search: he mai,32,3659.32,8.74
+elastic,search: he mai,32,4287.33,7.46
+elastic,search: he mai,32,3576.76,8.94
+redis,search: hello,32,8403.82,3.81
+redis,search: hello,32,8307.34,3.85
