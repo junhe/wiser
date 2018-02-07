@@ -317,14 +317,24 @@ class QqMemEngine : public SearchEngineServiceNew {
   int LoadLocalDocuments(const std::string &line_doc_path, 
       int n_rows, const std::string loader) {
     int ret;
+    std::unique_ptr<LineDocParserService> parser;
+
     if (loader == "naive") {
-      ret = engine_loader::load_body_and_tokenized_body(
-         this, line_doc_path, n_rows, 2, 2);
+      parser.reset(new LineDocParserToken(line_doc_path, n_rows));
     } else if (loader == "with-offsets") {
-      ret = engine_loader::load_body_and_tokenized_body_and_token_offsets(
-          this, line_doc_path, n_rows, 1, 2, 3);
+      parser.reset(new LineDocParserOffset(line_doc_path, n_rows));
+    } else if (loader == "with-positions") {
+      parser.reset(new LineDocParserOffset(line_doc_path, n_rows));
     } else {
       throw std::runtime_error("Loader " + loader + " is not supported");
+    }
+
+    DocInfo doc_info;
+    while (parser->Pop(&doc_info)) {
+      AddDocument(doc_info); 
+      if (parser->Count() % 10000 == 0) {
+        std::cout << "Indexed " << parser->Count() << " documents" << std::endl;
+      }
     }
 
     LOG(WARNING) << "Number of terms in inverted index: " << TermCount();
