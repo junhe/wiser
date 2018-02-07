@@ -93,6 +93,13 @@ class DocInfo {
 
   const int BodyLength() const;
 
+  std::string ToStr() const {
+    return "body: " + body_ + 
+           "\ntokens: " + tokens_ +
+           "\noffsets: " + token_offsets_ + 
+           "\npositions: " + token_positions_ + "\n";
+  }
+
  private:
   std::string body_;
   std::string tokens_;
@@ -163,7 +170,7 @@ struct SearchResultEntry {
   std::string ToStr() {
     return "DocId: " + std::to_string(doc_id) 
       + " Doc Score: " + std::to_string(doc_score)
-      + " Snippet: " + snippet;
+      + " Snippet: \"" + snippet + "\"";
   }
   void CopyTo(qq::SearchReplyEntry *grpc_entry) {
     grpc_entry->set_doc_id(doc_id);
