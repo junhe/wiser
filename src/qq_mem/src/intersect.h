@@ -392,6 +392,7 @@ struct ResultDocEntry {
   DocIdType doc_id;
   qq_float score;
   std::vector<StandardPosting> postings;
+  Positions phrase_positions;
 
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in)
     :doc_id(doc_id_in), score(score_in) {}
@@ -399,6 +400,12 @@ struct ResultDocEntry {
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
       std::vector<StandardPosting> &postings_in)
     :doc_id(doc_id_in), score(score_in), postings(postings_in) {}
+
+  ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
+      std::vector<StandardPosting> &postings_in,
+      const Positions &positions)
+    :doc_id(doc_id_in), score(score_in), postings(postings_in),
+     phrase_positions(positions) {}
 
   friend bool operator<(ResultDocEntry a, ResultDocEntry b)
   {
@@ -414,7 +421,6 @@ struct ResultDocEntry {
     return std::to_string(doc_id) + " (" + std::to_string(score) + ")";
   }
 };
-
 
 
 typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
@@ -530,14 +536,15 @@ class QueryProcessor {
     if (is_phrase_ == true) {
       auto positions = FindPhrase();
       if (positions.size() > 0) {
-        RankDoc(max_doc_id);
+        RankDoc(max_doc_id, positions);
       }
     } else {
-      RankDoc(max_doc_id);
+      Positions positions;
+      RankDoc(max_doc_id, positions);
     }
   }
 
-  void RankDoc(const DocIdType &max_doc_id) {
+  void RankDoc(const DocIdType &max_doc_id, const Positions &positions) {
     qq_float score_of_this_doc = calc_doc_score_for_a_query(
         pl_iterators_,
         idfs_of_terms_,
@@ -546,11 +553,11 @@ class QueryProcessor {
         doc_lengths_.GetLength(max_doc_id));
 
     if (min_heap_.size() < k_) {
-      InsertToHeap(max_doc_id, score_of_this_doc);
+      InsertToHeap(max_doc_id, score_of_this_doc, positions);
     } else {
       if (score_of_this_doc > min_heap_.top().score) {
         min_heap_.pop();
-        InsertToHeap(max_doc_id, score_of_this_doc);
+        InsertToHeap(max_doc_id, score_of_this_doc, positions);
       }
       assert(min_heap_.size() == k_);
     }
@@ -569,13 +576,15 @@ class QueryProcessor {
     return ret;
   }
 
-  void InsertToHeap( const DocIdType &doc_id, const qq_float &score_of_this_doc)
+  void InsertToHeap(const DocIdType &doc_id, 
+                    const qq_float &score_of_this_doc,
+                    const Positions &positions)
   {
     std::vector<PostingWO> postings;
     for (int i = 0; i < n_lists_; i++) {
       postings.push_back(GetPosting(pl_iterators_[i].get()));
     }
-    min_heap_.emplace(doc_id, score_of_this_doc, postings);
+    min_heap_.emplace(doc_id, score_of_this_doc, postings, positions);
   }
 
   StandardPosting GetPosting(const PostingListIteratorService *pl_it) {
