@@ -61,6 +61,7 @@ TEST_CASE( "QueryProcessor works", "[engine0]" ) {
     std::vector<DocIdType> doc_ids;
     for (auto & entry : result) {
       doc_ids.push_back(entry.doc_id);
+      REQUIRE(entry.phrase_positions == Positions{1, 19});
     }
 
     REQUIRE(doc_ids == std::vector<DocIdType>{4, 3, 2, 1, 0});
