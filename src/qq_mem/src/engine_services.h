@@ -10,12 +10,7 @@
 
 class SearchEngineServiceNew {
  public:
-  virtual void AddDocument(const DocInfo doc_inf) = 0;
-  // tokenized_body is stemmed and tokenized. It may have repeated token. 
-  virtual void AddDocument(const std::string &body, const std::string &tokenized_body) = 0;
-  // tokenized_body is stemmed and tokenized. It have unqie tokens. token_offsets represent apperances of each token
-  virtual void AddDocument(const std::string &body, const std::string &tokenized_body, 
-      const std::string &token_offsets) = 0;
+  virtual void AddDocument(const DocInfo doc_info) = 0;
   virtual int LoadLocalDocuments(const std::string &line_doc_path, 
       int n_rows, const std::string loader) = 0;
   virtual int TermCount() const = 0;
@@ -111,10 +106,6 @@ class InvertedIndexService {
   virtual IteratorPointers FindIterators(const TermList &terms) const = 0;
   virtual std::map<std::string, int> PostinglistSizes(const TermList &terms) const = 0;
   virtual void AddDocument(const int doc_id, const DocInfo doc_info) = 0;
-  virtual void AddDocument(const int &doc_id, const std::string &body, 
-      const std::string &tokens) = 0;
-  virtual void AddDocument(const int &doc_id, const std::string &body, 
-      const std::string &tokens, const std::string &token_offsets) = 0;
   virtual int Size() const = 0;
 };
 

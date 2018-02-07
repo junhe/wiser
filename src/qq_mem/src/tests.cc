@@ -650,8 +650,8 @@ TEST_CASE( "Utilities work", "[utils]" ) {
 
 
 void setup_inverted_index(InvertedIndexService &inverted_index) {
-  inverted_index.AddDocument(0, "hello world", "hello world");
-  inverted_index.AddDocument(1, "hello wisconsin", "hello wisconsin");
+  inverted_index.AddDocument(0, DocInfo("hello world", "hello world"));
+  inverted_index.AddDocument(1, DocInfo("hello wisconsin", "hello wisconsin"));
   REQUIRE(inverted_index.Size() == 3);
 }
 
@@ -677,12 +677,12 @@ void test_inverted_index(InvertedIndexService &inverted_index) {
 }
 
 TEST_CASE( "Inverted index", "[engine]" ) {
-  SECTION("Unompressed") {
-    InvertedIndexQqMemVec inverted_index;
+  // SECTION("Unompressed") {
+    // InvertedIndexQqMemVec inverted_index;
 
-    setup_inverted_index(inverted_index);
-    test_inverted_index(inverted_index);
-  }
+    // setup_inverted_index(inverted_index);
+    // test_inverted_index(inverted_index);
+  // }
 
   SECTION("Compressed") {
     InvertedIndexQqMemDelta inverted_index;
@@ -698,13 +698,13 @@ QqMemEngine test_get_engine(std::string inverted_index) {
   config.SetString("inverted_index", inverted_index);
   QqMemEngine engine(config);
 
-  engine.AddDocument("hello world", "hello world");
+  engine.AddDocument(DocInfo("hello world", "hello world"));
   REQUIRE(engine.TermCount() == 2);
 
-  engine.AddDocument("hello wisconsin", "hello wisconsin");
+  engine.AddDocument(DocInfo("hello wisconsin", "hello wisconsin"));
   REQUIRE(engine.TermCount() == 3);
 
-  engine.AddDocument("hello world big world", "hello world big world");
+  engine.AddDocument(DocInfo("hello world big world", "hello world big world"));
   REQUIRE(engine.TermCount() == 4);
 
   return engine;

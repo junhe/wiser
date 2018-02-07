@@ -46,7 +46,7 @@ std::unique_ptr<SearchEngineServiceNew> create_engine(const int &step_height,
   int cnt = 0;
   while ( (doc = staircase.NextLayer()) != "" ) {
     // std::cout << doc << std::endl;
-    engine->AddDocument(doc, doc);
+    engine->AddDocument(DocInfo(doc, doc, "", ""));
     cnt++;
 
     if (cnt % 1000 == 0) {

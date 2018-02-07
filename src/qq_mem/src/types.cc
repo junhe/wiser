@@ -31,6 +31,5 @@ std::vector<Positions> DocInfo::GetPositions() const {
   return table;
 }
 
-const std::string DocInfo::Body() const {return body_;}
 const int DocInfo::BodyLength() const {return utils::count_terms(body_);}
 

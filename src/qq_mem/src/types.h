@@ -67,8 +67,8 @@ typedef std::vector<TermWithOffset> TermWithOffsetList;
 
 class DocInfo {
  public:
-  DocInfo(std::string body, std::string tokens, std::string token_offsets, 
-          std::string token_positions) 
+  DocInfo(std::string body, std::string tokens, std::string token_offsets = "", 
+          std::string token_positions = "") 
     :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
      token_positions_(token_positions) {}
 
@@ -81,7 +81,15 @@ class DocInfo {
   // return a table of positions
   // Each row is for a term
   std::vector<Positions> GetPositions() const;
-  const std::string Body() const;
+
+  const std::string &Body() const {return body_;}
+
+  const std::string &Tokens() const {return tokens_;}
+
+  const std::string &TokenOffsets() const {return token_offsets_;}
+
+  const std::string &TokenPositions() const {return token_positions_;}
+
   const int BodyLength() const;
 
  private:

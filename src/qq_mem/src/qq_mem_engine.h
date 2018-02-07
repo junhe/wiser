@@ -13,7 +13,41 @@
 #include "general_config.h"
 
 
-class InvertedIndexQqMemVec: public InvertedIndexService {
+class InvertedIndexImpl: public InvertedIndexService {
+ public:
+  virtual void AddDocument(const int doc_id, const DocInfo doc_info) {
+    if (doc_info.Body().size() > 0 &&
+        doc_info.Tokens().size() > 0 &&
+        doc_info.TokenOffsets().size() == 0 &&
+        doc_info.TokenPositions().size() == 0) {
+      AddDocumentInternal(doc_id, doc_info.Body(), doc_info.Tokens());
+    } else if (doc_info.Body().size() > 0 &&
+               doc_info.Tokens().size() > 0 &&
+               doc_info.TokenOffsets().size() > 0 &&
+               doc_info.TokenPositions().size() == 0) {
+      AddDocumentInternal(doc_id, doc_info.Body(), doc_info.Tokens(),
+          doc_info.TokenOffsets());
+    } else if (doc_info.Body().size() > 0 &&
+               doc_info.Tokens().size() > 0 &&
+               doc_info.TokenOffsets().size() > 0 &&
+               doc_info.TokenPositions().size() > 0) {
+			AddDocumentWithPositions(doc_id, doc_info);
+    } else {
+      LOG(FATAL) << "This doc info is not supported.\n";
+    }
+  }
+
+ protected:
+  virtual void AddDocumentInternal(const int &doc_id, const std::string &body, 
+      const std::string &tokens) = 0;
+  virtual void AddDocumentInternal(const int &doc_id, const std::string &body, 
+      const std::string &tokens, const std::string &token_offsets) = 0;
+  virtual void AddDocumentWithPositions(const int &doc_id, 
+      const DocInfo &doc_info) = 0;
+};
+
+
+class InvertedIndexQqMemVec: public InvertedIndexImpl {
  private:
   typedef PostingListStandardVec PostingListType;
   typedef std::unordered_map<Term, PostingListType> IndexStore;
@@ -59,11 +93,35 @@ class InvertedIndexQqMemVec: public InvertedIndexService {
     return ret;
   }
 
-  void AddDocument(const int doc_id, const DocInfo doc_info) {
-    LOG(FATAL) << "AddDocument() in InvertedIndexQqMemVec is not implemented.\n";
+  int Size() const {
+    return index_.size();
   }
 
-  void AddDocument(const int &doc_id, const std::string &body, 
+ protected:
+	void AddDocumentWithPositions(const int &doc_id, const DocInfo &doc_info) {
+		TermList token_vec = doc_info.GetTokens();
+		std::vector<Offsets> offsets_parsed = doc_info.GetOffsetPairsVec();
+		std::vector<Positions> positions_table = doc_info.GetPositions();
+
+		assert(token_vec.size() == offsets_parsed.size());
+
+		for (int i = 0; i < token_vec.size(); i++) {
+			IndexStore::iterator it = index_.find(token_vec[i]);
+
+			if (it == index_.cend()) {
+				std::pair<IndexStore::iterator, bool> ret;
+				ret = index_.insert( std::make_pair(token_vec[i], PostingListType(token_vec[i])) );
+				it = ret.first;
+			} 
+
+			PostingListType &postinglist = it->second;
+			postinglist.AddPosting(
+					StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i],
+						positions_table[i]));
+		}
+	}
+
+  void AddDocumentInternal(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
     utils::CountMapType token_counts = utils::count_tokens(tokens);
     std::map<Term, OffsetPairs> term_offsets = utils::extract_offset_pairs(tokens);
@@ -87,7 +145,7 @@ class InvertedIndexQqMemVec: public InvertedIndexService {
     }
   }
 
-  void AddDocument(const int &doc_id, const std::string &body, 
+  void AddDocumentInternal(const int &doc_id, const std::string &body, 
       const std::string &tokens, const std::string &token_offsets) {
     TermList token_vec = utils::explode(tokens, ' ');
     std::vector<Offsets> offsets_parsed = utils::parse_offsets(token_offsets);
@@ -112,14 +170,10 @@ class InvertedIndexQqMemVec: public InvertedIndexService {
       //std::cout << ";" ;
     }
   }
-
-  int Size() const {
-    return index_.size();
-  }
 };
 
 
-class InvertedIndexQqMemDelta: public InvertedIndexService {
+class InvertedIndexQqMemDelta: public InvertedIndexImpl {
  private:
   typedef PostingListDelta PostingListType;
   typedef std::unordered_map<Term, PostingListType> IndexStore;
@@ -165,31 +219,36 @@ class InvertedIndexQqMemDelta: public InvertedIndexService {
     return ret;
   }
 
-  void AddDocument(const int doc_id, const DocInfo doc_info) {
-    TermList token_vec = doc_info.GetTokens();
-    std::vector<Offsets> offsets_parsed = doc_info.GetOffsetPairsVec();
-    std::vector<Positions> positions_table = doc_info.GetPositions();
-    
-    assert(token_vec.size() == offsets_parsed.size());
-
-    for (int i = 0; i < token_vec.size(); i++) {
-      IndexStore::iterator it = index_.find(token_vec[i]);
-
-      if (it == index_.cend()) {
-        std::pair<IndexStore::iterator, bool> ret;
-        ret = index_.insert( std::make_pair(token_vec[i], PostingListType(token_vec[i])) );
-        it = ret.first;
-      } 
-      
-      PostingListType &postinglist = it->second;
-      postinglist.AddPosting(
-          StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i],
-                          positions_table[i]));
-    }
+  // Return number of posting lists
+  int Size() const {
+    return index_.size();
   }
 
+ protected:
+	void AddDocumentWithPositions(const int &doc_id, const DocInfo &doc_info) {
+		TermList token_vec = doc_info.GetTokens();
+		std::vector<Offsets> offsets_parsed = doc_info.GetOffsetPairsVec();
+		std::vector<Positions> positions_table = doc_info.GetPositions();
 
-  void AddDocument(const int &doc_id, const std::string &body, 
+		assert(token_vec.size() == offsets_parsed.size());
+
+		for (int i = 0; i < token_vec.size(); i++) {
+			IndexStore::iterator it = index_.find(token_vec[i]);
+
+			if (it == index_.cend()) {
+				std::pair<IndexStore::iterator, bool> ret;
+				ret = index_.insert( std::make_pair(token_vec[i], PostingListType(token_vec[i])) );
+				it = ret.first;
+			} 
+
+			PostingListType &postinglist = it->second;
+			postinglist.AddPosting(
+					StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i],
+						positions_table[i]));
+		}
+	}
+
+  void AddDocumentInternal(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
     utils::CountMapType token_counts = utils::count_tokens(tokens);
     std::map<Term, OffsetPairs> term_offsets = utils::extract_offset_pairs(tokens);
@@ -213,7 +272,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexService {
     }
   }
 
-  void AddDocument(const int &doc_id, const std::string &body, 
+  void AddDocumentInternal(const int &doc_id, const std::string &body, 
       const std::string &tokens, const std::string &token_offsets) {
     TermList token_vec = utils::explode(tokens, ' ');
     std::vector<Offsets> offsets_parsed = utils::parse_offsets(token_offsets);
@@ -236,10 +295,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexService {
     }
   }
 
-  // Return number of posting lists
-  int Size() const {
-    return index_.size();
-  }
+
 };
 
 
@@ -281,22 +337,6 @@ class QqMemEngine : public SearchEngineServiceNew {
     doc_store_.Add(doc_id, doc_info.Body());
     inverted_index_->AddDocument(doc_id, doc_info);
     doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); // TODO modify to count on offsets?
-  }
-
-  void AddDocument(const std::string &body, const std::string &tokens) {
-    int doc_id = NextDocId();
-
-    doc_store_.Add(doc_id, body);
-    inverted_index_->AddDocument(doc_id, body, tokens);
-    doc_lengths_.AddLength(doc_id, utils::count_terms(body));
-  }
-
-  void AddDocument(const std::string &body, const std::string &tokens, const std::string &token_offsets) {
-    int doc_id = NextDocId();
-
-    doc_store_.Add(doc_id, body);
-    inverted_index_->AddDocument(doc_id, body, tokens, token_offsets);
-    doc_lengths_.AddLength(doc_id, utils::count_terms(body)); // TODO modify to count on offsets?
   }
 
   std::string GetDocument(const DocIdType &doc_id) {

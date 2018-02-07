@@ -16,7 +16,9 @@ int load_body_and_tokenized_body(SearchEngineServiceNew * engine,
   for (int i = 0; i < n_rows; i++) {
     has_it = linedoc.GetRow(items);
     if (has_it) {
-      engine->AddDocument(items[col_body], items[col_tokenized_body]);
+      DocInfo doc_info(items[col_body], items[col_tokenized_body], "", "");
+      engine->AddDocument(doc_info);
+      // engine->AddDocument(items[col_body], items[col_tokenized_body]);
       count++;
     } else {
       break;
@@ -44,8 +46,10 @@ int load_body_and_tokenized_body_and_token_offsets(SearchEngineServiceNew * engi
   for (int i = 0; i < n_rows; i++) {
     has_it = linedoc.GetRow(items);
     if (has_it) {
-      engine->AddDocument(items[col_body], items[col_tokenized_body], 
-                          items[col_token_offsets]);
+      DocInfo doc_info(items[col_body], items[col_tokenized_body], items[col_token_offsets]);
+      engine->AddDocument(doc_info);
+      // engine->AddDocument(items[col_body], items[col_tokenized_body], 
+                          // items[col_token_offsets]);
       count++;
     } else {
       break;
