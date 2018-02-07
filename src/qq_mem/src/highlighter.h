@@ -50,7 +50,7 @@ class Offset_Iterator {
   int endoffset;
   int weight = 1;            // weight of this term
 
-  Offset_Iterator(const std::vector<Offset> & offsets_in) {
+  Offset_Iterator(const OffsetPairs & offsets_in) {
       offsets = &offsets_in;
       cur_position = offsets_in.begin(); 
       startoffset = std::get<0>(*cur_position);
@@ -68,8 +68,8 @@ class Offset_Iterator {
   }
 
  private:
-  const Offsets * offsets;
-  Offsets::const_iterator cur_position;
+  const OffsetPairs * offsets;
+  OffsetPairs::const_iterator cur_position;
 };
 
 
@@ -94,14 +94,14 @@ class Passage {
       return ;
     } 
 
-    Offsets matches = {};
+    OffsetPairs matches = {};
     std::string to_string(const std::string * doc_string) {
       std::string res= "";
       res += doc_string->substr(startoffset, endoffset - startoffset + 1) + "\n";
       //std::cout << "\nprepare to string: " << res << "\n(" << res.size() << ")" << std::endl;
       // highlight
 
-      auto cmp_terms = [] (Offset & a, Offset & b) -> bool { return (std::get<0>(a) > std::get<0>(b));};
+      auto cmp_terms = [] (OffsetPair & a, OffsetPair & b) -> bool { return (std::get<0>(a) > std::get<0>(b));};
       std::sort(matches.begin(), matches.end(), cmp_terms);
       //std::cout << matches.size() << std::endl;
       for (auto it = matches.begin(); it != matches.end(); it++) {
