@@ -21,6 +21,16 @@
 typedef std::vector<PostingListDeltaIterator> PostingListIterators;
 typedef std::vector<std::unique_ptr<PopIteratorService>> PositionIterators;
 
+struct PositionInfo {
+  int pos = 0;
+  //                   hello readers, this is my hello world program
+  // term_appearance   0                         1
+  int term_appearance = 0;
+};
+
+typedef std::vector<PositionInfo> PositionInfoVec;
+typedef std::vector<PositionInfoVec> PositionInfoTable;
+
 class PhraseQueryProcessor {
  public:
   // Order matters in iterators. If "hello world" is 
@@ -42,7 +52,7 @@ class PhraseQueryProcessor {
     //
     // if the adjusted pos are the same, it is a phrase match
     for(int i = 0; i < last_orig_popped_.size(); i++) {
-      adjusted_pos = last_orig_popped_[i] - i;
+      adjusted_pos = last_orig_popped_[i].pos - i;
       if (adjusted_pos > max) {
         max = adjusted_pos;
       }
@@ -69,11 +79,12 @@ class PhraseQueryProcessor {
     // If the last popped is larger than or equal to max_adjusted_pos
     auto &it = iterators_[i];
 
-    while (it->IsEnd() == false && last_orig_popped_[i] - i < max_adjusted_pos) {
-      last_orig_popped_[i] = it->Pop();
+    while (it->IsEnd() == false && last_orig_popped_[i].pos - i < max_adjusted_pos) {
+      last_orig_popped_[i].pos = it->Pop();
+      last_orig_popped_[i].term_appearance++;
     }
     
-    if (it->IsEnd() == true && last_orig_popped_[i] - i < max_adjusted_pos) {
+    if (it->IsEnd() == true && last_orig_popped_[i].pos - i < max_adjusted_pos) {
       return false;
     } else {
       return true;
@@ -84,7 +95,7 @@ class PhraseQueryProcessor {
     Position adjusted_pos;
 
     for(int i = 0; i < last_orig_popped_.size(); i++) {
-      adjusted_pos = last_orig_popped_[i] - i;
+      adjusted_pos = last_orig_popped_[i].pos - i;
       if (adjusted_pos != max_adjusted_pos) {
         return false;
       }
@@ -98,7 +109,8 @@ class PhraseQueryProcessor {
         // one list is empty
         return false;
       }
-      last_orig_popped_[i] = iterators_[i]->Pop();
+      last_orig_popped_[i].pos = iterators_[i]->Pop();
+      last_orig_popped_[i].term_appearance = 0;
     }
     return true;
   }
@@ -137,7 +149,7 @@ class PhraseQueryProcessor {
  private:
   PositionIterators &iterators_;
   // We need signed int because adjusted pos can be negative
-  std::vector<int> last_orig_popped_;
+  std::vector<PositionInfo> last_orig_popped_;
   bool list_exhausted_ = false;
 };
 
