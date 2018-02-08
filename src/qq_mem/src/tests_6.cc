@@ -49,14 +49,11 @@ TEST_CASE( "Integrated Test for Phrase Query", "[engine0]" ) {
 
 
 
-TEST_CASE( "Encode offset pairs", "[posting0]" ) {
+TEST_CASE( "Encode offset pairs", "[posting]" ) {
   SECTION("Empty") {
     StandardPosting posting(0, 0, OffsetPairs{});
     VarintBuffer buf = posting.EncodeOffsets();
     VarintIteratorEndBound it(buf);
-
-    REQUIRE(it.IsEnd() == false);
-    REQUIRE(it.Pop() == 0); // size offfset segment
 
     REQUIRE(it.IsEnd() == true);
   }
@@ -69,9 +66,6 @@ TEST_CASE( "Encode offset pairs", "[posting0]" ) {
     VarintIteratorEndBound it(buf);
 
     REQUIRE(it.IsEnd() == false);
-    REQUIRE(it.Pop() == 4); // size offfset segment
-
-    REQUIRE(it.IsEnd() == false);
     REQUIRE(it.Pop() == 8);
 
     REQUIRE(it.IsEnd() == false);
@@ -82,6 +76,34 @@ TEST_CASE( "Encode offset pairs", "[posting0]" ) {
 
     REQUIRE(it.IsEnd() == false);
     REQUIRE(it.Pop() == 2);
+
+    REQUIRE(it.IsEnd() == true);
+  }
+}
+
+TEST_CASE( "Encode positions", "[posting]" ) {
+  SECTION("Empty") {
+    StandardPosting posting(0, 0);
+    VarintBuffer buf = posting.EncodePositions();
+    VarintIteratorEndBound it(buf);
+
+    REQUIRE(it.IsEnd() == true);
+  }
+ 
+  SECTION("Regular") {
+    StandardPosting posting(0, 0, 
+        OffsetPairs{}, Positions{10, 21, 25});
+    VarintBuffer buf = posting.EncodePositions();
+    VarintIteratorEndBound it(buf);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 10);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 11);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 4);
 
     REQUIRE(it.IsEnd() == true);
   }

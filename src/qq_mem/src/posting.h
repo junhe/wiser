@@ -96,8 +96,20 @@ class StandardPosting: public QqMemPostingService {
       last_offset = std::get<1>(pair);
     }
 
-    int off_size = buf.Size(); 
-    buf.Prepend(off_size);
+    return buf;
+  }
+
+  // Assume an imaginary position = 0 before the first real position
+  VarintBuffer EncodePositions() const {
+    VarintBuffer buf;
+    uint32_t last_pos = 0;
+    uint32_t delta;
+
+    for (auto &position : positions_) {
+      delta = position - last_pos;
+      buf.Append(delta);
+      last_pos = position;
+    }
 
     return buf;
   }
