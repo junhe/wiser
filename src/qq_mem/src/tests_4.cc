@@ -124,8 +124,8 @@ TEST_CASE( "Encoding posting", "[encoding]" ) {
 
   SECTION("With offset pairs but no positions") {
     OffsetPairs offset_pairs;
-    for (int i = 0; i < 10; i++) {
-      offset_pairs.push_back(std::make_tuple(1, 2)); 
+    for (int i = 1; i < 11; i++) {
+      offset_pairs.push_back(std::make_tuple(i, i)); 
     }
 
     StandardPosting posting(3, 4, offset_pairs); 
@@ -140,7 +140,7 @@ TEST_CASE( "Encoding posting", "[encoding]" ) {
     const auto PRE = 4; // size | doc_id | TF | off size|
     for (int i = 0; i < 10; i++) {
       REQUIRE(buf[PRE + 2 * i] == 1);
-      REQUIRE(buf[PRE + 2 * i + 1] == 2);
+      REQUIRE(buf[PRE + 2 * i + 1] == 0);
     }
   }
 }

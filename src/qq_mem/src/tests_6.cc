@@ -49,7 +49,7 @@ TEST_CASE( "Integrated Test for Phrase Query", "[engine0]" ) {
 
 
 
-TEST_CASE( "Encode offset pairs", "[posting0]" ) {
+TEST_CASE( "Encode offset pairs", "[posting]" ) {
   SECTION("Empty") {
     StandardPosting posting(0, 0, OffsetPairs{});
     VarintBuffer buf = posting.EncodeOffsets();
@@ -108,7 +108,7 @@ TEST_CASE( "Encode offset pairs", "[posting0]" ) {
   }
 }
 
-TEST_CASE( "Encode positions", "[posting0]" ) {
+TEST_CASE( "Encode positions", "[posting]" ) {
   SECTION("Empty") {
     StandardPosting posting(0, 0);
     VarintBuffer buf = posting.EncodePositions();

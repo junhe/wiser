@@ -120,18 +120,9 @@ class StandardPosting: public QqMemPostingService {
     info_buf.Append(doc_id_);
     info_buf.Append(term_frequency_);
 
-    VarintBuffer offset_buf;
-    for (auto & pair : offset_pairs_) {
-      offset_buf.Append(std::get<0>(pair));
-      offset_buf.Append(std::get<1>(pair));
-    }
-    int off_size = offset_buf.Size(); 
-    offset_buf.Prepend(off_size);
-
-    VarintBuffer pos_buf;
-    for (auto &pos : positions_) {
-      pos_buf.Append(pos);
-    }
+    VarintBuffer offset_buf = EncodeOffsets();
+    offset_buf.Prepend(offset_buf.Size());
+    VarintBuffer pos_buf = EncodePositions();
 
     int content_size = info_buf.Size() + offset_buf.Size() + pos_buf.Size();
 

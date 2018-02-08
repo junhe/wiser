@@ -173,12 +173,17 @@ class PostingListDeltaIterator: public PostingListIteratorService {
         << "Trying to get offset iterator from a empty posting iterator\n";
     }
     std::unique_ptr<OffsetPairsIteratorService> p(new
-        CompressedPairIterator(data_->DataPointer(), cache_.cur_offset_pairs_start_,
-          cache_.cur_position_start_)); return p; }
+        CompressedPairIterator(data_->DataPointer(), 
+                               cache_.cur_offset_pairs_start_,
+                               cache_.cur_position_start_)); 
+    return p; 
+  }
 
   std::unique_ptr<PopIteratorService> PositionBegin() const {
-    std::unique_ptr<PopIteratorService> p(new VarintIteratorEndBound(
-          data_->DataPointer(), cache_.cur_position_start_, cache_.next_posting_byte_offset_));
+    std::unique_ptr<PopIteratorService> p(new CompressedPositionIterator(
+          data_->DataPointer(), 
+          cache_.cur_position_start_, 
+          cache_.next_posting_byte_offset_));
     return p;
   }
 

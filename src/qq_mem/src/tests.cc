@@ -666,7 +666,8 @@ void test_inverted_index(InvertedIndexService &inverted_index) {
       REQUIRE(pair == std::make_tuple(0, 4)); // in doc 0
     }
 
-    it->Advance();
+    auto ret = it->Advance();
+    REQUIRE(ret == true);
     {
       REQUIRE(it->DocId() == 1);
       auto pairs_it = it->OffsetPairsBegin();
