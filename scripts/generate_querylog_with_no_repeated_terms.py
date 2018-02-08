@@ -20,7 +20,7 @@ def generate_querylog(database, output):
             print i, "queris generated"
         
         # decide how many terms k
-        n_terms = randint(1,3)
+        n_terms = randint(2,3)
 
         if (i in terms_occured) :
             print("Error")
