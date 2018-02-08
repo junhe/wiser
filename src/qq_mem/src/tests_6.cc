@@ -85,27 +85,52 @@ TEST_CASE( "Encode positions", "[posting]" ) {
   SECTION("Empty") {
     StandardPosting posting(0, 0);
     VarintBuffer buf = posting.EncodePositions();
-    VarintIteratorEndBound it(buf);
 
-    REQUIRE(it.IsEnd() == true);
+    SECTION("Using Varint Iterator") {
+      VarintIteratorEndBound it(buf);
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("Using position iterator") {
+      CompressedPositionIterator it(buf.DataPointer(), 0, buf.Size());
+      REQUIRE(it.IsEnd() == true);
+    }
   }
  
   SECTION("Regular") {
     StandardPosting posting(0, 0, 
         OffsetPairs{}, Positions{10, 21, 25});
     VarintBuffer buf = posting.EncodePositions();
-    VarintIteratorEndBound it(buf);
 
-    REQUIRE(it.IsEnd() == false);
-    REQUIRE(it.Pop() == 10);
+    SECTION("Using Varint Iterator") {
+      VarintIteratorEndBound it(buf);
 
-    REQUIRE(it.IsEnd() == false);
-    REQUIRE(it.Pop() == 11);
+      REQUIRE(it.IsEnd() == false);
+      REQUIRE(it.Pop() == 10);
 
-    REQUIRE(it.IsEnd() == false);
-    REQUIRE(it.Pop() == 4);
+      REQUIRE(it.IsEnd() == false);
+      REQUIRE(it.Pop() == 11);
 
-    REQUIRE(it.IsEnd() == true);
+      REQUIRE(it.IsEnd() == false);
+      REQUIRE(it.Pop() == 4);
+
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("Using position iterator") {
+      CompressedPositionIterator it(buf.DataPointer(), 0, buf.Size());
+
+      REQUIRE(it.IsEnd() == false);
+      REQUIRE(it.Pop() == 10);
+
+      REQUIRE(it.IsEnd() == false);
+      REQUIRE(it.Pop() == 21);
+
+      REQUIRE(it.IsEnd() == false);
+      REQUIRE(it.Pop() == 25);
+
+      REQUIRE(it.IsEnd() == true);
+    }
   }
 }
 
