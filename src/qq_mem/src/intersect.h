@@ -31,6 +31,8 @@ struct PositionInfo {
 typedef std::vector<PositionInfo> PositionInfoVec;
 typedef std::vector<PositionInfoVec> PositionInfoTable;
 
+typedef std::vector<std::unique_ptr<OffsetPairsIteratorService>> OffsetIterators;
+
 class PhraseQueryProcessor {
  public:
   // Order matters in iterators. If "hello world" is 
@@ -434,9 +436,25 @@ struct ResultDocEntry {
   qq_float score;
   std::vector<StandardPosting> postings;
   Positions phrase_positions;
+  PositionInfoTable position_table;
+  // offset_iters[0]: offset iterator for the first term
+  // offset_iters[1]: offset iterator for the second term
+  // ...
+  // OffsetIterators offset_iters;
 
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in)
     :doc_id(doc_id_in), score(score_in) {}
+
+  // ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
+      // const OffsetIterators offset_iters_in, 
+      // const PositionInfoTable position_table_in)
+    // :doc_id(doc_id_in), score(score_in), offset_iters(std::move(offset_iters_in)),
+     // position_table(position_table_in) {}
+
+  ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
+      const PositionInfoTable position_table_in)
+    :doc_id(doc_id_in), score(score_in), 
+     position_table(position_table_in) {}
 
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
       std::vector<StandardPosting> &postings_in)
@@ -562,7 +580,7 @@ class QueryProcessor {
     return false;
   }
 
-  Positions FindPhrase() {
+  PositionInfoTable FindPhrase() {
     // All iterators point to the same posting at this point
     PositionIterators iterators;
     for (int i = 0; i < pl_iterators_.size(); i++) {
@@ -570,22 +588,22 @@ class QueryProcessor {
     }
 
     PhraseQueryProcessor phrase_qp(&iterators);
-    return phrase_qp.Process();
+    return phrase_qp.Process2();
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
     if (is_phrase_ == true) {
-      auto positions = FindPhrase();
-      if (positions.size() > 0) {
-        RankDoc(max_doc_id, positions);
+      auto position_table = FindPhrase();
+      if (position_table[0].size() > 0) {
+        RankDoc(max_doc_id, position_table);
       }
     } else {
-      Positions positions;
-      RankDoc(max_doc_id, positions);
+      PositionInfoTable position_table;
+      RankDoc(max_doc_id, position_table);
     }
   }
 
-  void RankDoc(const DocIdType &max_doc_id, const Positions &positions) {
+  void RankDoc(const DocIdType &max_doc_id, const PositionInfoTable &position_table) {
     qq_float score_of_this_doc = calc_doc_score_for_a_query(
         pl_iterators_,
         idfs_of_terms_,
@@ -594,11 +612,11 @@ class QueryProcessor {
         doc_lengths_.GetLength(max_doc_id));
 
     if (min_heap_.size() < k_) {
-      InsertToHeap(max_doc_id, score_of_this_doc, positions);
+      InsertToHeap(max_doc_id, score_of_this_doc, position_table);
     } else {
       if (score_of_this_doc > min_heap_.top().score) {
         min_heap_.pop();
-        InsertToHeap(max_doc_id, score_of_this_doc, positions);
+        InsertToHeap(max_doc_id, score_of_this_doc, position_table);
       }
       assert(min_heap_.size() == k_);
     }
@@ -619,13 +637,13 @@ class QueryProcessor {
 
   void InsertToHeap(const DocIdType &doc_id, 
                     const qq_float &score_of_this_doc,
-                    const Positions &positions)
+                    const PositionInfoTable &position_table)
   {
-    std::vector<PostingWO> postings;
-    for (int i = 0; i < n_lists_; i++) {
-      postings.push_back(GetPosting(pl_iterators_[i].get()));
-    }
-    min_heap_.emplace(doc_id, score_of_this_doc, postings, positions);
+    // OffsetIterators offset_iters;
+    // for (int i = 0; i < n_lists_; i++) {
+      // offset_iters.push_back(std::move(pl_iterators_[i]->OffsetPairsBegin()));
+    // }
+    min_heap_.emplace(doc_id, score_of_this_doc, position_table);
   }
 
   StandardPosting GetPosting(const PostingListIteratorService *pl_it) {
