@@ -115,12 +115,41 @@ class PhraseQueryProcessor {
     return true;
   }
 
+  //          --- table ---
+  // term01: info_col  info_col ...
+  // term02: info_col  info_col ...
+  // term03: info_col  info_col ...
+  // ...
+  void AppendPositionCol(PositionInfoTable *table) {
+    for (int i = 0; i < last_orig_popped_.size(); i++) {
+      PositionInfo info = last_orig_popped_[i];
+      PositionInfoVec &row = (*table)[i];
+      row.push_back(info);
+      // (*table)[i].push_back(info);
+    }
+  }
+
   Positions Process() {
+    Positions positions;
+    auto table = Process2();
+
+    if (table.size() == 0) {
+      return positions;
+    }
+
+    for (auto &info : table[0]) {
+      positions.push_back(info.pos);
+    }
+
+    return positions;
+  }
+
+  PositionInfoTable Process2() {
     bool any_list_exhausted = false;
-    Positions matched_pos_vec;
+    PositionInfoTable ret_table(iterators_.size()); 
 
     if (InitializeLastPopped() == false) {
-      return matched_pos_vec;
+      return ret_table;
     }
 
     while (any_list_exhausted == false) {
@@ -134,7 +163,7 @@ class PhraseQueryProcessor {
 
       bool match = IsPoppedMatch(max_adjusted_pos);        
       if (match == true) {
-        matched_pos_vec.push_back(max_adjusted_pos);
+        AppendPositionCol(&ret_table);
 
         bool found = MovePoppedBeyond(max_adjusted_pos + 1);
         if (found == false) {
@@ -143,7 +172,7 @@ class PhraseQueryProcessor {
       }
     }
 
-    return matched_pos_vec;
+    return ret_table;
   }
 
  private:

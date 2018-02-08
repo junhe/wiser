@@ -11,7 +11,7 @@
 #include "test_helpers.h"
 
 
-TEST_CASE( "QueryProcessor works", "[engine0]" ) {
+TEST_CASE( "QueryProcessor works", "[engine]" ) {
   OffsetPairs offset_pairs;
   for (int i = 0; i < 10; i++) {
     offset_pairs.push_back(std::make_tuple(1, 2)); 
@@ -254,8 +254,8 @@ PositionIterators create_iterators(std::vector<VarintBuffer *> buffers, std::vec
   return iterators;
 }
 
-TEST_CASE( "PhraseQueryProcessor", "[engine]" ) {
-  SECTION("Simple 001") {
+TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
+  SECTION("Simple") {
     // 3, 4 is a match
     VarintBuffer buf01 = create_varint_buffer(std::vector<uint32_t>{1, 3, 5});
     VarintBuffer buf02 = create_varint_buffer(std::vector<uint32_t>{4});
@@ -266,6 +266,15 @@ TEST_CASE( "PhraseQueryProcessor", "[engine]" ) {
     SECTION("Regular simple case") {
       auto positions = qp.Process();
       REQUIRE(positions == Positions{3});
+    }
+
+    SECTION("Returning info table") {
+      auto info_table = qp.Process2();
+      REQUIRE(info_table[0][0].pos == 3);
+      REQUIRE(info_table[0][0].term_appearance == 1);
+
+      REQUIRE(info_table[1][0].pos == 4);
+      REQUIRE(info_table[1][0].term_appearance == 0);
     }
 
     SECTION("FindMaxAdjustedLastPopped() and MovePoppedBeyond()") {
@@ -302,9 +311,10 @@ TEST_CASE( "PhraseQueryProcessor", "[engine]" ) {
     auto iterators = create_iterators({&buf01, &buf02}, {0, 0});
 
     PhraseQueryProcessor qp(&iterators);
-    auto positions = qp.Process();
-
-    REQUIRE(positions == Positions{});
+    auto table = qp.Process2();
+    REQUIRE(table.size() == 2); // two rows, each for a term
+    REQUIRE(table[0].size() == 0);
+    REQUIRE(table[1].size() == 0);
   }
 
   SECTION("No matches") {
@@ -313,9 +323,9 @@ TEST_CASE( "PhraseQueryProcessor", "[engine]" ) {
     auto iterators = create_iterators({&buf01, &buf02}, {3, 3});
 
     PhraseQueryProcessor qp(&iterators);
-    auto positions = qp.Process();
+    auto table = qp.Process2();
 
-    REQUIRE(positions == Positions{});
+    REQUIRE(table[0].size() == 0);
   }
  
   SECTION("Bad positions") {
@@ -325,9 +335,9 @@ TEST_CASE( "PhraseQueryProcessor", "[engine]" ) {
     auto iterators = create_iterators({&buf01, &buf02}, {1, 1});
 
     PhraseQueryProcessor qp(&iterators);
-    auto positions = qp.Process();
+    auto table = qp.Process2();
 
-    REQUIRE(positions == Positions{});
+    REQUIRE(table[0].size() == 0);
   }
  
   SECTION("One list is empty") {
@@ -336,9 +346,9 @@ TEST_CASE( "PhraseQueryProcessor", "[engine]" ) {
     auto iterators = create_iterators({&buf01, &buf02}, {1, 0});
 
     PhraseQueryProcessor qp(&iterators);
-    auto positions = qp.Process();
+    auto table = qp.Process2();
 
-    REQUIRE(positions == Positions{});
+    REQUIRE(table[0].size() == 0);
   }
 
   SECTION("Multiple matches") {
@@ -347,9 +357,20 @@ TEST_CASE( "PhraseQueryProcessor", "[engine]" ) {
     auto iterators = create_iterators({&buf01, &buf02}, {4, 4});
 
     PhraseQueryProcessor qp(&iterators);
-    auto positions = qp.Process();
+    auto table = qp.Process2();
 
-    REQUIRE(positions == Positions{10, 20, 100});
+    REQUIRE(table.size() == 2);
+    REQUIRE(table[0].size() == 3);
+    REQUIRE(table[0][0].pos == 10);
+    REQUIRE(table[0][1].pos == 20);
+    REQUIRE(table[0][2].pos == 100);
+
+    REQUIRE(table[1].size() == 3);
+    REQUIRE(table[1][0].pos == 11);
+    REQUIRE(table[1][1].pos == 21);
+    REQUIRE(table[1][2].pos == 101);
+
+    // REQUIRE(positions == Positions{10, 20, 100});
   }
 }
 
