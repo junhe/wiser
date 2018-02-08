@@ -49,3 +49,42 @@ TEST_CASE( "Integrated Test for Phrase Query", "[engine0]" ) {
 
 
 
+TEST_CASE( "Encode offset pairs", "[posting0]" ) {
+  SECTION("Empty") {
+    StandardPosting posting(0, 0, OffsetPairs{});
+    VarintBuffer buf = posting.EncodeOffsets();
+    VarintIteratorEndBound it(buf);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 0); // size offfset segment
+
+    REQUIRE(it.IsEnd() == true);
+  }
+
+ 
+  SECTION("Regular") {
+    StandardPosting posting(0, 0, 
+        OffsetPairs{OffsetPair{8, 9}, OffsetPair{20, 22}});
+    VarintBuffer buf = posting.EncodeOffsets();
+    VarintIteratorEndBound it(buf);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 4); // size offfset segment
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 8);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 1);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 11);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == 2);
+
+    REQUIRE(it.IsEnd() == true);
+  }
+}
+
+

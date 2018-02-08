@@ -80,6 +80,28 @@ class StandardPosting: public QqMemPostingService {
     return oss.str();
   }
 
+  // Assume an imaginary offset=0 before the first real offset
+  // 0 (delta to prev, delta to prev), (delta to prev, delta to prev), ..
+  VarintBuffer EncodeOffsets() const {
+    VarintBuffer buf;
+    uint32_t last_offset = 0;
+    uint32_t delta;
+    for (auto & pair : offset_pairs_) {
+      delta = std::get<0>(pair) - last_offset;
+      buf.Append(delta);
+      last_offset = std::get<0>(pair);
+
+      delta = std::get<1>(pair) - last_offset;
+      buf.Append(delta);
+      last_offset = std::get<1>(pair);
+    }
+
+    int off_size = buf.Size(); 
+    buf.Prepend(off_size);
+
+    return buf;
+  }
+
   // content_size | doc_id_delta | TF | off_size | off1 | off2 | off1 | off2 | ... | pos 1 | pos 2 | ...
   std::string Encode() const {
     VarintBuffer info_buf;
