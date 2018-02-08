@@ -49,13 +49,22 @@ TEST_CASE( "Integrated Test for Phrase Query", "[engine0]" ) {
 
 
 
-TEST_CASE( "Encode offset pairs", "[posting]" ) {
+TEST_CASE( "Encode offset pairs", "[posting0]" ) {
   SECTION("Empty") {
     StandardPosting posting(0, 0, OffsetPairs{});
     VarintBuffer buf = posting.EncodeOffsets();
-    VarintIteratorEndBound it(buf);
 
-    REQUIRE(it.IsEnd() == true);
+    SECTION("Using varint iterator") {
+      VarintIteratorEndBound it(buf);
+
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("Using compressed data iterator") {
+      CompressedPairIterator it(buf.DataPointer(), 0, buf.Size());    
+
+      REQUIRE(it.IsEnd() == true);
+    }
   }
 
  
@@ -63,25 +72,43 @@ TEST_CASE( "Encode offset pairs", "[posting]" ) {
     StandardPosting posting(0, 0, 
         OffsetPairs{OffsetPair{8, 9}, OffsetPair{20, 22}});
     VarintBuffer buf = posting.EncodeOffsets();
-    VarintIteratorEndBound it(buf);
 
-    REQUIRE(it.IsEnd() == false);
-    REQUIRE(it.Pop() == 8);
+    SECTION("Using varint iterator") {
+      VarintIteratorEndBound it(buf);
 
-    REQUIRE(it.IsEnd() == false);
-    REQUIRE(it.Pop() == 1);
+      REQUIRE(it.IsEnd() == false);
+      REQUIRE(it.Pop() == 8);
 
-    REQUIRE(it.IsEnd() == false);
-    REQUIRE(it.Pop() == 11);
+      REQUIRE(it.IsEnd() == false);
+      REQUIRE(it.Pop() == 1);
 
-    REQUIRE(it.IsEnd() == false);
-    REQUIRE(it.Pop() == 2);
+      REQUIRE(it.IsEnd() == false);
+      REQUIRE(it.Pop() == 11);
 
-    REQUIRE(it.IsEnd() == true);
+      REQUIRE(it.IsEnd() == false);
+      REQUIRE(it.Pop() == 2);
+
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("Using compressed data iterator") {
+      CompressedPairIterator it(buf.DataPointer(), 0, buf.Size());    
+      OffsetPair pair;
+
+      REQUIRE(it.IsEnd() == false);
+      it.Pop(&pair);
+      REQUIRE(pair == OffsetPair{8, 9});
+
+      REQUIRE(it.IsEnd() == false);
+      it.Pop(&pair);
+      REQUIRE(pair == OffsetPair{20, 22});
+
+      REQUIRE(it.IsEnd() == true);
+    }
   }
 }
 
-TEST_CASE( "Encode positions", "[posting]" ) {
+TEST_CASE( "Encode positions", "[posting0]" ) {
   SECTION("Empty") {
     StandardPosting posting(0, 0);
     VarintBuffer buf = posting.EncodePositions();

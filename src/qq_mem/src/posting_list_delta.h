@@ -30,43 +30,33 @@ class CompressedPositionIterator: public PopIteratorService {
 };
 
 
-class OffsetPairsDeltaIterator: public OffsetPairsIteratorService {
+class CompressedPairIterator: public OffsetPairsIteratorService {
  public:
-  OffsetPairsDeltaIterator(const VarintBuffer *data, int byte_offset, 
+  CompressedPairIterator(const std::string *data, const int start_offset, 
       const int end_offset)
-    :data_(data), byte_offset_(byte_offset), end_offset_(end_offset),
-     pair_index_(0) {}
+    :iterator_(data, start_offset, end_offset) {}
 
   bool IsEnd() const {
-    return byte_offset_ == end_offset_;
+    return iterator_.IsEnd();
   }
 
   // Make sure you are not at the end by IsEnd() before calling
   // this function.
   void Pop(OffsetPair *pair) {
-    if (byte_offset_ == end_offset_) {
-      LOG(FATAL) << "You just tried to advance when you are already at the end\n";
-    }
-    
-    uint32_t n;
-    int len;
+    uint32_t offset;
 
-    const std::string *data = data_->DataPointer();
+    offset = last_offset_ + iterator_.Pop();
+    std::get<0>(*pair) = offset;
+    last_offset_ = offset;
 
-    len = utils::varint_decode(*data, byte_offset_, &n);
-    byte_offset_ += len;
-    std::get<0>(*pair) = n;
-
-    len = utils::varint_decode(*data, byte_offset_, &n);
-    byte_offset_ += len;
-    std::get<1>(*pair) = n;
+    offset = last_offset_ + iterator_.Pop();
+    std::get<1>(*pair) = offset;
+    last_offset_ = offset;
   }
 
  private:
-  const VarintBuffer *data_;
-  int byte_offset_; 
-  const int end_offset_; // the start offset of the next posting
-  int pair_index_;
+  VarintIteratorEndBound iterator_;
+  uint32_t last_offset_ = 0;
 };
 
 
@@ -182,11 +172,9 @@ class PostingListDeltaIterator: public PostingListIteratorService {
       LOG(FATAL) 
         << "Trying to get offset iterator from a empty posting iterator\n";
     }
-    std::unique_ptr<OffsetPairsIteratorService> p(new OffsetPairsDeltaIterator(data_, 
-                               cache_.cur_offset_pairs_start_,
-                               cache_.cur_position_start_));
-    return p;
-  }
+    std::unique_ptr<OffsetPairsIteratorService> p(new
+        CompressedPairIterator(data_->DataPointer(), cache_.cur_offset_pairs_start_,
+          cache_.cur_position_start_)); return p; }
 
   std::unique_ptr<PopIteratorService> PositionBegin() const {
     std::unique_ptr<PopIteratorService> p(new VarintIteratorEndBound(
