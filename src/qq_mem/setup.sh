@@ -1,5 +1,8 @@
 sudo apt-get install -y curl
 
+# install dev tools
+sudo apt-get install -y libtool autoconf
+
 # install grpc
 cd ~/
 git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
