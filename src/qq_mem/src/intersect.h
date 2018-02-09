@@ -580,7 +580,18 @@ class QueryProcessor {
     return false;
   }
 
-  PositionInfoTable FindPhrase() {
+  Positions FindPhrase() {
+    // All iterators point to the same posting at this point
+    PositionIterators iterators;
+    for (int i = 0; i < pl_iterators_.size(); i++) {
+      iterators.push_back(std::move(pl_iterators_[i]->PositionBegin()));
+    }
+
+    PhraseQueryProcessor phrase_qp(&iterators);
+    return phrase_qp.Process();
+  }
+
+  PositionInfoTable FindPhrase2() {
     // All iterators point to the same posting at this point
     PositionIterators iterators;
     for (int i = 0; i < pl_iterators_.size(); i++) {
@@ -593,17 +604,29 @@ class QueryProcessor {
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
     if (is_phrase_ == true) {
-      auto position_table = FindPhrase();
-      if (position_table[0].size() > 0) {
-        RankDoc(max_doc_id, position_table);
+      auto positions = FindPhrase();
+      if (positions.size() > 0) {
+        RankDoc(max_doc_id, positions);
       }
     } else {
-      PositionInfoTable position_table;
-      RankDoc(max_doc_id, position_table);
+      Positions positions;
+      RankDoc(max_doc_id, positions);
     }
   }
 
-  void RankDoc(const DocIdType &max_doc_id, const PositionInfoTable &position_table) {
+  void HandleTheFoundDoc2(const DocIdType &max_doc_id) {
+    if (is_phrase_ == true) {
+      auto position_table = FindPhrase2();
+      if (position_table[0].size() > 0) {
+        RankDoc2(max_doc_id, position_table);
+      }
+    } else {
+      PositionInfoTable position_table;
+      RankDoc2(max_doc_id, position_table);
+    }
+  }
+
+  void RankDoc(const DocIdType &max_doc_id, const Positions &positions) {
     qq_float score_of_this_doc = calc_doc_score_for_a_query(
         pl_iterators_,
         idfs_of_terms_,
@@ -612,11 +635,30 @@ class QueryProcessor {
         doc_lengths_.GetLength(max_doc_id));
 
     if (min_heap_.size() < k_) {
-      InsertToHeap(max_doc_id, score_of_this_doc, position_table);
+      InsertToHeap(max_doc_id, score_of_this_doc, positions);
     } else {
       if (score_of_this_doc > min_heap_.top().score) {
         min_heap_.pop();
-        InsertToHeap(max_doc_id, score_of_this_doc, position_table);
+        InsertToHeap(max_doc_id, score_of_this_doc, positions);
+      }
+      assert(min_heap_.size() == k_);
+    }
+  }
+
+  void RankDoc2(const DocIdType &max_doc_id, const PositionInfoTable &position_table) {
+    qq_float score_of_this_doc = calc_doc_score_for_a_query(
+        pl_iterators_,
+        idfs_of_terms_,
+        n_total_docs_in_index_,
+        doc_lengths_.GetAvgLength(),
+        doc_lengths_.GetLength(max_doc_id));
+
+    if (min_heap_.size() < k_) {
+      InsertToHeap2(max_doc_id, score_of_this_doc, position_table);
+    } else {
+      if (score_of_this_doc > min_heap_.top().score) {
+        min_heap_.pop();
+        InsertToHeap2(max_doc_id, score_of_this_doc, position_table);
       }
       assert(min_heap_.size() == k_);
     }
@@ -637,13 +679,24 @@ class QueryProcessor {
 
   void InsertToHeap(const DocIdType &doc_id, 
                     const qq_float &score_of_this_doc,
+                    const Positions &positions)
+  {
+    std::vector<PostingWO> postings;
+    for (int i = 0; i < n_lists_; i++) {
+      postings.push_back(GetPosting(pl_iterators_[i].get()));
+    }
+    min_heap_.emplace(doc_id, score_of_this_doc, postings, positions);
+  }
+
+  void InsertToHeap2(const DocIdType &doc_id, 
+                    const qq_float &score_of_this_doc,
                     const PositionInfoTable &position_table)
   {
     // OffsetIterators offset_iters;
     // for (int i = 0; i < n_lists_; i++) {
       // offset_iters.push_back(std::move(pl_iterators_[i]->OffsetPairsBegin()));
     // }
-    min_heap_.emplace(doc_id, score_of_this_doc, position_table);
+    // min_heap_.emplace(doc_id, score_of_this_doc, position_table);
   }
 
   StandardPosting GetPosting(const PostingListIteratorService *pl_it) {
