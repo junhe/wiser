@@ -597,7 +597,8 @@ class QueryProcessor {
       }
 
       if (list_i == n_lists_ - 1) {
-        HandleTheFoundDoc(max_doc_id);
+        // HandleTheFoundDoc(max_doc_id);
+        HandleTheFoundDoc2(max_doc_id);
         // Advance iterators
         for (int i = 0; i < n_lists_; i++) {
           pl_iterators_[i]->Advance();
@@ -719,11 +720,12 @@ class QueryProcessor {
                     const qq_float &score_of_this_doc,
                     const PositionInfoTable &position_table)
   {
-    // OffsetIterators offset_iters;
-    // for (int i = 0; i < n_lists_; i++) {
-      // offset_iters.push_back(std::move(pl_iterators_[i]->OffsetPairsBegin()));
-    // }
-    // min_heap_.emplace(doc_id, score_of_this_doc, position_table);
+    OffsetIterators offset_iters;
+    for (int i = 0; i < n_lists_; i++) {
+      auto p = pl_iterators_[i]->OffsetPairsBegin();
+      offset_iters.push_back(std::move(p));
+    }
+    min_heap_.emplace(doc_id, score_of_this_doc, offset_iters, position_table);
   }
 
   StandardPosting GetPosting(const PostingListIteratorService *pl_it) {
