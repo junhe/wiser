@@ -31,7 +31,7 @@ struct PositionInfo {
 typedef std::vector<PositionInfo> PositionInfoVec;
 typedef std::vector<PositionInfoVec> PositionInfoTable;
 
-typedef std::vector<std::unique_ptr<OffsetPairsIteratorService>> OffsetIterators;
+typedef std::vector<std::shared_ptr<OffsetPairsIteratorService>> OffsetIterators;
 
 class PhraseQueryProcessor {
  public:
@@ -436,20 +436,22 @@ struct ResultDocEntry {
   qq_float score;
   std::vector<StandardPosting> postings;
   Positions phrase_positions;
+  // table[0]: row of position info structs for the first term
+  // table[1]: row of position info structs for the second term
   PositionInfoTable position_table;
   // offset_iters[0]: offset iterator for the first term
   // offset_iters[1]: offset iterator for the second term
   // ...
-  // OffsetIterators offset_iters;
+  OffsetIterators offset_iters;
 
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in)
     :doc_id(doc_id_in), score(score_in) {}
 
-  // ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
-      // const OffsetIterators offset_iters_in, 
-      // const PositionInfoTable position_table_in)
-    // :doc_id(doc_id_in), score(score_in), offset_iters(std::move(offset_iters_in)),
-     // position_table(position_table_in) {}
+  ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
+      const OffsetIterators offset_iters_in, 
+      const PositionInfoTable position_table_in)
+    :doc_id(doc_id_in), score(score_in), offset_iters(offset_iters_in),
+     position_table(position_table_in) {}
 
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
       const PositionInfoTable position_table_in)
@@ -465,6 +467,31 @@ struct ResultDocEntry {
       const Positions &positions)
     :doc_id(doc_id_in), score(score_in), postings(postings_in),
      phrase_positions(positions) {}
+
+  // Make sure you have valid offset and positions in this object
+  // before calling this function
+  std::vector<OffsetPairs> FilterOffsetByPosition() {
+    std::vector<OffsetPairs> offset_table(position_table.size());
+
+    for (int row_i = 0; row_i < position_table.size(); row_i++) {
+      auto offset_iter = offset_iters[row_i];
+      const PositionInfoVec &row = position_table[row_i];
+
+      int offset_cur = -1;
+      for (int col_i = 0; col_i < row.size(); col_i++) {
+        OffsetPair pair;
+        while (offset_cur < row[col_i].term_appearance) {
+          assert(offset_iter->IsEnd() == false);
+          offset_iter->Pop(&pair);
+          offset_cur++;
+        }
+
+        offset_table[row_i].push_back(pair);
+      }
+    }
+
+    return offset_table;
+  }
 
   friend bool operator<(ResultDocEntry a, ResultDocEntry b)
   {

@@ -1,5 +1,7 @@
 #include "catch.hpp"
 
+#include <memory>
+
 #include "utils.h"
 #include "compression.h"
 #include "posting.h"
@@ -160,5 +162,69 @@ TEST_CASE( "Encode positions", "[posting]" ) {
     }
   }
 }
+
+
+
+PositionInfoVec CreateInfoVec(std::vector<int> dataset) {
+  PositionInfoVec info_vec;
+  for (int i = 0; i < dataset.size(); i += 2) {
+    PositionInfo info;
+    info.pos = dataset[i];
+    info.term_appearance = dataset[i+1];
+    info_vec.push_back(info);
+  }
+  return info_vec;
+}
+
+VarintBuffer CreateOffsetPairBuf(std::vector<int> dataset) {
+  VarintBuffer buf;
+  for (auto m : dataset) {
+    buf.Append(m);
+  }
+  return buf;
+}
+
+std::shared_ptr<OffsetPairsIteratorService> CreateOffsetIter(VarintBuffer *buf) {
+  std::shared_ptr<OffsetPairsIteratorService> iter(new CompressedPairIterator(buf->DataPointer(), 0, buf->Size()));
+  return iter;
+}
+
+TEST_CASE( "Filter offsets by positions", "[result]" ) {
+  SECTION("") {
+    PositionInfoTable position_table{
+      CreateInfoVec({0, 2,   0, 4}),
+      CreateInfoVec({0, 1,   0, 2})
+    };
+
+    //                                        0, 1,   3, 6,   10,15   21,28,  36,45
+    VarintBuffer buf_1 = CreateOffsetPairBuf({0, 1,   2, 3,   4, 5,   6, 7,   8, 9});
+    auto iter_1 = CreateOffsetIter(&buf_1);
+    //                                        10, 21,   33, 46,  60, 75
+    VarintBuffer buf_2 = CreateOffsetPairBuf({10, 11,   12, 13,  14, 15});
+    auto iter_2 = CreateOffsetIter(&buf_2);
+    OffsetIterators offset_iters{iter_1, iter_2};
+    
+    ResultDocEntry entry(0, 1.0, offset_iters, position_table);
+    std::vector<OffsetPairs> ret = entry.FilterOffsetByPosition();
+
+    REQUIRE(ret.size() == 2);
+    // first term
+    REQUIRE(std::get<0>(ret[0][0]) == 10);
+    REQUIRE(std::get<1>(ret[0][0]) == 15);
+
+    REQUIRE(std::get<0>(ret[0][1]) == 36);
+    REQUIRE(std::get<1>(ret[0][1]) == 45);
+      
+    // second term
+    REQUIRE(std::get<0>(ret[1][0]) == 33);
+    REQUIRE(std::get<1>(ret[1][0]) == 46);
+
+    REQUIRE(std::get<0>(ret[1][1]) == 60);
+    REQUIRE(std::get<1>(ret[1][1]) == 75);
+  }
+}
+
+
+
 
 
