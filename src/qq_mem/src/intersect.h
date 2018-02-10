@@ -481,7 +481,9 @@ struct ResultDocEntry {
       for (int col_i = 0; col_i < row.size(); col_i++) {
         OffsetPair pair;
         while (offset_cur < row[col_i].term_appearance) {
-          assert(offset_iter->IsEnd() == false);
+          // assert(offset_iter->IsEnd() == false);
+          LOG_IF(FATAL, offset_iter->IsEnd()) 
+            << "offset_iter does not suppose to reach the end." << std::endl;
           offset_iter->Pop(&pair);
           offset_cur++;
         }
@@ -649,7 +651,7 @@ class QueryProcessor {
         RankDoc2(max_doc_id, position_table);
       }
     } else {
-      PositionInfoTable position_table;
+      PositionInfoTable position_table(pl_iterators_.size());
       RankDoc2(max_doc_id, position_table);
     }
   }
