@@ -387,7 +387,7 @@ class QqMemEngine : public SearchEngineServiceNew {
 
       if (query.return_snippets == true) {
         auto offset_table = top_doc_entry.OffsetsForHighliting();
-        result_entry.snippet = GenerateSnippet2(top_doc_entry.doc_id,
+        result_entry.snippet = GenerateSnippet(top_doc_entry.doc_id,
             offset_table, query.n_snippet_passages);
       }
 
@@ -397,25 +397,13 @@ class QqMemEngine : public SearchEngineServiceNew {
     return result;
   }
 
-  std::string GenerateSnippet2(const DocIdType &doc_id, 
+  std::string GenerateSnippet(const DocIdType &doc_id, 
       std::vector<OffsetPairs> &offset_table,
       const int n_passages) {
     OffsetsEnums res = {};
 
     for (int i = 0; i < offset_table.size(); i++) {
       res.push_back(Offset_Iterator(offset_table[i]));
-    }
-
-    return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));
-  }
-
-  std::string GenerateSnippet(const DocIdType &doc_id, 
-      const std::vector<StandardPosting> &postings, 
-      const int n_passages) {
-    OffsetsEnums res = {};
-
-    for (int i = 0; i < postings.size(); i++) {
-      res.push_back(Offset_Iterator(*postings[i].GetOffsetPairs()));
     }
 
     return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));
