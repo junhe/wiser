@@ -443,13 +443,23 @@ struct ResultDocEntry {
   // offset_iters[1]: offset iterator for the second term
   // ...
   OffsetIterators offset_iters;
+  bool is_phrase = false;
 
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in)
     :doc_id(doc_id_in), score(score_in) {}
 
-  ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
-      const OffsetIterators offset_iters_in, 
-      const PositionInfoTable position_table_in)
+  ResultDocEntry(const DocIdType &doc_id_in, 
+                 const qq_float &score_in, 
+                 const OffsetIterators offset_iters_in, 
+                 const PositionInfoTable position_table_in, 
+                 const bool is_phrase_in)
+    :doc_id(doc_id_in), score(score_in), offset_iters(offset_iters_in),
+     position_table(position_table_in), is_phrase(is_phrase_in) {}
+
+  ResultDocEntry(const DocIdType &doc_id_in, 
+                 const qq_float &score_in, 
+                 const OffsetIterators offset_iters_in, 
+                 const PositionInfoTable position_table_in)
     :doc_id(doc_id_in), score(score_in), offset_iters(offset_iters_in),
      position_table(position_table_in) {}
 
@@ -467,6 +477,27 @@ struct ResultDocEntry {
       const Positions &positions)
     :doc_id(doc_id_in), score(score_in), postings(postings_in),
      phrase_positions(positions) {}
+
+  std::vector<OffsetPairs> OffsetsForHighliting() {
+    if (is_phrase == true) {
+      return FilterOffsetByPosition();
+    } else {
+      return ExpandOffsets();
+    }
+  }
+
+  std::vector<OffsetPairs> ExpandOffsets() {
+    std::vector<OffsetPairs> table(offset_iters.size());
+    for (int i = 0; i < offset_iters.size(); i++) {
+      auto &it = offset_iters[i];
+      while (it->IsEnd() == false) {
+        OffsetPair pair;
+        it->Pop(&pair);
+        table[i].push_back(pair);
+      }
+    }
+    return table;
+  }
 
   // Make sure you have valid offset and positions in this object
   // before calling this function

@@ -224,6 +224,35 @@ TEST_CASE( "Filter offsets by positions", "[result]" ) {
   }
 }
 
+TEST_CASE( "Return offset vector", "[result]" ) {
+  //                                        0, 1,   3, 6   
+  VarintBuffer buf_1 = CreateOffsetPairBuf({0, 1,   2, 3});
+  auto iter_1 = CreateOffsetIter(&buf_1);
+  //                                        10, 21,   33, 46,  60, 75
+  VarintBuffer buf_2 = CreateOffsetPairBuf({10, 11,   12, 13,  14, 15});
+  auto iter_2 = CreateOffsetIter(&buf_2);
+  OffsetIterators offset_iters{iter_1, iter_2};
+
+  ResultDocEntry entry(0, 1.0);
+  entry.offset_iters = offset_iters;
+
+  std::vector<OffsetPairs> table = entry.ExpandOffsets();
+  REQUIRE(table.size() == 2);
+  REQUIRE(table[0].size() == 2);
+  REQUIRE(std::get<0>(table[0][0]) == 0);
+  REQUIRE(std::get<1>(table[0][0]) == 1);
+  REQUIRE(std::get<0>(table[0][1]) == 3);
+  REQUIRE(std::get<1>(table[0][1]) == 6);
+
+  REQUIRE(table[1].size() == 3);
+  REQUIRE(std::get<0>(table[1][0]) == 10);
+  REQUIRE(std::get<1>(table[1][0]) == 21);
+  REQUIRE(std::get<0>(table[1][1]) == 33);
+  REQUIRE(std::get<1>(table[1][1]) == 46);
+  REQUIRE(std::get<0>(table[1][2]) == 60);
+  REQUIRE(std::get<1>(table[1][2]) == 75);
+}
+
 
 
 
