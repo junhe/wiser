@@ -19,7 +19,7 @@ TEST_CASE( "Integrated Test for Phrase Query", "[engine0]" ) {
                                // 01234567890123456789012
                               "hello world program",
                               "3,7;.9,13;.15,21;.",
-                              "2;.3;.4;."));
+                              "2;.3;.4;.", "WITH_POSITIONS"));
   REQUIRE(engine->TermCount() == 3);
 
   SECTION("Sanity") {

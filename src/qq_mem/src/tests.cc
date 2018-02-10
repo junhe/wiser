@@ -650,8 +650,8 @@ TEST_CASE( "Utilities work", "[utils]" ) {
 
 
 void setup_inverted_index(InvertedIndexService &inverted_index) {
-  inverted_index.AddDocument(0, DocInfo("hello world", "hello world"));
-  inverted_index.AddDocument(1, DocInfo("hello wisconsin", "hello wisconsin"));
+  inverted_index.AddDocument(0, DocInfo("hello world", "hello world", "", "", "TOKEN_ONLY"));
+  inverted_index.AddDocument(1, DocInfo("hello wisconsin", "hello wisconsin", "", "", "TOKEN_ONLY"));
   REQUIRE(inverted_index.Size() == 3);
 }
 
@@ -699,13 +699,16 @@ QqMemEngine test_get_engine(std::string inverted_index) {
   config.SetString("inverted_index", inverted_index);
   QqMemEngine engine(config);
 
-  engine.AddDocument(DocInfo("hello world", "hello world"));
+  engine.AddDocument(
+      DocInfo("hello world", "hello world", "", "", "TOKEN_ONLY"));
   REQUIRE(engine.TermCount() == 2);
 
-  engine.AddDocument(DocInfo("hello wisconsin", "hello wisconsin"));
+  engine.AddDocument(
+      DocInfo("hello wisconsin", "hello wisconsin", "", "", "TOKEN_ONLY"));
   REQUIRE(engine.TermCount() == 3);
 
-  engine.AddDocument(DocInfo("hello world big world", "hello world big world"));
+  engine.AddDocument(
+      DocInfo("hello world big world", "hello world big world", "", "", "TOKEN_ONLY"));
   REQUIRE(engine.TermCount() == 4);
 
   return engine;

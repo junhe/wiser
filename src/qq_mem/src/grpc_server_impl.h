@@ -88,7 +88,8 @@ class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEn
     Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
             StatusReply* reply) override {
         // In this case, body must be already tokenized.
-        DocInfo doc_info(request->document().body(),  request->document().body());
+        DocInfo doc_info(request->document().body(),
+                         request->document().body(), "", "", "TOKEN_ONLY");
         search_engine_->AddDocument(doc_info);
 
         count++;

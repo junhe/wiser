@@ -406,7 +406,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
 TEST_CASE( "DocInfo", "[engine]" ) {
   // hello, this is the hello         hello  this      0-4,19-23;7-10;.    1;5;.2;.
   DocInfo doc_info("hello, this is the hello", "hello this", 
-               "0,4;19,23.7-10;.", "1;5;.2;.");
+               "0,4;19,23.7-10;.", "1;5;.2;.", "WITH_POSITIONS");
 
   SECTION("Position parsing") {
     auto pos_table = doc_info.GetPositions();

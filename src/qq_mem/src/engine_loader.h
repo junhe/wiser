@@ -6,6 +6,7 @@
 #include "engine_services.h"
 #include "utils.h"
 
+
 class LineDocParserService {
  public:
   LineDocParserService(const std::string line_doc_path)
@@ -60,7 +61,7 @@ class LineDocParserToken : public LineDocParserService {
 
  protected:
   DocInfo ParseLine(std::vector<std::string> items) {
-    return DocInfo(items[2], items[2]);
+    return DocInfo(items[2], items[2], "", "", "TOKEN_ONLY");
   }
 };
 
@@ -75,7 +76,7 @@ class LineDocParserOffset : public LineDocParserService {
 
  protected:
   DocInfo ParseLine(std::vector<std::string> items) {
-    return DocInfo(items[1], items[2], items[3]);
+    return DocInfo(items[1], items[2], items[3], "", "WITH_OFFSETS");
   }
 };
 
@@ -90,7 +91,7 @@ class LineDocParserPosition : public LineDocParserService {
 
  protected:
   DocInfo ParseLine(std::vector<std::string> items) {
-    return DocInfo(items[1], items[2], items[3], items[4]);
+    return DocInfo(items[1], items[2], items[3], items[4], "WITH_POSITIONS");
   }
 };
 
