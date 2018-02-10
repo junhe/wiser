@@ -61,12 +61,13 @@ int main(int argc, char** argv) {
 
   GeneralConfig config;
   config.SetString("target", std::string("localhost:") + port);
-  // config.SetString("engine_name", "qq_mem_compressed");
-  config.SetString("engine_name", "qq_mem_uncompressed");
+  config.SetString("engine_name", "qq_mem_compressed");
+  // config.SetString("engine_name", "qq_mem_uncompressed");
   config.SetString("sync_type", sync_type);
   config.SetInt("n_line_doc_rows", n_docs);
+  config.SetString("line_doc_format", "WITH_POSITIONS");
   config.SetString("line_doc_path", 
-      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+      "/mnt/ssd/downloads/enwiki.linedoc_tokenized.1");
 
   if (config.GetString("sync_type") == "ASYNC") {
     config.SetInt("n_server_threads", n_threads);
