@@ -73,6 +73,12 @@ class DocInfo {
     :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
      token_positions_(token_positions) {}
 
+  DocInfo(const std::string &body, const std::string &tokens, 
+      const std::string &token_offsets, const std::string &token_positions, 
+      const std::string &format) 
+    :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
+     token_positions_(token_positions), format_(format) {}
+
   TermList GetTokens() const;
 
   // return a table of offset pairs
@@ -90,6 +96,8 @@ class DocInfo {
   const std::string &TokenOffsets() const {return token_offsets_;}
 
   const std::string &TokenPositions() const {return token_positions_;}
+  
+  const std::string &Format() const {return format_;}
 
   const int BodyLength() const;
 
@@ -97,7 +105,9 @@ class DocInfo {
     return "body: " + body_ + 
            "\ntokens: " + tokens_ +
            "\noffsets: " + token_offsets_ + 
-           "\npositions: " + token_positions_ + "\n";
+           "\npositions: " + token_positions_ + 
+           "\nformat: " + format_ + 
+           "\n";
   }
 
  private:
@@ -105,6 +115,7 @@ class DocInfo {
   std::string tokens_;
   std::string token_offsets_;
   std::string token_positions_;
+  std::string format_;
 };
 
 
