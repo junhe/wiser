@@ -16,24 +16,17 @@
 class InvertedIndexImpl: public InvertedIndexService {
  public:
   virtual void AddDocument(const int doc_id, const DocInfo doc_info) {
-    if (doc_info.Body().size() > 0 &&
-        doc_info.Tokens().size() > 0 &&
-        doc_info.TokenOffsets().size() == 0 &&
-        doc_info.TokenPositions().size() == 0) {
+    auto format = doc_info.Format();
+
+    if (format == "TOKEN_ONLY") {
       AddDocumentNaive(doc_id, doc_info.Body(), doc_info.Tokens());
-    } else if (doc_info.Body().size() > 0 &&
-               doc_info.Tokens().size() > 0 &&
-               doc_info.TokenOffsets().size() > 0 &&
-               doc_info.TokenPositions().size() == 0) {
+    } else if (format == "WITH_OFFSETS") {
       AddDocumentWithOffsets(doc_id, doc_info.Body(), doc_info.Tokens(),
           doc_info.TokenOffsets());
-    } else if (doc_info.Body().size() > 0 &&
-               doc_info.Tokens().size() > 0 &&
-               doc_info.TokenOffsets().size() > 0 &&
-               doc_info.TokenPositions().size() > 0) {
+    } else if (format == "WITH_POSITIONS") {
 			AddDocumentWithPositions(doc_id, doc_info);
     } else {
-      LOG(FATAL) << "This doc info is not supported.\n";
+      LOG(FATAL) << "Format " << format << " is not supported.\n";
     }
   }
 
