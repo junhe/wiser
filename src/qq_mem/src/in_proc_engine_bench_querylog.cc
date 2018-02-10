@@ -174,19 +174,23 @@ GeneralConfig config_by_jun() {
 */
 
   GeneralConfig config;
-  // config.SetString("engine_type", "qq_mem_compressed");
-  config.SetString("engine_type", "qq_mem_uncompressed");
+  config.SetString("engine_type", "qq_mem_compressed");
+  // config.SetString("engine_type", "qq_mem_uncompressed");
 
-  config.SetInt("n_docs", 10000000);
+  config.SetInt("n_docs", 10000);
 
   // config.SetString("linedoc_path", 
       // "/mnt/ssd/downloads/enwiki.linedoc_tokenized"); // full article
       // "/mnt/ssd/downloads/enwiki_tookenized_200000.linedoc");
-  // config.SetString("loader", "with-offsets");
-
+  // config.SetString("loader", "WITH_OFFSETS");
+  
   config.SetString("linedoc_path", 
-      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  config.SetString("loader", "naive");
+      "/mnt/ssd/downloads/enwiki.linedoc_tokenized.1");
+  config.SetString("loader", "WITH_POSITIONS");
+
+  // config.SetString("linedoc_path", 
+      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  // config.SetString("loader", "TOKEN_ONLY");
 
   config.SetInt("n_repeats", 100000);
   config.SetInt("n_passages", 3);

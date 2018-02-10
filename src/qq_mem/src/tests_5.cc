@@ -435,7 +435,7 @@ TEST_CASE( "Loading Engine From Local Line Doc", "[engine]" ) {
   auto engine = CreateSearchEngine("qq_mem_compressed");
   REQUIRE(engine->TermCount() == 0);
   engine->LoadLocalDocuments("src/testdata/line_doc_with_positions", 10000, 
-      "with-positions");
+      "WITH_POSITIONS");
   REQUIRE(engine->TermCount() > 0);
   auto result = engine->Search(SearchQuery({"prefix"}));
   std::cout << result.ToStr() << std::endl;

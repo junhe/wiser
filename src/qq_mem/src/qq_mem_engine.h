@@ -308,18 +308,18 @@ class QqMemEngine : public SearchEngineServiceNew {
 
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
-      int n_rows, const std::string loader) {
+      int n_rows, const std::string format) {
     int ret;
     std::unique_ptr<LineDocParserService> parser;
 
-    if (loader == "naive") {
+    if (format == "TOKEN_ONLY") {
       parser.reset(new LineDocParserToken(line_doc_path, n_rows));
-    } else if (loader == "with-offsets") {
+    } else if (format == "WITH_OFFSETS") {
       parser.reset(new LineDocParserOffset(line_doc_path, n_rows));
-    } else if (loader == "with-positions") {
+    } else if (format == "WITH_POSITIONS") {
       parser.reset(new LineDocParserPosition(line_doc_path, n_rows));
     } else {
-      throw std::runtime_error("Loader " + loader + " is not supported");
+      throw std::runtime_error("Format " + format + " is not supported");
     }
 
     DocInfo doc_info;

@@ -164,8 +164,7 @@ class AsyncServer : public ServerService {
       std::string line_doc_path = config.GetString("line_doc_path");
       if (line_doc_path.size() > 0) {
         int n_rows = config.GetInt("n_line_doc_rows");
-        int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows, "naive");
-        // std::cout << ret << " docs indexed to search engine." << std::endl;
+        int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows, "TOKEN_ONLY");
       }
     }
 
@@ -408,7 +407,7 @@ class SyncServer : public ServerService {
 
       if (line_doc_path.size() > 0) {
         int n_rows = config.GetInt("n_line_doc_rows");
-        int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows, "naive");
+        int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows, "TOKEN_ONLY");
         // std::cout << ret << " docs indexed to search engine." << std::endl;
       }
     }
