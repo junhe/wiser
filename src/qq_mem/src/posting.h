@@ -15,7 +15,7 @@
 #include "utils.h"
 #include "compression.h"
 
-
+#include "glog/logging.h"
 
 
 class PostingSimple : public QqMemPostingService {
@@ -114,8 +114,23 @@ class StandardPosting: public QqMemPostingService {
     return buf;
   }
 
+  void WarnIfNotEqual() const {
+    auto offset_cnt = offset_pairs_.size();
+    auto pos_cnt = positions_.size();
+
+    if (offset_cnt != pos_cnt) {
+      LOG(WARNING) 
+        << "The number of offset pairs and the number "
+           "of positions are not equal. "
+        << "offset_cnt: " << offset_cnt 
+        << " pos_cnt:" << pos_cnt << std::endl;
+    }
+  }
+
   // content_size | doc_id_delta | TF | off_size | off1 | off2 | off1 | off2 | ... | pos 1 | pos 2 | ...
   std::string Encode() const {
+    WarnIfNotEqual();
+
     VarintBuffer info_buf;
     info_buf.Append(doc_id_);
     info_buf.Append(term_frequency_);
