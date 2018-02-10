@@ -89,21 +89,6 @@ DocScoreVec score_docs(const IntersectionResult &intersection_result,
   return doc_scores;
 }
 
-
-void insert_to_heap(MinHeap *min_heap, const DocIdType &doc_id, 
-    const qq_float &score_of_this_doc, 
-    const std::vector<const PostingList_Vec<PostingWO>*> &lists, 
-    const std::vector<typename PostingList_Vec<PostingWO>::iterator_t> &posting_iters,
-    const int &n_lists)
-{
-  std::vector<PostingWO> postings;
-  for (int i = 0; i < n_lists; i++) {
-    postings.push_back(lists[i]->GetPosting(posting_iters[i]));
-  }
-  min_heap->emplace(doc_id, score_of_this_doc, postings);
-}
-
-
 qq_float calc_doc_score_for_a_query(
     const IteratorPointers &pl_iterators,
     const std::vector<qq_float> &idfs_of_terms,

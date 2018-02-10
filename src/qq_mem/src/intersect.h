@@ -33,6 +33,7 @@ typedef std::vector<PositionInfoVec> PositionInfoTable;
 
 typedef std::vector<std::shared_ptr<OffsetPairsIteratorService>> OffsetIterators;
 
+
 class PhraseQueryProcessor {
  public:
   // Order matters in iterators. If "hello world" is 
@@ -170,10 +171,6 @@ class PhraseQueryProcessor {
 };
 
 
-
-
-
-
 class IntersectionResult {
  public:
   typedef std::map<Term, const QqMemPostingService *> row_dict_t; 
@@ -242,8 +239,6 @@ class IntersectionResult {
   table_dict_t table_;
   doc_cnt_dict_t doc_cnt_;
 };
-
-
 
 TermScoreMap score_terms_in_doc(const IntersectionResult &intersection_result, 
     IntersectionResult::row_iterator row_it,
@@ -438,30 +433,11 @@ struct ResultDocEntry {
                  const OffsetIterators offset_iters_in, 
                  const PositionInfoTable position_table_in, 
                  const bool is_phrase_in)
-    :doc_id(doc_id_in), score(score_in), offset_iters(offset_iters_in),
-     position_table(position_table_in), is_phrase(is_phrase_in) {}
-
-  ResultDocEntry(const DocIdType &doc_id_in, 
-                 const qq_float &score_in, 
-                 const OffsetIterators offset_iters_in, 
-                 const PositionInfoTable position_table_in)
-    :doc_id(doc_id_in), score(score_in), offset_iters(offset_iters_in),
-     position_table(position_table_in) {}
-
-  ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
-      const PositionInfoTable position_table_in)
-    :doc_id(doc_id_in), score(score_in), 
-     position_table(position_table_in) {}
-
-  ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
-      std::vector<StandardPosting> &postings_in)
-    :doc_id(doc_id_in), score(score_in), postings(postings_in) {}
-
-  ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in, 
-      std::vector<StandardPosting> &postings_in,
-      const Positions &positions)
-    :doc_id(doc_id_in), score(score_in), postings(postings_in),
-     phrase_positions(positions) {}
+    :doc_id(doc_id_in), 
+     score(score_in), 
+     offset_iters(offset_iters_in),
+     position_table(position_table_in), 
+     is_phrase(is_phrase_in) {}
 
   std::vector<OffsetPairs> OffsetsForHighliting() {
     if (is_phrase == true) {
@@ -529,14 +505,6 @@ struct ResultDocEntry {
 
 typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
     std::greater<ResultDocEntry> > MinHeap;
-typedef StandardPosting PostingWO;
-
-void insert_to_heap(MinHeap *min_heap, const DocIdType &doc_id, 
-    const qq_float &score_of_this_doc, 
-    const std::vector<const PostingList_Vec<PostingWO>*> &lists, 
-    const std::vector<typename PostingList_Vec<PostingWO>::iterator_t> &posting_iters,
-    const int &n_lists);
-
 
 class QueryProcessor {
  public:

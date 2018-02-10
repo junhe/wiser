@@ -204,7 +204,7 @@ TEST_CASE( "Filter offsets by positions", "[result]" ) {
     auto iter_2 = CreateOffsetIter(&buf_2);
     OffsetIterators offset_iters{iter_1, iter_2};
     
-    ResultDocEntry entry(0, 1.0, offset_iters, position_table);
+    ResultDocEntry entry(0, 1.0, offset_iters, position_table, true);
     std::vector<OffsetPairs> ret = entry.FilterOffsetByPosition();
 
     REQUIRE(ret.size() == 2);
