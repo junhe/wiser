@@ -4,7 +4,7 @@
 #include <assert.h>
 
 #include "doc_length_store.h"
-#include "intersect.h"
+#include "query_processing.h"
 #include "utils.h"
 #include "doc_store.h"
 #include "highlighter.h"

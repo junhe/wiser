@@ -7,7 +7,7 @@
 #include "posting.h"
 #include "posting_list_delta.h"
 #include "posting_list_vec.h"
-#include "intersect.h"
+#include "query_processing.h"
 #include "qq_mem_engine.h"
 
 #include "test_helpers.h"

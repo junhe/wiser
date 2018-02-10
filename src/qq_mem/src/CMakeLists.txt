@@ -34,7 +34,7 @@ grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 set(ENGINE_SRCS 
     doc_store.cc
     posting.cc
-    intersect.cc
+    query_processing.cc
     query_pool.cc
     types.cc
     qq_mem_engine.cc

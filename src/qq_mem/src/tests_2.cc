@@ -3,7 +3,7 @@
 #include "qq.pb.h"
 
 #include "highlighter.h"
-#include "intersect.h"
+#include "query_processing.h"
 #include "utils.h"
 #include "general_config.h"
 #include "query_pool.h"

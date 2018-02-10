@@ -20,7 +20,7 @@
 
 #include "posting_list_vec.h"
 
-#include "intersect.h"
+#include "query_processing.h"
 #include "scoring.h"
 
 #include "highlighter.h"

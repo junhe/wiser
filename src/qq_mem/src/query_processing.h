@@ -1,5 +1,5 @@
-#ifndef INTERSECT_H
-#define INTERSECT_H
+#ifndef QUERY_PROCESSING_H
+#define QUERY_PROCESSING_H
 
 #include <vector>
 #include <cassert>
