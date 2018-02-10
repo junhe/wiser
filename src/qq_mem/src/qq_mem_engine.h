@@ -20,12 +20,12 @@ class InvertedIndexImpl: public InvertedIndexService {
         doc_info.Tokens().size() > 0 &&
         doc_info.TokenOffsets().size() == 0 &&
         doc_info.TokenPositions().size() == 0) {
-      AddDocumentInternal(doc_id, doc_info.Body(), doc_info.Tokens());
+      AddDocumentNaive(doc_id, doc_info.Body(), doc_info.Tokens());
     } else if (doc_info.Body().size() > 0 &&
                doc_info.Tokens().size() > 0 &&
                doc_info.TokenOffsets().size() > 0 &&
                doc_info.TokenPositions().size() == 0) {
-      AddDocumentInternal(doc_id, doc_info.Body(), doc_info.Tokens(),
+      AddDocumentWithOffsets(doc_id, doc_info.Body(), doc_info.Tokens(),
           doc_info.TokenOffsets());
     } else if (doc_info.Body().size() > 0 &&
                doc_info.Tokens().size() > 0 &&
@@ -38,9 +38,9 @@ class InvertedIndexImpl: public InvertedIndexService {
   }
 
  protected:
-  virtual void AddDocumentInternal(const int &doc_id, const std::string &body, 
+  virtual void AddDocumentNaive(const int &doc_id, const std::string &body, 
       const std::string &tokens) = 0;
-  virtual void AddDocumentInternal(const int &doc_id, const std::string &body, 
+  virtual void AddDocumentWithOffsets(const int &doc_id, const std::string &body, 
       const std::string &tokens, const std::string &token_offsets) = 0;
   virtual void AddDocumentWithPositions(const int &doc_id, 
       const DocInfo &doc_info) = 0;
@@ -121,7 +121,7 @@ class InvertedIndexQqMemVec: public InvertedIndexImpl {
 		}
 	}
 
-  void AddDocumentInternal(const int &doc_id, const std::string &body, 
+  void AddDocumentNaive(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
     utils::CountMapType token_counts = utils::count_tokens(tokens);
     std::map<Term, OffsetPairs> term_offsets = utils::extract_offset_pairs(tokens);
@@ -145,7 +145,7 @@ class InvertedIndexQqMemVec: public InvertedIndexImpl {
     }
   }
 
-  void AddDocumentInternal(const int &doc_id, const std::string &body, 
+  void AddDocumentWithOffsets(const int &doc_id, const std::string &body, 
       const std::string &tokens, const std::string &token_offsets) {
     TermList token_vec = utils::explode(tokens, ' ');
     std::vector<Offsets> offsets_parsed = utils::parse_offsets(token_offsets);
@@ -248,7 +248,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 		}
 	}
 
-  void AddDocumentInternal(const int &doc_id, const std::string &body, 
+  void AddDocumentNaive(const int &doc_id, const std::string &body, 
       const std::string &tokens) {
     utils::CountMapType token_counts = utils::count_tokens(tokens);
     std::map<Term, OffsetPairs> term_offsets = utils::extract_offset_pairs(tokens);
@@ -272,7 +272,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     }
   }
 
-  void AddDocumentInternal(const int &doc_id, const std::string &body, 
+  void AddDocumentWithOffsets(const int &doc_id, const std::string &body, 
       const std::string &tokens, const std::string &token_offsets) {
     TermList token_vec = utils::explode(tokens, ' ');
     std::vector<Offsets> offsets_parsed = utils::parse_offsets(token_offsets);
