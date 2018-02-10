@@ -20,10 +20,9 @@ std::vector<Positions> DocInfo::GetPositions() const {
   std::vector<Positions> table(groups.size());
 
   for (int i = 0; i < groups.size(); i++) {
-    // group: 1;3;8
+    // example group: 1;3;8
     std::vector<std::string> pos_strs = utils::explode(groups[i], ';');
     for (auto & pos_str : pos_strs) {
-      std::cout << "pos_str: " << pos_str << std::endl;
       table[i].push_back(std::stoi(pos_str));
     }
   }

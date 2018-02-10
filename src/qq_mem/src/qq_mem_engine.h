@@ -317,7 +317,7 @@ class QqMemEngine : public SearchEngineServiceNew {
     } else if (loader == "with-offsets") {
       parser.reset(new LineDocParserOffset(line_doc_path, n_rows));
     } else if (loader == "with-positions") {
-      parser.reset(new LineDocParserOffset(line_doc_path, n_rows));
+      parser.reset(new LineDocParserPosition(line_doc_path, n_rows));
     } else {
       throw std::runtime_error("Loader " + loader + " is not supported");
     }
