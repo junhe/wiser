@@ -758,7 +758,7 @@ class QueryProcessor {
       auto p = pl_iterators_[i]->OffsetPairsBegin();
       offset_iters.push_back(std::move(p));
     }
-    min_heap_.emplace(doc_id, score_of_this_doc, offset_iters, position_table);
+    min_heap_.emplace(doc_id, score_of_this_doc, offset_iters, position_table, is_phrase_);
   }
 
   StandardPosting GetPosting(const PostingListIteratorService *pl_it) {

@@ -386,19 +386,7 @@ class QqMemEngine : public SearchEngineServiceNew {
       result_entry.doc_score = top_doc_entry.score;
 
       if (query.return_snippets == true) {
-        // result_entry.snippet = GenerateSnippet(top_doc_entry.doc_id,
-            // top_doc_entry.postings, query.n_snippet_passages);
-
-        auto offset_table = top_doc_entry.FilterOffsetByPosition();
-        std::cout << "-------- offset_table" << std::endl;
-        for (auto &row : offset_table) {
-          std::cout << "row ";
-          for (auto &col : row) {
-            std::cout << std::get<0>(col) << "," << std::get<1>(col) << "  ";
-          }
-          std::cout << std::endl;
-        }
-
+        auto offset_table = top_doc_entry.OffsetsForHighliting();
         result_entry.snippet = GenerateSnippet2(top_doc_entry.doc_id,
             offset_table, query.n_snippet_passages);
       }
