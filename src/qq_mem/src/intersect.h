@@ -511,12 +511,12 @@ struct ResultDocEntry {
     return offset_table;
   }
 
-  friend bool operator<(ResultDocEntry a, ResultDocEntry b)
+  friend bool operator<(const ResultDocEntry &a, const ResultDocEntry &b)
   {
     return a.score < b.score;
   }
 
-  friend bool operator>(ResultDocEntry a, ResultDocEntry b)
+  friend bool operator>(const ResultDocEntry &a, const ResultDocEntry &b)
   {
     return a.score > b.score;
   }
