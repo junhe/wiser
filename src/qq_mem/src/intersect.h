@@ -131,22 +131,7 @@ class PhraseQueryProcessor {
     }
   }
 
-  Positions Process() {
-    Positions positions;
-    auto table = Process2();
-
-    if (table.size() == 0) {
-      return positions;
-    }
-
-    for (auto &info : table[0]) {
-      positions.push_back(info.pos);
-    }
-
-    return positions;
-  }
-
-  PositionInfoTable Process2() {
+  PositionInfoTable Process() {
     bool any_list_exhausted = false;
     PositionInfoTable ret_table(iterators_.size()); 
 
@@ -649,7 +634,7 @@ class QueryProcessor {
     }
 
     PhraseQueryProcessor phrase_qp(&iterators);
-    return phrase_qp.Process2();
+    return phrase_qp.Process();
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {

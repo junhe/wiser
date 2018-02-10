@@ -296,13 +296,8 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
 
     PhraseQueryProcessor qp(&iterators);
    
-    SECTION("Regular simple case") {
-      auto positions = qp.Process();
-      REQUIRE(positions == Positions{3});
-    }
-
     SECTION("Returning info table") {
-      auto info_table = qp.Process2();
+      auto info_table = qp.Process();
       REQUIRE(info_table[0][0].pos == 3);
       REQUIRE(info_table[0][0].term_appearance == 1);
 
@@ -344,7 +339,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
     auto iterators = create_iterators({&buf01, &buf02}, {0, 0});
 
     PhraseQueryProcessor qp(&iterators);
-    auto table = qp.Process2();
+    auto table = qp.Process();
     REQUIRE(table.size() == 2); // two rows, each for a term
     REQUIRE(table[0].size() == 0);
     REQUIRE(table[1].size() == 0);
@@ -356,7 +351,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
     auto iterators = create_iterators({&buf01, &buf02}, {3, 3});
 
     PhraseQueryProcessor qp(&iterators);
-    auto table = qp.Process2();
+    auto table = qp.Process();
 
     REQUIRE(table[0].size() == 0);
   }
@@ -368,7 +363,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
     auto iterators = create_iterators({&buf01, &buf02}, {1, 1});
 
     PhraseQueryProcessor qp(&iterators);
-    auto table = qp.Process2();
+    auto table = qp.Process();
 
     REQUIRE(table[0].size() == 0);
   }
@@ -379,7 +374,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
     auto iterators = create_iterators({&buf01, &buf02}, {1, 0});
 
     PhraseQueryProcessor qp(&iterators);
-    auto table = qp.Process2();
+    auto table = qp.Process();
 
     REQUIRE(table[0].size() == 0);
   }
@@ -390,7 +385,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
     auto iterators = create_iterators({&buf01, &buf02}, {4, 4});
 
     PhraseQueryProcessor qp(&iterators);
-    auto table = qp.Process2();
+    auto table = qp.Process();
 
     REQUIRE(table.size() == 2);
     REQUIRE(table[0].size() == 3);
