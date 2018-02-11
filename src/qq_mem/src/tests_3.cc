@@ -319,7 +319,7 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
   client_config.SetBool("save_reply", true);
   client_config.SetInt("benchmark_duration", 3);
 
-  std::unique_ptr<QueryPoolArray> query_pools(new QueryPoolArray(2));
+  std::unique_ptr<TermPoolArray> query_pools(new TermPoolArray(2));
   query_pools->Add(0, TermList{"body"});
   query_pools->Add(1, TermList{"body"});
 

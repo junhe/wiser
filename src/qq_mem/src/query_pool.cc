@@ -1,6 +1,6 @@
 #include "query_pool.h"
 
-void load_query_pool_from_file(QueryPool *pool, 
+void load_query_pool_from_file(TermPool *pool, 
                      const std::string &query_log_path, 
                      const int n_queries) 
 {
@@ -15,7 +15,7 @@ void load_query_pool_from_file(QueryPool *pool,
 
 
 // if n_queries = 0, we load the whole file
-void load_query_pool_array(QueryPoolArray *array, 
+void load_query_pool_array(TermPoolArray *array, 
                            const std::string &query_log_path, 
                            const int n_queries) {
   QueryLogReader reader(query_log_path);
@@ -33,9 +33,9 @@ void load_query_pool_array(QueryPoolArray *array,
 }
 
 
-std::unique_ptr<QueryPoolArray> create_query_pool_array(const TermList &query,
+std::unique_ptr<TermPoolArray> create_query_pool_array(const TermList &query,
     const int n_pools) {
-  std::unique_ptr<QueryPoolArray> array(new QueryPoolArray(n_pools));
+  std::unique_ptr<TermPoolArray> array(new TermPoolArray(n_pools));
 
   for (int i = 0; i < n_pools; i++) {
     array->Add(i, query);
@@ -44,10 +44,10 @@ std::unique_ptr<QueryPoolArray> create_query_pool_array(const TermList &query,
   return array;
 }
 
-std::unique_ptr<QueryPoolArray> create_query_pool_array(
+std::unique_ptr<TermPoolArray> create_query_pool_array(
     const std::string &query_log_path, const int n_pools, const int n_queries) 
 {
-  std::unique_ptr<QueryPoolArray> array(new QueryPoolArray(n_pools));
+  std::unique_ptr<TermPoolArray> array(new TermPoolArray(n_pools));
   load_query_pool_array(array.get(), query_log_path, n_queries);
   return array;
 }

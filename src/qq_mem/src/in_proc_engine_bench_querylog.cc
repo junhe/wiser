@@ -20,7 +20,7 @@ const int B = 1000 * M;
 
 
 
-void load_query_pool(QueryPool *pool, const GeneralConfig &config) {
+void load_query_pool(TermPool *pool, const GeneralConfig &config) {
   auto query_source_ = config.GetString("query_source");
 
   // config according to different mode
@@ -85,7 +85,7 @@ utils::ResultRow search(SearchEngineServiceNew *engine,
   utils::ResultRow row;
   
   // construct query pool
-  QueryPool query_pool;
+  TermPool query_pool;
   load_query_pool(&query_pool, config);
   std::cout << "Constructed query pool successfully" << std::endl;
 

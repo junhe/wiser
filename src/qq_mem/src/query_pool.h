@@ -36,9 +36,9 @@ class QueryLogReader {
 };
 
 
-class QueryPool {
+class TermPool {
  public:
-  QueryPool() {}
+  TermPool() {}
 
   const TermList &Next() {
     return query_buffer_[(counter_++) % query_buffer_size_];
@@ -56,9 +56,9 @@ class QueryPool {
 };
 
 
-class QueryPoolArray {
+class TermPoolArray {
  public:
-  QueryPoolArray(const int n_pools): array_(n_pools) {
+  TermPoolArray(const int n_pools): array_(n_pools) {
   }
 
   void Add(const int i, const TermList &query) {
@@ -73,21 +73,21 @@ class QueryPoolArray {
     return array_.size();
   }
 
-  QueryPool *GetPool(const int i) {
+  TermPool *GetPool(const int i) {
     return &array_[i];
   }
 
  private:
-  std::vector<QueryPool> array_;
+  std::vector<TermPool> array_;
 };
 
-void load_query_pool_array(QueryPoolArray *array,
+void load_query_pool_array(TermPoolArray *array,
     const std::string &query_log_path, const int n_queries = 0);
-std::unique_ptr<QueryPoolArray> create_query_pool_array(const TermList &terms,
+std::unique_ptr<TermPoolArray> create_query_pool_array(const TermList &terms,
     const int n_pools);
-std::unique_ptr<QueryPoolArray> create_query_pool_array(
+std::unique_ptr<TermPoolArray> create_query_pool_array(
     const std::string &query_log_path, const int n_pools, const int n_queries=0);
-void load_query_pool_from_file(QueryPool *pool, 
+void load_query_pool_from_file(TermPool *pool, 
                      const std::string &query_log_path, 
                      const int n_queries);
 
