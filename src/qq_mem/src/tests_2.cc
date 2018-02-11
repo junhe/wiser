@@ -400,7 +400,7 @@ TEST_CASE( "Query pool work", "[aux]" ) {
   SECTION("Loading query pool") {
     TermPoolArray array(2);
 
-    load_query_pool_array(&array, "src/testdata/query-log-sample.txt");
+    array.LoadFromFile("src/testdata/query-log-sample.txt", 0);
     REQUIRE(array.Next(0) == TermList{"hello", "world"});
     REQUIRE(array.Next(0) == TermList{"hello", "world"});
     REQUIRE(array.Next(1) == TermList{"barack", "obama"});
