@@ -333,6 +333,9 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
   query_pools->Add(0, TermList{"body"});
   query_pools->Add(1, TermList{"body"});
 
+  std::unique_ptr<QueryProducer> query_producer = 
+    CreateQueryProducer(TermList{"body"}, 2);
+
   SECTION("SyncStreamingClient") {
     std::string target = "localhost:50061";
     server_config.SetString("target", target);
@@ -344,7 +347,9 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
     simple_client->AddDocument("my title", "my url", "my spirit");
 
     client_config.SetString("target", target);
-    SyncStreamingClient client(client_config, std::move(query_pools));
+    SyncStreamingClient client(client_config, 
+                               std::move(query_pools),
+                               std::move(query_producer));
 
     client.Wait();
     auto reply_pools = client.GetReplyPools();
@@ -370,7 +375,9 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
     simple_client->AddDocument("my title", "my url", "my spirit");
 
     client_config.SetString("target", target);
-    SyncUnaryClient client(client_config, std::move(query_pools));
+    SyncUnaryClient client(client_config, 
+                           std::move(query_pools),
+                           std::move(query_producer));
 
     client.Wait();
     auto reply_pools = client.GetReplyPools();
