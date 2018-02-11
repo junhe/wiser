@@ -218,6 +218,86 @@ class RPCContext {
     context_.TryCancel();
   }
 
+  bool RunNextState2(bool ok, int thread_idx, Histogram *hist, 
+      TermPool *query_pool, ReplyPool *reply_pool, bool save_reply, 
+      QueryProducer *query_producer) {
+    TermList terms;
+    int i;
+
+    while (true) {
+      switch (next_state_) {
+        case State::STREAM_IDLE:
+          next_state_ = State::READY_TO_WRITE;
+          break;  // loop around, so we proceed to writing.
+        case State::WAIT:
+          // We do not wait in this client
+          GPR_ASSERT(false);
+        case State::READY_TO_WRITE:
+          if (!ok) {
+            return false;
+          }
+          
+          req_.clear_terms();
+          req_.set_n_results(10);
+          terms = query_pool->Next();    
+          for (i = 0; i < terms.size(); i++) {
+            req_.add_terms(terms[i]);
+          }
+
+          start_ = utils::now();
+          next_state_ = State::WRITE_DONE;
+          stream_->Write(req_, RPCContext::tag(this));
+          return true;
+        case State::WRITE_DONE:
+          if (!ok) {
+            return false;
+          }
+          next_state_ = State::READ_DONE;
+          stream_->Read(&reply_, RPCContext::tag(this));
+          return true;
+        case State::READ_DONE:
+          ++n_issued_;
+          finished_roundtrips_[thread_idx]++;
+
+          if (save_reply == true) {
+            reply_pool->push_back(reply_);
+          }
+
+          end_ = utils::now();
+          duration_ = utils::duration(start_, end_);
+          hist->Add(duration_ * HISTOGRAM_TIME_SCALE);
+
+          if (n_issued_ < n_messages_per_call_) {
+            // has more to do
+            next_state_ = State::STREAM_IDLE;
+            break; // loop around to the next state immediately
+          } else {
+            next_state_ = State::WRITES_DONE_DONE;
+            stream_->WritesDone(RPCContext::tag(this));
+            return true;
+          }
+        case State::WRITES_DONE_DONE:
+          next_state_ = State::FINISH_DONE;
+          stream_->Finish(&status_, RPCContext::tag(this));
+          return true;
+        case State::FINISH_DONE:
+          finished_call_counts_[thread_idx]++;
+          next_state_ = State::FINISH_DONE_DONE;
+          return false;
+        default:
+          std::cout << "State: INITIALIZED " 
+            << (next_state_ == State::INITIALIZED) << std::endl;
+          std::cout << "State: FINISH_DONE_DONE " 
+            << (next_state_ == State::FINISH_DONE_DONE) << std::endl;
+          GPR_ASSERT(false);
+          return false;
+      }
+    }
+    return true;
+  }
+
+
+
   bool RunNextState(bool ok, int thread_idx, Histogram *hist, 
       TermPool *query_pool, ReplyPool *reply_pool, bool save_reply) {
     TermList terms;
@@ -742,6 +822,32 @@ class AsyncClient: public Client {
         delete RPCContext::detag(got_tag);
       }
     }
+  }
+
+  void ThreadFunc2(int thread_idx) {
+    void* got_tag;
+    bool ok;
+
+    while (cli_cqs_[cq_[thread_idx]]->Next(&got_tag, &ok)) {
+      RPCContext* ctx = RPCContext::detag(got_tag);
+
+      std::lock_guard<std::mutex> l(shutdown_state_[thread_idx]->mutex);
+      if (shutdown_state_[thread_idx]->shutdown == true) {
+        ctx->TryCancel();
+        delete ctx;
+        break;
+      }
+
+      if (!ctx->RunNextState2(ok, thread_idx, &histograms_[thread_idx], 
+            query_pool_array_->GetPool(thread_idx),
+            &reply_pools_[thread_idx], save_reply_, query_producer_.get())) 
+      {
+        ctx->StartNewClone();
+        delete ctx;
+      } 
+    }
+
+    std::cout << "Thread " << thread_idx << " ends" << std::endl;
   }
 
   void ThreadFunc(int thread_idx) {
