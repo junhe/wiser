@@ -361,9 +361,9 @@ class Client {
     std::cout << "num_threads: " << num_threads << std::endl;
     std::cout << "n_client_channels: " << n_client_channels << std::endl;
 
-    if (query_pool_array_->Size() != num_threads) {
+    if (query_producer_->Size() != num_threads) {
       throw std::runtime_error(
-          "Query pool size is not the same as the number of threads");
+          "Query producer size is not the same as the number of threads");
     }
 
     // initialize hitogram vector  
@@ -525,10 +525,6 @@ class SyncStreamingClient: public Client {
 
   void ThreadFunc(int thread_idx) {
     TermList terms;
-    SearchRequest grpc_request;
-    grpc_request.set_n_results(10);
-    grpc_request.set_return_snippets(true);
-    grpc_request.set_n_snippet_passages(3);
     SearchReply reply;
 
     ClientContext context;
@@ -537,11 +533,7 @@ class SyncStreamingClient: public Client {
         stub->SyncStreamingSearch(&context));
 
     while (shutdown_state_[thread_idx]->shutdown == false) {
-      terms = query_pool_array_->Next(thread_idx);
-      grpc_request.clear_terms();
-      for (int i = 0; i < terms.size(); i++) {
-        grpc_request.add_terms(terms[i]);
-      }
+      SearchRequest grpc_request = query_producer_->NextGrpcQuery(thread_idx);
 
       StreamingSearch(thread_idx, stream.get(), grpc_request, reply);
 
