@@ -124,20 +124,32 @@ class QueryProducerService {
 // return full Queries, instead of just terms
 class QueryProducer: public QueryProducerService {
  public:
-  QueryProducer(std::unique_ptr<TermPoolArray> term_pool_array) 
-    :term_pool_array_(std::move(term_pool_array)) {}
+  QueryProducer(std::unique_ptr<TermPoolArray> term_pool_array, 
+      GeneralConfig config) 
+      :term_pool_array_(std::move(term_pool_array)), 
+       query_template_(term_pool_array->Size()) {
+    for (auto &query : query_template_) {
+      query.n_results = config.HasKey("n_results")? 
+        config.GetInt("n_results") : 5;
+      query.return_snippets = config.HasKey("return_snippets")? 
+        config.GetBool("return_snippets") : false;
+      query.n_snippet_passages = config.HasKey("n_snippet_passages")? 
+        config.GetInt("n_snippet_passages") : 3;
+      query.is_phrase = config.HasKey("is_phrase")? 
+        config.GetBool("is_phrase") : false;
+    }
+  }
 
   SearchQuery NextNativeQuery(const int i) {
-    SearchQuery query(term_pool_array_->Next(i));
+    query_template_[i].terms = term_pool_array_->Next(i);
+    return query_template_[i];
   }
 
   qq::SearchRequest NextGrpcQuery(const int i) {
-    TermList terms = term_pool_array_->Next(i);
-
     qq::SearchRequest request;
-    for (auto &term : terms) {
-      request.add_terms(term);
-    }
+
+    SearchQuery query = NextNativeQuery(i);
+    query.CopyTo(&request);
 
     return request;
   }
@@ -148,6 +160,7 @@ class QueryProducer: public QueryProducerService {
 
  private:
   std::unique_ptr<TermPoolArray> term_pool_array_;
+  std::vector<SearchQuery> query_template_;
 };
 
 
