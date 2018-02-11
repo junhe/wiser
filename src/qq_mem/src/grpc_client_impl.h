@@ -353,6 +353,64 @@ class Client {
   //  target
   //  benchmark_duration
   Client(const GeneralConfig config,
+      std::unique_ptr<TermPoolArray> query_pool_array,
+      std::unique_ptr<QueryProducer> query_producer) 
+    :config_(config), 
+     query_pool_array_(std::move(query_pool_array)),
+     query_producer_(std::move(query_producer))
+  {
+    int num_threads = config.GetInt("n_threads");
+    int n_client_channels = config.GetInt("n_client_channels");
+
+    std::cout << "num_threads: " << num_threads << std::endl;
+    std::cout << "n_client_channels: " << n_client_channels << std::endl;
+
+    if (query_pool_array_->Size() != num_threads) {
+      throw std::runtime_error(
+          "Query pool size is not the same as the number of threads");
+    }
+
+    // initialize hitogram vector  
+    for (int i = 0; i < num_threads; i++) {
+      histograms_.emplace_back();
+    }
+
+    // initialize reply pools
+    for (int i = 0; i < num_threads; i++) {
+      reply_pools_.emplace_back();
+    }
+    save_reply_ = config.GetBool("save_reply");
+
+    for (int i = 0; i < num_threads; i++) {
+      shutdown_state_.emplace_back(new PerThreadShutdownState());
+    }
+
+    for (int i = 0; i < num_threads; i++) {
+      finished_call_counts_.push_back(0);
+      finished_roundtrips_.push_back(0);
+    }
+
+    // create channels
+    for (int i = 0; i < n_client_channels; i++) {
+      channels_.emplace_back(config.GetString("target"), i); 
+    }
+    std::cout << channels_.size() << " channels created." << std::endl;
+
+    // create threads and counts
+    for(int i = 0; i < num_threads; i++)
+    {
+      finished_call_counts_.push_back(0);
+      finished_roundtrips_.push_back(0);
+    }
+  }
+
+  // Must set the following items in config:
+  //  n_threads
+  //  n_client_channels
+  //  save_reply
+  //  target
+  //  benchmark_duration
+  Client(const GeneralConfig config,
       std::unique_ptr<TermPoolArray> query_pool_array) 
     :config_(config), query_pool_array_(std::move(query_pool_array))
   {
@@ -484,6 +542,7 @@ class Client {
   std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
   std::vector<Histogram> histograms_;
   std::unique_ptr<TermPoolArray> query_pool_array_;
+  std::unique_ptr<QueryProducer> query_producer_;
   ReplyPools reply_pools_;
   bool save_reply_;
 };
@@ -494,6 +553,20 @@ class SyncStreamingClient: public Client {
   SyncStreamingClient() = default;
   SyncStreamingClient(SyncStreamingClient&&) = default;
   SyncStreamingClient& operator=(SyncStreamingClient&&) = default;
+
+  // Must set the following items in config:
+  //  n_threads
+  //  n_client_channels
+  //  save_reply
+  //  target
+  //  benchmark_duration
+  SyncStreamingClient(const GeneralConfig config,
+      std::unique_ptr<TermPoolArray> query_pool_array,
+      std::unique_ptr<QueryProducer> query_producer) 
+    :Client(config, std::move(query_pool_array), std::move(query_producer))
+  {
+    StartThreads();
+  }
 
   // Must set the following items in config:
   //  n_threads
@@ -561,6 +634,51 @@ class AsyncClient: public Client {
   AsyncClient() = default;
   AsyncClient(AsyncClient&&) = default;
   AsyncClient& operator=(AsyncClient&&) = default;
+
+
+  AsyncClient(const GeneralConfig config,
+    std::unique_ptr<TermPoolArray> query_pool_array,
+    std::unique_ptr<QueryProducer> query_producer)
+      :Client(config, std::move(query_pool_array), std::move(query_producer))
+  {
+    int tpc = config.GetInt("n_threads_per_cq");
+    int num_async_threads = config.GetInt("n_threads");
+    int n_client_channels = config.GetInt("n_client_channels");
+    int n_rpcs_per_channel = config.GetInt("n_rpcs_per_channel");
+
+    std::cout << "n_threads_per_cq: " << tpc << std::endl;
+    std::cout << "num_async_threads: " << num_async_threads << std::endl;
+    std::cout << "n_client_channels: " << n_client_channels << std::endl;
+    std::cout << "n_rpcs_per_channel: " << n_rpcs_per_channel << std::endl;
+
+    // Initialize completion queues
+    int num_cqs = (num_async_threads + tpc - 1) / tpc;  // ceiling operator
+    for (int i = 0; i < num_cqs; i++) {
+      std::cout << "Creating CQ " << i << std::endl;
+      cli_cqs_.emplace_back(new CompletionQueue);
+    }
+
+    // completion queue index for a thread
+    for (int i = 0; i < num_async_threads; i++) {
+      cq_.emplace_back(i % cli_cqs_.size());
+    }
+    
+    int t = 0;
+    for (int ch = 0; ch < n_client_channels; ch++) {
+      for (int i = 0; i < n_rpcs_per_channel; i++) {
+        auto* cq = cli_cqs_[t].get();
+        auto ctx = new RPCContext(
+            cq, 
+            channels_[ch].get_stub(),
+            config.GetInt("n_messages_per_call"), 
+            finished_call_counts_,
+            finished_roundtrips_);
+      }
+      t = (t + 1) % cli_cqs_.size();
+    }
+
+    StartThreads();
+  }
 
   AsyncClient(const GeneralConfig config,
     std::unique_ptr<TermPoolArray> query_pool_array)
@@ -663,6 +781,20 @@ class SyncUnaryClient: public Client {
   SyncUnaryClient() = default;
   SyncUnaryClient(SyncUnaryClient&&) = default;
   SyncUnaryClient& operator=(SyncUnaryClient&&) = default;
+
+  // Must set the following items in config:
+  //  n_threads
+  //  n_client_channels
+  //  save_reply
+  //  target
+  //  benchmark_duration
+  SyncUnaryClient(const GeneralConfig config,
+      std::unique_ptr<TermPoolArray> query_pool_array,
+      std::unique_ptr<QueryProducer> query_producer) 
+    :Client(config, std::move(query_pool_array), std::move(query_producer))
+  {
+    StartThreads();
+  }
 
   // Must set the following items in config:
   //  n_threads
