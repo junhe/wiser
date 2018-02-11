@@ -66,8 +66,8 @@ std::unique_ptr<SearchEngineServiceNew> create_engine_from_file(
                              config.GetString("loader"));
   std::cout << "Term Count: " << engine->TermCount() << std::endl;
 
-  // std::cout << "Sleeping 10000 sec..." << std::endl;
-  // utils::sleep(10000);
+  std::cout << "Sleeping 100000 sec..." << std::endl;
+  utils::sleep(100000);
 
   return engine;
 }
@@ -177,7 +177,7 @@ GeneralConfig config_by_jun() {
   config.SetString("engine_type", "qq_mem_compressed");
   // config.SetString("engine_type", "qq_mem_uncompressed");
 
-  config.SetInt("n_docs", 10000);
+  config.SetInt("n_docs", 10000000);
 
   // config.SetString("linedoc_path", 
       // "/mnt/ssd/downloads/enwiki.linedoc_tokenized"); // full article
@@ -192,10 +192,10 @@ GeneralConfig config_by_jun() {
       // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
   // config.SetString("loader", "TOKEN_ONLY");
 
-  config.SetInt("n_repeats", 100000);
+  config.SetInt("n_repeats", 100);
   config.SetInt("n_passages", 3);
-  config.SetBool("enable_snippets", true);
-  // config.SetBool("enable_snippets", false);
+  // config.SetBool("enable_snippets", true);
+  config.SetBool("enable_snippets", false);
   
   
   config.SetString("query_source", "hardcoded");
