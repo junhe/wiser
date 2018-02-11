@@ -71,6 +71,12 @@ class TermPoolArray {
   TermPoolArray(const int n_pools): array_(n_pools) {
   }
 
+  void LoadTerms(const TermList &query) {
+    for (int i = 0; i < array_.size(); i++) {
+      Add(i, query);
+    }
+  }
+
   void LoadFromFile(const std::string &query_log_path, const int n_queries) {
     QueryLogReader reader(query_log_path);
     TermList query;

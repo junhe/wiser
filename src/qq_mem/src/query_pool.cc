@@ -4,11 +4,7 @@
 std::unique_ptr<TermPoolArray> create_query_pool_array(const TermList &query,
     const int n_pools) {
   std::unique_ptr<TermPoolArray> array(new TermPoolArray(n_pools));
-
-  for (int i = 0; i < n_pools; i++) {
-    array->Add(i, query);
-  }
-
+  array->LoadTerms(query);
   return array;
 }
 
