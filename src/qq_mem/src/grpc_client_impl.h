@@ -524,7 +524,6 @@ class SyncStreamingClient: public Client {
   }
 
   void ThreadFunc(int thread_idx) {
-    TermList terms;
     SearchReply reply;
 
     ClientContext context;
@@ -688,19 +687,10 @@ class SyncUnaryClient: public Client {
   }
 
   void ThreadFunc(int thread_idx) {
-    TermList terms;
-    SearchRequest grpc_request;
-    grpc_request.set_n_results(10);
-    grpc_request.set_return_snippets(true);
-    grpc_request.set_n_snippet_passages(3);
     SearchReply reply;
 
     while (shutdown_state_[thread_idx]->shutdown == false) {
-      terms = query_pool_array_->Next(thread_idx);
-      grpc_request.clear_terms();
-      for (int i = 0; i < terms.size(); i++) {
-        grpc_request.add_terms(terms[i]);
-      }
+      SearchRequest grpc_request = query_producer_->NextGrpcQuery(thread_idx);
 
       UnarySearch(thread_idx, grpc_request, reply);
 
@@ -710,7 +700,6 @@ class SyncUnaryClient: public Client {
     }
   }
 };
-
 
 
 std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target);
