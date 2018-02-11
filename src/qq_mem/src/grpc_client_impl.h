@@ -237,12 +237,7 @@ class RPCContext {
             return false;
           }
           
-          req_.clear_terms();
-          req_.set_n_results(10);
-          terms = query_pool->Next();    
-          for (i = 0; i < terms.size(); i++) {
-            req_.add_terms(terms[i]);
-          }
+          req_ = query_producer->NextGrpcQuery(thread_idx);
 
           start_ = utils::now();
           next_state_ = State::WRITE_DONE;
@@ -824,7 +819,7 @@ class AsyncClient: public Client {
     }
   }
 
-  void ThreadFunc2(int thread_idx) {
+  void ThreadFunc(int thread_idx) {
     void* got_tag;
     bool ok;
 
@@ -850,7 +845,7 @@ class AsyncClient: public Client {
     std::cout << "Thread " << thread_idx << " ends" << std::endl;
   }
 
-  void ThreadFunc(int thread_idx) {
+  void ThreadFuncOLD(int thread_idx) {
     void* got_tag;
     bool ok;
 

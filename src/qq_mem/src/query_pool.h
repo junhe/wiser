@@ -131,7 +131,7 @@ class QueryProducer: public QueryProducerService {
   {
     for (auto &query : query_template_) {
       query.n_results = config.HasKey("n_results")? 
-        config.GetInt("n_results") : 5;
+        config.GetInt("n_results") : 10;
       query.return_snippets = config.HasKey("return_snippets")? 
         config.GetBool("return_snippets") : false;
       query.n_snippet_passages = config.HasKey("n_snippet_passages")? 
