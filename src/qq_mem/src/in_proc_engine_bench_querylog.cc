@@ -28,7 +28,7 @@ void load_query_pool(TermPool *pool, const GeneralConfig &config) {
     pool->Add(config.GetStringVec("terms"));
   } else if (query_source_ == "querylog") {
     // read in all querys
-    load_query_pool_from_file(pool, config.GetString("querylog_path"), 0);
+    pool->LoadFromFile(config.GetString("querylog_path"), 0);
   } else {
     LOG(WARNING) << "Cannot determine query source";
   }

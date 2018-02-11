@@ -1,18 +1,5 @@
 #include "query_pool.h"
 
-void load_query_pool_from_file(TermPool *pool, 
-                     const std::string &query_log_path, 
-                     const int n_queries) 
-{
-  QueryLogReader reader(query_log_path);
-  TermList query;
-
-  while (reader.NextQuery(query)) {
-    pool->Add(query);
-  }
-}
-
-
 
 // if n_queries = 0, we load the whole file
 void load_query_pool_array(TermPoolArray *array, 

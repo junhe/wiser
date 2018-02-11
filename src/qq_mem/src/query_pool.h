@@ -41,6 +41,15 @@ class TermPool {
  public:
   TermPool() {}
 
+  void LoadFromFile(const std::string &query_log_path, const int n_queries) {
+    QueryLogReader reader(query_log_path);
+    TermList query;
+
+    while (reader.NextQuery(query)) {
+      Add(query);
+    }
+  }
+
   const TermList &Next() {
     return query_buffer_[(counter_++) % query_buffer_size_];
   }
@@ -127,9 +136,5 @@ std::unique_ptr<TermPoolArray> create_query_pool_array(const TermList &terms,
     const int n_pools);
 std::unique_ptr<TermPoolArray> create_query_pool_array(
     const std::string &query_log_path, const int n_pools, const int n_queries=0);
-void load_query_pool_from_file(TermPool *pool, 
-                     const std::string &query_log_path, 
-                     const int n_queries);
-
 
 #endif 
