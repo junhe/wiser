@@ -259,10 +259,10 @@ TEST_CASE( "QueryProducer", "[query]" ) {
   std::unique_ptr<TermPoolArray> array(new TermPoolArray(2));
   array->LoadTerms({"hello"});
 
-
   GeneralConfig config;
   config.SetInt("n_results", 8);
   QueryProducer producer(std::move(array), config);
+  REQUIRE(producer.Size() == 2);
 
   SearchQuery query;
   query = producer.NextNativeQuery(0);
