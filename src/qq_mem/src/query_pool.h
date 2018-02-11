@@ -151,9 +151,9 @@ class QueryProducer: public QueryProducerService {
 };
 
 
-std::unique_ptr<TermPoolArray> create_query_pool_array(const TermList &terms,
+std::unique_ptr<TermPoolArray> CreateTermPoolArray(const TermList &terms,
     const int n_pools);
-std::unique_ptr<TermPoolArray> create_query_pool_array(
+std::unique_ptr<TermPoolArray> CreateTermPoolArray(
     const std::string &query_log_path, const int n_pools, const int n_queries=0);
 
 #endif 

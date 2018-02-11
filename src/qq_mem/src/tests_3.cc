@@ -66,7 +66,7 @@ TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
       config.SetInt("benchmark_duration", 2);
       config.SetBool("save_reply", true);
 
-      auto query_pool_array = create_query_pool_array(TermList{"body"}, 
+      auto query_pool_array = CreateTermPoolArray(TermList{"body"}, 
           config.GetInt("n_threads"));
       auto client = CreateAsyncClient(config, std::move(query_pool_array));
       client->Wait();
@@ -117,7 +117,7 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
   config.SetInt("benchmark_duration", 2);
   config.SetBool("save_reply", true);
 
-  auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
+  auto query_pool_array = CreateTermPoolArray(TermList{"hello"}, 
       config.GetInt("n_threads"));
   auto client = CreateAsyncClient(config, std::move(query_pool_array));
   client->Wait();

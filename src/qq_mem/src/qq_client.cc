@@ -19,9 +19,9 @@ void bench_async_client(const int n_threads) {
   config.SetBool("save_reply", false);
   // config.SetBool("save_reply", true);
 
-  auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
+  auto query_pool_array = CreateTermPoolArray(TermList{"hello"}, 
       config.GetInt("n_threads"));
-  // auto query_pool_array = create_query_pool_array(
+  // auto query_pool_array = CreateTermPoolArray(
       // "/mnt/ssd/downloads/wiki_QueryLog_tokenized",
       // config.GetInt("n_threads"));
 
@@ -41,9 +41,9 @@ void bench_sync_client(const int n_threads, std::string arity) {
   // config.SetBool("save_reply", true);
   config.SetBool("save_reply", false);
 
-  auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
+  auto query_pool_array = CreateTermPoolArray(TermList{"hello"}, 
       config.GetInt("n_threads"));
-  // auto query_pool_array = create_query_pool_array(
+  // auto query_pool_array = CreateTermPoolArray(
       // "/mnt/ssd/downloads/wiki_QueryLog_tokenized",
       // config.GetInt("n_threads"));
 

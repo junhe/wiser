@@ -408,7 +408,7 @@ TEST_CASE( "Query pool work", "[aux]" ) {
   }
 
   SECTION("TermPoolArray factory") {
-    auto array = create_query_pool_array(TermList{"hello"}, 2);
+    auto array = CreateTermPoolArray(TermList{"hello"}, 2);
     REQUIRE(array->Size() == 2);
     REQUIRE(array->Next(0) == TermList{"hello"});
     REQUIRE(array->Next(1) == TermList{"hello"});
