@@ -66,12 +66,9 @@ TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
       config.SetInt("benchmark_duration", 2);
       config.SetBool("save_reply", true);
 
-      auto query_pool_array = CreateTermPoolArray(TermList{"body"}, 
-          config.GetInt("n_threads"));
       auto query_producer = CreateQueryProducer(TermList{"body"}, 
           config.GetInt("n_threads"));
       auto client = CreateAsyncClient(config, 
-                                      std::move(query_pool_array),
                                       std::move(query_producer) 
                                       );
       client->Wait();
@@ -122,13 +119,10 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
   config.SetInt("benchmark_duration", 2);
   config.SetBool("save_reply", true);
 
-  auto query_pool_array = CreateTermPoolArray(TermList{"hello"}, 
-      config.GetInt("n_threads"));
   auto query_producer = CreateQueryProducer(TermList{"hello"},
       config.GetInt("n_threads"));
 
   auto client = CreateAsyncClient(config, 
-                                  std::move(query_pool_array), 
                                   std::move(query_producer));
   client->Wait();
   client.release();
@@ -329,10 +323,6 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
   client_config.SetBool("save_reply", true);
   client_config.SetInt("benchmark_duration", 3);
 
-  std::unique_ptr<TermPoolArray> query_pools(new TermPoolArray(2));
-  query_pools->Add(0, TermList{"body"});
-  query_pools->Add(1, TermList{"body"});
-
   std::unique_ptr<QueryProducer> query_producer = 
     CreateQueryProducer(TermList{"body"}, 2);
 
@@ -348,7 +338,6 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
 
     client_config.SetString("target", target);
     SyncStreamingClient client(client_config, 
-                               std::move(query_pools),
                                std::move(query_producer));
 
     client.Wait();
@@ -376,7 +365,6 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
 
     client_config.SetString("target", target);
     SyncUnaryClient client(client_config, 
-                           std::move(query_pools),
                            std::move(query_producer));
 
     client.Wait();

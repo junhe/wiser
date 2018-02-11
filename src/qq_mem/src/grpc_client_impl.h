@@ -349,10 +349,8 @@ class Client {
   //  target
   //  benchmark_duration
   Client(const GeneralConfig config,
-      std::unique_ptr<TermPoolArray> query_pool_array,
       std::unique_ptr<QueryProducer> query_producer) 
     :config_(config), 
-     query_pool_array_(std::move(query_pool_array)),
      query_producer_(std::move(query_producer))
   {
     int num_threads = config.GetInt("n_threads");
@@ -482,7 +480,6 @@ class Client {
   std::vector<int> finished_roundtrips_;
   std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
   std::vector<Histogram> histograms_;
-  std::unique_ptr<TermPoolArray> query_pool_array_;
   std::unique_ptr<QueryProducer> query_producer_;
   ReplyPools reply_pools_;
   bool save_reply_;
@@ -502,9 +499,8 @@ class SyncStreamingClient: public Client {
   //  target
   //  benchmark_duration
   SyncStreamingClient(const GeneralConfig config,
-      std::unique_ptr<TermPoolArray> query_pool_array,
       std::unique_ptr<QueryProducer> query_producer) 
-    :Client(config, std::move(query_pool_array), std::move(query_producer))
+    :Client(config, std::move(query_producer))
   {
     StartThreads();
   }
@@ -556,9 +552,8 @@ class AsyncClient: public Client {
 
 
   AsyncClient(const GeneralConfig config,
-    std::unique_ptr<TermPoolArray> query_pool_array,
     std::unique_ptr<QueryProducer> query_producer)
-      :Client(config, std::move(query_pool_array), std::move(query_producer))
+      :Client(config, std::move(query_producer))
   {
     int tpc = config.GetInt("n_threads_per_cq");
     int num_async_threads = config.GetInt("n_threads");
@@ -664,9 +659,8 @@ class SyncUnaryClient: public Client {
   //  target
   //  benchmark_duration
   SyncUnaryClient(const GeneralConfig config,
-      std::unique_ptr<TermPoolArray> query_pool_array,
       std::unique_ptr<QueryProducer> query_producer) 
-    :Client(config, std::move(query_pool_array), std::move(query_producer))
+    :Client(config, std::move(query_producer))
   {
     StartThreads();
   }
@@ -705,11 +699,9 @@ class SyncUnaryClient: public Client {
 std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target);
 
 std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
-    std::unique_ptr<TermPoolArray> query_pool_array,
     std::unique_ptr<QueryProducer> query_producer);
 
 std::unique_ptr<Client> CreateClient(const GeneralConfig &config,
-    std::unique_ptr<TermPoolArray> query_pool_array,
     std::unique_ptr<QueryProducer> query_producer);
 
 #endif
