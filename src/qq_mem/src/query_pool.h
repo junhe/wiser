@@ -126,8 +126,9 @@ class QueryProducer: public QueryProducerService {
  public:
   QueryProducer(std::unique_ptr<TermPoolArray> term_pool_array, 
       GeneralConfig config) 
-      :term_pool_array_(std::move(term_pool_array)), 
-       query_template_(term_pool_array->Size()) {
+      :term_pool_array_(std::move(term_pool_array)),
+       query_template_(term_pool_array_->Size())
+  {
     for (auto &query : query_template_) {
       query.n_results = config.HasKey("n_results")? 
         config.GetInt("n_results") : 5;

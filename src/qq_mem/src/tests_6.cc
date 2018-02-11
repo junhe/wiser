@@ -9,6 +9,7 @@
 #include "posting_list_vec.h"
 #include "query_processing.h"
 #include "qq_mem_engine.h"
+#include "query_pool.h"
 
 #include "test_helpers.h"
 
@@ -252,6 +253,37 @@ TEST_CASE( "Return offset vector", "[result]" ) {
   REQUIRE(std::get<0>(table[1][2]) == 60);
   REQUIRE(std::get<1>(table[1][2]) == 75);
 }
+
+
+TEST_CASE( "QueryProducer", "[query]" ) {
+  std::unique_ptr<TermPoolArray> array(new TermPoolArray(2));
+  array->LoadTerms({"hello"});
+
+
+  GeneralConfig config;
+  config.SetInt("n_results", 8);
+  QueryProducer producer(std::move(array), config);
+
+  SearchQuery query;
+  query = producer.NextNativeQuery(0);
+  REQUIRE(query.n_results == 8);
+  REQUIRE(query.terms == TermList{"hello"});
+
+  query = producer.NextNativeQuery(0);
+  REQUIRE(query.n_results == 8);
+  REQUIRE(query.terms == TermList{"hello"});
+
+
+  query = producer.NextNativeQuery(1);
+  REQUIRE(query.n_results == 8);
+  REQUIRE(query.terms == TermList{"hello"});
+
+  query = producer.NextNativeQuery(1);
+  REQUIRE(query.n_results == 8);
+  REQUIRE(query.terms == TermList{"hello"});
+}
+
+
 
 
 
