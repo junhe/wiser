@@ -219,7 +219,7 @@ class RPCContext {
   }
 
   bool RunNextState(bool ok, int thread_idx, Histogram *hist, 
-      TermPool *query_pool, ReplyPool *reply_pool, bool save_reply, 
+      ReplyPool *reply_pool, bool save_reply, 
       QueryProducer *query_producer) {
     TermList terms;
     int i;
@@ -644,7 +644,6 @@ class AsyncClient: public Client {
       }
 
       if (!ctx->RunNextState(ok, thread_idx, &histograms_[thread_idx], 
-            query_pool_array_->GetPool(thread_idx),
             &reply_pools_[thread_idx], save_reply_, query_producer_.get())) 
       {
         ctx->StartNewClone();
