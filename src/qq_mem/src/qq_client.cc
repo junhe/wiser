@@ -21,11 +21,15 @@ void bench_async_client(const int n_threads) {
 
   auto query_pool_array = CreateTermPoolArray(TermList{"hello"}, 
       config.GetInt("n_threads"));
+  auto query_producer = CreateQueryProducer(TermList{"hello"},
+      config.GetInt("n_threads"));
   // auto query_pool_array = CreateTermPoolArray(
       // "/mnt/ssd/downloads/wiki_QueryLog_tokenized",
       // config.GetInt("n_threads"));
 
-  auto async_client = CreateClient(config, std::move(query_pool_array));
+  auto async_client = CreateClient(config, 
+                                   std::move(query_pool_array),
+                                   std::move(query_producer));
   async_client->Wait();
   async_client->ShowStats();
 }
@@ -43,11 +47,15 @@ void bench_sync_client(const int n_threads, std::string arity) {
 
   auto query_pool_array = CreateTermPoolArray(TermList{"hello"}, 
       config.GetInt("n_threads"));
+  auto query_producer = CreateQueryProducer(TermList{"hello"},
+      config.GetInt("n_threads"));
   // auto query_pool_array = CreateTermPoolArray(
       // "/mnt/ssd/downloads/wiki_QueryLog_tokenized",
       // config.GetInt("n_threads"));
 
-  auto async_client = CreateClient(config, std::move(query_pool_array));
+  auto async_client = CreateClient(config, 
+                                   std::move(query_pool_array),
+                                   std::move(query_producer));
   async_client->Wait();
   async_client->ShowStats();
 }

@@ -25,24 +25,6 @@ std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
   return client;
 }
 
-std::unique_ptr<SyncUnaryClient> CreateSyncUnaryClient(const GeneralConfig &config,
-    std::unique_ptr<TermPoolArray> query_pool_array) 
-{
-  std::unique_ptr<SyncUnaryClient> client(
-      new SyncUnaryClient(config, std::move(query_pool_array)));
-  return client;
-}
-
-std::unique_ptr<SyncUnaryClient> CreateSyncUnaryClient(const GeneralConfig &config,
-    std::unique_ptr<TermPoolArray> query_pool_array,
-    std::unique_ptr<QueryProducer> query_producer) 
-{
-  std::unique_ptr<SyncUnaryClient> client(
-      new SyncUnaryClient(config, std::move(query_pool_array), 
-        std::move(query_producer)));
-  return client;
-}
-
 std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target) {
   std::unique_ptr<QQEngineSyncClient> client(
       new QQEngineSyncClient(

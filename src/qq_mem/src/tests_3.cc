@@ -68,7 +68,12 @@ TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
 
       auto query_pool_array = CreateTermPoolArray(TermList{"body"}, 
           config.GetInt("n_threads"));
-      auto client = CreateAsyncClient(config, std::move(query_pool_array));
+      auto query_producer = CreateQueryProducer(TermList{"body"}, 
+          config.GetInt("n_threads"));
+      auto client = CreateAsyncClient(config, 
+                                      std::move(query_pool_array),
+                                      std::move(query_producer) 
+                                      );
       client->Wait();
       auto reply_pools = client->GetReplyPools();
 
@@ -119,7 +124,12 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
 
   auto query_pool_array = CreateTermPoolArray(TermList{"hello"}, 
       config.GetInt("n_threads"));
-  auto client = CreateAsyncClient(config, std::move(query_pool_array));
+  auto query_producer = CreateQueryProducer(TermList{"hello"},
+      config.GetInt("n_threads"));
+
+  auto client = CreateAsyncClient(config, 
+                                  std::move(query_pool_array), 
+                                  std::move(query_producer));
   client->Wait();
   client.release();
 }
