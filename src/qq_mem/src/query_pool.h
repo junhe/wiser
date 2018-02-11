@@ -6,6 +6,7 @@
 
 #include <glog/logging.h>
 
+#include "qq.pb.h"
 #include "general_config.h"
 #include "types.h"
 #include "utils.h"
@@ -80,6 +81,45 @@ class TermPoolArray {
  private:
   std::vector<TermPool> array_;
 };
+
+
+class QueryProducerService {
+ public:
+  virtual SearchQuery NextNativeQuery(const int i) = 0;
+  virtual qq::SearchRequest NextGrpcQuery(const int i) = 0;
+};
+
+
+// It is a wrapper of TermPoolArray. This class will
+// return full Queries, instead of just terms
+class QueryProducer: public QueryProducerService {
+ public:
+  QueryProducer(std::unique_ptr<TermPoolArray> term_pool_array) 
+    :term_pool_array_(std::move(term_pool_array)) {}
+
+  SearchQuery NextNativeQuery(const int i) {
+    SearchQuery query(term_pool_array_->Next(i));
+  }
+
+  qq::SearchRequest NextGrpcQuery(const int i) {
+    TermList terms = term_pool_array_->Next(i);
+
+    qq::SearchRequest request;
+    for (auto &term : terms) {
+      request.add_terms(term);
+    }
+
+    return request;
+  }
+
+  int Size() {
+    return term_pool_array_->Size();
+  }
+
+ private:
+  std::unique_ptr<TermPoolArray> term_pool_array_;
+};
+
 
 void load_query_pool_array(TermPoolArray *array,
     const std::string &query_log_path, const int n_queries = 0);
