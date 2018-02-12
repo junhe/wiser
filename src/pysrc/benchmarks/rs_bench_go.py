@@ -13,7 +13,8 @@ from utils.utils import LineDocPool, QueryPool
 from utils.expbase import Experiment
 from .Clients import ElasticSearchClient
 from utils.utils import shcmd
-
+from pyreuse.sysutils.blocktrace import *
+from pyreuse.sysutils.ncq import *
 
 BENCH_EXE = "RediSearchBenchmark"
 #WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml_1"
@@ -92,6 +93,13 @@ def start_blktrace_on_bg(dev, resultpath, trace_filter=None):
         raise RuntimeError("tracing failed to start")
 
     return p
+def analyze_ncq(subdir):
+    table = parse_ncq(event_path = os.path.join(subdir, 'blkparse-output.txt.parsed'))
+    with open(os.path.join(subdir, 'ncq.txt'), "w") as ncq_output:
+        for each_line in table:
+            for k,v in each_line.items():
+                ncq_output.write(str(v) + ' ')
+            ncq_output.write("\n")
 
 class ExperimentRsbenchGo(Experiment):
     """
@@ -102,11 +110,11 @@ class ExperimentRsbenchGo(Experiment):
     make rs_bench_go
     """
     def __init__(self):
-        self._exp_name = "test"
+        self._exp_name = "SmallMem"
 
         self.paras = helpers.parameter_combinations({
                     #'worker_count': [1, 16, 32, 64, 128],
-                    'worker_count': [1],
+                    'worker_count': [16],
                     'query': ['wiki-query-log'],
                     #'query': ['hello', 'barack obama', 'unit state america', 'wiki-query-log'],
                     #'query': ['unit state america', 'wiki-query-log'],
@@ -114,7 +122,10 @@ class ExperimentRsbenchGo(Experiment):
                     #'engine': ['redis'],
                     'n_shards': [1],
                     'n_hosts': [1],
-                    'mem_limit': [4,5,6,7,8,9,10,11,12,13,14,15,16,32],
+                    #'mem_limit': [4, 6, 8, 10, 12, 14, 16, 32],
+                    'mem_limit': [4],
+                    #'readahead': [4, 8, 16, 32, 64],
+                    'readahead': [0, 4, 8, 16, 32, 64, 128],
                     #'n_hosts': [1],
                     #'rebuild_index': [True]
                     'rebuild_index': [False],
@@ -133,6 +144,7 @@ class ExperimentRsbenchGo(Experiment):
                 'query': para['query'],
                 'engine': para['engine'],
                 'mem_limit': para['mem_limit'],
+                'readahead': para['readahead'],
                 'benchmark': 'GoBench',
                 'subexp_index': i,
                 'rebuild_index': para['rebuild_index'],
@@ -160,28 +172,32 @@ class ExperimentRsbenchGo(Experiment):
             '''
         #start elasticsearch and blktrace if testing elasticsearch
         if conf["engine"] == "elastic":
+            # set readahead block
+            cmd = 'echo ' + str(conf['readahead']) + ' > /sys/block/sdc/queue/read_ahead_kb'
+            shcmd(cmd)
             # clear page cache etc.
             self.elastic_process = start_elastic(conf['mem_limit'])
             # start blk trace
             if conf['warm_engine'] is True:
                 self.treatment(conf)
                 shcmd("mv " + os.path.join(self._subexpdir, "out.csv") + " " + os.path.join(self._subexpdir, "warmup.csv"))
-            self.blk_trace = start_blktrace_on_bg('/dev/sdc', os.path.join(self._subexpdir, "blktrace.output"))
-
+            trace_filter=['issue', 'complete']
+            self.blk_trace = start_blktrace_on_bg('/dev/sdc', os.path.join(self._subexpdir, "blktrace.output"), trace_filter=trace_filter)
+            shcmd("iostat -x 1 300 > " + os.path.join(self._subexpdir, "iostat.out") + " &")
 
     def treatment(self, conf):
         if conf['query'] == 'wiki-query-log':
             helpers.shcmd("{bench_exe} -engine {engine} -shards {n_shards} " \
                     "-hosts \"{hosts}\" "\
                     "-benchmark search -querypath \"{querypath}\" -c {n_clients} " \
-                    "-o {outpath}".format(
+                    "-o {outpath} ".format(
                         engine = conf['engine'],
                         bench_exe = BENCH_EXE,
                         n_clients = conf['n_clients'],
                         hosts = hosts_string(conf['host'], conf['n_hosts'], conf['start_port']),
                         n_shards = conf['n_shards'],
                         #querypath = '/mnt/ssd/downloads/wiki_QueryLog',
-                        querypath = '/users/kanwu/querylog_no_repeated',   # be sure not on /dev/sdc
+                        querypath = '/users/kanwu/test_data/querylog_no_repeated',   # be sure not on /dev/sdc
                         outpath = os.path.join(self._subexpdir, "out.csv")
                         ))
         else:
@@ -203,7 +219,21 @@ class ExperimentRsbenchGo(Experiment):
         # print blktrace
         kill_blktrace_on_bg()
         # kill elasticsaerch
-        os.killpg(os.getpgid(self.elastic_process.pid), signal.SIGTERM)
+        elastic_pid = subprocess.check_output(['pidof', 'java']).strip('\n')
+        shcmd('ps -o min_flt,maj_flt ' + str(elastic_pid) + ' > ' + os.path.join(self._subexpdir, 'page_faults.out'))
+        elastic_pid = os.getpgid(self.elastic_process.pid)
+        os.killpg(elastic_pid, signal.SIGTERM)
+        
+        # parse blkparse results
+        blkresult = BlktraceResultInMem(
+                sector_size=512,
+                event_file_column_names=['pid', 'action', 'operation', 'offset', 'size',
+                    'timestamp', 'pre_wait_time', 'sync'],
+                raw_blkparse_file_path=os.path.join(self._subexpdir, "blktrace.output"),
+                parsed_output_path=(os.path.join(self._subexpdir, 'blkparse-output.txt.parsed')))
+        blkresult.create_event_file()
+        # parse ncq depth:
+        analyze_ncq(self._subexpdir)
 
 def main():
     exp = ExperimentRsbenchGo()
