@@ -35,15 +35,26 @@ void bench_sync_client(const int n_threads, std::string arity) {
   config.SetString("target", "localhost:50051");
   config.SetInt("n_client_channels", 64);
   config.SetInt("n_threads", n_threads); 
-  config.SetInt("benchmark_duration", 10);
-  // config.SetBool("save_reply", true);
-  config.SetBool("save_reply", false);
+  config.SetInt("benchmark_duration", 3);
+  config.SetBool("save_reply", true);
+  // config.SetBool("save_reply", false);
 
-  auto query_producer = CreateQueryProducer(TermList{"hello"},
-      config.GetInt("n_threads"));
+  // auto query_producer = CreateQueryProducer(TermList{"hello"},
+      // config.GetInt("n_threads"));
 
-  auto async_client = CreateClient(config, 
-                                   std::move(query_producer));
+  int n_pools = config.GetInt("n_threads");
+  std::unique_ptr<TermPoolArray> array(new TermPoolArray(n_pools));
+  // array->LoadTerms(TermList{"hello"});
+  // array->LoadTerms(TermList{"default", "action"});
+  array->LoadFromFile("/mnt/ssd/downloads/wiki_QueryLog_tokenized", 100);
+
+  GeneralConfig query_config;
+  query_config.SetBool("return_snippets", true);
+  query_config.SetBool("is_phrase", true);
+  std::unique_ptr<QueryProducer> query_producer(
+      new QueryProducer(std::move(array), query_config));
+
+  auto async_client = CreateClient(config, std::move(query_producer));
   async_client->Wait();
   async_client->ShowStats();
 }
