@@ -450,14 +450,9 @@ class Client {
         << std::endl;
     }
 
-    if (save_reply_ == true) {
-      std::cout << "---- Reply Pool sizes ----" << std::endl;
-      for (auto &pool : reply_pools_) {
-        std::cout << pool.size() << " ";
-      }
-      std::cout << std::endl;
-    }
+    ShowReplies();
   }
+
   const ReplyPools *GetReplyPools() {
     return &reply_pools_;  
   };
@@ -483,6 +478,24 @@ class Client {
   std::unique_ptr<QueryProducer> query_producer_;
   ReplyPools reply_pools_;
   bool save_reply_;
+
+  void ShowReplies() {
+    std::cout << "save_reply_ == " << save_reply_ << std::endl;
+
+    std::cout << "---- Reply Pool sizes ----" << std::endl;
+    for (auto &pool : reply_pools_) {
+      std::cout << pool.size() << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "---- Reply Samples ----" << std::endl;
+    for (auto &pool : reply_pools_) {
+      for (int i = 0; i < pool.size() && i < 3; i++) {
+        std::cout << utils::str_qq_search_reply(pool[i]) << std::endl;
+      }
+    }
+    std::cout << std::endl;
+  }
 };
 
 
