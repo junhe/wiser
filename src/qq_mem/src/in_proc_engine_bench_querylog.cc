@@ -66,8 +66,8 @@ std::unique_ptr<SearchEngineServiceNew> create_engine_from_file(
                              config.GetString("loader"));
   std::cout << "Term Count: " << engine->TermCount() << std::endl;
 
-  std::cout << "Sleeping 100000 sec..." << std::endl;
-  utils::sleep(100000);
+  // std::cout << "Sleeping 100000 sec..." << std::endl;
+  // utils::sleep(100000);
 
   return engine;
 }
@@ -84,26 +84,32 @@ utils::ResultRow search(SearchEngineServiceNew *engine,
   const int n_repeats = config.GetInt("n_repeats");
   utils::ResultRow row;
   
-  // construct query pool
-  TermPool query_pool;
-  load_query_pool(&query_pool, config);
+  // Create query producer
+  std::unique_ptr<TermPoolArray> array(new TermPoolArray(1));
+
+  if (config.GetString("query_source") == "hardcoded") {
+    array->LoadTerms(config.GetStringVec("terms"));
+  } else {
+    array->LoadFromFile(config.GetString("querylog_path"), 100);
+  }
   std::cout << "Constructed query pool successfully" << std::endl;
+
+  GeneralConfig query_config;
+  query_config.SetBool("return_snippets", true);
+  query_config.SetBool("is_phrase", false);
+  query_config.SetBool("return_snippets", config.GetBool("enable_snippets"));
+
+  std::unique_ptr<QueryProducer> query_producer(
+      new QueryProducer(std::move(array), query_config));
 
   if (config.GetString("query_source") == "hardcoded") {
 		std::cout << "Posting list sizes:" << std::endl;
     show_engine_stats(engine, config.GetStringVec("terms"));
   }
 
-  auto enable_snippets = config.GetBool("enable_snippets");
   auto start = utils::now();
   for (int i = 0; i < n_repeats; i++) {
-    // auto terms = query_pool.Next();
-    // for (auto term: terms) {
-      // std::cout << term << " ";
-    // }
-    // auto query = SearchQuery(terms, enable_snippets);
-
-    auto query = SearchQuery(query_pool.Next(), enable_snippets);
+    auto query = query_producer->NextNativeQuery(0);
     query.n_snippet_passages = config.GetInt("n_passages");
     auto result = engine->Search(query);
 
@@ -180,30 +186,24 @@ GeneralConfig config_by_jun() {
   config.SetInt("n_docs", 10000000);
 
   // config.SetString("linedoc_path", 
-      // "/mnt/ssd/downloads/enwiki.linedoc_tokenized"); // full article
-      // "/mnt/ssd/downloads/enwiki_tookenized_200000.linedoc");
-  // config.SetString("loader", "WITH_OFFSETS");
-  
+      // "/mnt/ssd/downloads/enwiki.linedoc_tokenized.1");
+  // config.SetString("loader", "WITH_POSITIONS");
+
   config.SetString("linedoc_path", 
-      "/mnt/ssd/downloads/enwiki.linedoc_tokenized.1");
-  config.SetString("loader", "WITH_POSITIONS");
+      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  config.SetString("loader", "TOKEN_ONLY");
 
-  // config.SetString("linedoc_path", 
-      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  // config.SetString("loader", "TOKEN_ONLY");
-
-  config.SetInt("n_repeats", 100);
+  config.SetInt("n_repeats", 1000);
   config.SetInt("n_passages", 3);
   // config.SetBool("enable_snippets", true);
   config.SetBool("enable_snippets", false);
   
   
   config.SetString("query_source", "hardcoded");
-  // config.SetStringVec("terms", std::vector<std::string>{"hello", "world"});
   config.SetStringVec("terms", std::vector<std::string>{"hello"});
 
   // config.SetString("query_source", "querylog");
-  // config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
+  // config.SetString("querylog_path", "/mnt/ssd/downloads/wiki_QueryLog_tokenized");
   return config;
 }
 
@@ -226,40 +226,15 @@ GeneralConfig config_by_kan() {
                (__/_/                ((__/
 
 */
-  GeneralConfig config;
-  config.SetInt("n_docs", 10000);
-  // config.SetString("linedoc_path", 
-      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  // config.SetString("loader", "with-offsets");
 
-  config.SetString("linedoc_path", 
-      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  config.SetString("loader", "naive");
-
-  config.SetInt("n_repeats", 500000);
-  config.SetInt("n_passages", 3);
-  config.SetBool("enable_snippets", true);
-  //config.SetBool("enable_snippets", false);
-  
-  
-  config.SetString("query_source", "hardcoded");
-  config.SetStringVec("terms", std::vector<std::string>{"hello"});
-  //config.SetStringVec("terms", std::vector<std::string>{"barack", "obama"});
-  //config.SetStringVec("terms", std::vector<std::string>{"len", "from", "mai"});
-  // config.SetStringVec("terms", std::vector<std::string>{"arsen"});
-
-  // config.SetString("query_source", "querylog");
-  // config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
-  return config;
 }
 
 
 
 int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
-  // FLAGS_logtostderr = 1; // print to stderr instead of file
-  FLAGS_stderrthreshold = 0; 
-  FLAGS_minloglevel = 0; 
+  FLAGS_logtostderr = 1; // print to stderr instead of file
+  FLAGS_minloglevel = 4; 
 
   // Separate our configurations to avoid messes
   auto config = config_by_jun();
