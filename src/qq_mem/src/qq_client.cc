@@ -35,22 +35,29 @@ void bench_sync_client(const int n_threads, std::string arity) {
   config.SetString("target", "localhost:50051");
   config.SetInt("n_client_channels", 64);
   config.SetInt("n_threads", n_threads); 
-  config.SetInt("benchmark_duration", 3);
-  config.SetBool("save_reply", true);
-  // config.SetBool("save_reply", false);
+  config.SetInt("benchmark_duration", 10);
+  // config.SetBool("save_reply", true);
+  config.SetBool("save_reply", false);
 
   // auto query_producer = CreateQueryProducer(TermList{"hello"},
       // config.GetInt("n_threads"));
 
   int n_pools = config.GetInt("n_threads");
   std::unique_ptr<TermPoolArray> array(new TermPoolArray(n_pools));
+  // array->LoadTerms(TermList{"hello", "world"});
+  // array->LoadTerms(TermList{"barack", "obama"});
+  // array->LoadTerms(TermList{"from", "also"});
   // array->LoadTerms(TermList{"hello"});
+  // array->LoadTerms(TermList{"ripdo"});
+  array->LoadTerms(TermList{"from"});
+  // array->LoadTerms(TermList{"from", "also"});
+  // array->LoadTerms(TermList{"ripdo", "liftech"});
   // array->LoadTerms(TermList{"default", "action"});
-  array->LoadFromFile("/mnt/ssd/downloads/wiki_QueryLog_tokenized", 100);
+  // array->LoadFromFile("/mnt/ssd/downloads/wiki_QueryLog_tokenized", 100);
 
   GeneralConfig query_config;
   query_config.SetBool("return_snippets", true);
-  query_config.SetBool("is_phrase", true);
+  query_config.SetBool("is_phrase", false);
   std::unique_ptr<QueryProducer> query_producer(
       new QueryProducer(std::move(array), query_config));
 
