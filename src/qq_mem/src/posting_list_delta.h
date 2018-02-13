@@ -66,6 +66,24 @@ struct SpanMeta {
 
   SpanMeta(DocIdType id, int offset)
     : prev_doc_id(id), start_offset(offset) {}
+
+  SpanMeta(const std::string &data, const int offset) {
+    Deserialize(data, offset);
+  }
+
+  std::string Serialize() {
+    VarintBuffer buf;
+    buf.Append(prev_doc_id);
+    buf.Append(start_offset);
+
+    return buf.Data();
+  }
+
+  void Deserialize(const std::string &data, const int offset) {
+    VarintIterator it(&data, offset, 2); 
+    prev_doc_id = it.Pop();
+    start_offset = it.Pop();
+  }
 };
 
 typedef std::vector<SpanMeta> SkipIndex;
