@@ -254,9 +254,9 @@ class PostingListDeltaIterator: public PostingListIteratorService {
 
 class PostingListDelta {
  public:
-  PostingListDelta(Term term) :term_(term), skip_span_(100) {}
+  PostingListDelta(Term term) :skip_span_(100) {}
   PostingListDelta(Term term, const int skip_span) 
-    :term_(term), skip_span_(skip_span) {}
+    :skip_span_(skip_span) {}
 
   // Assume posting[-1] = posting[0], so delta[0] is always 0
   void AddPosting(const StandardPosting &posting) {
@@ -330,7 +330,6 @@ class PostingListDelta {
 
  private:
   VarintBuffer data_;
-  const Term term_;
   int posting_idx_ = 0; 
   DocIdType last_doc_id_;
   // [0]: doc id of posting[-1]
