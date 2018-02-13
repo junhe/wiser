@@ -44,6 +44,29 @@ class VarintBuffer {
     return &data_;
   }
 
+  // Format
+  // end_ | data_
+  std::string Serialize() const {
+    VarintBuffer out;
+    out.Append(end_);
+    out.Append(Data());
+    
+    return out.Data();
+  }
+
+  int Deserialize(const std::string &buf, const int offset) {
+    int len;
+    uint32_t end;
+
+    len = utils::varint_decode(buf, 0, &end);
+    end_ = end;
+
+    
+    data_ = std::string(buf, offset + len, offset + len + end_);
+    
+    return len + end_;
+  }
+
  private:
   std::string data_;
   int end_ = 0;
