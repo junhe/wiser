@@ -606,7 +606,7 @@ class QueryProcessor {
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
-    if (is_phrase_ == true) {
+    if (is_phrase_ == true && pl_iterators_.size() > 1 ) {
       auto position_table = FindPhrase();
       if (position_table[0].size() > 0) {
         RankDoc(max_doc_id, position_table);
