@@ -86,7 +86,11 @@ struct SpanMeta {
   }
 };
 
-typedef std::vector<SpanMeta> SkipIndex;
+
+struct SkipIndex {
+  std::vector<SpanMeta> vec;
+};
+
 
 class PostingListDeltaIterator: public PostingListIteratorService {
  public:
@@ -130,14 +134,14 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   // Only call this when the iterator HasSkip() == true
   DocIdType NextSpanDocId() const {
     int index = (cur_state_.cur_posting_index_ / skip_span_) + 1;
-    return (*skip_index_)[index].prev_doc_id;
+    return skip_index_->vec[index].prev_doc_id;
   }
   
   // Only call this when the iterator HasSkip() == true
   void SkipToNextSpan() {
     int next_span_index = cur_state_.cur_posting_index_ / skip_span_ + 1;
 
-    auto &meta = (*skip_index_)[next_span_index];
+    auto &meta = skip_index_->vec[next_span_index];
     cur_state_.Update(meta.start_offset, next_span_index * skip_span_, 
                   meta.prev_doc_id);
 
@@ -291,7 +295,7 @@ class PostingListDelta {
     }
 
     if (posting_idx_ % skip_span_ == 0) {
-      skip_index_.push_back(SpanMeta(last_doc_id_, data_.End()));
+      skip_index_.vec.push_back(SpanMeta(last_doc_id_, data_.End()));
     }
 
     DocIdType delta = doc_id - last_doc_id_;
@@ -315,7 +319,7 @@ class PostingListDelta {
           &skip_index_, 
           skip_span_, 
           Size(), 
-          skip_index_[0].prev_doc_id, 
+          skip_index_.vec[0].prev_doc_id, 
           0));
   }
 
@@ -328,7 +332,7 @@ class PostingListDelta {
           &skip_index_, 
           skip_span_, 
           Size(), 
-          skip_index_[0].prev_doc_id, 
+          skip_index_.vec[0].prev_doc_id, 
           0));
   }
 

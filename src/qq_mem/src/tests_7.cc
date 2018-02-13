@@ -31,6 +31,6 @@ TEST_CASE( "Serialization", "[serial]" ) {
     REQUIRE(meta2.prev_doc_id == meta.prev_doc_id);
     REQUIRE(meta2.start_offset == meta.start_offset);
   }
-}
 
+}
 

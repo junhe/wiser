@@ -255,11 +255,11 @@ TEST_CASE( "Skip list", "[postinglist0]" ) {
   SECTION("SkipIndex") {
     auto skip_index = pl.GetSkipIndex();
 
-    REQUIRE(skip_index.size() == 4);
+    REQUIRE(skip_index.vec.size() == 4);
 
     std::vector<DocIdType> doc_ids;
     std::vector<int> start_offsets;
-    for (auto meta : skip_index) {
+    for (auto meta : skip_index.vec) {
       doc_ids.push_back(meta.prev_doc_id);
       start_offsets.push_back(meta.start_offset);
     }
