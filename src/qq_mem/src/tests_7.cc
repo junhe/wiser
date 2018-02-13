@@ -32,5 +32,21 @@ TEST_CASE( "Serialization", "[serial]" ) {
     REQUIRE(meta2.start_offset == meta.start_offset);
   }
 
+  SECTION("SkipIndex") {
+    SkipIndex index;
+    index.vec.emplace_back(3, 8);
+    index.vec.emplace_back(10, 20);
+
+    std::string buf = index.Serialize();
+
+    SkipIndex index2;
+    index2.Deserialize(buf, 0);
+
+    REQUIRE(index.vec.size() == index2.vec.size());
+    for (int i = 0; i < index.vec.size(); i++) {
+      REQUIRE(index.vec[i].prev_doc_id == index2.vec[i].prev_doc_id);
+      REQUIRE(index.vec[i].start_offset == index2.vec[i].start_offset);
+    }
+  }
 }
 

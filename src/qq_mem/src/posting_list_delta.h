@@ -71,6 +71,10 @@ struct SpanMeta {
     Deserialize(data, offset);
   }
 
+  friend bool operator == (const SpanMeta &a, const SpanMeta &b) {
+    return a.prev_doc_id == b.prev_doc_id && a.start_offset == b.start_offset;
+  }
+
   std::string Serialize() {
     VarintBuffer buf;
     buf.Append(prev_doc_id);
@@ -89,6 +93,43 @@ struct SpanMeta {
 
 struct SkipIndex {
   std::vector<SpanMeta> vec;
+
+  // count | meta size | meta | meta size | meta ..
+  std::string Serialize() {
+    VarintBuffer buf;
+
+    buf.Append(vec.size());
+    
+    for (auto &meta : vec) {
+      std::string meta_data = meta.Serialize();
+      buf.Append(meta_data.size());
+      buf.Append(meta_data);
+    }
+
+    return buf.Data();
+  }
+
+  int Deserialize(const std::string &data, int start_offset) {
+    int len;  
+    uint32_t size; 
+    uint32_t meta_size;
+    int offset = start_offset;
+
+    vec.clear();
+
+    len = utils::varint_decode(data, offset, &size);
+    offset += len;
+
+    for (int i = 0; i < size; i++) {
+      len = utils::varint_decode(data, offset, &meta_size);
+      offset += len;
+
+      vec.emplace_back(data, offset);
+      offset += meta_size;
+    }
+
+    return offset - start_offset;
+  }
 };
 
 
