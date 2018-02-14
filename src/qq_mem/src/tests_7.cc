@@ -4,6 +4,7 @@
 
 #include "utils.h"
 #include "compression.h"
+#include "doc_store.h"
 
 #include "test_helpers.h"
 
@@ -63,5 +64,30 @@ TEST_CASE( "Serialization", "[serial]" ) {
     REQUIRE(pl == pl2);
     REQUIRE(pl2.Serialize() == buf);
   }
+
+  SECTION("Simple Doc Store") {
+    SimpleDocStore store;
+    std::string buf = store.SerializeEntry(8, "xxx");
+
+    int next = store.DeserializeEntry(buf.c_str());
+    REQUIRE(next == buf.size());
+    REQUIRE(store.Get(8) == "xxx");
+    REQUIRE(store.Size() == 1);
+  }
+
+  SECTION("Simple Doc Store with files") {
+    SimpleDocStore store;
+    store.Add(8, "xxx");
+    store.Add(100, "yyyy");
+    store.Serialize("/tmp/simple.doc.dump");
+
+    SimpleDocStore store2;
+
+    store2.Deserialize("/tmp/simple.doc.dump");
+    REQUIRE(store2.Get(8) == "xxx");
+    REQUIRE(store2.Get(100) == "yyyy");
+    REQUIRE(store2.Size() == 2);
+  }
+
 }
 
