@@ -11,6 +11,13 @@
 #include <utility>
 #include <locale>
 
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 
 namespace utils {
 
@@ -279,6 +286,36 @@ int varint_decode_chars(const char *buf, const int offset, uint32_t *value) {
 }
 
 
+#define handle_error(msg) \
+	do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+
+void MapFile(std::string path, char **ret_addr, int *ret_fd, size_t *ret_file_length) {
+  int fd;
+  char *addr;
+  size_t file_length;
+  struct stat sb;
+
+  fd = open(path.c_str(), O_RDONLY);
+
+  if (fstat(fd, &sb) == -1)           /* To obtain file size */
+    handle_error("fstat");
+  file_length = sb.st_size;
+
+  addr = (char *) mmap(NULL, file_length, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (addr == MAP_FAILED)
+    handle_error("mmap");
+
+  *ret_addr = addr;
+  *ret_fd = fd;
+  *ret_file_length = file_length;
+}
+
+
+void UnmapFile(char *addr, int fd, size_t file_length) {
+  munmap(addr, file_length);
+  close(fd);
+}
 
 
 } // namespace util

@@ -3,6 +3,7 @@
 
 #include <unordered_map>
 #include <iostream>
+#include <fstream>
 
 #include "types.h"
 
@@ -44,6 +45,25 @@ class DocLengthStore {
     }
 
     return str;
+  }
+
+  void Serialize(std::string path) {
+    std::ofstream ofile(path, std::ios::binary);
+
+    int count = length_dict_.size();
+    ofile.write((char *)&count, sizeof(count));
+
+    for (auto it = length_dict_.cbegin(); it != length_dict_.cend(); it++) {
+      ofile.write((char *)&it->first, sizeof(it->first));
+      ofile.write((char *)&it->second, sizeof(it->second));
+    }
+
+    ofile.close();	
+  }
+
+  void Deserialize(std::string path) {
+    
+
   }
 };
 

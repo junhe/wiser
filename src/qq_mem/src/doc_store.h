@@ -105,32 +105,6 @@ class SimpleDocStore: public DocumentStoreService {
     ofile.close();	
   }
 
-  void MapFile(std::string path, char **ret_addr, int *ret_fd, size_t *ret_file_length) {
-    int fd;
-    char *addr;
-    size_t file_length;
-    struct stat sb;
-
-    fd = open(path.c_str(), O_RDONLY);
-
-    if (fstat(fd, &sb) == -1)           /* To obtain file size */
-      handle_error("fstat");
-    file_length = sb.st_size;
-
-    addr = (char *) mmap(NULL, file_length, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (addr == MAP_FAILED)
-      handle_error("mmap");
-
-    *ret_addr = addr;
-    *ret_fd = fd;
-    *ret_file_length = file_length;
-  }
-
-  void UnmapFile(char *addr, int fd, size_t file_length) {
-    munmap(addr, file_length);
-    close(fd);
-  }
-
   void Deserialize(const std::string path) {
     int fd;
     int len;
@@ -139,20 +113,18 @@ class SimpleDocStore: public DocumentStoreService {
     uint32_t var;
     int offset = 0;
 
-    MapFile(path, &addr, &fd, &file_length);
+    utils::MapFile(path, &addr, &fd, &file_length);
 
     len = utils::varint_decode_chars(addr, 0, &var);
     offset += len;
     int count = var;
     
-    std::cout << "Count: " << count << std::endl;
-
     for (int i = 0; i < count; i++) {
       len = DeserializeEntry(addr + offset);
       offset += len;
     }
 
-    UnmapFile(addr, fd, file_length);
+    utils::UnmapFile(addr, fd, file_length);
   }
 };
 
