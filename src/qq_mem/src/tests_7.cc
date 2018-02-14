@@ -70,18 +70,18 @@ TEST_CASE( "Serialization", "[serial]" ) {
   SECTION("Inverted index") {
     InvertedIndexQqMemDelta index;
     {
-    DocInfo info("hello world hello", "hello world", "", "", "TOKEN_ONLY");
-    index.AddDocument(0, info);
+      DocInfo info("hello world hello", "hello world", "", "", "TOKEN_ONLY");
+      index.AddDocument(0, info);
     }
 
     {
-    DocInfo info("bb cd", "xj sj", "", "", "TOKEN_ONLY");
-    index.AddDocument(1, info);
+      DocInfo info("bb cd", "xj sj", "", "", "TOKEN_ONLY");
+      index.AddDocument(1, info);
     }
 
     {
-    DocInfo info("jj fjsjj 2jsd", "sj 2j3j xj", "", "", "TOKEN_ONLY");
-    index.AddDocument(2, info);
+      DocInfo info("jj fjsjj 2jsd", "sj 2j3j xj", "", "", "TOKEN_ONLY");
+      index.AddDocument(2, info);
     }
 
     index.Serialize("/tmp/inverted_index.dump");
@@ -127,6 +127,19 @@ TEST_CASE( "Serialization", "[serial]" ) {
     REQUIRE(store2.GetLength(8) == store.GetLength(8));
     REQUIRE(store2.GetLength(100) == store.GetLength(100));
     REQUIRE(store2.GetAvgLength() == store.GetAvgLength());
+  }
+
+  SECTION("The whole engine, metadata") {
+    GeneralConfig config;
+    config.SetString("inverted_index", "compressed");
+    QqMemEngine engine(config);
+
+    engine.SerializeMeta("/tmp/engine_meta.dump");
+
+    QqMemEngine engine2(config);
+    engine2.DeserializeMeta("/tmp/engine_meta.dump");
+
+    REQUIRE(engine == engine2);
   }
 }
 

@@ -23,7 +23,7 @@
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 
-class SimpleDocStore: public DocumentStoreService {
+class SimpleDocStore {
  private:
 	std::map<int,std::string> store_;  
 
@@ -50,7 +50,7 @@ class SimpleDocStore: public DocumentStoreService {
 		store_.clear();
 	}
 
-	int Size() {
+	int Size() const {
 		return store_.size();
 	}
 

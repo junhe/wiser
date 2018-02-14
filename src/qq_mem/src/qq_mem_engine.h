@@ -476,6 +476,56 @@ class QqMemEngine : public SearchEngineServiceNew {
     return ProcessQueryTogether(query);
   }
 
+  friend bool operator == (const QqMemEngine &a, const QqMemEngine &b) {
+    if (a.next_doc_id_ != b.next_doc_id_) {
+      return false;
+    }
+
+    if (a.doc_store_.Size() != b.doc_store_.Size()) {
+      return false;
+    }
+
+    if (a.inverted_index_->Size() != b.inverted_index_->Size()) {
+      return false;
+    }
+
+    if (a.doc_lengths_.Size() != b.doc_lengths_.Size()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  void SerializeMeta(std::string path) {
+    std::ofstream ofile(path, std::ios::binary);
+
+    ofile.write((char *)&next_doc_id_, sizeof(next_doc_id_));
+
+    ofile.close();	
+  }
+
+  void DeserializeMeta(std::string path) {
+    int fd;
+    int len;
+    char *addr;
+    size_t file_length;
+    uint32_t var;
+
+    utils::MapFile(path, &addr, &fd, &file_length);
+
+    next_doc_id_ = *((int *)addr);
+    
+    utils::UnmapFile(addr, fd, file_length);
+  }
+
+  void Serialize(std::string dir_path) {
+    
+  }
+
+  void Deserialize(std::string dir_path) {
+
+  }
+
  private:
   int next_doc_id_ = 0;
   SimpleDocStore doc_store_;
