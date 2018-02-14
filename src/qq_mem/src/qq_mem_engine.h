@@ -145,7 +145,6 @@ class InvertedIndexQqMemVec: public InvertedIndexImpl {
     
     assert(token_vec.size() == offsets_parsed.size());
 
-    //std::cout << "Add document " << doc_id << ": " << token_vec.size() << " : ";
     for (int i = 0; i < token_vec.size(); i++) {
       IndexStore::iterator it = index_.find(token_vec[i]);
 
@@ -157,10 +156,8 @@ class InvertedIndexQqMemVec: public InvertedIndexImpl {
       } 
       
       PostingListType &postinglist = it->second;
-      //std::cout << i << ", " << token_vec[i];
       postinglist.AddPosting(
           StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
-      //std::cout << ";" ;
     }
   }
 };
@@ -175,6 +172,74 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
  public:
   typedef IndexStore::const_iterator const_iterator;
   typedef std::vector<const PostingListType*> PlPointers;
+
+  void Serialize(std::string path) {
+    std::ofstream ofile(path, std::ios::binary);
+
+    int count = index_.size();
+    ofile.write((char *)&count, sizeof(count));
+
+    for (auto it = index_.cbegin(); it != index_.cend(); it++) {
+      int term_len = it->first.size();
+      ofile.write((char *)&term_len, sizeof(int));
+      ofile.write(it->first.data(), term_len);
+
+      std::string data = it->second.Serialize();
+      int data_len = data.size();
+      ofile.write((char *)&data_len, sizeof(int));
+      ofile.write(data.data(), data_len);
+    }
+
+    ofile.close();	
+  }
+
+  int DeserializeEntry(const char *buf) {
+    int offset = 0;
+
+    int term_len = *((int *)buf); 
+    offset += sizeof(int);
+
+    std::string term(buf + offset, term_len);
+    offset += term_len;
+
+    int data_len = *((int *)(buf + offset)); 
+    offset += sizeof(int);
+
+    std::string data(buf + offset, data_len);
+    offset += data_len;
+
+    PostingListDelta pl("");
+    pl.Deserialize(data, 0);
+
+    index_.emplace(term, pl);
+
+    // return the length of this entry
+    return offset;
+  }
+
+  void Deserialize(std::string path) {
+    int fd;
+    int len;
+    char *addr;
+    size_t file_length;
+    uint32_t var;
+    int offset = 0;
+
+    index_.clear();
+
+    utils::MapFile(path, &addr, &fd, &file_length);
+
+    int count = *((int *)addr);
+    offset += sizeof(int);
+    
+    int width = sizeof(int);
+    for (int i = 0; i < count; i++) {
+      int entry_len = DeserializeEntry(addr + offset);
+      offset += entry_len;
+    }
+
+    utils::UnmapFile(addr, fd, file_length);
+  }
 
   IteratorPointers FindIterators(const TermList &terms) const {
     IteratorPointers it_pointers;
@@ -210,6 +275,11 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     }
 
     return ret;
+  }
+
+  friend bool operator == (const InvertedIndexQqMemDelta &a,
+      const InvertedIndexQqMemDelta &b) {
+    return a.index_ == b.index_;
   }
 
   // Return number of posting lists

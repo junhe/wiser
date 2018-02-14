@@ -79,7 +79,7 @@ struct SpanMeta {
     return !(a == b);
   }
 
-  std::string Serialize() {
+  std::string Serialize() const {
     VarintBuffer buf;
     buf.Append(prev_doc_id);
     buf.Append(start_offset);
@@ -99,7 +99,7 @@ struct SkipIndex {
   std::vector<SpanMeta> vec;
 
   // count | meta size | meta | meta size | meta ..
-  std::string Serialize() {
+  std::string Serialize() const {
     VarintBuffer buf;
 
     buf.Append(vec.size());
@@ -411,6 +411,7 @@ class PostingListDelta {
 
   friend bool operator == (const PostingListDelta &a, const PostingListDelta &b) {
     if (a.last_doc_id_ != b.last_doc_id_) {
+      std::cout << "doc_id:" << a.last_doc_id_ << "," << b.last_doc_id_ << std::endl;
       return false;
     }
 
@@ -433,7 +434,7 @@ class PostingListDelta {
     return true;
   }
 
-  std::string Serialize() {
+  std::string Serialize() const {
     VarintBuffer buf;
     buf.Append(last_doc_id_);
     buf.Append(posting_idx_);

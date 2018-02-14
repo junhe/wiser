@@ -4,6 +4,7 @@
 
 #include "utils.h"
 #include "compression.h"
+#include "qq_mem_engine.h"
 #include "doc_store.h"
 #include "doc_length_store.h"
 
@@ -64,6 +65,31 @@ TEST_CASE( "Serialization", "[serial]" ) {
     REQUIRE(pl.GetSkipIndex() == pl2.GetSkipIndex());
     REQUIRE(pl == pl2);
     REQUIRE(pl2.Serialize() == buf);
+  }
+
+  SECTION("Inverted index") {
+    InvertedIndexQqMemDelta index;
+    {
+    DocInfo info("hello world hello", "hello world", "", "", "TOKEN_ONLY");
+    index.AddDocument(0, info);
+    }
+
+    {
+    DocInfo info("bb cd", "xj sj", "", "", "TOKEN_ONLY");
+    index.AddDocument(1, info);
+    }
+
+    {
+    DocInfo info("jj fjsjj 2jsd", "sj 2j3j xj", "", "", "TOKEN_ONLY");
+    index.AddDocument(2, info);
+    }
+
+    index.Serialize("/tmp/inverted_index.dump");
+
+    InvertedIndexQqMemDelta index2;
+    index2.Deserialize("/tmp/inverted_index.dump");
+    
+    REQUIRE(index == index2);
   }
 
   SECTION("Simple Doc Store") {
