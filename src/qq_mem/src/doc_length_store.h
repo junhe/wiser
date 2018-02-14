@@ -6,6 +6,7 @@
 #include <fstream>
 
 #include "types.h"
+#include "utils.h"
 
 class DocLengthStore {
  private:
@@ -62,8 +63,29 @@ class DocLengthStore {
   }
 
   void Deserialize(std::string path) {
-    
+    int fd;
+    int len;
+    char *addr;
+    size_t file_length;
+    uint32_t var;
+    int offset = 0;
 
+    avg_length_ = 0;
+
+    utils::MapFile(path, &addr, &fd, &file_length);
+
+    int count = *((int *)addr);
+    std::cout << "count: " << count << std::endl;
+    
+    int width = 4;
+    const char *base = addr + width;
+    for (int i = 0; i < count; i++) {
+      int id = *((int *) (base + width * (2 * i)));
+      int length = *((int *) (base + width * (2 * i + 1)));
+      AddLength(id, length);
+    }
+
+    utils::UnmapFile(addr, fd, file_length);
   }
 };
 

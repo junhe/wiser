@@ -5,6 +5,7 @@
 #include "utils.h"
 #include "compression.h"
 #include "doc_store.h"
+#include "doc_length_store.h"
 
 #include "test_helpers.h"
 
@@ -89,5 +90,17 @@ TEST_CASE( "Serialization", "[serial]" ) {
     REQUIRE(store2.Size() == 2);
   }
 
+  SECTION("Doc Length Store") {
+    DocLengthStore store;       
+    store.AddLength(8, 88);
+    store.AddLength(100, 1000);
+    store.Serialize("/tmp/doc_length.dump");
+
+    DocLengthStore store2;
+    store2.Deserialize("/tmp/doc_length.dump");
+    REQUIRE(store2.GetLength(8) == store.GetLength(8));
+    REQUIRE(store2.GetLength(100) == store.GetLength(100));
+    REQUIRE(store2.GetAvgLength() == store.GetAvgLength());
+  }
 }
 
