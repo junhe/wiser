@@ -182,6 +182,7 @@ std::string str_qq_search_reply(const qq::SearchReply &reply);
 int varint_expand_and_encode(uint32_t value, std::string *buf, const int offset);
 int varint_encode(uint32_t value, std::string *buf, int offset);
 int varint_decode(const std::string &buf, int offset, uint32_t *value);
+int varint_decode_chars(const char *buf, const int offset, uint32_t *value);
 
 } // namespace util
 #endif

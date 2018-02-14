@@ -263,6 +263,10 @@ int varint_encode(uint32_t value, std::string *buf, const int offset) {
 // from varint code to int
 // return: length of the buffer decoded
 int varint_decode(const std::string &buf, const int offset, uint32_t *value) {
+  return varint_decode_chars(buf.data(), offset, value);
+}
+
+int varint_decode_chars(const char *buf, const int offset, uint32_t *value) {
   int i = 0;
   *value = 0;
   // inv: buf[offset, offset + i) has been copied to value 
@@ -273,6 +277,7 @@ int varint_decode(const std::string &buf, const int offset, uint32_t *value) {
   }
   return i; 
 }
+
 
 
 
