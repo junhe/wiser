@@ -58,9 +58,8 @@ class VarintBuffer {
     int len;
     uint32_t end;
 
-    len = utils::varint_decode(buf, 0, &end);
+    len = utils::varint_decode(buf, offset, &end);
     end_ = end;
-
     
     data_ = std::string(buf, offset + len, offset + len + end_);
     
