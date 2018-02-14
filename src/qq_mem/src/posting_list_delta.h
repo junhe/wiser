@@ -75,6 +75,10 @@ struct SpanMeta {
     return a.prev_doc_id == b.prev_doc_id && a.start_offset == b.start_offset;
   }
 
+  friend bool operator != (const SpanMeta &a, const SpanMeta &b) {
+    return !(a == b);
+  }
+
   std::string Serialize() {
     VarintBuffer buf;
     buf.Append(prev_doc_id);
@@ -107,6 +111,22 @@ struct SkipIndex {
     }
 
     return buf.Data();
+  }
+
+  friend bool operator == (const SkipIndex &a, const SkipIndex &b) {
+    if (a.vec.size() != b.vec.size()) 
+      return false;
+
+    for (int i = 0; i < a.vec.size(); i++) {
+      if (a.vec[i] != b.vec[i]) 
+        return false;
+    }
+
+    return true;
+  }
+
+  friend bool operator != (const SkipIndex &a, const SkipIndex &b) {
+    return !(a == b);
   }
 
   int Deserialize(const std::string &data, int start_offset) {
@@ -377,8 +397,6 @@ class PostingListDelta {
           0));
   }
 
-
-
   int Size() const {
     return posting_idx_;
   }
@@ -391,16 +409,91 @@ class PostingListDelta {
     return skip_index_;
   }
 
+  friend bool operator == (const PostingListDelta &a, const PostingListDelta &b) {
+    if (a.last_doc_id_ != b.last_doc_id_) {
+      return false;
+    }
+
+    if (a.posting_idx_ != b.posting_idx_) {
+      return false;
+    }
+
+    if (a.skip_span_ != b.skip_span_) {
+      return false;
+    }
+
+    if (a.data_.Data() != b.data_.Data()) {
+      return false;
+    }
+
+    if (a.skip_index_ != b.skip_index_) {
+      return false;
+    }
+
+    return true;
+  }
+
+  std::string Serialize() {
+    VarintBuffer buf;
+    buf.Append(last_doc_id_);
+    buf.Append(posting_idx_);
+    buf.Append(skip_span_);
+    
+
+    std::string data = data_.Serialize();
+    buf.Append(data.size());
+    buf.Append(data);
+
+    std::string index_data = skip_index_.Serialize();
+    buf.Append(index_data.size());
+    buf.Append(index_data);
+
+    return buf.Data();
+  }
+
+  void Deserialize(const std::string &data, const int start_offset) {
+    int len;
+    int offset = start_offset;
+    uint32_t var;
+
+    len = utils::varint_decode(data, offset, &var);
+    offset += len;
+    last_doc_id_ = var;
+
+    len = utils::varint_decode(data, offset, &var);
+    offset += len;
+    posting_idx_ = var;
+
+    len = utils::varint_decode(data, offset, &var);
+    offset += len;
+    skip_span_ = var;
+
+    len = utils::varint_decode(data, offset, &var);
+    offset += len;
+    int data_size  = var;
+
+    data_.Deserialize(data, offset);
+    offset += data_size;
+
+    len = utils::varint_decode(data, offset, &var);
+    offset += len;
+    int skip_index_size  = var;
+
+    skip_index_.Deserialize(data, offset);
+    offset += skip_index_size;
+  }
+
  private:
-  VarintBuffer data_;
-  int posting_idx_ = 0; 
   DocIdType last_doc_id_;
+  int posting_idx_ = 0; 
+  int skip_span_;
+  VarintBuffer data_;
   // [0]: doc id of posting[-1]
   // [1]: doc id of posting[skip_span_ - 1] 
   // [2]: doc id of posting[skip_span_ * 2 - 1] 
   // ...
   SkipIndex skip_index_;
-  const int skip_span_;
+
 };
 
 #endif
