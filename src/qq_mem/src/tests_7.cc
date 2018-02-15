@@ -156,7 +156,7 @@ TEST_CASE( "Serialization", "[serial]" ) {
 }
 
 TEST_CASE( "Whole engine test", "[serial0]" ) {
-  SECTION("The whole engine, empty") {
+  SECTION("The whole engine") {
     GeneralConfig config;
     config.SetString("inverted_index", "compressed");
     QqMemEngine engine(config);
@@ -171,5 +171,26 @@ TEST_CASE( "Whole engine test", "[serial0]" ) {
 
     REQUIRE(engine == engine2);
   }
+
+  SECTION("The whole engine, a lot docs") {
+    GeneralConfig config;
+    config.SetString("inverted_index", "compressed");
+    QqMemEngine engine(config);
+
+    for (int i = 0; i < 1000; i++) {
+      DocInfo info("hello world hello", 
+          "hello world " + std::to_string(i), "", "", "TOKEN_ONLY");
+      engine.AddDocument(info);
+    }
+
+    engine.Serialize("/tmp/test_folder");
+
+    QqMemEngine engine2(config);
+    engine2.Deserialize("/tmp/test_folder");
+
+    REQUIRE(engine == engine2);
+  }
+
+
 }
 
