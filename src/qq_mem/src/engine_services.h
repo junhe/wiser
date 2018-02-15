@@ -6,6 +6,9 @@
 #include <vector>
 #include <map>
 #include <tuple>
+
+#include <glog/logging.h>
+
 #include "types.h"
 
 class SearchEngineServiceNew {
@@ -18,16 +21,6 @@ class SearchEngineServiceNew {
   virtual SearchResult Search(const SearchQuery &query) = 0; 
 };
 
-
-class DocumentStoreService {
-    public:
-        virtual void Add(int id, std::string document) = 0;
-        virtual void Remove(int id) = 0;
-        virtual const std::string & Get(int id) = 0;
-        virtual bool Has(int id) = 0;
-        virtual void Clear() = 0;
-        virtual int Size() = 0;
-};
 
 struct DocScore {
   DocIdType doc_id;
@@ -107,6 +100,18 @@ class InvertedIndexService {
   virtual std::map<std::string, int> PostinglistSizes(const TermList &terms) const = 0;
   virtual void AddDocument(const int doc_id, const DocInfo doc_info) = 0;
   virtual int Size() const = 0;
+  virtual void Serialize(std::string dir_path) const {
+    LOG(FATAL) << "Not Implemented" << std::endl;
+  }
+  virtual void Deserialize(std::string dir_path) {
+    LOG(FATAL) << "Not Implemented" << std::endl;
+  }
+  virtual bool operator== (const InvertedIndexService &rhs) const {
+    LOG(FATAL) << "Not Implemented" << std::endl;
+  }
+  virtual bool operator!= (const InvertedIndexService &rhs) const {
+    LOG(FATAL) << "Not Implemented" << std::endl;
+  }
 };
 
 

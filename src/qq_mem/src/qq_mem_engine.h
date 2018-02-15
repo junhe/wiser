@@ -3,6 +3,8 @@
 
 #include <assert.h>
 
+#include <boost/filesystem.hpp>
+
 #include "doc_length_store.h"
 #include "query_processing.h"
 #include "utils.h"
@@ -173,7 +175,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
   typedef IndexStore::const_iterator const_iterator;
   typedef std::vector<const PostingListType*> PlPointers;
 
-  void Serialize(std::string path) {
+  void Serialize(std::string path) const {
     std::ofstream ofile(path, std::ios::binary);
 
     int count = index_.size();
@@ -277,9 +279,14 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     return ret;
   }
 
-  friend bool operator == (const InvertedIndexQqMemDelta &a,
-      const InvertedIndexQqMemDelta &b) {
-    return a.index_ == b.index_;
+  bool operator == (const InvertedIndexService &rhs) const {
+    const InvertedIndexQqMemDelta &idx2 = static_cast<const InvertedIndexQqMemDelta &>(rhs);
+
+    return this->index_ == idx2.index_;
+  }
+
+  bool operator != (const InvertedIndexService &rhs) const {
+    return !(*this == rhs);
   }
 
   // Return number of posting lists
@@ -485,7 +492,7 @@ class QqMemEngine : public SearchEngineServiceNew {
       return false;
     }
 
-    if (a.inverted_index_->Size() != b.inverted_index_->Size()) {
+    if (*a.inverted_index_.get() != *b.inverted_index_.get()) {
       return false;
     }
 
@@ -496,7 +503,7 @@ class QqMemEngine : public SearchEngineServiceNew {
     return true;
   }
 
-  void SerializeMeta(std::string path) {
+  void SerializeMeta(std::string path) const {
     std::ofstream ofile(path, std::ios::binary);
 
     ofile.write((char *)&next_doc_id_, sizeof(next_doc_id_));
@@ -518,12 +525,25 @@ class QqMemEngine : public SearchEngineServiceNew {
     utils::UnmapFile(addr, fd, file_length);
   }
 
-  void Serialize(std::string dir_path) {
-    
+  void Serialize(std::string dir_path) const {
+    namespace boost_fs = boost::filesystem;
+    boost_fs::path p{dir_path};
+
+    if (boost_fs::exists(p) == false) {
+      boost_fs::create_directory(p);
+    }
+
+    SerializeMeta(dir_path + "/engine_meta.dump");
+    doc_store_.Serialize(dir_path + "/doc_store.dump");
+    inverted_index_->Serialize(dir_path + "/inverted_index.dump");
+    doc_lengths_.Serialize(dir_path + "/doc_lengths.dump");
   }
 
   void Deserialize(std::string dir_path) {
-
+    DeserializeMeta(dir_path + "/engine_meta.dump");
+    doc_store_.Deserialize(dir_path + "/doc_store.dump");
+    inverted_index_->Deserialize(dir_path + "/inverted_index.dump");
+    doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
   }
 
  private:

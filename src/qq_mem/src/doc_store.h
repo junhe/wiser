@@ -54,7 +54,8 @@ class SimpleDocStore {
 		return store_.size();
 	}
 
-  static std::string SerializeEntry(const int doc_id, const std::string &doc_text) {
+  static std::string SerializeEntry(const int doc_id, 
+      const std::string &doc_text) {
     VarintBuffer buf;
     buf.Append(doc_id);
     buf.Append(doc_text.size());
@@ -85,13 +86,13 @@ class SimpleDocStore {
     return offset + text_size;
   }
 
-  std::string SerializeCount() {
+  std::string SerializeCount() const {
     VarintBuffer buf;
     buf.Append(store_.size());
     return buf.Data(); 
   }
 
-  void Serialize(const std::string path) {
+  void Serialize(const std::string path) const {
     std::ofstream ofile(path, std::ios::binary);
 
     std::string count_buf = SerializeCount();

@@ -48,7 +48,7 @@ class DocLengthStore {
     return str;
   }
 
-  void Serialize(std::string path) {
+  void Serialize(std::string path) const {
     std::ofstream ofile(path, std::ios::binary);
 
     int count = length_dict_.size();

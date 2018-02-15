@@ -13,6 +13,20 @@
 
 TEST_CASE( "Serialization", "[serial]" ) {
   std::string fake_padding = "012";
+
+  SECTION("Empty VarintBuffer") {
+    VarintBuffer buf;
+
+    std::string serialized = buf.Serialize();
+    REQUIRE(serialized.size() == 1);
+
+    VarintBuffer buf2;
+    buf2.Deserialize(fake_padding + serialized, fake_padding.size());
+    REQUIRE(buf.Size() == buf2.Size());
+    REQUIRE(buf.Data() == buf2.Data());
+  }
+
+
   SECTION("VarintBuffer") {
     VarintBuffer buf;
     buf.Append(11);
@@ -66,6 +80,17 @@ TEST_CASE( "Serialization", "[serial]" ) {
     REQUIRE(pl == pl2);
     REQUIRE(pl2.Serialize() == buf);
   }
+
+  SECTION("Empty inverted index") {
+    InvertedIndexQqMemDelta index;
+    index.Serialize("/tmp/inverted_index.dump");
+
+    InvertedIndexQqMemDelta index2;
+    index2.Deserialize("/tmp/inverted_index.dump");
+    
+    REQUIRE(index == index2);
+  }
+
 
   SECTION("Inverted index") {
     InvertedIndexQqMemDelta index;
@@ -128,16 +153,21 @@ TEST_CASE( "Serialization", "[serial]" ) {
     REQUIRE(store2.GetLength(100) == store.GetLength(100));
     REQUIRE(store2.GetAvgLength() == store.GetAvgLength());
   }
+}
 
-  SECTION("The whole engine, metadata") {
+TEST_CASE( "Whole engine test", "[serial0]" ) {
+  SECTION("The whole engine, empty") {
     GeneralConfig config;
     config.SetString("inverted_index", "compressed");
     QqMemEngine engine(config);
 
-    engine.SerializeMeta("/tmp/engine_meta.dump");
+    DocInfo info("hello world hello", "hello world", "", "", "TOKEN_ONLY");
+    engine.AddDocument(info);
+
+    engine.Serialize("/tmp/test_folder");
 
     QqMemEngine engine2(config);
-    engine2.DeserializeMeta("/tmp/engine_meta.dump");
+    engine2.Deserialize("/tmp/test_folder");
 
     REQUIRE(engine == engine2);
   }
