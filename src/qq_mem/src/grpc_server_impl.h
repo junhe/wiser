@@ -77,7 +77,8 @@ using std::chrono::system_clock;
 // WithAsyncMethod_StreamingSearch: Async methods are provided here
 //   |
 // QQEngineServiceImpl: Sync methods are implemented here
-class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEngine::Service> {
+class QQEngineServiceImpl: 
+    public QQEngine::WithAsyncMethod_StreamingSearch<QQEngine::Service> {
   public:
     void Initialize(SearchEngineServiceNew* search_engine) {
       // TODO: This function is ugly. Need to find a better way to 
@@ -152,6 +153,35 @@ class ServerService {
  public:
   virtual void Wait() = 0;  
   virtual void Shutdown() = 0;  
+  virtual void LoadEngine(SearchEngineServiceNew *engine, 
+      const GeneralConfig config) {
+    if (config.HasKey("load_source") == false) {
+      LOG(ERROR) << "load_source is not set. "
+        "You probably want to load something to the engine.\n";
+      return;
+    }
+
+    if (config.GetString("load_source") == "linedoc") {
+      if (config.HasKey("line_doc_path"))  {
+        std::string line_doc_path = config.GetString("line_doc_path");
+
+        if (line_doc_path.size() > 0) {
+          int n_rows = config.GetInt("n_line_doc_rows");
+          std::cout << "Loading documents from " << line_doc_path << std::endl;
+          int ret = engine->LoadLocalDocuments(line_doc_path, n_rows, 
+              config.GetString("line_doc_format"));
+        }
+      } else {
+        LOG(FATAL) << "load source is set to linedoc but linedoc " 
+          "path is not set.\n";
+      }
+    } else if (config.GetString("load_source") == "dump") {
+      engine->Deserialize(config.GetString("dump_path"));
+    } else {
+      LOG(FATAL) << "load source " << config.GetString("load_source") 
+        << " is not supported.\n";
+    }
+  }
 };
 
 
@@ -160,15 +190,7 @@ class AsyncServer : public ServerService {
   AsyncServer(const GeneralConfig config, std::unique_ptr<SearchEngineServiceNew> engine)
       :config_(config), search_engine_(std::move(engine)) {
 
-    if (config.HasKey("line_doc_path"))  {
-      std::string line_doc_path = config.GetString("line_doc_path");
-      if (line_doc_path.size() > 0) {
-        int n_rows = config.GetInt("n_line_doc_rows");
-        std::cout << "Loading documents from " << line_doc_path << std::endl;
-        int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows,
-            config.GetString("line_doc_format"));
-      }
-    }
+    LoadEngine(search_engine_.get(), config);
 
     ServerBuilder builder;
 
@@ -404,16 +426,7 @@ class SyncServer : public ServerService {
   SyncServer(const GeneralConfig config, std::unique_ptr<SearchEngineServiceNew> engine)
       :config_(config), search_engine_(std::move(engine)) {
 
-    if (config.HasKey("line_doc_path"))  {
-      std::string line_doc_path = config.GetString("line_doc_path");
-
-      if (line_doc_path.size() > 0) {
-        int n_rows = config.GetInt("n_line_doc_rows");
-        std::cout << "Loading documents from " << line_doc_path << std::endl;
-        int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows, 
-            config.GetString("line_doc_format"));
-      }
-    }
+    LoadEngine(search_engine_.get(), config);
 
     const std::string target = config.GetString("target");
 
