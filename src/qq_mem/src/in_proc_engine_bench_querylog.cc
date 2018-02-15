@@ -19,146 +19,146 @@ const int M = 1000 * K;
 const int B = 1000 * M;
 
 
-
-void load_query_pool(TermPool *pool, const GeneralConfig &config) {
-  auto query_source_ = config.GetString("query_source");
-
-  // config according to different mode
-  if (query_source_ == "hardcoded") {
-    pool->Add(config.GetStringVec("terms"));
-  } else if (query_source_ == "querylog") {
-    // read in all querys
-    pool->LoadFromFile(config.GetString("querylog_path"), 0);
-  } else {
-    LOG(WARNING) << "Cannot determine query source";
+class Experiment {
+ public:
+  virtual void Before() {}
+  virtual void RunTreatment() {}
+  virtual void After() {}
+  void Run() {
+    Before();
+    RunTreatment();
+    After();
   }
-}
+};
 
 
-std::unique_ptr<SearchEngineServiceNew> create_engine(const int &step_height, 
-    const int &step_width, const int &n_steps) {
-  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine("qq_mem_uncompressed");
+class InProcExperiment: public Experiment {
+ public:
+  InProcExperiment(GeneralConfig config): config_(config) {}
 
-  utils::Staircase staircase(step_height, step_width, n_steps);
+  void Before() {
+    engine_ = std::move(CreateEngineFromFile());
+  }
 
-  std::string doc;
-  int cnt = 0;
-  while ( (doc = staircase.NextLayer()) != "" ) {
-    // std::cout << doc << std::endl;
-    engine->AddDocument(DocInfo(doc, doc, "", "", "TOKEN_ONLY"));
-    cnt++;
+  void RunTreatment() {
+    utils::ResultTable table;
 
-    if (cnt % 1000 == 0) {
-      std::cout << cnt << std::endl;
+    auto query_producer = CreateQueryProducer();
+    auto row = Search(query_producer.get());
+
+    row["n_docs"] = std::to_string(config_.GetInt("n_docs"));
+    row["query_source"] = config_.GetString("query_source");
+    if (row["query_source"] == "hardcoded") {
+      auto terms = config_.GetStringVec("terms");
+      for (auto term : terms) {
+        row["query"] += term;
+      }
+    }
+    table.Append(row);
+
+    std::cout << table.ToStr();
+  }
+
+  std::unique_ptr<SearchEngineServiceNew> CreateEngineFromFile() {
+    std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
+        config_.GetString("engine_type"));
+
+    if (config_.GetString("load_source") == "linedoc") {
+      engine->LoadLocalDocuments(config_.GetString("linedoc_path"), 
+                                 config_.GetInt("n_docs"),
+                                 config_.GetString("loader"));
+    } else if (config_.GetString("load_source") == "dump") {
+      std::cout << "Loading engine from dumpped data...." << std::endl;
+      engine->Deserialize(config_.GetString("dump_path"));
+    } else {
+      std::cout << "You must speicify load_source" << std::endl;
+    }
+
+    // engine->Serialize("/mnt/ssd/big-engine-dump");
+
+    std::cout << "Term Count: " << engine->TermCount() << std::endl;
+    return engine;
+  }
+
+  std::unique_ptr<SearchEngineServiceNew> CreateEngineBySyntheticData(
+      const int &step_height, const int &step_width, const int &n_steps) {
+    std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine("qq_mem_uncompressed");
+
+    utils::Staircase staircase(step_height, step_width, n_steps);
+
+    std::string doc;
+    int cnt = 0;
+    while ( (doc = staircase.NextLayer()) != "" ) {
+      // std::cout << doc << std::endl;
+      engine->AddDocument(DocInfo(doc, doc, "", "", "TOKEN_ONLY"));
+      cnt++;
+
+      if (cnt % 1000 == 0) {
+        std::cout << cnt << std::endl;
+      }
+    }
+
+    return engine;
+  }
+
+  void ShowEngineStatus(SearchEngineServiceNew *engine, const TermList &terms) {
+    auto pl_sizes = engine->PostinglistSizes(terms); 
+    for (auto pair : pl_sizes) {
+      std::cout << pair.first << " : " << pair.second << std::endl;
     }
   }
 
-  return engine;
-}
+  std::unique_ptr<QueryProducer> CreateQueryProducer() {
+    // Create query producer
+    std::unique_ptr<TermPoolArray> array(new TermPoolArray(1));
 
-
-std::unique_ptr<SearchEngineServiceNew> create_engine_from_file(
-    const GeneralConfig &config) {
-
-  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(config.GetString("engine_type"));
-
-  // engine->LoadLocalDocuments(config.GetString("linedoc_path"), 
-                             // config.GetInt("n_docs"),
-                             // config.GetString("loader"));
-  engine->Deserialize("/mnt/ssd/big-engine-dump");
-
-  // std::cout << "Sleeping 100000 sec..." << std::endl;
-  // utils::sleep(100000);
-
-  // engine->Serialize("/mnt/ssd/big-engine-dump");
-
-  std::cout << "Term Count: " << engine->TermCount() << std::endl;
-  return engine;
-}
-
-void show_engine_stats(SearchEngineServiceNew *engine, const TermList &terms) {
-  auto pl_sizes = engine->PostinglistSizes(terms); 
-  for (auto pair : pl_sizes) {
-    std::cout << pair.first << " : " << pair.second << std::endl;
-  }
-}
-
-utils::ResultRow search(SearchEngineServiceNew *engine, 
-                        const GeneralConfig &config) {
-  const int n_repeats = config.GetInt("n_repeats");
-  utils::ResultRow row;
-  
-  // Create query producer
-  std::unique_ptr<TermPoolArray> array(new TermPoolArray(1));
-
-  if (config.GetString("query_source") == "hardcoded") {
-    array->LoadTerms(config.GetStringVec("terms"));
-  } else {
-    array->LoadFromFile(config.GetString("querylog_path"), 100);
-  }
-  std::cout << "Constructed query pool successfully" << std::endl;
-
-  GeneralConfig query_config;
-  query_config.SetBool("return_snippets", true);
-  query_config.SetBool("is_phrase", false);
-  query_config.SetBool("return_snippets", config.GetBool("enable_snippets"));
-
-  std::unique_ptr<QueryProducer> query_producer(
-      new QueryProducer(std::move(array), query_config));
-
-  if (config.GetString("query_source") == "hardcoded") {
-		std::cout << "Posting list sizes:" << std::endl;
-    show_engine_stats(engine, config.GetStringVec("terms"));
-  }
-
-  auto start = utils::now();
-  for (int i = 0; i < n_repeats; i++) {
-    auto query = query_producer->NextNativeQuery(0);
-    query.n_snippet_passages = config.GetInt("n_passages");
-    auto result = engine->Search(query);
-
-    // std::cout << result.ToStr() << std::endl;
-  }
-  auto end = utils::now();
-  auto dur = utils::duration(start, end);
-
-  row["duration"] = std::to_string(dur / n_repeats); 
-  row["QPS"] = std::to_string(n_repeats / dur);
-  return row;
-}
-
-
-void qq_uncompressed_bench() {
-  utils::ResultTable table;
-  auto engine = create_engine(1, 2, 425);
-
-  // table.Append(search(engine.get(), TermList{"0"}));
-
-  // table.Append(search(engine.get(), TermList{"0", "1"}));
-
-  std::cout << table.ToStr();
-}
-
-
-void qq_uncompressed_bench_wiki(const GeneralConfig &config) {
-  utils::ResultTable table;
-
-  auto engine = create_engine_from_file(config);
-
-  auto row = search(engine.get(), config);
-
-  row["n_docs"] = std::to_string(config.GetInt("n_docs"));
-  row["query_source"] = config.GetString("query_source");
-  if (row["query_source"] == "hardcoded") {
-    auto terms = config.GetStringVec("terms");
-    for (auto term : terms) {
-      row["query"] += term;
+    if (config_.GetString("query_source") == "hardcoded") {
+      array->LoadTerms(config_.GetStringVec("terms"));
+    } else {
+      array->LoadFromFile(config_.GetString("querylog_path"), 100);
     }
-  }
-  table.Append(row);
+    std::cout << "Constructed query pool successfully" << std::endl;
 
-  std::cout << table.ToStr();
-}
+    GeneralConfig query_config;
+    query_config.SetBool("return_snippets", true);
+    query_config.SetBool("is_phrase", false);
+    query_config.SetBool("return_snippets", config_.GetBool("enable_snippets"));
+
+    std::unique_ptr<QueryProducer> query_producer(
+        new QueryProducer(std::move(array), query_config));
+    return query_producer;
+  }
+
+  utils::ResultRow Search(QueryProducer *query_producer) {
+    const int n_repeats = config_.GetInt("n_repeats");
+    utils::ResultRow row;
+
+    if (config_.GetString("query_source") == "hardcoded") {
+      std::cout << "Posting list sizes:" << std::endl;
+      ShowEngineStatus(engine_.get(), config_.GetStringVec("terms"));
+    }
+
+    auto start = utils::now();
+    for (int i = 0; i < n_repeats; i++) {
+      auto query = query_producer->NextNativeQuery(0);
+      query.n_snippet_passages = config_.GetInt("n_passages");
+      auto result = engine_->Search(query);
+
+      // std::cout << result.ToStr() << std::endl;
+    }
+    auto end = utils::now();
+    auto dur = utils::duration(start, end);
+
+    row["duration"] = std::to_string(dur / n_repeats); 
+    row["QPS"] = std::to_string(n_repeats / dur);
+    return row;
+  }
+
+ private:
+  GeneralConfig config_;
+  std::unique_ptr<SearchEngineServiceNew> engine_;
+};
+
 
 GeneralConfig config_by_jun() {
 /*
@@ -187,8 +187,11 @@ GeneralConfig config_by_jun() {
   config.SetString("engine_type", "qq_mem_compressed");
   // config.SetString("engine_type", "qq_mem_uncompressed");
 
-  config.SetInt("n_docs", 10000000);
 
+  config.SetString("load_source", "linedoc");
+  // config.SetString("load_source", "dump");
+
+  config.SetInt("n_docs", 100);
   config.SetString("linedoc_path", 
       "/mnt/ssd/downloads/enwiki.linedoc_tokenized.1");
   config.SetString("loader", "WITH_POSITIONS");
@@ -196,6 +199,8 @@ GeneralConfig config_by_jun() {
   // config.SetString("linedoc_path", 
       // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
   // config.SetString("loader", "TOKEN_ONLY");
+  
+  config.SetString("dump_path", "/mnt/ssd/big-engine-dump");
 
   config.SetInt("n_repeats", 1000);
   config.SetInt("n_passages", 3);
@@ -243,8 +248,10 @@ int main(int argc, char **argv) {
   auto config = config_by_jun();
   // auto config = config_by_kan();
   
-  qq_uncompressed_bench_wiki(config);
-  // debug();
+  // qq_uncompressed_bench_wiki(config);
+
+  InProcExperiment experiment(config);
+  experiment.Run();
 }
 
 
