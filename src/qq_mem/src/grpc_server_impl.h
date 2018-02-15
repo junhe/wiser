@@ -176,6 +176,8 @@ class ServerService {
           "path is not set.\n";
       }
     } else if (config.GetString("load_source") == "dump") {
+      std::cout << "Loading data from dump directory "
+        << config.GetString("dump_path") << std::endl;
       engine->Deserialize(config.GetString("dump_path"));
     } else {
       LOG(FATAL) << "load source " << config.GetString("load_source") 
