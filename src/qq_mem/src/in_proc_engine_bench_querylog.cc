@@ -40,11 +40,12 @@ class Experiment {
 };
 
 
-struct SimpleQuery {
-  SimpleQuery(TermList terms_in, bool is_phrase_in)
-    :terms(terms_in), is_phrase(is_phrase_in) {}
+struct Treatment {
+  Treatment(TermList terms_in, bool is_phrase_in, int n_repeats_in)
+    :terms(terms_in), is_phrase(is_phrase_in), n_repeats(n_repeats_in) {}
   TermList terms;
   bool is_phrase;
+  int n_repeats;
 };
 
 class InProcExperiment: public Experiment {
@@ -59,21 +60,21 @@ class InProcExperiment: public Experiment {
 
   void MakeQueryProducers() {
     // single term
-    std::vector<SimpleQuery> queries {
-      SimpleQuery({"hello"}, false),
-      SimpleQuery({"from"}, false),
-      SimpleQuery({"ripdo"}, false),
+    std::vector<Treatment> queries {
+      Treatment({"hello"}, false, 1000),
+      Treatment({"from"}, false, 10),
+      Treatment({"ripdo"}, false, 1000000),
 
-      SimpleQuery({"hello", "world"}, false),
-      SimpleQuery({"from", "also"}, false),
-      SimpleQuery({"ripdo", "liftech"}, false),
+      Treatment({"hello", "world"}, false, 100),
+      Treatment({"from", "also"}, false, 10),
+      Treatment({"ripdo", "liftech"}, false, 1000000),
 
-      SimpleQuery({"hello", "world"}, true),
-      SimpleQuery({"barack", "obama"}, true),
-      SimpleQuery({"from", "also"}, true) 
+      Treatment({"hello", "world"}, true, 100),
+      Treatment({"barack", "obama"}, true, 100),
+      Treatment({"from", "also"}, true, 10) 
     };
 
-    simple_queries_ = queries;
+    treatments_ = queries;
     for (auto &query : queries) {
       GeneralConfig config;
       config.SetBool("is_phrase", query.is_phrase);
@@ -101,11 +102,11 @@ class InProcExperiment: public Experiment {
   void RunTreatment(const int run_id) {
     std::cout << "Running treatment " << run_id << std::endl;
 
-    auto row = Search(query_producers_[run_id].get());
+    auto row = Search(query_producers_[run_id].get(), run_id);
 
     row["n_docs"] = std::to_string(config_.GetInt("n_docs"));
-    row["terms"] = Concat(simple_queries_[run_id].terms);
-    row["is_phrase"] = std::to_string(simple_queries_[run_id].is_phrase);
+    row["terms"] = Concat(treatments_[run_id].terms);
+    row["is_phrase"] = std::to_string(treatments_[run_id].is_phrase);
     table_.Append(row);
   }
 
@@ -123,7 +124,10 @@ class InProcExperiment: public Experiment {
                                  config_.GetString("loader"));
     } else if (config_.GetString("load_source") == "dump") {
       std::cout << "Loading engine from dumpped data...." << std::endl;
+      auto start = utils::now();
       engine->Deserialize(config_.GetString("dump_path"));
+      auto end = utils::now();
+      std::cout << "Time to load dumpped data: " << utils::duration(start, end) << std::endl;
     } else {
       std::cout << "You must speicify load_source" << std::endl;
     }
@@ -183,8 +187,8 @@ class InProcExperiment: public Experiment {
     return query_producer;
   }
 
-  utils::ResultRow Search(QueryProducer *query_producer) {
-    const int n_repeats = config_.GetInt("n_repeats");
+  utils::ResultRow Search(QueryProducer *query_producer, const int run_id) {
+    const int n_repeats = treatments_[run_id].n_repeats;
     utils::ResultRow row;
 
     auto start = utils::now();
@@ -198,8 +202,9 @@ class InProcExperiment: public Experiment {
     auto end = utils::now();
     auto dur = utils::duration(start, end);
 
-    row["duration"] = std::to_string(dur / n_repeats); 
-    row["QPS"] = std::to_string(n_repeats / dur);
+    row["latency"] = std::to_string(dur / n_repeats); 
+    row["duration"] = std::to_string(dur); 
+    row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
     return row;
   }
 
@@ -207,7 +212,7 @@ class InProcExperiment: public Experiment {
   GeneralConfig config_;
   std::vector<std::unique_ptr<QueryProducer>> query_producers_;
   std::unique_ptr<SearchEngineServiceNew> engine_;
-  std::vector<SimpleQuery> simple_queries_;
+  std::vector<Treatment> treatments_;
   utils::ResultTable table_;
 };
 
@@ -240,8 +245,8 @@ GeneralConfig config_by_jun() {
   // config.SetString("engine_type", "qq_mem_uncompressed");
 
 
-  config.SetString("load_source", "linedoc");
-  // config.SetString("load_source", "dump");
+  // config.SetString("load_source", "linedoc");
+  config.SetString("load_source", "dump");
 
   config.SetInt("n_docs", 100);
   config.SetString("linedoc_path", 
