@@ -35,7 +35,6 @@ void load_query_pool(TermPool *pool, const GeneralConfig &config) {
 }
 
 
-
 std::unique_ptr<SearchEngineServiceNew> create_engine(const int &step_height, 
     const int &step_width, const int &n_steps) {
   std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine("qq_mem_uncompressed");
@@ -60,15 +59,20 @@ std::unique_ptr<SearchEngineServiceNew> create_engine(const int &step_height,
 
 std::unique_ptr<SearchEngineServiceNew> create_engine_from_file(
     const GeneralConfig &config) {
+
   std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(config.GetString("engine_type"));
-  engine->LoadLocalDocuments(config.GetString("linedoc_path"), 
-                             config.GetInt("n_docs"),
-                             config.GetString("loader"));
-  std::cout << "Term Count: " << engine->TermCount() << std::endl;
+
+  // engine->LoadLocalDocuments(config.GetString("linedoc_path"), 
+                             // config.GetInt("n_docs"),
+                             // config.GetString("loader"));
+  engine->Deserialize("/mnt/ssd/big-engine-dump");
 
   // std::cout << "Sleeping 100000 sec..." << std::endl;
   // utils::sleep(100000);
 
+  // engine->Serialize("/mnt/ssd/big-engine-dump");
+
+  std::cout << "Term Count: " << engine->TermCount() << std::endl;
   return engine;
 }
 
@@ -185,13 +189,13 @@ GeneralConfig config_by_jun() {
 
   config.SetInt("n_docs", 10000000);
 
-  // config.SetString("linedoc_path", 
-      // "/mnt/ssd/downloads/enwiki.linedoc_tokenized.1");
-  // config.SetString("loader", "WITH_POSITIONS");
-
   config.SetString("linedoc_path", 
-      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  config.SetString("loader", "TOKEN_ONLY");
+      "/mnt/ssd/downloads/enwiki.linedoc_tokenized.1");
+  config.SetString("loader", "WITH_POSITIONS");
+
+  // config.SetString("linedoc_path", 
+      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  // config.SetString("loader", "TOKEN_ONLY");
 
   config.SetInt("n_repeats", 1000);
   config.SetInt("n_passages", 3);
@@ -230,7 +234,6 @@ GeneralConfig config_by_kan() {
 }
 
 
-
 int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = 1; // print to stderr instead of file
@@ -241,6 +244,7 @@ int main(int argc, char **argv) {
   // auto config = config_by_kan();
   
   qq_uncompressed_bench_wiki(config);
+  // debug();
 }
 
 
