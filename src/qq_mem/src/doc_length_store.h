@@ -68,7 +68,7 @@ class DocLengthStore {
     char *addr;
     size_t file_length;
     uint32_t var;
-    int offset = 0;
+    off_t offset = 0;
 
     avg_length_ = 0;
 
@@ -77,7 +77,7 @@ class DocLengthStore {
     int count = *((int *)addr);
     std::cout << "count: " << count << std::endl;
     
-    int width = 4;
+    int width = sizeof(int);
     const char *base = addr + width;
     for (int i = 0; i < count; i++) {
       int id = *((int *) (base + width * (2 * i)));

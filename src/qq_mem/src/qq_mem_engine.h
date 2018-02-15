@@ -196,7 +196,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
   }
 
   int DeserializeEntry(const char *buf) {
-    int offset = 0;
+    off_t offset = 0;
 
     int term_len = *((int *)buf); 
     offset += sizeof(int);
@@ -225,7 +225,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     char *addr;
     size_t file_length;
     uint32_t var;
-    int offset = 0;
+    off_t offset = 0;
 
     index_.clear();
 

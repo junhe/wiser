@@ -112,7 +112,7 @@ class SimpleDocStore {
     char *addr;
     size_t file_length;
     uint32_t var;
-    int offset = 0;
+    off_t offset = 0;
 
     utils::MapFile(path, &addr, &fd, &file_length);
 

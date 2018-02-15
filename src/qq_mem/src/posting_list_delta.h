@@ -455,9 +455,9 @@ class PostingListDelta {
     return buf.Data();
   }
 
-  void Deserialize(const std::string &data, const int start_offset) {
+  void Deserialize(const std::string &data, const off_t start_offset) {
     int len;
-    int offset = start_offset;
+    off_t offset = start_offset;
     uint32_t var;
 
     len = utils::varint_decode(data, offset, &var);
