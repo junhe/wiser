@@ -27,11 +27,11 @@ class VarintBuffer {
     end_ += buf.size();
   }
 
-  int Size() const {
+  off_t Size() const {
     return end_;
   }
 
-  int End() const {
+  off_t End() const {
     return end_;
   }
 
@@ -54,7 +54,7 @@ class VarintBuffer {
     return out.Data();
   }
 
-  int Deserialize(const std::string &buf, const int offset) {
+  off_t Deserialize(const std::string &buf, const off_t offset) {
     int len;
     uint32_t end;
 
@@ -68,7 +68,7 @@ class VarintBuffer {
 
  private:
   std::string data_;
-  int end_ = 0;
+  off_t end_ = 0;
 };
 
 

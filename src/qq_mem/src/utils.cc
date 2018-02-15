@@ -242,7 +242,7 @@ std::string str_qq_search_reply(const qq::SearchReply &reply) {
 // TODO: expand more then 5 so we do not frequently resize? but
 // C++ will expand capacity automatically. We are not actually
 // resizing memory.
-int varint_expand_and_encode(uint32_t value, std::string *buf, const int offset) {
+int varint_expand_and_encode(uint32_t value, std::string *buf, const off_t offset) {
   if ( buf->size() - offset < 5 ) {
     buf->resize(offset + 5);
   }
@@ -253,7 +253,7 @@ int varint_expand_and_encode(uint32_t value, std::string *buf, const int offset)
 // buf must be at least 5 bytes long, which is the size required
 // to store a full unsigned int
 // It returns the number of bytes stored in buf
-int varint_encode(uint32_t value, std::string *buf, const int offset) {
+int varint_encode(uint32_t value, std::string *buf, const off_t offset) {
   int i = 0;
   // inv: value has what left to be encoded
   //      buf[offset, offset+i) has encoded bytes
@@ -271,11 +271,11 @@ int varint_encode(uint32_t value, std::string *buf, const int offset) {
 
 // from varint code to int
 // return: length of the buffer decoded
-int varint_decode(const std::string &buf, const int offset, uint32_t *value) {
+int varint_decode(const std::string &buf, const off_t offset, uint32_t *value) {
   return varint_decode_chars(buf.data(), offset, value);
 }
 
-int varint_decode_chars(const char *buf, const int offset, uint32_t *value) {
+int varint_decode_chars(const char *buf, const off_t offset, uint32_t *value) {
   int i = 0;
   *value = 0;
   // inv: buf[offset, offset + i) has been copied to value 

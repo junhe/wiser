@@ -87,7 +87,7 @@ struct SpanMeta {
     return buf.Data();
   }
 
-  void Deserialize(const std::string &data, const int offset) {
+  void Deserialize(const std::string &data, const off_t offset) {
     VarintIterator it(&data, offset, 2); 
     prev_doc_id = it.Pop();
     start_offset = it.Pop();
@@ -129,11 +129,11 @@ struct SkipIndex {
     return !(a == b);
   }
 
-  int Deserialize(const std::string &data, int start_offset) {
+  int Deserialize(const std::string &data, off_t start_offset) {
     int len;  
     uint32_t size; 
     uint32_t meta_size;
-    int offset = start_offset;
+    off_t offset = start_offset;
 
     vec.clear();
 
