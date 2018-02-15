@@ -19,6 +19,8 @@ class SearchEngineServiceNew {
   virtual int TermCount() const = 0;
   virtual std::map<std::string, int> PostinglistSizes(const TermList &terms) = 0;
   virtual SearchResult Search(const SearchQuery &query) = 0; 
+  virtual void Serialize(std::string dir_path) const = 0;
+  virtual void Deserialize(std::string dir_path) = 0;
 };
 
 

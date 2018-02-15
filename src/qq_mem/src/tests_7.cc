@@ -155,7 +155,7 @@ TEST_CASE( "Serialization", "[serial]" ) {
   }
 }
 
-TEST_CASE( "Whole engine test", "[serial0]" ) {
+TEST_CASE( "Whole engine test", "[serial]" ) {
   SECTION("The whole engine") {
     GeneralConfig config;
     config.SetString("inverted_index", "compressed");
