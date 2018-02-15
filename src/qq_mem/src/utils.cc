@@ -11,6 +11,8 @@
 #include <utility>
 #include <locale>
 
+#include <boost/filesystem.hpp>
+
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -317,5 +319,8 @@ void UnmapFile(char *addr, int fd, size_t file_length) {
   close(fd);
 }
 
+void RemoveDir(std::string path) {
+  boost::filesystem::remove_all(path); 
+}
 
 } // namespace util

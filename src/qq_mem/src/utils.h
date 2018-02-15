@@ -187,6 +187,8 @@ int varint_decode_chars(const char *buf, const int offset, uint32_t *value);
 void MapFile(std::string path, char **ret_addr, int *ret_fd, size_t *ret_file_length);
 void UnmapFile(char *addr, int fd, size_t file_length);
 
+void RemoveDir(std::string path);
+
 } // namespace util
 #endif
 

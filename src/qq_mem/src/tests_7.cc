@@ -191,6 +191,23 @@ TEST_CASE( "Whole engine test", "[serial]" ) {
     REQUIRE(engine == engine2);
   }
 
+  SECTION("The whole engine, real docs") {
+    std::string path = "/tmp/test_folder";
+    utils::RemoveDir(path);
 
+    GeneralConfig config;
+    config.SetString("inverted_index", "compressed");
+    QqMemEngine engine(config);
+
+    engine.LoadLocalDocuments("src/testdata/line_doc_with_positions", 1000, 
+        "WITH_POSITIONS");
+
+    engine.Serialize(path);
+
+    QqMemEngine engine2(config);
+    engine2.Deserialize(path);
+
+    REQUIRE(engine == engine2);
+  }
 }
 
