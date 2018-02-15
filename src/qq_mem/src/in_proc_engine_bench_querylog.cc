@@ -22,41 +22,95 @@ const int B = 1000 * M;
 class Experiment {
  public:
   virtual void Before() {}
-  virtual void RunTreatment() {}
+  virtual void BeforeEach(const int run_id) {}
+  virtual void RunTreatment(const int run_id) = 0;
+  virtual void AfterEach(const int run_id) {}
   virtual void After() {}
-  void Run() {
+
+  virtual int NumberOfRuns() = 0;
+  virtual void Run() {
     Before();
-    RunTreatment();
+    for (int i = 0; i < NumberOfRuns(); i++) {
+      BeforeEach(i);
+      RunTreatment(i);
+      AfterEach(i);
+    }
     After();
   }
 };
 
 
+struct SimpleQuery {
+  SimpleQuery(TermList terms_in, bool is_phrase_in)
+    :terms(terms_in), is_phrase(is_phrase_in) {}
+  TermList terms;
+  bool is_phrase;
+};
+
 class InProcExperiment: public Experiment {
  public:
-  InProcExperiment(GeneralConfig config): config_(config) {}
+  InProcExperiment(GeneralConfig config): config_(config) {
+    MakeQueryProducers();
+  }
+
+  int NumberOfRuns() {
+    return query_producers_.size();
+  }
+
+  void MakeQueryProducers() {
+    // single term
+    std::vector<SimpleQuery> queries {
+      SimpleQuery({"hello"}, false),
+      SimpleQuery({"from"}, false),
+      SimpleQuery({"ripdo"}, false),
+
+      SimpleQuery({"hello", "world"}, false),
+      SimpleQuery({"from", "also"}, false),
+      SimpleQuery({"ripdo", "liftech"}, false),
+
+      SimpleQuery({"hello", "world"}, true),
+      SimpleQuery({"barack", "obama"}, true),
+      SimpleQuery({"from", "also"}, true) 
+    };
+
+    simple_queries_ = queries;
+    for (auto &query : queries) {
+      GeneralConfig config;
+      config.SetBool("is_phrase", query.is_phrase);
+      query_producers_.push_back(
+          CreateQueryProducer(query.terms, 1, config));
+    }
+  }
 
   void Before() {
     engine_ = std::move(CreateEngineFromFile());
   }
 
-  void RunTreatment() {
-    utils::ResultTable table;
-
-    auto query_producer = CreateQueryProducer();
-    auto row = Search(query_producer.get());
-
-    row["n_docs"] = std::to_string(config_.GetInt("n_docs"));
-    row["query_source"] = config_.GetString("query_source");
-    if (row["query_source"] == "hardcoded") {
-      auto terms = config_.GetStringVec("terms");
-      for (auto term : terms) {
-        row["query"] += term;
+  std::string Concat(TermList terms) {
+    std::string s;
+    for (int i = 0; i < terms.size(); i++) {
+      s += terms[i];
+      if (i < terms.size() - 1) {
+        // not the last term
+        s += "+";
       }
     }
-    table.Append(row);
+    return s;
+  }
 
-    std::cout << table.ToStr();
+  void RunTreatment(const int run_id) {
+    std::cout << "Running treatment " << run_id << std::endl;
+
+    auto row = Search(query_producers_[run_id].get());
+
+    row["n_docs"] = std::to_string(config_.GetInt("n_docs"));
+    row["terms"] = Concat(simple_queries_[run_id].terms);
+    row["is_phrase"] = std::to_string(simple_queries_[run_id].is_phrase);
+    table_.Append(row);
+  }
+
+  void After() {
+    std::cout << table_.ToStr();
   }
 
   std::unique_ptr<SearchEngineServiceNew> CreateEngineFromFile() {
@@ -108,7 +162,7 @@ class InProcExperiment: public Experiment {
     }
   }
 
-  std::unique_ptr<QueryProducer> CreateQueryProducer() {
+  std::unique_ptr<QueryProducer> CreateQueryProducer2() {
     // Create query producer
     std::unique_ptr<TermPoolArray> array(new TermPoolArray(1));
 
@@ -133,15 +187,10 @@ class InProcExperiment: public Experiment {
     const int n_repeats = config_.GetInt("n_repeats");
     utils::ResultRow row;
 
-    if (config_.GetString("query_source") == "hardcoded") {
-      std::cout << "Posting list sizes:" << std::endl;
-      ShowEngineStatus(engine_.get(), config_.GetStringVec("terms"));
-    }
-
     auto start = utils::now();
     for (int i = 0; i < n_repeats; i++) {
       auto query = query_producer->NextNativeQuery(0);
-      query.n_snippet_passages = config_.GetInt("n_passages");
+      // query.n_snippet_passages = config_.GetInt("n_passages");
       auto result = engine_->Search(query);
 
       // std::cout << result.ToStr() << std::endl;
@@ -156,7 +205,10 @@ class InProcExperiment: public Experiment {
 
  private:
   GeneralConfig config_;
+  std::vector<std::unique_ptr<QueryProducer>> query_producers_;
   std::unique_ptr<SearchEngineServiceNew> engine_;
+  std::vector<SimpleQuery> simple_queries_;
+  utils::ResultTable table_;
 };
 
 
