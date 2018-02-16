@@ -73,7 +73,7 @@ void sanity_check() {
   bool ret;
   ret = client->Search("multicellular", doc_ids);
   assert(ret == true);
-  assert(doc_ids.size() >= 1);
+  assert(doc_ids.size() > 0);
 }
 
 int main(int argc, char** argv) {

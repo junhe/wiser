@@ -18,6 +18,18 @@ const int K = 1000;
 const int M = 1000 * K;
 const int B = 1000 * M;
 
+std::string Concat(TermList terms) {
+  std::string s;
+  for (int i = 0; i < terms.size(); i++) {
+    s += terms[i];
+    if (i < terms.size() - 1) {
+      // not the last term
+      s += "+";
+    }
+  }
+  return s;
+}
+
 
 class Experiment {
  public:
@@ -47,6 +59,53 @@ struct Treatment {
   bool is_phrase;
   int n_repeats;
 };
+
+
+class TreatmentExecutor {
+ public:
+  virtual utils::ResultRow Execute(Treatment treatment) = 0;
+};
+
+
+class LocalTreatmentExecutor: public TreatmentExecutor {
+ public:
+  LocalTreatmentExecutor(SearchEngineServiceNew *engine)
+     :engine_(engine) {}
+
+  std::unique_ptr<QueryProducer> CreateProducer(Treatment treatment) {
+    GeneralConfig config;
+    config.SetBool("is_phrase", treatment.is_phrase);
+    return CreateQueryProducer(treatment.terms, 1, config);
+  }
+
+  utils::ResultRow Execute(Treatment treatment) {
+    const int n_repeats = treatment.n_repeats;
+    utils::ResultRow row;
+    auto query_producer = CreateProducer(treatment);
+
+    auto start = utils::now();
+    for (int i = 0; i < n_repeats; i++) {
+      auto query = query_producer->NextNativeQuery(0);
+      // query.n_snippet_passages = config_.GetInt("n_passages");
+      auto result = engine_->Search(query);
+
+      // std::cout << result.ToStr() << std::endl;
+    }
+    auto end = utils::now();
+    auto dur = utils::duration(start, end);
+
+    row["latency"] = std::to_string(dur / n_repeats); 
+    row["duration"] = std::to_string(dur); 
+    row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
+    return row;
+  }
+
+ private:
+  SearchEngineServiceNew *engine_;
+};
+
+
+
 
 class InProcExperiment: public Experiment {
  public:
@@ -85,24 +144,14 @@ class InProcExperiment: public Experiment {
 
   void Before() {
     engine_ = std::move(CreateEngineFromFile());
-  }
-
-  std::string Concat(TermList terms) {
-    std::string s;
-    for (int i = 0; i < terms.size(); i++) {
-      s += terms[i];
-      if (i < terms.size() - 1) {
-        // not the last term
-        s += "+";
-      }
-    }
-    return s;
+    treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
   }
 
   void RunTreatment(const int run_id) {
     std::cout << "Running treatment " << run_id << std::endl;
 
-    auto row = Search(query_producers_[run_id].get(), run_id);
+    // auto row = Search(query_producers_[run_id].get(), run_id);
+    auto row = treatment_executor_->Execute(treatments_[run_id]);
 
     row["n_docs"] = std::to_string(config_.GetInt("n_docs"));
     row["terms"] = Concat(treatments_[run_id].terms);
@@ -138,74 +187,11 @@ class InProcExperiment: public Experiment {
     return engine;
   }
 
-  std::unique_ptr<SearchEngineServiceNew> CreateEngineBySyntheticData(
-      const int &step_height, const int &step_width, const int &n_steps) {
-    std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine("qq_mem_uncompressed");
-
-    utils::Staircase staircase(step_height, step_width, n_steps);
-
-    std::string doc;
-    int cnt = 0;
-    while ( (doc = staircase.NextLayer()) != "" ) {
-      // std::cout << doc << std::endl;
-      engine->AddDocument(DocInfo(doc, doc, "", "", "TOKEN_ONLY"));
-      cnt++;
-
-      if (cnt % 1000 == 0) {
-        std::cout << cnt << std::endl;
-      }
-    }
-
-    return engine;
-  }
-
   void ShowEngineStatus(SearchEngineServiceNew *engine, const TermList &terms) {
     auto pl_sizes = engine->PostinglistSizes(terms); 
     for (auto pair : pl_sizes) {
       std::cout << pair.first << " : " << pair.second << std::endl;
     }
-  }
-
-  std::unique_ptr<QueryProducer> CreateQueryProducer2() {
-    // Create query producer
-    std::unique_ptr<TermPoolArray> array(new TermPoolArray(1));
-
-    if (config_.GetString("query_source") == "hardcoded") {
-      array->LoadTerms(config_.GetStringVec("terms"));
-    } else {
-      array->LoadFromFile(config_.GetString("querylog_path"), 100);
-    }
-    std::cout << "Constructed query pool successfully" << std::endl;
-
-    GeneralConfig query_config;
-    query_config.SetBool("return_snippets", true);
-    query_config.SetBool("is_phrase", false);
-    query_config.SetBool("return_snippets", config_.GetBool("enable_snippets"));
-
-    std::unique_ptr<QueryProducer> query_producer(
-        new QueryProducer(std::move(array), query_config));
-    return query_producer;
-  }
-
-  utils::ResultRow Search(QueryProducer *query_producer, const int run_id) {
-    const int n_repeats = treatments_[run_id].n_repeats;
-    utils::ResultRow row;
-
-    auto start = utils::now();
-    for (int i = 0; i < n_repeats; i++) {
-      auto query = query_producer->NextNativeQuery(0);
-      // query.n_snippet_passages = config_.GetInt("n_passages");
-      auto result = engine_->Search(query);
-
-      // std::cout << result.ToStr() << std::endl;
-    }
-    auto end = utils::now();
-    auto dur = utils::duration(start, end);
-
-    row["latency"] = std::to_string(dur / n_repeats); 
-    row["duration"] = std::to_string(dur); 
-    row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
-    return row;
   }
 
  private:
@@ -214,6 +200,7 @@ class InProcExperiment: public Experiment {
   std::unique_ptr<SearchEngineServiceNew> engine_;
   std::vector<Treatment> treatments_;
   utils::ResultTable table_;
+  std::unique_ptr<TreatmentExecutor> treatment_executor_;
 };
 
 
@@ -245,8 +232,8 @@ GeneralConfig config_by_jun() {
   // config.SetString("engine_type", "qq_mem_uncompressed");
 
 
-  // config.SetString("load_source", "linedoc");
-  config.SetString("load_source", "dump");
+  config.SetString("load_source", "linedoc");
+  // config.SetString("load_source", "dump");
 
   config.SetInt("n_docs", 100);
   config.SetString("linedoc_path", 
