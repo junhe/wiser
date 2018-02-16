@@ -11,6 +11,7 @@
 
 #include "qq_mem_engine.h"
 #include "utils.h"
+#include "grpc_client_impl.h"
 #include "general_config.h"
 #include "query_pool.h"
 
@@ -66,6 +67,42 @@ class TreatmentExecutor {
   virtual utils::ResultRow Execute(Treatment treatment) = 0;
 };
 
+class GrpcTreatmentExecutor: public TreatmentExecutor {
+ public:
+  GrpcTreatmentExecutor(int n_threads){
+    client_config_.SetString("synchronization", "ASYNC");
+    client_config_.SetString("rpc_arity", "STREAMING");
+    client_config_.SetString("target", "localhost:50051");
+    client_config_.SetInt("n_client_channels", 64);
+    client_config_.SetInt("n_rpcs_per_channel", 100);
+    client_config_.SetInt("n_messages_per_call", 100000);
+    client_config_.SetInt("n_threads", n_threads); 
+    client_config_.SetInt("n_threads_per_cq", 1);
+    client_config_.SetInt("benchmark_duration", 5);
+    client_config_.SetBool("save_reply", false);
+    // client_config_.SetBool("save_reply", true);
+  }
+
+  std::unique_ptr<QueryProducer> CreateProducer(Treatment treatment) {
+    GeneralConfig config;
+    config.SetBool("is_phrase", treatment.is_phrase);
+    return CreateQueryProducer(treatment.terms, 
+        client_config_.GetInt("n_threads"), config);
+  }
+
+  utils::ResultRow Execute(Treatment treatment) {
+    utils::ResultRow row;
+
+    auto client = CreateClient(client_config_, CreateProducer(treatment));
+    client->Wait();
+    client->ShowStats();
+
+    return row;
+  }
+
+ private:
+  GeneralConfig client_config_;
+};
 
 class LocalTreatmentExecutor: public TreatmentExecutor {
  public:
@@ -143,8 +180,9 @@ class InProcExperiment: public Experiment {
   }
 
   void Before() {
-    engine_ = std::move(CreateEngineFromFile());
-    treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
+    // engine_ = std::move(CreateEngineFromFile());
+    // treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
+    treatment_executor_.reset(new GrpcTreatmentExecutor(2));//TODO
   }
 
   void RunTreatment(const int run_id) {
