@@ -568,6 +568,10 @@ class AsyncClient: public Client {
     std::unique_ptr<QueryProducer> query_producer)
       :Client(config, std::move(query_producer))
   {
+    LOG(WARNING) << "With async client, you may send too many queries that require long "
+      << "processing time (e.g., from), which will make draining of the completion "
+      << "queues very long. The long draining time will make the performance results "
+      << "not accurate because draining time is not measured." << std::endl;
     int tpc = config.GetInt("n_threads_per_cq");
     int num_async_threads = config.GetInt("n_threads");
     int n_client_channels = config.GetInt("n_client_channels");
