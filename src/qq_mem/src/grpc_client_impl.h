@@ -427,14 +427,19 @@ class Client {
     std::for_each(threads_.begin(), threads_.end(), std::mem_fn(&std::thread::join));
   }
 
-  void ShowStats() {
+  utils::ResultRow ShowStats() {
+    utils::ResultRow row;
+
     std::cout << "Finished round trips: " << GetTotalRoundtrips() << std::endl;
 
     auto n_secs = config_.GetInt("benchmark_duration");
+    row["duration"] = std::to_string(n_secs);
+
     std::cout << "Duration: " << n_secs << std::endl;
     std::cout << "Total roundtrips: " << GetTotalRoundtrips() << std::endl;
-    std::cout << "Roundtrip Per Second: " 
-      << GetTotalRoundtrips() / n_secs << std::endl;
+    auto qps = GetTotalRoundtrips() / n_secs;
+    std::cout << "Roundtrip Per Second (QPS): " << qps << std::endl;
+    row["QPS"] = std::to_string(qps);
 
     Histogram hist_all;
     for (auto & histogram : histograms_) {
@@ -444,13 +449,21 @@ class Client {
     std::cout << "---- Latency histogram (us) ----" << std::endl;
     std::vector<int> percentiles{0, 25, 50, 75, 90, 95, 99, 100};
     for (auto percentile : percentiles) {
+      auto latency = utils::format_with_commas<int>(
+          round(hist_all.Percentile(percentile)));
       std::cout << "Percentile " << std::setw(4) << percentile << ": " 
-        << std::setw(25) 
-        << utils::format_with_commas<int>(round(hist_all.Percentile(percentile))) 
-        << std::endl;
+        << std::setw(25) << latency << std::endl;
+
+      if (percentile == 50) {
+        row["latency_50th"] = latency;
+      } else if (percentile == 95) {
+        row["latency_95th"] = latency;
+      }
     }
 
     ShowReplies();
+
+    return row;
   }
 
   const ReplyPools *GetReplyPools() {

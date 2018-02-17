@@ -70,17 +70,27 @@ class TreatmentExecutor {
 class GrpcTreatmentExecutor: public TreatmentExecutor {
  public:
   GrpcTreatmentExecutor(int n_threads){
-    client_config_.SetString("synchronization", "ASYNC");
+    // ASYNC Streaming
+    // client_config_.SetString("synchronization", "SYNC");
+    // client_config_.SetString("rpc_arity", "STREAMING");
+    // client_config_.SetString("target", "localhost:50051");
+    // client_config_.SetInt("n_client_channels", 64);
+    // client_config_.SetInt("n_rpcs_per_channel", 100);
+    // client_config_.SetInt("n_messages_per_call", 100000);
+    // client_config_.SetInt("n_threads", n_threads); 
+    // client_config_.SetInt("n_threads_per_cq", 1);
+    // client_config_.SetInt("benchmark_duration", 5);
+    // client_config_.SetBool("save_reply", false);
+
+    client_config_.SetString("synchronization", "SYNC");
     client_config_.SetString("rpc_arity", "STREAMING");
     client_config_.SetString("target", "localhost:50051");
     client_config_.SetInt("n_client_channels", 64);
-    client_config_.SetInt("n_rpcs_per_channel", 100);
-    client_config_.SetInt("n_messages_per_call", 100000);
     client_config_.SetInt("n_threads", n_threads); 
-    client_config_.SetInt("n_threads_per_cq", 1);
-    client_config_.SetInt("benchmark_duration", 5);
-    client_config_.SetBool("save_reply", false);
+    client_config_.SetInt("benchmark_duration", 10);
     // client_config_.SetBool("save_reply", true);
+    client_config_.SetBool("save_reply", false);
+
   }
 
   std::unique_ptr<QueryProducer> CreateProducer(Treatment treatment) {
@@ -95,7 +105,7 @@ class GrpcTreatmentExecutor: public TreatmentExecutor {
 
     auto client = CreateClient(client_config_, CreateProducer(treatment));
     client->Wait();
-    client->ShowStats();
+    row = client->ShowStats();
 
     return row;
   }
@@ -142,8 +152,6 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
 };
 
 
-
-
 class InProcExperiment: public Experiment {
  public:
   InProcExperiment(GeneralConfig config): config_(config) {
@@ -182,7 +190,7 @@ class InProcExperiment: public Experiment {
   void Before() {
     // engine_ = std::move(CreateEngineFromFile());
     // treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
-    treatment_executor_.reset(new GrpcTreatmentExecutor(2));//TODO
+    treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
   }
 
   void RunTreatment(const int run_id) {
