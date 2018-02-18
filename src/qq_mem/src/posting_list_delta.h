@@ -265,30 +265,29 @@ class PostingListDeltaIterator: public PostingListIteratorService {
  private:
   // After this function, item_index will be decoded, item_index + 1 will not.
   void DecodeUntil(int item_index) {
-    int len;
-    const std::string *data = data_->DataPointer();
-    const off_t start_offset = cur_state_.posting_start_offset_;
-
     for( int i = cur_state_.next_item_to_decode_;
          i <= item_index; 
          i++ ) {
       if (i == 0) {
-        len = utils::varint_decode(*data, start_offset, &cache_.cur_content_bytes_);
-        // cur_state_.PopInPosting(len);
-
-        // cache_.next_posting_byte_offset_ = offset + cache_.cur_content_bytes_;
+        cur_state_.PopInPosting(&cache_.cur_content_bytes_);
+        cache_.next_posting_byte_offset_ = cur_state_.Offset() + cache_.cur_content_bytes_;
       } else if (i == 1) {
+        uint32_t delta;
+        cur_state_.PopInPosting(&delta);
+        cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
       } else if (i == 2) {
+        cur_state_.PopInPosting(&cache_.cur_term_freq_);
       } else if (i == 3) {
+        cur_state_.PopInPosting(&cache_.offset_size_);
+        cache_.cur_offset_pairs_start_ = cur_state_.Offset(); 
+        cache_.cur_position_start_ = cur_state_.Offset() + cache_.offset_size_;
       }
     }
 
   }
 
   void DecodeToCache() {
-    off_t offset = cur_state_.posting_start_offset_;
     uint32_t delta;
-    int len;
 
     // decoding 0
     cur_state_.PopInPosting(&cache_.cur_content_bytes_);
