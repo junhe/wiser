@@ -242,10 +242,6 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     return cache_.cur_term_freq_;
   }
 
-  int OffsetPairStart() {
-    return cache_.cur_offset_pairs_start_;
-  }
-
   int PositionStart() {
     return cache_.cur_position_start_;
   }

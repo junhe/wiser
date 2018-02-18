@@ -188,8 +188,6 @@ void test_posting_list_delta( StandardPosting postingA,
   REQUIRE(it->IsEnd() == false);
   REQUIRE(it->DocId() == postingA.GetDocId());
   REQUIRE(it->TermFreq() == postingA.GetTermFreq());
-  // REQUIRE(it->OffsetPairStart() == 3); // size|id|tf|offset
-  // REQUIRE(it->CurContentBytes() == postingA.Encode().size() - 1); // size|id|tf|offset
 
   // check offsets
   {
@@ -203,8 +201,6 @@ void test_posting_list_delta( StandardPosting postingA,
   REQUIRE(it->IsEnd() == false);
   REQUIRE(it->DocId() == postingB.GetDocId());
   REQUIRE(it->TermFreq() == postingB.GetTermFreq());
-  // REQUIRE(it->OffsetPairStart() == postingA.Encode().size() + 3); // size|id|tf|offset
-  // REQUIRE(it->CurContentBytes() == postingB.Encode().size() - 1); // size|id|tf|offset
 
   // check offsets
   {
