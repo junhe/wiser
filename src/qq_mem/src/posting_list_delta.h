@@ -165,7 +165,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
      skip_index_(skip_index),
      skip_span_(skip_span),
      total_postings_(total_postings),
-     cur_state_(byte_offset, 0, prev_doc_id)
+     cur_state_(*data->DataPointer(), byte_offset, 0, prev_doc_id)
   {
     DecodeToCache();
   }
@@ -179,7 +179,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
       return false;
     }
 
-    cur_state_.Update(cache_.next_posting_byte_offset_, 
+    cur_state_.SetPosting(cache_.next_posting_byte_offset_, 
                   cur_state_.cur_posting_index_ + 1,
                   cache_.cur_doc_id_);
                   
@@ -203,7 +203,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     int next_span_index = cur_state_.cur_posting_index_ / skip_span_ + 1;
 
     auto &meta = skip_index_->vec[next_span_index];
-    cur_state_.Update(meta.start_offset, next_span_index * skip_span_, 
+    cur_state_.SetPosting(meta.start_offset, next_span_index * skip_span_, 
                   meta.prev_doc_id);
 
     DecodeToCache();
@@ -217,7 +217,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
 
     // loop inv: 
     //   posting[0, cur_posting_index_).doc_id < doc_id
-    //   byte_offset_ is the offset of posting[cur_posting_index_]
+    //   posting_start_offset_ is the offset of posting[cur_posting_index_]
     //   prev_doc_id_ is the doc id of posting[cur_posting_index_ - 1]
     //   cache_ has the data of posting[cur_posting_index_]
 
@@ -263,28 +263,48 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   }
 
  private:
+  // After this function, item_index will be decoded, item_index + 1 will not.
+  void DecodeUntil(int item_index) {
+    int len;
+    const std::string *data = data_->DataPointer();
+    const off_t start_offset = cur_state_.posting_start_offset_;
+
+    for( int i = cur_state_.next_item_to_decode_;
+         i <= item_index; 
+         i++ ) {
+      if (i == 0) {
+        len = utils::varint_decode(*data, start_offset, &cache_.cur_content_bytes_);
+        // cur_state_.PopInPosting(len);
+
+        // cache_.next_posting_byte_offset_ = offset + cache_.cur_content_bytes_;
+      } else if (i == 1) {
+      } else if (i == 2) {
+      } else if (i == 3) {
+      }
+    }
+
+  }
+
   void DecodeToCache() {
-    int offset = cur_state_.byte_offset_;
+    off_t offset = cur_state_.posting_start_offset_;
     uint32_t delta;
     int len;
 
-    const std::string *data = data_->DataPointer();
+    // decoding 0
+    cur_state_.PopInPosting(&cache_.cur_content_bytes_);
+    cache_.next_posting_byte_offset_ = cur_state_.Offset() + cache_.cur_content_bytes_;
 
-    len = utils::varint_decode(*data, offset, &cache_.cur_content_bytes_);
-    offset += len;
-    cache_.next_posting_byte_offset_ = offset + cache_.cur_content_bytes_;
-
-    len = utils::varint_decode(*data, offset, &delta);
-    offset += len;
-    len = utils::varint_decode(*data, offset, &cache_.cur_term_freq_);
-    offset += len;
-
-    len = utils::varint_decode(*data, offset, &cache_.offset_size_);
-    offset += len;
-    cache_.cur_offset_pairs_start_ = offset; 
-    cache_.cur_position_start_ = offset + cache_.offset_size_;
-
+    // decoding 1
+    cur_state_.PopInPosting(&delta);
     cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
+
+    // decoding 2
+    cur_state_.PopInPosting(&cache_.cur_term_freq_);
+
+    // decoding 3
+    cur_state_.PopInPosting(&cache_.offset_size_);
+    cache_.cur_offset_pairs_start_ = cur_state_.Offset(); 
+    cache_.cur_position_start_ = cur_state_.Offset() + cache_.offset_size_;
   }
 
   const VarintBuffer * data_;
@@ -292,31 +312,58 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   const int total_postings_;
   const int skip_span_;
 
+  // Only set member variables through setters.
+  // You can read them directly.
+  // This is to avoid extra function calls.
   struct State {
-    int byte_offset_; // start byte of posting[cur_posting_index_]
+    const std::string &data_;
+    off_t posting_start_offset_; // start byte of posting[cur_posting_index_]
+    int in_posting_offset_; // offset of the next item to decode
     int cur_posting_index_;
+    int next_item_to_decode_;
     DocIdType prev_doc_id_; // doc id of posting[cur_posting_index_ - 1]
 
-    State(int offset, int index, DocIdType id)
-      :byte_offset_(offset), cur_posting_index_(index), prev_doc_id_(id) {}
+    State(const std::string &data, off_t offset, int index, DocIdType id)
+      :data_(data),
+       posting_start_offset_(offset), 
+       in_posting_offset_(0),
+       next_item_to_decode_(0),
+       cur_posting_index_(index), 
+       prev_doc_id_(id) {}
 
-    void Update(int offset, int index, DocIdType id) {
-      byte_offset_ = offset;
+    off_t Offset() {
+      return posting_start_offset_ + in_posting_offset_;
+    }
+
+    void SetPosting(off_t offset, int index, DocIdType id) {
+      posting_start_offset_ = offset;
+      in_posting_offset_ = 0;
+      next_item_to_decode_ = 0;
       cur_posting_index_ = index;
       prev_doc_id_ = id;
+    }
+
+    // return the index of item just popped.
+    int PopInPosting(uint32_t *p) {
+      int len;
+      int ret = next_item_to_decode_;
+      len = utils::varint_decode(data_, posting_start_offset_ + in_posting_offset_, p);
+      in_posting_offset_ += len;
+      next_item_to_decode_++;
+      return ret;
     }
   };
   State cur_state_;
 
-  struct PostingCache {
-    uint32_t cur_content_bytes_;
-    DocIdType cur_doc_id_;
-    uint32_t cur_term_freq_;
-    uint32_t offset_size_;
-    int cur_offset_pairs_start_;
-    int cur_position_start_;
+  struct PostingCache {             // available when next_item_to_decode_ > x
+    uint32_t cur_content_bytes_;    // 0
+    int next_posting_byte_offset_;  // 0
 
-    int next_posting_byte_offset_;
+    DocIdType cur_doc_id_;          // 1
+    uint32_t cur_term_freq_;        // 2
+    uint32_t offset_size_;          // 3
+    int cur_offset_pairs_start_;    // 3
+    int cur_position_start_;        // 3
   };
   // Cached data of cur_posting_index_
   PostingCache cache_;
