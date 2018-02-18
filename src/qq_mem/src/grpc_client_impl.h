@@ -109,11 +109,11 @@ class QqGrpcPlainClient {
     }
   }
 
-  bool DoSyncStreamingSearch(const SearchRequest &request, SearchReply &reply) {
+  bool DoStreamingSearch(const SearchRequest &request, SearchReply &reply) {
     ClientContext context;
 
     std::unique_ptr<ClientReaderWriter<SearchRequest, SearchReply> > 
-      stream(stub_->SyncStreamingSearch(&context));
+      stream(stub_->StreamingSearch(&context));
     stream->Write(request);
     stream->WritesDone();
     stream->Read(&reply);
@@ -550,7 +550,7 @@ class SyncStreamingClient: public Client {
     ClientContext context;
     auto stub = channels_[thread_idx % channels_.size()].get_stub();
     std::unique_ptr<ClientReaderWriter<SearchRequest, SearchReply> > stream(
-        stub->SyncStreamingSearch(&context));
+        stub->StreamingSearch(&context));
 
     while (shutdown_state_[thread_idx]->shutdown == false) {
       SearchRequest grpc_request = query_producer_->NextGrpcQuery(thread_idx);

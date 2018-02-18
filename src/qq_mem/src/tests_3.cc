@@ -302,7 +302,7 @@ TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
     query.CopyTo(&request);
 
     SearchReply reply;
-    client->DoSyncStreamingSearch(request, reply);
+    client->DoStreamingSearch(request, reply);
     
     REQUIRE(reply.entries_size() == 1);
     REQUIRE(reply.entries(0).doc_id() == 0);

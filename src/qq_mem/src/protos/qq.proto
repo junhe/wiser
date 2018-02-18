@@ -12,7 +12,6 @@ service QQEngine {
 
   rpc UnarySearch (SearchRequest) returns (SearchReply) {}
   rpc StreamingSearch (stream SearchRequest) returns (stream SearchReply) {}
-  rpc SyncStreamingSearch (stream SearchRequest) returns (stream SearchReply) {}
 }
 
 
