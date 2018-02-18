@@ -165,16 +165,16 @@ class InProcExperiment: public Experiment {
   void MakeQueryProducers() {
     // single term
     std::vector<Treatment> treatments {
-      // Treatment({"hello"}, false, 1000),
+      Treatment({"hello"}, false, 1000),
       Treatment({"from"}, false, 20),
-      // Treatment({"ripdo"}, false, 1000000),
+      Treatment({"ripdo"}, false, 10000),
 
-      // Treatment({"hello", "world"}, false, 100),
-      // Treatment({"from", "also"}, false, 10),
-      // Treatment({"ripdo", "liftech"}, false, 1000000),
+      Treatment({"hello", "world"}, false, 100),
+      Treatment({"from", "also"}, false, 10),
+      Treatment({"ripdo", "liftech"}, false, 1000000),
 
-      // Treatment({"hello", "world"}, true, 100),
-      // Treatment({"barack", "obama"}, true, 100),
+      Treatment({"hello", "world"}, true, 100),
+      Treatment({"barack", "obama"}, true, 100),
       Treatment({"from", "also"}, true, 10) 
     };
 
@@ -188,10 +188,10 @@ class InProcExperiment: public Experiment {
   }
 
   void Before() {
-    engine_ = std::move(CreateEngineFromFile());
-    treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
+    // engine_ = std::move(CreateEngineFromFile());
+    // treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
 
-    // treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
+    treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
   }
 
   void RunTreatment(const int run_id) {
