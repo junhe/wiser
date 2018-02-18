@@ -661,18 +661,6 @@ class QueryProcessor {
     min_heap_.emplace(doc_id, score_of_this_doc, offset_iters, position_table, is_phrase_);
   }
 
-  StandardPosting GetPosting(const PostingListIteratorService *pl_it) {
-    OffsetPairs pairs;
-    auto it = pl_it->OffsetPairsBegin();
-
-    while (it->IsEnd() == false) {
-      pairs.emplace_back();
-      it->Pop(&pairs.back());
-    }
-
-    return StandardPosting(pl_it->DocId(), pl_it->TermFreq(), pairs);
-  }
-
   const int n_lists_;
   IteratorPointers &pl_iterators_;
   const int k_;
