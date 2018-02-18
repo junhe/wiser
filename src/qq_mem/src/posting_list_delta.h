@@ -223,10 +223,11 @@ class PostingListDeltaIterator: public PostingListIteratorService {
 
     while (cur_state_.cur_posting_index_ < total_postings_ && cache_.cur_doc_id_ < doc_id) {
       if (HasSkip() && NextSpanDocId() < doc_id) {
-        SkipToNextSpan();
+        SkipToNextSpanWithoutDecoding();
       } else {
-        Advance();
+        AdvanceWithoutDecoding();
       }
+      DecodeUntil(1);
     }
   }
 
@@ -263,6 +264,21 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   }
 
  private:
+  void AdvanceWithoutDecoding() {
+    cur_state_.SetPosting(cache_.next_posting_byte_offset_, 
+                  cur_state_.cur_posting_index_ + 1,
+                  cache_.cur_doc_id_);
+  }
+
+  // Only call this when the iterator HasSkip() == true
+  void SkipToNextSpanWithoutDecoding() {
+    int next_span_index = cur_state_.cur_posting_index_ / skip_span_ + 1;
+
+    auto &meta = skip_index_->vec[next_span_index];
+    cur_state_.SetPosting(meta.start_offset, next_span_index * skip_span_, 
+                  meta.prev_doc_id);
+  }
+
   // After this function, item_index will be decoded, item_index + 1 will not.
   void DecodeUntil(int item_index) {
     for( int i = cur_state_.next_item_to_decode_;
@@ -283,7 +299,6 @@ class PostingListDeltaIterator: public PostingListIteratorService {
         cache_.cur_position_start_ = cur_state_.Offset() + cache_.offset_size_;
       }
     }
-
   }
 
   void DecodeToCache() {
