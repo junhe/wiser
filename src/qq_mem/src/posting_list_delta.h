@@ -227,7 +227,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
       } else {
         AdvanceWithoutDecoding();
       }
-      DecodeUntil(1);
+      DecodeUntil(3);
     }
   }
 
