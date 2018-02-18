@@ -158,6 +158,19 @@ class SyncQqGrpcEngineServiceImpl: public QqGrpcCommonService
     }
     return Status::OK;
   }
+
+  Status SyncStreamingSearch(ServerContext* context,
+      ServerReaderWriter<SearchReply, SearchRequest>* stream) override {
+    SearchRequest request;
+    SearchReply reply;
+    while (stream->Read(&request)) {
+      SearchResult result = search_engine_->Search(SearchQuery(request));
+      result.CopyTo(&reply);
+
+      stream->Write(reply);
+    }
+    return Status::OK;
+  }
 };
 
 
@@ -543,7 +556,7 @@ class SyncServer : public ServerService {
  private:
   const GeneralConfig config_;
   std::unique_ptr<SearchEngineServiceNew> search_engine_;
-  QQEngineServiceImpl sync_service_;
+  SyncQqGrpcEngineServiceImpl sync_service_;
   std::unique_ptr<grpc::Server> server_;
 };
 
