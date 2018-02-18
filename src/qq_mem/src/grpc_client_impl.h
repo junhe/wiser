@@ -44,9 +44,9 @@ using qq::EchoData;
 // Interface to interact with gRPC server. For example, you can use
 // C++ native containers intead of protobuf objects when invoking
 // AddDocument().
-class QQEngineSyncClient {
+class QqGrpcPlainClient {
  public:
-  QQEngineSyncClient(std::shared_ptr<Channel> channel)
+  QqGrpcPlainClient(std::shared_ptr<Channel> channel)
     : stub_(QQEngine::NewStub(channel)) {}
 
   bool AddDocument(const std::string &title, 
@@ -79,7 +79,7 @@ class QQEngineSyncClient {
     request.set_return_snippets(true);
     request.set_n_snippet_passages(3);
 
-    Status status = stub_->UnarySearch(&context, request,  &reply);
+    Status status = stub_->SyncUnarySearch(&context, request,  &reply);
 
     if (status.ok()) {
       for (int i = 0; i < reply.entries_size(); i++) {
@@ -725,7 +725,7 @@ class SyncUnaryClient: public Client {
 };
 
 
-std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target);
+std::unique_ptr<QqGrpcPlainClient> CreateSyncClient(const std::string &target);
 
 std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
     std::unique_ptr<QueryProducer> query_producer);

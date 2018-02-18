@@ -98,6 +98,14 @@ class QqGrpcCommonService: public QQEngine::Service {
     return Status::OK;
   }
 
+  Status SyncUnarySearch(ServerContext* context, const SearchRequest* request,
+          SearchReply* reply) override {
+      SearchResult result = search_engine_->Search(SearchQuery(*request));
+      result.CopyTo(reply);
+
+      return Status::OK;
+  }
+
   Status StreamingEcho(ServerContext* context,
       ServerReaderWriter<EchoData, EchoData>* stream) override {
     EchoData data;
@@ -391,7 +399,7 @@ class AsyncServer : public ServerService {
 
   class ServerRpcContext {
    public:
-      ServerRpcContext(QQEngineServiceImpl *async_service,
+      ServerRpcContext(AsyncQqGrpcEngineServiceImpl *async_service,
                        grpc::ServerCompletionQueue *cq,
                        SearchEngineServiceNew *search_engine)
         : async_service_(async_service), 
@@ -472,7 +480,7 @@ class AsyncServer : public ServerService {
 
     State next_state_;
     grpc::ServerCompletionQueue *cq_;
-    QQEngineServiceImpl *async_service_;
+    AsyncQqGrpcEngineServiceImpl *async_service_;
     std::unique_ptr<grpc::ServerContext> srv_ctx_;
     SearchRequest req_;
     SearchReply response_;
@@ -487,7 +495,7 @@ class AsyncServer : public ServerService {
   std::unique_ptr<grpc::Server> server_;
   std::vector<std::unique_ptr<grpc::ServerCompletionQueue>> srv_cqs_;
   std::vector<int> cq_;
-  QQEngineServiceImpl async_service_;
+  AsyncQqGrpcEngineServiceImpl async_service_;
   std::vector<std::unique_ptr<ServerRpcContext>> contexts_;
 
   struct PerThreadShutdownState {

@@ -16,9 +16,9 @@ std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
   return client;
 }
 
-std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target) {
-  std::unique_ptr<QQEngineSyncClient> client(
-      new QQEngineSyncClient(
+std::unique_ptr<QqGrpcPlainClient> CreateSyncClient(const std::string &target) {
+  std::unique_ptr<QqGrpcPlainClient> client(
+      new QqGrpcPlainClient(
         grpc::CreateChannel(target, grpc::InsecureChannelCredentials())));
   return client;
 }
