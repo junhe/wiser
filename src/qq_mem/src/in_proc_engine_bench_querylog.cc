@@ -164,22 +164,22 @@ class InProcExperiment: public Experiment {
 
   void MakeQueryProducers() {
     // single term
-    std::vector<Treatment> queries {
-      Treatment({"hello"}, false, 1000),
-      Treatment({"from"}, false, 10),
-      Treatment({"ripdo"}, false, 1000000),
+    std::vector<Treatment> treatments {
+      // Treatment({"hello"}, false, 1000),
+      Treatment({"from"}, false, 20),
+      // Treatment({"ripdo"}, false, 1000000),
 
-      Treatment({"hello", "world"}, false, 100),
-      Treatment({"from", "also"}, false, 10),
-      Treatment({"ripdo", "liftech"}, false, 1000000),
+      // Treatment({"hello", "world"}, false, 100),
+      // Treatment({"from", "also"}, false, 10),
+      // Treatment({"ripdo", "liftech"}, false, 1000000),
 
-      Treatment({"hello", "world"}, true, 100),
-      Treatment({"barack", "obama"}, true, 100),
+      // Treatment({"hello", "world"}, true, 100),
+      // Treatment({"barack", "obama"}, true, 100),
       Treatment({"from", "also"}, true, 10) 
     };
 
-    treatments_ = queries;
-    for (auto &query : queries) {
+    treatments_ = treatments;
+    for (auto &query : treatments) {
       GeneralConfig config;
       config.SetBool("is_phrase", query.is_phrase);
       query_producers_.push_back(
@@ -188,9 +188,10 @@ class InProcExperiment: public Experiment {
   }
 
   void Before() {
-    // engine_ = std::move(CreateEngineFromFile());
-    // treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
-    treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
+    engine_ = std::move(CreateEngineFromFile());
+    treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
+
+    // treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
   }
 
   void RunTreatment(const int run_id) {
@@ -275,11 +276,9 @@ GeneralConfig config_by_jun() {
 
   GeneralConfig config;
   config.SetString("engine_type", "qq_mem_compressed");
-  // config.SetString("engine_type", "qq_mem_uncompressed");
 
-
-  config.SetString("load_source", "linedoc");
-  // config.SetString("load_source", "dump");
+  // config.SetString("load_source", "linedoc");
+  config.SetString("load_source", "dump");
 
   config.SetInt("n_docs", 100);
   config.SetString("linedoc_path", 
