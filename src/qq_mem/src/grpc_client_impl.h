@@ -79,8 +79,7 @@ class QQEngineSyncClient {
     request.set_return_snippets(true);
     request.set_n_snippet_passages(3);
 
-    // Here we can the stub's newly available method we just added.
-    Status status = stub_->Search(&context, request,  &reply);
+    Status status = stub_->UnarySearch(&context, request,  &reply);
 
     if (status.ok()) {
       for (int i = 0; i < reply.entries_size(); i++) {
@@ -700,7 +699,7 @@ class SyncUnaryClient: public Client {
     auto stub = channels_[thread_idx % channels_.size()].get_stub();
 
     auto start = utils::now();
-    Status status = stub->Search(&context, request,  &reply);
+    Status status = stub->UnarySearch(&context, request,  &reply);
     auto end = utils::now();
     auto duration = utils::duration(start, end);
 

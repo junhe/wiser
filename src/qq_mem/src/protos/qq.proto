@@ -8,7 +8,7 @@ service QQEngine {
 
   rpc AddDocument (AddDocumentRequest) returns (StatusReply) {}
 
-  rpc Search (SearchRequest) returns (SearchReply) {}
+  rpc UnarySearch (SearchRequest) returns (SearchReply) {}
   rpc StreamingSearch (stream SearchRequest) returns (stream SearchReply) {}
   rpc SyncStreamingSearch (stream SearchRequest) returns (stream SearchReply) {}
 }

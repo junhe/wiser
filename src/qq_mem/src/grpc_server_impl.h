@@ -104,7 +104,7 @@ class QQEngineServiceImpl:
         return Status::OK;
     }
 
-    Status Search(ServerContext* context, const SearchRequest* request,
+    Status UnarySearch(ServerContext* context, const SearchRequest* request,
             SearchReply* reply) override {
         SearchResult result = search_engine_->Search(SearchQuery(*request));
         result.CopyTo(reply);
