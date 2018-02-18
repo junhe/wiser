@@ -287,23 +287,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   }
 
   void DecodeToCache() {
-    uint32_t delta;
-
-    // decoding 0
-    cur_state_.PopInPosting(&cache_.cur_content_bytes_);
-    cache_.next_posting_byte_offset_ = cur_state_.Offset() + cache_.cur_content_bytes_;
-
-    // decoding 1
-    cur_state_.PopInPosting(&delta);
-    cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
-
-    // decoding 2
-    cur_state_.PopInPosting(&cache_.cur_term_freq_);
-
-    // decoding 3
-    cur_state_.PopInPosting(&cache_.offset_size_);
-    cache_.cur_offset_pairs_start_ = cur_state_.Offset(); 
-    cache_.cur_position_start_ = cur_state_.Offset() + cache_.offset_size_;
+    DecodeUntil(3);
   }
 
   const VarintBuffer * data_;
