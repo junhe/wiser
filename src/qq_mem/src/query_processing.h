@@ -632,7 +632,6 @@ class QueryProcessor {
         min_heap_.pop();
         InsertToHeap(max_doc_id, score_of_this_doc, position_table);
       }
-      assert(min_heap_.size() == k_);
     }
   }
 

@@ -242,10 +242,6 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     return cache_.cur_term_freq_;
   }
 
-  int PositionStart() {
-    return cache_.cur_position_start_;
-  }
-
   std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const {
     if (IsEnd()) {
       LOG(FATAL) 
@@ -266,10 +262,6 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     return p;
   }
 
-  int CurContentBytes() const {
-    return cache_.cur_content_bytes_;
-  }
-  
  private:
   void DecodeToCache() {
     int offset = cur_state_.byte_offset_;
