@@ -133,7 +133,7 @@ class QueryProducer: public QueryProducerService {
       query.n_results = config.HasKey("n_results")? 
         config.GetInt("n_results") : 5;
       query.return_snippets = config.HasKey("return_snippets")? 
-        config.GetBool("return_snippets") : false;
+        config.GetBool("return_snippets") : true;
       query.n_snippet_passages = config.HasKey("n_snippet_passages")? 
         config.GetInt("n_snippet_passages") : 3;
       query.is_phrase = config.HasKey("is_phrase")? 
