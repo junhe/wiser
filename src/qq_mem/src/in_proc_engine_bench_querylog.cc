@@ -64,6 +64,7 @@ struct Treatment {
   bool is_phrase;
   int n_repeats;
   bool return_snippets;
+  int n_passages = 3;
 };
 
 
@@ -136,7 +137,7 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
     auto start = utils::now();
     for (int i = 0; i < n_repeats; i++) {
       auto query = query_producer->NextNativeQuery(0);
-      // query.n_snippet_passages = config_.GetInt("n_passages");
+      query.n_snippet_passages = treatment.n_passages;
       // std::cout << query.ToStr() << std::endl;
       auto result = engine_->Search(query);
 
@@ -146,6 +147,7 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
     auto dur = utils::duration(start, end);
 
     row["latency"] = std::to_string(dur / n_repeats); 
+    row["n_passages"] = std::to_string(treatment.n_passages);
     row["return_snippets"] = std::to_string(treatment.return_snippets);
     row["duration"] = std::to_string(dur); 
     row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
