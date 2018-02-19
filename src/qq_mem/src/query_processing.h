@@ -529,6 +529,14 @@ class QueryProcessor {
   }
 
   std::vector<ResultDocEntry> Process() {
+    if (pl_iterators_.size() == 1) {
+      return ProcessSingleTerm();
+    } else {
+      return ProcessMultipleTerms();
+    }
+  }
+
+  std::vector<ResultDocEntry> ProcessMultipleTerms() {
     bool finished = false;
     DocIdType max_doc_id;
 
@@ -544,6 +552,19 @@ class QueryProcessor {
 
       finished = FindMatch(max_doc_id);
     } // while
+
+    return SortHeap();
+  }
+
+  std::vector<ResultDocEntry> ProcessSingleTerm() {
+    auto &it = pl_iterators_[0];
+    PositionInfoTable position_table(1);
+
+    while (it->IsEnd() == false) {
+      DocIdType doc_id = it->DocId();
+      RankDoc(doc_id, position_table);
+      it->Advance();
+    }
 
     return SortHeap();
   }
