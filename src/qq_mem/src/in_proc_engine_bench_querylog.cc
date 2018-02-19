@@ -65,6 +65,7 @@ struct Treatment {
   int n_repeats;
   bool return_snippets;
   int n_passages = 3;
+  int n_results = 5;
 };
 
 
@@ -76,6 +77,7 @@ class TreatmentExecutor {
     GeneralConfig config;
     config.SetBool("is_phrase", treatment.is_phrase);
     config.SetBool("return_snippets", treatment.return_snippets);
+    config.SetInt("n_results", treatment.n_results);
     return CreateQueryProducer(treatment.terms, NumberOfThreads(), config);
   }
 };
