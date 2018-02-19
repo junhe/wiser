@@ -146,6 +146,12 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
     auto end = utils::now();
     auto dur = utils::duration(start, end);
 
+    auto count_map = engine_->PostinglistSizes(treatment.terms);
+    std::cout << "--- Term Counts ---" << std::endl;
+    for (auto pair : count_map) {
+      std::cout << pair.first << " : " << pair.second << std::endl;
+    }
+
     row["latency"] = std::to_string(dur / n_repeats); 
     row["n_passages"] = std::to_string(treatment.n_passages);
     row["return_snippets"] = std::to_string(treatment.return_snippets);
