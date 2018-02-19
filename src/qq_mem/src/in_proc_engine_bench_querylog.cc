@@ -54,17 +54,29 @@ class Experiment {
 
 
 struct Treatment {
-  Treatment(TermList terms_in, bool is_phrase_in, int n_repeats_in)
-    :terms(terms_in), is_phrase(is_phrase_in), n_repeats(n_repeats_in) {}
+  Treatment(TermList terms_in, 
+            bool is_phrase_in, 
+            int n_repeats_in, 
+            bool return_snippets_in)
+    :terms(terms_in), is_phrase(is_phrase_in), n_repeats(n_repeats_in),
+     return_snippets(return_snippets_in){}
   TermList terms;
   bool is_phrase;
   int n_repeats;
+  bool return_snippets;
 };
 
 
 class TreatmentExecutor {
  public:
   virtual utils::ResultRow Execute(Treatment treatment) = 0;
+  virtual int NumberOfThreads() = 0;
+  virtual std::unique_ptr<QueryProducer> CreateProducer(Treatment treatment) {
+    GeneralConfig config;
+    config.SetBool("is_phrase", treatment.is_phrase);
+    config.SetBool("return_snippets", treatment.return_snippets);
+    return CreateQueryProducer(treatment.terms, NumberOfThreads(), config);
+  }
 };
 
 class GrpcTreatmentExecutor: public TreatmentExecutor {
@@ -93,12 +105,7 @@ class GrpcTreatmentExecutor: public TreatmentExecutor {
 
   }
 
-  std::unique_ptr<QueryProducer> CreateProducer(Treatment treatment) {
-    GeneralConfig config;
-    config.SetBool("is_phrase", treatment.is_phrase);
-    return CreateQueryProducer(treatment.terms, 
-        client_config_.GetInt("n_threads"), config);
-  }
+  int NumberOfThreads() {return client_config_.GetInt("n_threads");}
 
   utils::ResultRow Execute(Treatment treatment) {
     utils::ResultRow row;
@@ -119,11 +126,7 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
   LocalTreatmentExecutor(SearchEngineServiceNew *engine)
      :engine_(engine) {}
 
-  std::unique_ptr<QueryProducer> CreateProducer(Treatment treatment) {
-    GeneralConfig config;
-    config.SetBool("is_phrase", treatment.is_phrase);
-    return CreateQueryProducer(treatment.terms, 1, config);
-  }
+  int NumberOfThreads() {return 1;}
 
   utils::ResultRow Execute(Treatment treatment) {
     const int n_repeats = treatment.n_repeats;
@@ -134,6 +137,7 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
     for (int i = 0; i < n_repeats; i++) {
       auto query = query_producer->NextNativeQuery(0);
       // query.n_snippet_passages = config_.GetInt("n_passages");
+      // std::cout << query.ToStr() << std::endl;
       auto result = engine_->Search(query);
 
       // std::cout << result.ToStr() << std::endl;
@@ -142,6 +146,7 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
     auto dur = utils::duration(start, end);
 
     row["latency"] = std::to_string(dur / n_repeats); 
+    row["return_snippets"] = std::to_string(treatment.return_snippets);
     row["duration"] = std::to_string(dur); 
     row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
     return row;
@@ -155,43 +160,43 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
 class InProcExperiment: public Experiment {
  public:
   InProcExperiment(GeneralConfig config): config_(config) {
-    MakeQueryProducers();
+    MakeTreatments();
   }
 
   int NumberOfRuns() {
-    return query_producers_.size();
+    return treatments_.size();
   }
 
-  void MakeQueryProducers() {
+  void MakeTreatments() {
     // single term
     std::vector<Treatment> treatments {
-      Treatment({"hello"}, false, 1000),
-      Treatment({"from"}, false, 20),
-      Treatment({"ripdo"}, false, 10000),
+      // Treatment({"hello"}, false, 1000, true),
+      // Treatment({"from"}, false, 20, true),
+      // Treatment({"ripdo"}, false, 10000, true),
 
-      Treatment({"hello", "world"}, false, 100),
-      Treatment({"from", "also"}, false, 10),
-      Treatment({"ripdo", "liftech"}, false, 1000000),
+      // Treatment({"hello", "world"}, false, 100, true),
+      // Treatment({"from", "also"}, false, 10, true),
+      // Treatment({"ripdo", "liftech"}, false, 1000000, true),
 
-      Treatment({"hello", "world"}, true, 100),
-      Treatment({"barack", "obama"}, true, 100),
-      Treatment({"from", "also"}, true, 10) 
+      // Treatment({"hello", "world"}, true, 100, true),
+      // Treatment({"barack", "obama"}, true, 100, true),
+      Treatment({"from", "also"}, true, 10, true),
+
+
+
+      // temporary
+      Treatment({"from", "also"}, true, 10, false),
+      Treatment({"from", "also"}, false, 10, false) 
     };
 
     treatments_ = treatments;
-    for (auto &query : treatments) {
-      GeneralConfig config;
-      config.SetBool("is_phrase", query.is_phrase);
-      query_producers_.push_back(
-          CreateQueryProducer(query.terms, 1, config));
-    }
   }
 
   void Before() {
-    // engine_ = std::move(CreateEngineFromFile());
-    // treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
+    engine_ = std::move(CreateEngineFromFile());
+    treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
 
-    treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
+    // treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
   }
 
   void RunTreatment(const int run_id) {
