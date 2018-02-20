@@ -2,7 +2,8 @@ sudo apt-get install -y curl
 
 # install grpc
 cd ~/
-git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
+#git clone -b $(curl -L https://grpc.io/release) https://github.com/grpc/grpc
+git clone -b v1.7.x https://github.com/grpc/grpc
 cd grpc
 git submodule update --init
 
@@ -17,7 +18,7 @@ make
 sudo make install
 
 # This is required to run performance benchmarks
-sudo apt-get install libgflags-dev
+sudo apt-get install -y libgflags-dev
 
 
 # install new cmake
@@ -36,4 +37,6 @@ make
 sudo make install
 
 
+# boost
+sudo apt-get install -y libboost-all-dev
 
