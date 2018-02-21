@@ -128,7 +128,6 @@ class PhraseQueryProcessor {
       PositionInfo info = last_orig_popped_[i];
       PositionInfoVec &row = (*table)[i];
       row.push_back(info);
-      // (*table)[i].push_back(info);
     }
   }
 

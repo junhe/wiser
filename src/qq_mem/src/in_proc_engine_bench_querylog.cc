@@ -190,13 +190,7 @@ class InProcExperiment: public Experiment {
 
       // Treatment({"hello", "world"}, true, 100, true),
       // Treatment({"barack", "obama"}, true, 100, true),
-      Treatment({"from", "also"}, true, 10, true),
-
-
-
-      // temporary
-      Treatment({"from", "also"}, true, 10, false),
-      Treatment({"from", "also"}, false, 10, false) 
+      Treatment({"from", "also"}, true, 10, true)
     };
 
     treatments_ = treatments;
@@ -206,7 +200,7 @@ class InProcExperiment: public Experiment {
     engine_ = std::move(CreateEngineFromFile());
     treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
 
-    // treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
+    // treatment_executor_.reset(new GrpcTreatmentExecutor(1));//TODO
   }
 
   void RunTreatment(const int run_id) {
