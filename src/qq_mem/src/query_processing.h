@@ -530,6 +530,8 @@ class QueryProcessor {
   std::vector<ResultDocEntry> Process() {
     if (pl_iterators_.size() == 1) {
       return ProcessSingleTerm();
+    } else if (pl_iterators_.size() == 2) {
+      return ProcessTwoTerm();
     } else {
       return ProcessMultipleTerms();
     }
@@ -563,6 +565,29 @@ class QueryProcessor {
       DocIdType doc_id = it->DocId();
       RankDoc(doc_id, position_table);
       it->Advance();
+    }
+
+    return SortHeap();
+  }
+
+  std::vector<ResultDocEntry> ProcessTwoTerm() {
+    auto &it_0 = pl_iterators_[0];
+    auto &it_1 = pl_iterators_[1];
+    DocIdType doc0, doc1;
+
+    while (it_0->IsEnd() == false && it_1->IsEnd() == false) {
+      doc0 = it_0->DocId();
+      doc1 = it_1->DocId();
+      if (doc0 > doc1) {
+        it_1->SkipForward(doc0);
+      } else if (doc0 < doc1) {
+        it_0->SkipForward(doc1);
+      } else {
+        HandleTheFoundDoc(doc0); 
+
+        it_0->Advance();
+        it_1->Advance();
+      }
     }
 
     return SortHeap();
