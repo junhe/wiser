@@ -712,14 +712,26 @@ class QueryProcessor {
   }
 
   PositionInfoTable FindPhrase() {
-    // All iterators point to the same posting at this point
-    PositionIterators iterators;
-    for (int i = 0; i < pl_iterators_.size(); i++) {
-      iterators.push_back(std::move(pl_iterators_[i]->PositionBegin()));
-    }
+    // PositionInfoTable ret_table(pl_iterators_.size()); 
+    // return ret_table;
 
-    PhraseQueryProcessor phrase_qp(&iterators);
-    return phrase_qp.Process();
+    // All iterators point to the same posting at this point
+    // PositionIterators iterators;
+    // for (int i = 0; i < pl_iterators_.size(); i++) {
+      // iterators.push_back(std::move(pl_iterators_[i]->PositionBegin()));
+    // }
+
+    // Raw pointer 
+    // std::vector<PopIteratorService *> iterators;
+    // for (int i = 0; i < pl_iterators_.size(); i++) {
+      // iterators.push_back(pl_iterators_[i]->PositionBegin2());
+    // }
+
+    PositionInfoTable ret_table(pl_iterators_.size()); 
+    return ret_table;
+
+    // PhraseQueryProcessor phrase_qp(&iterators);
+    // return phrase_qp.Process();
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
