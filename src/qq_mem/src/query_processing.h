@@ -545,8 +545,8 @@ struct ResultDocEntry {
         OffsetPair pair;
         while (offset_cur < row[col_i].term_appearance) {
           // assert(offset_iter->IsEnd() == false);
-          LOG_IF(FATAL, offset_iter->IsEnd()) 
-            << "offset_iter does not suppose to reach the end." << std::endl;
+          // LOG_IF(FATAL, offset_iter->IsEnd()) 
+            // << "offset_iter does not suppose to reach the end." << std::endl;
           offset_iter->Pop(&pair);
           offset_cur++;
         }
