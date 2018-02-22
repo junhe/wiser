@@ -132,6 +132,76 @@ class PhraseQueryProcessor {
   }
 
   PositionInfoTable Process() {
+    if (iterators_.size() == 2) {
+      return ProcessTwoTerm();
+    } else {
+      return ProcessGeneral();
+    }
+  }
+
+  PositionInfoTable ProcessTwoTerm() {
+    PositionInfoTable ret_table(iterators_.size()); 
+
+    PopIteratorService *it0 = iterators_[0].get(); 
+    PopIteratorService *it1 = iterators_[1].get(); 
+    int pos0, pos1;
+    int apr0 = -1, apr1 = -1;
+
+    pos0 = -100;
+    pos1 = -200;
+
+    // loop inv: 
+    //   iterator points to first unpoped item
+    //   pos is the last poped (it - 1). Pos is adjusted
+    //   everything before pos has been checked
+    //   apr is the appearance of the iterator
+    bool tried_pop_end = false;
+    while(tried_pop_end == false) {
+      if (pos0 < pos1) {
+        if (it0->IsEnd() == false) {
+          pos0 = it0->Pop();  
+          apr0++;
+        } else {
+          tried_pop_end = true;
+        }
+      } else if (pos0 > pos1) {
+        if (it1->IsEnd() == false) { // add test for it0
+          pos1 = it1->Pop() - 1;  
+          apr1++;
+        } else {
+          tried_pop_end = true;
+        }
+      } else {
+        PositionInfo info0;
+        info0.pos = pos0;
+        info0.term_appearance = apr0;
+        ret_table[0].push_back(info0);
+
+        PositionInfo info1;
+        info1.pos = pos1 + 1;
+        info1.term_appearance = apr1;
+        ret_table[1].push_back(info1);
+
+        if (it0->IsEnd() == false) {
+          pos0 = it0->Pop();  
+          apr0++;
+        } else {
+          tried_pop_end = true;
+        }
+
+        if (it1->IsEnd() == false) {
+          pos1 = it1->Pop() - 1;  
+          apr1++;
+        } else {
+          tried_pop_end = true;
+        }
+      }
+    }
+
+    return ret_table;
+  }
+
+  PositionInfoTable ProcessGeneral() {
     bool any_list_exhausted = false;
     PositionInfoTable ret_table(iterators_.size()); 
 
