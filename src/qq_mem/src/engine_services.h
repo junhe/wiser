@@ -92,6 +92,7 @@ class PostingListIteratorService {
   virtual void SkipForward(const DocIdType doc_id) = 0;
   virtual std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const = 0;
   virtual std::unique_ptr<PopIteratorService> PositionBegin() const = 0;
+  virtual PopIteratorService* PositionBegin2() const {};
 };
 
 

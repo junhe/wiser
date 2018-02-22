@@ -262,6 +262,14 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     return p;
   }
 
+  PopIteratorService *PositionBegin2() const {
+    PopIteratorService *p = new CompressedPositionIterator(
+          data_->DataPointer(), 
+          cache_.cur_position_start_, 
+          cache_.next_posting_byte_offset_);
+    return p;
+  }
+
  private:
   void DecodeToCache() {
     int offset = cur_state_.byte_offset_;
