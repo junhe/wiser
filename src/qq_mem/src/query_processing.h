@@ -141,6 +141,8 @@ class PhraseQueryProcessor {
 
   PositionInfoTable ProcessTwoTerm() {
     PositionInfoTable ret_table(iterators_.size()); 
+    return ret_table;
+
 
     PopIteratorService *it0 = iterators_[0].get(); 
     PopIteratorService *it1 = iterators_[1].get(); 
