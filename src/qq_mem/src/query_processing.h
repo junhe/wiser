@@ -722,10 +722,10 @@ class QueryProcessor {
     // }
 
     // Raw pointer 
-    // std::vector<PopIteratorService *> iterators;
-    // for (int i = 0; i < pl_iterators_.size(); i++) {
-      // iterators.push_back(pl_iterators_[i]->PositionBegin2());
-    // }
+    std::vector<PopIteratorService *> iterators;
+    for (int i = 0; i < pl_iterators_.size(); i++) {
+      iterators.push_back(pl_iterators_[i]->PositionBegin2());
+    }
 
     PositionInfoTable ret_table(pl_iterators_.size()); 
     return ret_table;

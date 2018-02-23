@@ -6,6 +6,9 @@
 #include "compression.h"
 #include "engine_services.h"
 
+#include <boost/pool/poolfwd.hpp>
+#include <boost/pool/singleton_pool.hpp>
+
 
 class CompressedPositionIterator: public PopIteratorService {
  public:
@@ -29,6 +32,8 @@ class CompressedPositionIterator: public PopIteratorService {
   uint32_t last_pos_ = 0;
 };
 
+typedef boost::singleton_pool<CompressedPositionIterator, 
+        sizeof(CompressedPositionIterator)> my_pool;
 
 class CompressedPairIterator: public OffsetPairsIteratorService {
  public:
@@ -263,10 +268,11 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   }
 
   PopIteratorService *PositionBegin2() const {
-    PopIteratorService *p = new CompressedPositionIterator(
-          data_->DataPointer(), 
-          cache_.cur_position_start_, 
-          cache_.next_posting_byte_offset_);
+    // PopIteratorService *p = new CompressedPositionIterator(
+          // data_->DataPointer(), 
+          // cache_.cur_position_start_, 
+          // cache_.next_posting_byte_offset_);
+    CompressedPositionIterator *p = (CompressedPositionIterator *) my_pool::malloc();
     return p;
   }
 
