@@ -40,3 +40,7 @@ sudo make install
 # boost
 sudo apt-get install -y libboost-all-dev
 
+
+# configure the shared libraries
+sudo ldconfig
+
