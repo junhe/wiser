@@ -942,13 +942,20 @@ class QueryProcessor {
   PositionInfoTable FindPhrase() {
     PositionIterators2 iterators;
     for (int i = 0; i < pl_iterators_.size(); i++) {
-      CompressedPositionIterator *p = position_iterator_pool_->Borrow(i);
+      CompressedPositionIterator *p = position_iterator_pool_->Borrow();
       pl_iterators_[i]->AssignPositionBegin(p);
       iterators.push_back(p);
     }
 
     phrase_qp_.Reset(&iterators);
-    return phrase_qp_.Process();
+    auto ret = phrase_qp_.Process();
+
+    // Return the borrowed iterators
+    for (auto it : iterators) {
+      position_iterator_pool_->Return((CompressedPositionIterator *)it);
+    }
+    
+    return ret;
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {

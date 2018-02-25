@@ -1,6 +1,8 @@
 #ifndef POSTING_LIST_DELTA_H
 #define POSTING_LIST_DELTA_H
 
+#include <mutex>
+
 #include <glog/logging.h>
 
 #include "compression.h"
@@ -66,17 +68,42 @@ class CompressedPairIterator: public OffsetPairsIteratorService {
 
 class CompressedPositionIteratorPool {
  public:
-  CompressedPositionIteratorPool(int size) :iterators_(size) {}
+  CompressedPositionIteratorPool(int size) 
+      :iterators_(size) {
+    free_iters_.reserve(size); // makes sure it does not need reallocation
 
-  CompressedPositionIterator *Borrow(int i) {
-    return &iterators_[i];
+    for (auto &it : iterators_) {
+      free_iters_.push_back(&it);
+    }
   }
 
-  void Return(int i) {
+  CompressedPositionIteratorPool(CompressedPositionIteratorPool &&rhs)
+      : CompressedPositionIteratorPool(rhs.iterators_.size()) {
+    // You get brand-new object when you move
+    // free_iters_ in the new object will not point to the old object
+  }
+
+  CompressedPositionIterator *Borrow() {
+    CompressedPositionIterator *ret;
+
+    // free_iters_mutext_.lock();
+    ret = free_iters_.back(); 
+    free_iters_.pop_back();
+    // free_iters_mutext_.unlock();
+
+    return ret;
+  }
+
+  void Return(CompressedPositionIterator *it) {
+    // free_iters_mutext_.lock();
+    free_iters_.push_back(it); 
+    // free_iters_mutext_.unlock();
   }
 
  private:
   std::vector<CompressedPositionIterator> iterators_;
+  std::vector<CompressedPositionIterator *> free_iters_;
+  std::mutex free_iters_mutext_;
 };
 
 
