@@ -80,6 +80,8 @@ class PopIteratorService {
 };
 
 
+class CompressedPositionIterator;
+
 class PostingListIteratorService {
  public:
   virtual int Size() const = 0;
@@ -92,6 +94,9 @@ class PostingListIteratorService {
   virtual void SkipForward(const DocIdType doc_id) = 0;
   virtual std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const = 0;
   virtual std::unique_ptr<PopIteratorService> PositionBegin() const = 0;
+  virtual void AssignPositionBegin(CompressedPositionIterator *iterator) const {
+    LOG(FATAL) << "Not Implemented" << std::endl;
+  };
 };
 
 
