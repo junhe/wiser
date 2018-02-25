@@ -256,10 +256,6 @@ class PhraseQueryProcessor3 {
     :solid_iterators_(3), last_orig_popped_(3) {
   }
 
-  void Reset() {
-
-  }
-
   Position FindMaxAdjustedLastPopped() {
     Position max = 0;
     Position adjusted_pos;
@@ -447,6 +443,14 @@ class PhraseQueryProcessor3 {
     }
 
     return ret_table;
+  }
+
+  CompressedPositionIterator *Iterator(int i) {
+    return &solid_iterators_[i];
+  }
+
+  void SetNumTerms(int n) {
+    n_terms_ = n;
   }
 
  private:
