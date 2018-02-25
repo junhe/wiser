@@ -919,7 +919,7 @@ class QueryProcessor {
     return false;
   }
 
-  PositionInfoTable FindPhrase() {
+  PositionInfoTable FindPhraseOLD() {
     // All iterators point to the same posting at this point
     PositionIterators iterators;
     for (int i = 0; i < pl_iterators_.size(); i++) {
@@ -927,6 +927,18 @@ class QueryProcessor {
     }
 
     PhraseQueryProcessor phrase_qp(&iterators);
+    return phrase_qp.Process();
+  }
+
+  PositionInfoTable FindPhrase() {
+    PositionIterators2 iterators;
+    for (int i = 0; i < pl_iterators_.size(); i++) {
+      CompressedPositionIterator *p = position_iterator_pool_->Borrow(i);
+      pl_iterators_[i]->AssignPositionBegin(p);
+      iterators.push_back(p);
+    }
+
+    PhraseQueryProcessor2 phrase_qp(&iterators);
     return phrase_qp.Process();
   }
 
