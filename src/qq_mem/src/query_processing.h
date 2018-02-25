@@ -1228,6 +1228,7 @@ class QueryProcessor {
 
   CompressedPositionIteratorPool * position_iterator_pool_ = nullptr;
   PhraseQueryProcessor2 phrase_qp_;
+  PhraseQueryProcessor3 phrase_qp_3_;
 };
 
 
