@@ -371,7 +371,9 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
 class QqMemEngine : public SearchEngineServiceNew {
  public:
-  QqMemEngine(GeneralConfig config) {
+  QqMemEngine(GeneralConfig config)
+    :position_iterator_pool_(128)
+  {
     if (config.HasKey("inverted_index") == false || 
         config.GetString("inverted_index") == "compressed") {
       inverted_index_.reset(new InvertedIndexQqMemDelta);
@@ -553,6 +555,8 @@ class QqMemEngine : public SearchEngineServiceNew {
   std::unique_ptr<InvertedIndexService> inverted_index_;
   DocLengthStore doc_lengths_;
   SimpleHighlighter highlighter_;
+  
+  CompressedPositionIteratorPool position_iterator_pool_;
 
   int NextDocId() {
     return next_doc_id_++;

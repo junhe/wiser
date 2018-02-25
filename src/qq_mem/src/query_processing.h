@@ -597,6 +597,8 @@ class QueryProcessor {
     }
   }
 
+
+
   std::vector<ResultDocEntry> Process() {
     if (pl_iterators_.size() == 1) {
       return ProcessSingleTerm();

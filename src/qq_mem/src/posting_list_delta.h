@@ -7,12 +7,16 @@
 #include "engine_services.h"
 
 
+
 class CompressedPositionIterator: public PopIteratorService {
  public:
   // The data should not contain the size of the position segment
   CompressedPositionIterator(const std::string *data, 
       const int start_offset, const int end_offset)
     :iterator_(data, start_offset, end_offset) {}
+
+  CompressedPositionIterator()
+    :iterator_(nullptr, 0, 0) {}
 
   bool IsEnd() const {
     return iterator_.IsEnd();
@@ -57,6 +61,22 @@ class CompressedPairIterator: public OffsetPairsIteratorService {
  private:
   VarintIteratorEndBound iterator_;
   uint32_t last_offset_ = 0;
+};
+
+
+class CompressedPositionIteratorPool {
+ public:
+  CompressedPositionIteratorPool(int size) :iterators_(size) {}
+
+  CompressedPositionIterator *Borrow(int i) {
+    return &iterators_[i];
+  }
+
+  void Return(int i) {
+  }
+
+ private:
+  std::vector<CompressedPositionIterator> iterators_;
 };
 
 
