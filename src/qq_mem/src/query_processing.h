@@ -41,7 +41,16 @@ class PhraseQueryProcessor2 {
   // the phrase query, iterator for "hello" should 
   // be the first iterator in iterators;
   PhraseQueryProcessor2(PositionIterators2 *iterators)
-    :iterators_(*iterators), last_orig_popped_(iterators->size()) {
+    :iterators_(iterators), last_orig_popped_(iterators->size()) {
+  }
+
+  PhraseQueryProcessor2()
+    :iterators_(nullptr), last_orig_popped_() {
+  }
+
+  void Reset(PositionIterators2 *iterators) {
+    iterators_ = iterators;
+    last_orig_popped_.resize(iterators->size());
   }
 
   Position FindMaxAdjustedLastPopped() {
@@ -68,7 +77,7 @@ class PhraseQueryProcessor2 {
   // max_adjusted_pos
   bool MovePoppedBeyond(Position max_adjusted_pos) {
     bool ret;
-    for (int i = 0; i < iterators_.size(); i++) {
+    for (int i = 0; i < iterators_->size(); i++) {
       ret = MovePoppedBeyond(i, max_adjusted_pos);
       if (ret == false) {
         return false;
@@ -81,7 +90,7 @@ class PhraseQueryProcessor2 {
   bool MovePoppedBeyond(int i, Position max_adjusted_pos) {
     // the last popped will be larger than or equal to max_pos
     // If the last popped is larger than or equal to max_adjusted_pos
-    auto &it = iterators_[i];
+    auto &it = (*iterators_)[i];
 
     while (it->IsEnd() == false && last_orig_popped_[i].pos - i < max_adjusted_pos) {
       last_orig_popped_[i].pos = it->Pop();
@@ -109,11 +118,11 @@ class PhraseQueryProcessor2 {
 
   bool InitializeLastPopped() {
     for (int i = 0; i < last_orig_popped_.size(); i++) {
-      if (iterators_[i]->IsEnd()) {
+      if ((*iterators_)[i]->IsEnd()) {
         // one list is empty
         return false;
       }
-      last_orig_popped_[i].pos = iterators_[i]->Pop();
+      last_orig_popped_[i].pos = (*iterators_)[i]->Pop();
       last_orig_popped_[i].term_appearance = 0;
     }
     return true;
@@ -133,7 +142,7 @@ class PhraseQueryProcessor2 {
   }
 
   PositionInfoTable Process() {
-    if (iterators_.size() == 2) {
+    if ((*iterators_).size() == 2) {
       return ProcessTwoTerm();
     } else {
       return ProcessGeneral();
@@ -141,10 +150,10 @@ class PhraseQueryProcessor2 {
   }
 
   PositionInfoTable ProcessTwoTerm() {
-    PositionInfoTable ret_table(iterators_.size()); 
+    PositionInfoTable ret_table((*iterators_).size()); 
 
-    PopIteratorService *it0 = iterators_[0]; 
-    PopIteratorService *it1 = iterators_[1]; 
+    PopIteratorService *it0 = (*iterators_)[0]; 
+    PopIteratorService *it1 = (*iterators_)[1]; 
     int pos0, pos1;
     int apr0 = -1, apr1 = -1;
 
@@ -204,7 +213,7 @@ class PhraseQueryProcessor2 {
 
   PositionInfoTable ProcessGeneral() {
     bool any_list_exhausted = false;
-    PositionInfoTable ret_table(iterators_.size()); 
+    PositionInfoTable ret_table((*iterators_).size()); 
 
     if (InitializeLastPopped() == false) {
       return ret_table;
@@ -234,7 +243,7 @@ class PhraseQueryProcessor2 {
   }
 
  private:
-  PositionIterators2 &iterators_;
+  PositionIterators2 *iterators_;
   // We need signed int because adjusted pos can be negative
   std::vector<PositionInfo> last_orig_popped_;
   bool list_exhausted_ = false;
@@ -938,8 +947,8 @@ class QueryProcessor {
       iterators.push_back(p);
     }
 
-    PhraseQueryProcessor2 phrase_qp(&iterators);
-    return phrase_qp.Process();
+    phrase_qp_.Reset(&iterators);
+    return phrase_qp_.Process();
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
@@ -1007,6 +1016,7 @@ class QueryProcessor {
   bool is_phrase_;
 
   CompressedPositionIteratorPool * position_iterator_pool_ = nullptr;
+  PhraseQueryProcessor2 phrase_qp_;
 };
 
 
