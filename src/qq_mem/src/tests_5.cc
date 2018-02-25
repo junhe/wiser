@@ -32,12 +32,15 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     store.AddLength(i, (5 - i) * 10);
   }
 
+  CompressedPositionIteratorPool position_iterator_pool(128);
+
   SECTION("Find top 5") {
     IteratorPointers iterators;
     iterators.push_back(std::move(pl01.Begin()));
     iterators.push_back(std::move(pl02.Begin()));
 
-    QueryProcessor processor(&iterators, store, 100, 5, false);
+    QueryProcessor processor(&position_iterator_pool, &iterators, store, 
+        100, 5, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -54,7 +57,8 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     iterators.push_back(std::move(pl01.Begin()));
     iterators.push_back(std::move(pl02.Begin()));
 
-    QueryProcessor processor(&iterators, store, 100, 5, true);
+    QueryProcessor processor(&position_iterator_pool, &iterators, store, 
+        100, 5, true);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -105,7 +109,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     iterators.push_back(std::move(pl02.Begin()));
     iterators.push_back(std::move(pl03.Begin()));
 
-    QueryProcessor processor(&iterators, store, 100, 5, true);
+    QueryProcessor processor(&position_iterator_pool, &iterators, store, 100, 5, true);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 0);
   }
@@ -115,7 +119,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     iterators.push_back(std::move(pl01.Begin()));
     iterators.push_back(std::move(pl02.Begin()));
 
-    QueryProcessor processor(&iterators, store, 100, 2, false);
+    QueryProcessor processor(&position_iterator_pool, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -131,7 +135,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     IteratorPointers iterators;
     iterators.push_back(std::move(pl01.Begin()));
 
-    QueryProcessor processor(&iterators, store, 100, 2, false);
+    QueryProcessor processor(&position_iterator_pool, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -149,7 +153,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     iterators.push_back(std::move(pl02.Begin()));
     iterators.push_back(std::move(pl03.Begin()));
 
-    QueryProcessor processor(&iterators, store, 100, 2, false);
+    QueryProcessor processor(&position_iterator_pool, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 

@@ -578,12 +578,14 @@ typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>,
 class QueryProcessor {
  public:
   QueryProcessor(
+    CompressedPositionIteratorPool * position_iterator_pool,
     IteratorPointers *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5,
     const bool is_phrase = false)
-  : n_lists_(pl_iterators->size()),
+  : position_iterator_pool_(position_iterator_pool),
+    n_lists_(pl_iterators->size()),
     doc_lengths_(doc_lengths),
     pl_iterators_(*pl_iterators),
     k_(k),
@@ -596,8 +598,6 @@ class QueryProcessor {
                                       pl_iterators_[i]->Size());
     }
   }
-
-
 
   std::vector<ResultDocEntry> Process() {
     if (pl_iterators_.size() == 1) {
@@ -785,17 +785,19 @@ class QueryProcessor {
   MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
   bool is_phrase_;
+
+  CompressedPositionIteratorPool * position_iterator_pool_ = nullptr;
 };
 
 
 namespace qq_search {
-std::vector<ResultDocEntry> ProcessQuery(IteratorPointers *pl_iterators, 
-                                           const DocLengthStore &doc_lengths,
-                                           const int n_total_docs_in_index,
-                                           const int k,
-                                           const bool is_phrase);
-
-
+std::vector<ResultDocEntry> ProcessQuery(
+   CompressedPositionIteratorPool *position_iterator_pool,
+   IteratorPointers *pl_iterators, 
+   const DocLengthStore &doc_lengths,
+   const int n_total_docs_in_index,
+   const int k,
+   const bool is_phrase);
 }
 
 

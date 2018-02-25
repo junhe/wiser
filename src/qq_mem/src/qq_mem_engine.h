@@ -450,8 +450,9 @@ class QqMemEngine : public SearchEngineServiceNew {
       return result;
     }
 
-    auto top_k = qq_search::ProcessQuery(&iterators, doc_lengths_, doc_lengths_.Size(), 
-                             query.n_results, query.is_phrase);  
+    auto top_k = qq_search::ProcessQuery(
+        &position_iterator_pool_, &iterators, doc_lengths_, doc_lengths_.Size(), 
+        query.n_results, query.is_phrase);  
     for (auto & top_doc_entry : top_k) {
       SearchResultEntry result_entry;
       result_entry.doc_id = top_doc_entry.doc_id;
