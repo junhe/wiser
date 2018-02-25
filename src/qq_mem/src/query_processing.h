@@ -267,7 +267,7 @@ class PhraseQueryProcessor3 {
     // adj:     0     0       0
     //
     // if the adjusted pos are the same, it is a phrase match
-    for(int i = 0; i < last_orig_popped_.size(); i++) {
+    for(int i = 0; i < n_terms_; i++) {
       adjusted_pos = last_orig_popped_[i].pos - i;
       if (adjusted_pos > max) {
         max = adjusted_pos;
@@ -280,7 +280,7 @@ class PhraseQueryProcessor3 {
   // max_adjusted_pos
   bool MovePoppedBeyond(Position max_adjusted_pos) {
     bool ret;
-    for (int i = 0; i < solid_iterators_.size(); i++) {
+    for (int i = 0; i < n_terms_; i++) {
       ret = MovePoppedBeyond(i, max_adjusted_pos);
       if (ret == false) {
         return false;
@@ -310,7 +310,7 @@ class PhraseQueryProcessor3 {
   bool IsPoppedMatch(Position max_adjusted_pos) {
     Position adjusted_pos;
 
-    for(int i = 0; i < last_orig_popped_.size(); i++) {
+    for(int i = 0; i < n_terms_; i++) {
       adjusted_pos = last_orig_popped_[i].pos - i;
       if (adjusted_pos != max_adjusted_pos) {
         return false;
@@ -320,7 +320,7 @@ class PhraseQueryProcessor3 {
   }
 
   bool InitializeLastPopped() {
-    for (int i = 0; i < last_orig_popped_.size(); i++) {
+    for (int i = 0; i < n_terms_; i++) {
       if (solid_iterators_[i].IsEnd()) {
         // one list is empty
         return false;
@@ -337,7 +337,7 @@ class PhraseQueryProcessor3 {
   // term03: info_col  info_col ...
   // ...
   void AppendPositionCol(PositionInfoTable *table) {
-    for (int i = 0; i < last_orig_popped_.size(); i++) {
+    for (int i = 0; i < n_terms_; i++) {
       PositionInfo info = last_orig_popped_[i];
       PositionInfoVec &row = (*table)[i];
       row.push_back(info);
@@ -1151,14 +1151,12 @@ class QueryProcessor {
   }
 
   PositionInfoTable FindPhrase() {
-    PositionIterators2 iterators;
     for (int i = 0; i < pl_iterators_.size(); i++) {
-      CompressedPositionIterator *p = position_iterator_pool_->Borrow(i);
+      CompressedPositionIterator *p = phrase_qp_.Iterator(i);
       pl_iterators_[i]->AssignPositionBegin(p);
-      iterators.push_back(p);
     }
+    phrase_qp_.SetNumTerms(pl_iterators_.size());
 
-    phrase_qp_.Reset(&iterators);
     return phrase_qp_.Process();
   }
 
@@ -1227,8 +1225,7 @@ class QueryProcessor {
   bool is_phrase_;
 
   CompressedPositionIteratorPool * position_iterator_pool_ = nullptr;
-  PhraseQueryProcessor2 phrase_qp_;
-  PhraseQueryProcessor3 phrase_qp_3_;
+  PhraseQueryProcessor3 phrase_qp_;
 };
 
 
