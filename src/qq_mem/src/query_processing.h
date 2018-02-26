@@ -252,8 +252,8 @@ class PhraseQueryProcessor2 {
 
 class PhraseQueryProcessor3 {
  public:
-  PhraseQueryProcessor3()
-    :solid_iterators_(3), last_orig_popped_(3) {
+  PhraseQueryProcessor3(int capacity)
+    :solid_iterators_(capacity), last_orig_popped_(capacity) {
   }
 
   Position FindMaxAdjustedLastPopped() {
@@ -1013,6 +1013,7 @@ class QueryProcessor {
     const int k = 5,
     const bool is_phrase = false)
   : position_iterator_pool_(position_iterator_pool),
+    phrase_qp_(128),
     n_lists_(pl_iterators->size()),
     doc_lengths_(doc_lengths),
     pl_iterators_(*pl_iterators),
