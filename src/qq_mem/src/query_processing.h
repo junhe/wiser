@@ -800,7 +800,8 @@ class QueryProcessor {
     k_(k),
     is_phrase_(is_phrase),
     idfs_of_terms_(n_lists_),
-    n_total_docs_in_index_(n_total_docs_in_index)
+    n_total_docs_in_index_(n_total_docs_in_index),
+    phrase_qp_(8)
   {
     for (int i = 0; i < n_lists_; i++) {
       idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
@@ -921,6 +922,16 @@ class QueryProcessor {
   }
 
   PositionInfoTable FindPhrase() {
+    for (int i = 0; i < pl_iterators_.size(); i++) {
+      CompressedPositionIterator *p = phrase_qp_.Iterator(i);
+      pl_iterators_[i]->AssignPositionBegin(p);
+    }
+    phrase_qp_.SetNumTerms(pl_iterators_.size());
+
+    return phrase_qp_.Process();
+  }
+
+  PositionInfoTable FindPhraseOLD() {
     // All iterators point to the same posting at this point
     PositionIterators iterators;
     for (int i = 0; i < pl_iterators_.size(); i++) {
@@ -994,6 +1005,7 @@ class QueryProcessor {
   MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
   bool is_phrase_;
+  PhraseQueryProcessor3 phrase_qp_;
 };
 
 
