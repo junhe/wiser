@@ -186,11 +186,12 @@ int varint_encode(uint32_t value, std::string *buf, off_t offset);
 // int varint_decode_chars(const char *buf, const off_t offset, uint32_t *value);
 
 inline int varint_decode_chars(const char *buf, const off_t offset, uint32_t *value) {
-  int i = 0;
-  *value = 0;
+  *value = buf[offset] & 0x7f;
+
+  int i = 1;
   // inv: buf[offset, offset + i) has been copied to value 
   //      (buf[offset + i] is about to be copied)
-  while (i == 0 || (buf[offset + i - 1] & 0x80) > 0) {
+  while ((buf[offset + i - 1] & 0x80) > 0) {
     *value += (0x7f & buf[offset + i]) << (i * 7);
     i++;
   }
