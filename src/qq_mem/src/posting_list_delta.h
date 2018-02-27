@@ -170,7 +170,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
                            const int total_postings,
                            DocIdType prev_doc_id, 
                            int byte_offset)
-    :data_(data), 
+    :data_pointer_(data->DataPointer()),
      skip_index_(skip_index),
      skip_span_(skip_span),
      total_postings_(total_postings),
@@ -276,7 +276,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
         << "Trying to get offset iterator from a empty posting iterator\n";
     }
     std::unique_ptr<OffsetPairsIteratorService> p(new
-        CompressedPairIterator(data_->DataPointer(), 
+        CompressedPairIterator(data_pointer_, 
                                cache_.cur_offset_pairs_start_,
                                cache_.cur_position_start_)); 
     return p; 
@@ -284,7 +284,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
 
   std::unique_ptr<PopIteratorService> PositionBegin() const {
     std::unique_ptr<PopIteratorService> p(new CompressedPositionIterator(
-          data_->DataPointer(), 
+          data_pointer_, 
           cache_.cur_position_start_, 
           cache_.next_posting_byte_offset_));
     return p;
@@ -292,7 +292,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
 
   void AssignPositionBegin(CompressedPositionIterator *iterator) const {
     new (iterator) CompressedPositionIterator(  
-          data_->DataPointer(), 
+          data_pointer_, 
           cache_.cur_position_start_, 
           cache_.next_posting_byte_offset_);
   }
@@ -303,7 +303,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     uint32_t delta;
     int len;
 
-    const std::string *data = data_->DataPointer();
+    const std::string *data = data_pointer_;
 
     len = utils::varint_decode(*data, offset, &cache_.cur_content_bytes_);
     offset += len;
@@ -322,7 +322,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
   }
 
-  const VarintBuffer * data_;
+  const std::string *data_pointer_;
   const SkipIndex *skip_index_;
   int total_postings_;
   int skip_span_;
