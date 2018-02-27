@@ -269,24 +269,6 @@ int varint_encode(uint32_t value, std::string *buf, const off_t offset) {
 }
 
 
-// from varint code to int
-// return: length of the buffer decoded
-int varint_decode(const std::string &buf, const off_t offset, uint32_t *value) {
-  return varint_decode_chars(buf.data(), offset, value);
-}
-
-int varint_decode_chars(const char *buf, const off_t offset, uint32_t *value) {
-  int i = 0;
-  *value = 0;
-  // inv: buf[offset, offset + i) has been copied to value 
-  //      (buf[offset + i] is about to be copied)
-  while (i == 0 || (buf[offset + i - 1] & 0x80) > 0) {
-    *value += (0x7f & buf[offset + i]) << (i * 7);
-    i++;
-  }
-  return i; 
-}
-
 
 #define handle_error(msg) \
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
