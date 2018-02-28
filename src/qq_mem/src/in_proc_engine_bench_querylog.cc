@@ -181,7 +181,7 @@ class InProcExperiment: public Experiment {
     // single term
     std::vector<Treatment> treatments {
       // Treatment({"hello"}, false, 1000, true),
-      // Treatment({"from"}, false, 20, true),
+      Treatment({"from"}, false, 20, true),
       // Treatment({"ripdo"}, false, 10000, true),
 
       // Treatment({"hello", "world"}, false, 100, true),
@@ -190,7 +190,7 @@ class InProcExperiment: public Experiment {
 
       // Treatment({"hello", "world"}, true, 100, true),
       // Treatment({"barack", "obama"}, true, 100, true),
-      Treatment({"from", "also"}, true, 10, true)
+      // Treatment({"from", "also"}, true, 10, true)
     };
 
     treatments_ = treatments;
