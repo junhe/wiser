@@ -12,11 +12,18 @@ class DocLengthStore {
  private:
   typedef std::unordered_map<DocIdType, int> length_store_t;
 
+  std::vector<int> vec_store_;
   length_store_t length_dict_;
   qq_float avg_length_ = 0;
+  int doc_cnt_ = 0;
 
  public:
+  DocLengthStore() {
+    vec_store_.reserve(6000000);
+  }
+
   void AddLength(const DocIdType &doc_id, const int &length) {
+    throw std::runtime_error("should not call me");
     if (length_dict_.find(doc_id) != length_dict_.end()) {
       throw std::runtime_error("The requested doc id already exists. "
           "We do not support update.");
@@ -26,8 +33,20 @@ class DocLengthStore {
     length_dict_[doc_id] = length;
   }
 
+  void AddLength2(const DocIdType &doc_id, const int &length) {
+    if (doc_id >= vec_store_.size()) {
+      vec_store_.resize(doc_id + 1);
+    }
+    avg_length_ = avg_length_ + (length - avg_length_) / (doc_cnt_ + 1);
+
+    vec_store_[doc_id] = length;
+    doc_cnt_++;
+  }
+
   int GetLength(const DocIdType &doc_id) const {
-    return length_dict_.at(doc_id);  
+    // return 301;
+    // return length_dict_.at(doc_id);  
+    return vec_store_[doc_id];
   }
 
   const qq_float &GetAvgLength() const {
@@ -35,7 +54,8 @@ class DocLengthStore {
   }
 
   int Size() const {
-    return length_dict_.size();
+    // return length_dict_.size();
+    return doc_cnt_;
   }
 
   std::string ToStr() const {
@@ -82,7 +102,7 @@ class DocLengthStore {
     for (int i = 0; i < count; i++) {
       int id = *((int *) (base + width * (2 * i)));
       int length = *((int *) (base + width * (2 * i + 1)));
-      AddLength(id, length);
+      AddLength2(id, length);
     }
 
     utils::UnmapFile(addr, fd, file_length);
