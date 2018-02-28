@@ -694,8 +694,8 @@ qq_float calc_doc_score_for_a_query(
 struct ResultDocEntry {
   DocIdType doc_id;
   qq_float score;
-  std::vector<StandardPosting> postings;
-  Positions phrase_positions;
+  
+  std::vector<PostingListDeltaIterator> pl_iterators;
   // table[0]: row of position info structs for the first term
   // table[1]: row of position info structs for the second term
   PositionInfoTable position_table;
@@ -707,6 +707,27 @@ struct ResultDocEntry {
 
   ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in)
     :doc_id(doc_id_in), score(score_in) {}
+
+
+  ResultDocEntry(const DocIdType &doc_id_in, 
+                 const qq_float &score_in, 
+                 IteratorPointers &pl_iters,
+                 const PositionInfoTable position_table_in, 
+                 const bool is_phrase_in)
+    :doc_id(doc_id_in), 
+     score(score_in), 
+     position_table(position_table_in), 
+     is_phrase(is_phrase_in) {
+
+    for (auto &p : pl_iters) {
+      PostingListDeltaIterator *pp = 
+        dynamic_cast<PostingListDeltaIterator *>(p.get());
+      LOG_IF(FATAL, p == nullptr) << "Cannot convert";
+
+      pl_iterators.push_back(*pp);
+    }
+  }
+
 
   ResultDocEntry(const DocIdType &doc_id_in, 
                  const qq_float &score_in, 
