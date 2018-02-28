@@ -1012,10 +1012,6 @@ class QueryProcessor {
       kk--;
     }
     std::reverse(ret.begin(), ret.end());
-
-    for (auto &entry : ret) {
-      entry.FillOffsetIters();
-    }
     return ret;
   }
 
@@ -1023,8 +1019,13 @@ class QueryProcessor {
                     const qq_float &score_of_this_doc,
                     const PositionInfoTable &position_table)
   {
+    OffsetIterators offset_iters;
+    for (int i = 0; i < n_lists_; i++) {
+      auto p = pl_iterators_[i]->OffsetPairsBegin();
+      offset_iters.push_back(std::move(p));
+    }
     min_heap_.emplace(doc_id, score_of_this_doc, 
-        pl_iterators_, position_table, is_phrase_);
+			offset_iters, position_table, is_phrase_);
   }
 
   const int n_lists_;
