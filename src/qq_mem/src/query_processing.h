@@ -835,7 +835,6 @@ class SingleTermQueryProcessor {
    : doc_lengths_(doc_lengths),
      pl_iterators_(*pl_iterators),
      k_(k),
-     is_phrase_(false),
      idfs_of_terms_(1),
      n_total_docs_in_index_(n_total_docs_in_index)
   {
@@ -880,7 +879,8 @@ class SingleTermQueryProcessor {
     auto p = pl_iterators_[0]->OffsetPairsBegin();
     offset_iters.push_back(std::move(p));
 
-    min_heap_.emplace(doc_id, score_of_this_doc, offset_iters, is_phrase_);
+    min_heap_.emplace(doc_id, score_of_this_doc, offset_iters, 
+        false);
   }
 
   std::vector<ResultDocEntry> SortHeap() {
@@ -902,7 +902,6 @@ class SingleTermQueryProcessor {
   std::vector<qq_float> idfs_of_terms_;
   MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
-  bool is_phrase_;
 };
 
 
