@@ -158,6 +158,12 @@ struct SkipIndex {
 
 class PostingListDeltaIterator: public PostingListIteratorService {
  public:
+  PostingListDeltaIterator() 
+    :data_(nullptr), 
+     skip_index_(nullptr),
+     skip_span_(-1),
+     total_postings_(0),
+     cur_state_(0, 0, 0) {}
   PostingListDeltaIterator(const VarintBuffer *data, 
                            const SkipIndex *skip_index,
                            const int skip_span,
@@ -171,6 +177,25 @@ class PostingListDeltaIterator: public PostingListIteratorService {
      cur_state_(byte_offset, 0, prev_doc_id)
   {
     DecodeToCache();
+  }
+
+  PostingListDeltaIterator(const PostingListDeltaIterator &rhs)
+    :data_(rhs.data_),
+     skip_index_(rhs.skip_index_),
+     total_postings_(rhs.total_postings_),
+     skip_span_(rhs.skip_span_),
+     cur_state_(rhs.cur_state_),
+     cache_(rhs.cache_)
+  {
+  }
+
+  PostingListDeltaIterator& operator=(const PostingListDeltaIterator &rhs) {
+    data_ = rhs.data_; 
+    skip_index_ = rhs.skip_index_;
+    total_postings_ = rhs.total_postings_;
+    skip_span_ = rhs.skip_span_;
+    cur_state_ = rhs.cur_state_;
+    cache_ = rhs.cache_;
   }
 
   int Size() const {
@@ -299,8 +324,8 @@ class PostingListDeltaIterator: public PostingListIteratorService {
 
   const VarintBuffer * data_;
   const SkipIndex *skip_index_;
-  const int total_postings_;
-  const int skip_span_;
+  int total_postings_;
+  int skip_span_;
 
   struct State {
     int byte_offset_; // start byte of posting[cur_posting_index_]
