@@ -215,6 +215,42 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     return true;
   }
 
+  void AdvanceAndDecode1() {
+    int offset = cur_state_.byte_offset_;
+    uint32_t delta;
+    int len;
+
+    cur_state_.Update(cache_.next_posting_byte_offset_, 
+                  cur_state_.cur_posting_index_ + 1,
+                  cache_.cur_doc_id_);
+
+    // Content bytes
+    len = utils::varint_decode(*data_pointer_, offset, &cache_.cur_content_bytes_);
+    offset += len;
+    cache_.next_posting_byte_offset_ = offset + cache_.cur_content_bytes_;
+
+    // Delta
+    len = utils::varint_decode(*data_pointer_, offset, &delta);
+    offset += len;
+    cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
+
+    // Term Freq
+    len = utils::varint_decode(*data_pointer_, offset, &cache_.cur_term_freq_);
+    last_offset_ = offset + len;
+  }
+  
+  // must be called after Advance1()
+  void Decode2() {
+    int offset = last_offset_;
+    int len;
+
+    // Offset size
+    len = utils::varint_decode(*data_pointer_, offset, &cache_.offset_size_);
+    offset += len;
+    cache_.cur_offset_pairs_start_ = offset; 
+    cache_.cur_position_start_ = offset + cache_.offset_size_;
+  }
+
   bool HasSkip() const {
     return cur_state_.cur_posting_index_ % skip_span_ == 0 && 
       cur_state_.cur_posting_index_ + skip_span_ < total_postings_;
@@ -355,6 +391,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   };
   // Cached data of cur_posting_index_
   PostingCache cache_;
+  int last_offset_;
 };
 
 
