@@ -159,7 +159,7 @@ struct SkipIndex {
 class PostingListDeltaIterator: public PostingListIteratorService {
  public:
   PostingListDeltaIterator() 
-    :data_(nullptr), 
+    :data_pointer_(nullptr), 
      skip_index_(nullptr),
      skip_span_(-1),
      total_postings_(0),
@@ -180,22 +180,24 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   }
 
   PostingListDeltaIterator(const PostingListDeltaIterator &rhs)
-    :data_(rhs.data_),
+    :data_pointer_(rhs.data_pointer_),
      skip_index_(rhs.skip_index_),
      total_postings_(rhs.total_postings_),
      skip_span_(rhs.skip_span_),
      cur_state_(rhs.cur_state_),
-     cache_(rhs.cache_)
+     cache_(rhs.cache_),
+     last_offset_(rhs.last_offset_)
   {
   }
 
   PostingListDeltaIterator& operator=(const PostingListDeltaIterator &rhs) {
-    data_ = rhs.data_; 
+    data_pointer_ = rhs.data_pointer_; 
     skip_index_ = rhs.skip_index_;
     total_postings_ = rhs.total_postings_;
     skip_span_ = rhs.skip_span_;
     cur_state_ = rhs.cur_state_;
     cache_ = rhs.cache_;
+    last_offset_ = rhs.last_offset_;
   }
 
   int Size() const {
