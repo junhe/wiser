@@ -751,6 +751,7 @@ struct ResultDocEntry {
   void FillOffsetIters() {
     OffsetIterators offset_iters;
     for (int i = 0; i < pl_iterators.size(); i++) {
+      pl_iterators[i].Decode2();
       auto p = pl_iterators[i].OffsetPairsBegin();
       offset_iters.push_back(std::move(p));
     }
