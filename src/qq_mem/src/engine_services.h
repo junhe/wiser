@@ -91,14 +91,20 @@ class PostingListIteratorService {
   virtual int TermFreq() const = 0;
 
   virtual void Advance() = 0;
+  virtual void AdvanceOnly() { LOG(FATAL) << "Not Implemented"; };
+  virtual void DecodeContSizeAndDocId() { LOG(FATAL) << "Not Implemented"; };
+  virtual void DecodeTf() { LOG(FATAL) << "Not Implemented"; };
+  virtual void DecodeOffsetSize() { LOG(FATAL) << "Not Implemented"; };
+  virtual void SkipToNextSpanOnly() { LOG(FATAL) << "Not Implemented"; };
   virtual void AdvanceAndDecode1() {};
   virtual void Decode2() {};
   virtual void SkipForward(const DocIdType doc_id) = 0;
+  virtual void SkipForward_MinDecode(const DocIdType doc_id) {
+    LOG(FATAL) << "Not Implemented"; };
   virtual std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const = 0;
   virtual std::unique_ptr<PopIteratorService> PositionBegin() const = 0;
   virtual void AssignPositionBegin(CompressedPositionIterator *iterator) const {
-    LOG(FATAL) << "Not Implemented" << std::endl;
-  };
+    LOG(FATAL) << "Not Implemented"; };
 };
 
 
