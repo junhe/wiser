@@ -127,13 +127,8 @@ class PostingListStandardVec: public PostingList_Vec<StandardPosting> {
       return posting_list_->GetPosting(it_).GetTermFreq();
     }
 
-    bool Advance() {
-      if (IsEnd()) {
-        return false;
-      }
-
+    void Advance() {
       it_++;
-      return true;
     }
 
     void SkipForward(const DocIdType doc_id) {

@@ -204,13 +204,12 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     return total_postings_;
   }
 
-  bool Advance() {
+  void Advance() {
     cur_state_.Update(cache_.next_posting_byte_offset_, 
                   cur_state_.cur_posting_index_ + 1,
                   cache_.cur_doc_id_);
                   
     DecodeToCache();
-    return true;
   }
 
   void AdvanceAndDecode1() {

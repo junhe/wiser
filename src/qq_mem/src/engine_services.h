@@ -90,7 +90,7 @@ class PostingListIteratorService {
   virtual DocIdType DocId() const = 0;
   virtual int TermFreq() const = 0;
 
-  virtual bool Advance() = 0;
+  virtual void Advance() = 0;
   virtual void AdvanceAndDecode1() {};
   virtual void Decode2() {};
   virtual void SkipForward(const DocIdType doc_id) = 0;

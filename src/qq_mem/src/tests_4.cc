@@ -281,16 +281,15 @@ TEST_CASE( "Skip list", "[postinglist0]" ) {
         not_has_skip.push_back(i);
       }
 
-      auto ret = it->Advance();
-      REQUIRE(ret == true);
+      REQUIRE(it->IsEnd() == false);
+      it->Advance();
     }
 
     REQUIRE(has_skip == std::vector<int>{0, 3, 6});
     REQUIRE(span_doc_ids == std::vector<int>{2, 5, 8});
     REQUIRE(not_has_skip == std::vector<int>{1, 2, 4, 5, 7, 8, 9});
 
-    auto ret = it->Advance();
-    REQUIRE(ret == false);
+    REQUIRE(it->IsEnd() == true);
   }
 
   SECTION("Skip to next span") {
