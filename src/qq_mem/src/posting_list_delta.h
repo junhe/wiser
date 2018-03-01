@@ -338,21 +338,25 @@ class PostingListDeltaIterator: public PostingListIteratorService {
 
     const std::string *data = data_pointer_;
 
+    // Content bytes
     len = utils::varint_decode(*data, offset, &cache_.cur_content_bytes_);
     offset += len;
     cache_.next_posting_byte_offset_ = offset + cache_.cur_content_bytes_;
 
+    // Doc Id delta
     len = utils::varint_decode(*data, offset, &delta);
     offset += len;
+    cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
+
+    // Term freq
     len = utils::varint_decode(*data, offset, &cache_.cur_term_freq_);
     offset += len;
 
+    // offset size
     len = utils::varint_decode(*data, offset, &cache_.offset_size_);
     offset += len;
     cache_.cur_offset_pairs_start_ = offset; 
     cache_.cur_position_start_ = offset + cache_.offset_size_;
-
-    cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
   }
 
   const std::string *data_pointer_;
