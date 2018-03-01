@@ -205,10 +205,6 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   }
 
   bool Advance() {
-    if (IsEnd()) {
-      return false;
-    }
-
     cur_state_.Update(cache_.next_posting_byte_offset_, 
                   cur_state_.cur_posting_index_ + 1,
                   cache_.cur_doc_id_);
