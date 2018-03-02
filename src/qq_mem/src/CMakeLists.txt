@@ -1,8 +1,10 @@
 project(grpc-cmake-example)
 cmake_minimum_required(VERSION 3.2)
 
-add_compile_options(-std=c++11 -O3)
+#add_compile_options(-std=c++11 -O3)
+add_compile_options(-std=c++11 -O3 -g)
 #add_compile_options(-std=c++11 -O0 -g)
+set(GPROFILER profiler)
 
 # GRPC and Protocol Buffers libraries location
 list(APPEND CMAKE_PREFIX_PATH "/opt/grpc" "/opt/protobuf")
@@ -59,7 +61,8 @@ set(GRPC_LIBS
     gRPC::grpc++_reflection
     )
 
-set(GLOG_LIB glog)
+
+set(GLOG_LIB glog ${GPROFILER})
 
 
 #######################################
