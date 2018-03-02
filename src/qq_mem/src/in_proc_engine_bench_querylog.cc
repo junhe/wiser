@@ -7,6 +7,8 @@
 #include <climits>
 
 #define NDEBUG
+
+#include <gperftools/profiler.h>
 #include <glog/logging.h>
 
 #include "qq_mem_engine.h"
@@ -200,7 +202,9 @@ class InProcExperiment: public Experiment {
     engine_ = std::move(CreateEngineFromFile());
     treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
 
-    // treatment_executor_.reset(new GrpcTreatmentExecutor(1));//TODO
+    // treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
+    
+    // ProfilerStart("my.profile.new");
   }
 
   void RunTreatment(const int run_id) {
@@ -216,6 +220,7 @@ class InProcExperiment: public Experiment {
   }
 
   void After() {
+    // ProfilerStop();
     std::cout << table_.ToStr();
   }
 
