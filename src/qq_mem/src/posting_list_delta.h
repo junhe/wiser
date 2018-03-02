@@ -212,12 +212,6 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     DecodeToCache();
   }
 
-  void AdvanceOnly() {
-    cur_state_.Update(cache_.next_posting_byte_offset_, 
-                  cur_state_.cur_posting_index_ + 1,
-                  cache_.cur_doc_id_);
-  }
-
   void AdvanceAndDecode1() {
     int offset = cur_state_.byte_offset_;
     uint32_t delta;
@@ -254,6 +248,12 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     cache_.cur_position_start_ = offset + cache_.offset_size_;
   }
 
+  void AdvanceOnly() {
+    cur_state_.Update(cache_.next_posting_byte_offset_, 
+                  cur_state_.cur_posting_index_ + 1,
+                  cache_.cur_doc_id_);
+  }
+
   void DecodeContSizeAndDocId() {
     last_offset_ = cur_state_.byte_offset_;
     uint32_t delta;
@@ -264,7 +264,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     cache_.next_posting_byte_offset_ = last_offset_ + cache_.cur_content_bytes_;
 
     // Delta
-    last_offset_ = utils::varint_decode(*data_pointer_, last_offset_, &delta);
+    last_offset_ += utils::varint_decode(*data_pointer_, last_offset_, &delta);
     cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
     
     next_expected_item_ = 2;
