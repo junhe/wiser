@@ -6,8 +6,6 @@
 #include <unordered_map>
 #include <queue>
 
-#define NDEBUG
-
 #include <glog/logging.h>
 
 #include "doc_length_store.h"
