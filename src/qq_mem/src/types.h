@@ -49,6 +49,8 @@ typedef std::tuple<int, int> Offset;  // (startoffset, endoffset)
 typedef Offset OffsetPair; // Alias for Offset, more intuitive
 typedef std::vector<Offset> Offsets;
 typedef Offsets OffsetPairs; // Alias for Offsets, more intuitive
+typedef int Position;
+typedef std::vector<Position> Positions;
 typedef std::vector<std::string> Snippets;
 
 typedef unsigned long byte_cnt_t;
@@ -61,6 +63,55 @@ class TermWithOffset { // class Term_With_Offset
         TermWithOffset(Term term_in, Offsets offsets_in) : term_(term_in), offsets_(offsets_in) {} 
 };
 typedef std::vector<TermWithOffset> TermWithOffsetList;
+
+
+class DocInfo {
+ public:
+  DocInfo() {}
+  DocInfo(const std::string &body, const std::string &tokens, 
+      const std::string &token_offsets, const std::string &token_positions, 
+      const std::string &format) 
+    :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
+     token_positions_(token_positions), format_(format) {}
+
+  TermList GetTokens() const;
+
+  // return a table of offset pairs
+  // Each row is for a term
+  std::vector<OffsetPairs> GetOffsetPairsVec() const;
+
+  // return a table of positions
+  // Each row is for a term
+  std::vector<Positions> GetPositions() const;
+
+  const std::string &Body() const {return body_;}
+
+  const std::string &Tokens() const {return tokens_;}
+
+  const std::string &TokenOffsets() const {return token_offsets_;}
+
+  const std::string &TokenPositions() const {return token_positions_;}
+  
+  const std::string &Format() const {return format_;}
+
+  const int BodyLength() const;
+
+  std::string ToStr() const {
+    return "body: " + body_ + 
+           "\ntokens: " + tokens_ +
+           "\noffsets: " + token_offsets_ + 
+           "\npositions: " + token_positions_ + 
+           "\nformat: " + format_ + 
+           "\n";
+  }
+
+ private:
+  std::string body_;
+  std::string tokens_;
+  std::string token_offsets_;
+  std::string token_positions_;
+  std::string format_;
+};
 
 
 struct SearchQuery {
@@ -76,6 +127,7 @@ struct SearchQuery {
   int n_results = 5;
   bool return_snippets = false;
   int n_snippet_passages = 3;
+  bool is_phrase = false;
 
   std::string ToStr() const {
     std::ostringstream oss;
@@ -85,6 +137,7 @@ struct SearchQuery {
     oss << "n_results(" << n_results << ") "
         << "return_snippets(" << return_snippets << ") "
         << "n_snippet_passages(" << n_snippet_passages << ") "
+        << "is_phrase(" << is_phrase << ") "
         << std::endl;
     return oss.str();
   }
@@ -97,6 +150,7 @@ struct SearchQuery {
     request->set_n_results(n_results);
     request->set_return_snippets(return_snippets);
     request->set_n_snippet_passages(n_snippet_passages);
+    request->set_is_phrase(is_phrase);
   }
 
   void CopyFrom(const qq::SearchRequest &grpc_req) {
@@ -109,8 +163,10 @@ struct SearchQuery {
     n_results = grpc_req.n_results();
     return_snippets = grpc_req.return_snippets();
     n_snippet_passages = grpc_req.n_snippet_passages();
+    is_phrase = grpc_req.is_phrase();
   }
 };
+
 
 struct SearchResultEntry {
   std::string snippet;
@@ -120,7 +176,7 @@ struct SearchResultEntry {
   std::string ToStr() {
     return "DocId: " + std::to_string(doc_id) 
       + " Doc Score: " + std::to_string(doc_score)
-      + " Snippet: " + snippet;
+      + " Snippet: \"" + snippet + "\"";
   }
   void CopyTo(qq::SearchReplyEntry *grpc_entry) {
     grpc_entry->set_doc_id(doc_id);

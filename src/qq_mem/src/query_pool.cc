@@ -1,54 +1,50 @@
 #include "query_pool.h"
 
-void load_query_pool_from_file(QueryPool *pool, 
-                     const std::string &query_log_path, 
-                     const int n_queries) 
-{
-  QueryLogReader reader(query_log_path);
-  TermList query;
 
-  while (reader.NextQuery(query)) {
-    pool->Add(query);
-  }
-}
-
-
-
-// if n_queries = 0, we load the whole file
-void load_query_pool_array(QueryPoolArray *array, 
-                           const std::string &query_log_path, 
-                           const int n_queries) {
-  QueryLogReader reader(query_log_path);
-  TermList query;
-
-  int i = 0;
-  while (reader.NextQuery(query)) {
-    array->Add( i % array->Size(), query);
-    i++;
-
-    if (i == n_queries) {
-      break;
-    }
-  }
-}
-
-
-std::unique_ptr<QueryPoolArray> create_query_pool_array(const TermList &query,
+std::unique_ptr<TermPoolArray> CreateTermPoolArray(const TermList &query,
     const int n_pools) {
-  std::unique_ptr<QueryPoolArray> array(new QueryPoolArray(n_pools));
-
-  for (int i = 0; i < n_pools; i++) {
-    array->Add(i, query);
-  }
-
+  std::unique_ptr<TermPoolArray> array(new TermPoolArray(n_pools));
+  array->LoadTerms(query);
   return array;
 }
 
-std::unique_ptr<QueryPoolArray> create_query_pool_array(
+
+std::unique_ptr<QueryProducer> CreateQueryProducer(const TermList &terms,
+    const int n_pools) {
+  std::unique_ptr<TermPoolArray> array(new TermPoolArray(n_pools));
+  array->LoadTerms(terms);
+
+  GeneralConfig config;
+  std::unique_ptr<QueryProducer> producer(
+      new QueryProducer(std::move(array), config));
+
+  return producer;
+}
+
+// Example setting:
+//
+// GeneralConfig config;
+// config.SetInt("n_results", 10);
+// config.SetBool("return_snippets", true);
+// config.SetInt("n_snippet_passages", 3);
+// config.SetBool("is_phrase", false);
+std::unique_ptr<QueryProducer> CreateQueryProducer(const TermList &terms,
+    const int n_pools, GeneralConfig config) {
+  std::unique_ptr<TermPoolArray> array(new TermPoolArray(n_pools));
+  array->LoadTerms(terms);
+
+  std::unique_ptr<QueryProducer> producer(
+      new QueryProducer(std::move(array), config));
+
+  return producer;
+}
+
+
+std::unique_ptr<TermPoolArray> CreateTermPoolArray(
     const std::string &query_log_path, const int n_pools, const int n_queries) 
 {
-  std::unique_ptr<QueryPoolArray> array(new QueryPoolArray(n_pools));
-  load_query_pool_array(array.get(), query_log_path, n_queries);
+  std::unique_ptr<TermPoolArray> array(new TermPoolArray(n_pools));
+  array->LoadFromFile(query_log_path, n_queries);
   return array;
 }
 

@@ -3,7 +3,7 @@
 #include "qq.pb.h"
 
 #include "highlighter.h"
-#include "intersect.h"
+#include "query_processing.h"
 #include "utils.h"
 #include "general_config.h"
 #include "query_pool.h"
@@ -354,8 +354,8 @@ TEST_CASE( "Time operations are accurate", "[time][slow]" ) {
 
 
 TEST_CASE( "Query pool work", "[aux]" ) {
-  SECTION("QueryPool") {
-    QueryPool pool;
+  SECTION("TermPool") {
+    TermPool pool;
     pool.Add(TermList{"hello"});
     pool.Add(TermList{"obama"});
 
@@ -365,8 +365,8 @@ TEST_CASE( "Query pool work", "[aux]" ) {
     REQUIRE(pool.Next() == TermList{"obama"});
   }
 
-  SECTION("QueryPoolArray") {
-    QueryPoolArray array(2);
+  SECTION("TermPoolArray") {
+    TermPoolArray array(2);
 
     REQUIRE(array.Size() == 2);
 
@@ -398,17 +398,17 @@ TEST_CASE( "Query pool work", "[aux]" ) {
   }
 
   SECTION("Loading query pool") {
-    QueryPoolArray array(2);
+    TermPoolArray array(2);
 
-    load_query_pool_array(&array, "src/testdata/query-log-sample.txt");
+    array.LoadFromFile("src/testdata/query-log-sample.txt", 0);
     REQUIRE(array.Next(0) == TermList{"hello", "world"});
     REQUIRE(array.Next(0) == TermList{"hello", "world"});
     REQUIRE(array.Next(1) == TermList{"barack", "obama"});
     REQUIRE(array.Next(1) == TermList{"barack", "obama"});
   }
 
-  SECTION("QueryPoolArray factory") {
-    auto array = create_query_pool_array(TermList{"hello"}, 2);
+  SECTION("TermPoolArray factory") {
+    auto array = CreateTermPoolArray(TermList{"hello"}, 2);
     REQUIRE(array->Size() == 2);
     REQUIRE(array->Next(0) == TermList{"hello"});
     REQUIRE(array->Next(1) == TermList{"hello"});

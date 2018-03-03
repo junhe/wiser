@@ -44,9 +44,9 @@ using qq::EchoData;
 // Interface to interact with gRPC server. For example, you can use
 // C++ native containers intead of protobuf objects when invoking
 // AddDocument().
-class QQEngineSyncClient {
+class QqGrpcPlainClient {
  public:
-  QQEngineSyncClient(std::shared_ptr<Channel> channel)
+  QqGrpcPlainClient(std::shared_ptr<Channel> channel)
     : stub_(QQEngine::NewStub(channel)) {}
 
   bool AddDocument(const std::string &title, 
@@ -79,8 +79,7 @@ class QQEngineSyncClient {
     request.set_return_snippets(true);
     request.set_n_snippet_passages(3);
 
-    // Here we can the stub's newly available method we just added.
-    Status status = stub_->Search(&context, request,  &reply);
+    Status status = stub_->SyncUnarySearch(&context, request,  &reply);
 
     if (status.ok()) {
       for (int i = 0; i < reply.entries_size(); i++) {
@@ -110,11 +109,11 @@ class QQEngineSyncClient {
     }
   }
 
-  bool DoSyncStreamingSearch(const SearchRequest &request, SearchReply &reply) {
+  bool DoStreamingSearch(const SearchRequest &request, SearchReply &reply) {
     ClientContext context;
 
     std::unique_ptr<ClientReaderWriter<SearchRequest, SearchReply> > 
-      stream(stub_->SyncStreamingSearch(&context));
+      stream(stub_->StreamingSearch(&context));
     stream->Write(request);
     stream->WritesDone();
     stream->Read(&reply);
@@ -219,7 +218,8 @@ class RPCContext {
   }
 
   bool RunNextState(bool ok, int thread_idx, Histogram *hist, 
-      QueryPool *query_pool, ReplyPool *reply_pool, bool save_reply) {
+      ReplyPool *reply_pool, bool save_reply, 
+      QueryProducer *query_producer) {
     TermList terms;
     int i;
 
@@ -236,12 +236,7 @@ class RPCContext {
             return false;
           }
           
-          req_.clear_terms();
-          req_.set_n_results(10);
-          terms = query_pool->Next();    
-          for (i = 0; i < terms.size(); i++) {
-            req_.add_terms(terms[i]);
-          }
+          req_ = query_producer->NextGrpcQuery(thread_idx);
 
           start_ = utils::now();
           next_state_ = State::WRITE_DONE;
@@ -353,8 +348,9 @@ class Client {
   //  target
   //  benchmark_duration
   Client(const GeneralConfig config,
-      std::unique_ptr<QueryPoolArray> query_pool_array) 
-    :config_(config), query_pool_array_(std::move(query_pool_array))
+      std::unique_ptr<QueryProducer> query_producer) 
+    :config_(config), 
+     query_producer_(std::move(query_producer))
   {
     int num_threads = config.GetInt("n_threads");
     int n_client_channels = config.GetInt("n_client_channels");
@@ -362,9 +358,9 @@ class Client {
     std::cout << "num_threads: " << num_threads << std::endl;
     std::cout << "n_client_channels: " << n_client_channels << std::endl;
 
-    if (query_pool_array_->Size() != num_threads) {
+    if (query_producer_->Size() != num_threads) {
       throw std::runtime_error(
-          "Query pool size is not the same as the number of threads");
+          "Query producer size is not the same as the number of threads");
     }
 
     // initialize hitogram vector  
@@ -430,14 +426,19 @@ class Client {
     std::for_each(threads_.begin(), threads_.end(), std::mem_fn(&std::thread::join));
   }
 
-  void ShowStats() {
+  utils::ResultRow ShowStats() {
+    utils::ResultRow row;
+
     std::cout << "Finished round trips: " << GetTotalRoundtrips() << std::endl;
 
     auto n_secs = config_.GetInt("benchmark_duration");
+    row["duration"] = std::to_string(n_secs);
+
     std::cout << "Duration: " << n_secs << std::endl;
     std::cout << "Total roundtrips: " << GetTotalRoundtrips() << std::endl;
-    std::cout << "Roundtrip Per Second: " 
-      << GetTotalRoundtrips() / n_secs << std::endl;
+    auto qps = GetTotalRoundtrips() / n_secs;
+    std::cout << "Roundtrip Per Second (QPS): " << qps << std::endl;
+    row["QPS"] = std::to_string(qps);
 
     Histogram hist_all;
     for (auto & histogram : histograms_) {
@@ -447,20 +448,23 @@ class Client {
     std::cout << "---- Latency histogram (us) ----" << std::endl;
     std::vector<int> percentiles{0, 25, 50, 75, 90, 95, 99, 100};
     for (auto percentile : percentiles) {
+      auto latency = utils::format_with_commas<int>(
+          round(hist_all.Percentile(percentile)));
       std::cout << "Percentile " << std::setw(4) << percentile << ": " 
-        << std::setw(25) 
-        << utils::format_with_commas<int>(round(hist_all.Percentile(percentile))) 
-        << std::endl;
+        << std::setw(25) << latency << std::endl;
+
+      if (percentile == 50) {
+        row["latency_50th"] = latency;
+      } else if (percentile == 95) {
+        row["latency_95th"] = latency;
+      }
     }
 
-    if (save_reply_ == true) {
-      std::cout << "---- Reply Pool sizes ----" << std::endl;
-      for (auto &pool : reply_pools_) {
-        std::cout << pool.size() << " ";
-      }
-      std::cout << std::endl;
-    }
+    ShowReplies();
+
+    return row;
   }
+
   const ReplyPools *GetReplyPools() {
     return &reply_pools_;  
   };
@@ -483,9 +487,27 @@ class Client {
   std::vector<int> finished_roundtrips_;
   std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
   std::vector<Histogram> histograms_;
-  std::unique_ptr<QueryPoolArray> query_pool_array_;
+  std::unique_ptr<QueryProducer> query_producer_;
   ReplyPools reply_pools_;
   bool save_reply_;
+
+  void ShowReplies() {
+    std::cout << "save_reply_ == " << save_reply_ << std::endl;
+
+    std::cout << "---- Reply Pool sizes ----" << std::endl;
+    for (auto &pool : reply_pools_) {
+      std::cout << pool.size() << " ";
+    }
+    std::cout << std::endl;
+
+    std::cout << "---- Reply Samples ----" << std::endl;
+    for (auto &pool : reply_pools_) {
+      for (int i = 0; i < pool.size() && i < 3; i++) {
+        std::cout << utils::str_qq_search_reply(pool[i]) << std::endl;
+      }
+    }
+    std::cout << std::endl;
+  }
 };
 
 
@@ -502,8 +524,8 @@ class SyncStreamingClient: public Client {
   //  target
   //  benchmark_duration
   SyncStreamingClient(const GeneralConfig config,
-      std::unique_ptr<QueryPoolArray> query_pool_array) 
-    :Client(config, std::move(query_pool_array))
+      std::unique_ptr<QueryProducer> query_producer) 
+    :Client(config, std::move(query_producer))
   {
     StartThreads();
   }
@@ -523,24 +545,15 @@ class SyncStreamingClient: public Client {
   }
 
   void ThreadFunc(int thread_idx) {
-    TermList terms;
-    SearchRequest grpc_request;
-    grpc_request.set_n_results(10);
-    grpc_request.set_return_snippets(true);
-    grpc_request.set_n_snippet_passages(3);
     SearchReply reply;
 
     ClientContext context;
     auto stub = channels_[thread_idx % channels_.size()].get_stub();
     std::unique_ptr<ClientReaderWriter<SearchRequest, SearchReply> > stream(
-        stub->SyncStreamingSearch(&context));
+        stub->StreamingSearch(&context));
 
     while (shutdown_state_[thread_idx]->shutdown == false) {
-      terms = query_pool_array_->Next(thread_idx);
-      grpc_request.clear_terms();
-      for (int i = 0; i < terms.size(); i++) {
-        grpc_request.add_terms(terms[i]);
-      }
+      SearchRequest grpc_request = query_producer_->NextGrpcQuery(thread_idx);
 
       StreamingSearch(thread_idx, stream.get(), grpc_request, reply);
 
@@ -562,10 +575,15 @@ class AsyncClient: public Client {
   AsyncClient(AsyncClient&&) = default;
   AsyncClient& operator=(AsyncClient&&) = default;
 
+
   AsyncClient(const GeneralConfig config,
-    std::unique_ptr<QueryPoolArray> query_pool_array)
-    :Client(config, std::move(query_pool_array))
+    std::unique_ptr<QueryProducer> query_producer)
+      :Client(config, std::move(query_producer))
   {
+    LOG(WARNING) << "With async client, you may send too many queries that require long "
+      << "processing time (e.g., from), which will make draining of the completion "
+      << "queues very long. The long draining time will make the performance results "
+      << "not accurate because draining time is not measured." << std::endl;
     int tpc = config.GetInt("n_threads_per_cq");
     int num_async_threads = config.GetInt("n_threads");
     int n_client_channels = config.GetInt("n_client_channels");
@@ -641,8 +659,7 @@ class AsyncClient: public Client {
       }
 
       if (!ctx->RunNextState(ok, thread_idx, &histograms_[thread_idx], 
-            query_pool_array_->GetPool(thread_idx),
-            &reply_pools_[thread_idx], save_reply_)) 
+            &reply_pools_[thread_idx], save_reply_, query_producer_.get())) 
       {
         ctx->StartNewClone();
         delete ctx;
@@ -671,8 +688,8 @@ class SyncUnaryClient: public Client {
   //  target
   //  benchmark_duration
   SyncUnaryClient(const GeneralConfig config,
-      std::unique_ptr<QueryPoolArray> query_pool_array) 
-    :Client(config, std::move(query_pool_array))
+      std::unique_ptr<QueryProducer> query_producer) 
+    :Client(config, std::move(query_producer))
   {
     StartThreads();
   }
@@ -682,7 +699,7 @@ class SyncUnaryClient: public Client {
     auto stub = channels_[thread_idx % channels_.size()].get_stub();
 
     auto start = utils::now();
-    Status status = stub->Search(&context, request,  &reply);
+    Status status = stub->UnarySearch(&context, request,  &reply);
     auto end = utils::now();
     auto duration = utils::duration(start, end);
 
@@ -693,19 +710,10 @@ class SyncUnaryClient: public Client {
   }
 
   void ThreadFunc(int thread_idx) {
-    TermList terms;
-    SearchRequest grpc_request;
-    grpc_request.set_n_results(10);
-    grpc_request.set_return_snippets(true);
-    grpc_request.set_n_snippet_passages(3);
     SearchReply reply;
 
     while (shutdown_state_[thread_idx]->shutdown == false) {
-      terms = query_pool_array_->Next(thread_idx);
-      grpc_request.clear_terms();
-      for (int i = 0; i < terms.size(); i++) {
-        grpc_request.add_terms(terms[i]);
-      }
+      SearchRequest grpc_request = query_producer_->NextGrpcQuery(thread_idx);
 
       UnarySearch(thread_idx, grpc_request, reply);
 
@@ -717,14 +725,13 @@ class SyncUnaryClient: public Client {
 };
 
 
+std::unique_ptr<QqGrpcPlainClient> CreateSyncClient(const std::string &target);
 
-std::unique_ptr<QQEngineSyncClient> CreateSyncClient(const std::string &target);
 std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
-    std::unique_ptr<QueryPoolArray> query_pool_array);
-std::unique_ptr<SyncUnaryClient> CreateSyncUnaryClient(const GeneralConfig &config,
-    std::unique_ptr<QueryPoolArray> query_pool_array);
+    std::unique_ptr<QueryProducer> query_producer);
+
 std::unique_ptr<Client> CreateClient(const GeneralConfig &config,
-    std::unique_ptr<QueryPoolArray> query_pool_array);
+    std::unique_ptr<QueryProducer> query_producer);
 
 #endif
 

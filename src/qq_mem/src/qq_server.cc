@@ -46,6 +46,10 @@ static void sigint_handler(int x) {
 
 
 int main(int argc, char** argv) {
+  google::InitGoogleLogging(argv[0]);
+  FLAGS_logtostderr = 1; // print to stderr instead of file
+  FLAGS_minloglevel = 0; 
+
   if (argc != 6) {
     std::cout << "Usage: exefile port secs threads n_docs sync_type" << std::endl;
     exit(1);
@@ -61,12 +65,21 @@ int main(int argc, char** argv) {
 
   GeneralConfig config;
   config.SetString("target", std::string("localhost:") + port);
-  // config.SetString("engine_name", "qq_mem_compressed");
-  config.SetString("engine_name", "qq_mem_uncompressed");
+  config.SetString("engine_name", "qq_mem_compressed");
+  // config.SetString("engine_name", "qq_mem_uncompressed");
   config.SetString("sync_type", sync_type);
+
+  config.SetString("load_source", "dump");
+  config.SetString("dump_path", "/mnt/ssd/big-engine-dump");
+
   config.SetInt("n_line_doc_rows", n_docs);
+  config.SetString("line_doc_format", "WITH_POSITIONS");
   config.SetString("line_doc_path", 
-      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+      "/mnt/ssd/downloads/enwiki.linedoc_tokenized.1");
+  
+  // config.SetString("line_doc_format", "TOKEN_ONLY");
+  // config.SetString("line_doc_path", 
+      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
 
   if (config.GetString("sync_type") == "ASYNC") {
     config.SetInt("n_server_threads", n_threads);

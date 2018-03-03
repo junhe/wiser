@@ -3,7 +3,7 @@
 #include "qq.pb.h"
 
 #include "highlighter.h"
-#include "intersect.h"
+#include "query_processing.h"
 #include "utils.h"
 #include "general_config.h"
 #include "query_pool.h"
@@ -66,9 +66,11 @@ TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
       config.SetInt("benchmark_duration", 2);
       config.SetBool("save_reply", true);
 
-      auto query_pool_array = create_query_pool_array(TermList{"body"}, 
+      auto query_producer = CreateQueryProducer(TermList{"body"}, 
           config.GetInt("n_threads"));
-      auto client = CreateAsyncClient(config, std::move(query_pool_array));
+      auto client = CreateAsyncClient(config, 
+                                      std::move(query_producer) 
+                                      );
       client->Wait();
       auto reply_pools = client->GetReplyPools();
 
@@ -117,9 +119,11 @@ TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
   config.SetInt("benchmark_duration", 2);
   config.SetBool("save_reply", true);
 
-  auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
+  auto query_producer = CreateQueryProducer(TermList{"hello"},
       config.GetInt("n_threads"));
-  auto client = CreateAsyncClient(config, std::move(query_pool_array));
+
+  auto client = CreateAsyncClient(config, 
+                                  std::move(query_producer));
   client->Wait();
   client.release();
 }
@@ -298,7 +302,7 @@ TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
     query.CopyTo(&request);
 
     SearchReply reply;
-    client->DoSyncStreamingSearch(request, reply);
+    client->DoStreamingSearch(request, reply);
     
     REQUIRE(reply.entries_size() == 1);
     REQUIRE(reply.entries(0).doc_id() == 0);
@@ -319,9 +323,8 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
   client_config.SetBool("save_reply", true);
   client_config.SetInt("benchmark_duration", 3);
 
-  std::unique_ptr<QueryPoolArray> query_pools(new QueryPoolArray(2));
-  query_pools->Add(0, TermList{"body"});
-  query_pools->Add(1, TermList{"body"});
+  std::unique_ptr<QueryProducer> query_producer = 
+    CreateQueryProducer(TermList{"body"}, 2);
 
   SECTION("SyncStreamingClient") {
     std::string target = "localhost:50061";
@@ -334,7 +337,8 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
     simple_client->AddDocument("my title", "my url", "my spirit");
 
     client_config.SetString("target", target);
-    SyncStreamingClient client(client_config, std::move(query_pools));
+    SyncStreamingClient client(client_config, 
+                               std::move(query_producer));
 
     client.Wait();
     auto reply_pools = client.GetReplyPools();
@@ -360,7 +364,8 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
     simple_client->AddDocument("my title", "my url", "my spirit");
 
     client_config.SetString("target", target);
-    SyncUnaryClient client(client_config, std::move(query_pools));
+    SyncUnaryClient client(client_config, 
+                           std::move(query_producer));
 
     client.Wait();
     auto reply_pools = client.GetReplyPools();

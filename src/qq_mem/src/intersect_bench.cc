@@ -6,7 +6,7 @@
 #include <glog/logging.h>
 
 #include "posting.h"
-#include "intersect.h"
+#include "query_processing.h"
 #include "utils.h"
 
 typedef std::vector<int> array_t;

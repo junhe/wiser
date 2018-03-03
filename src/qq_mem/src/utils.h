@@ -12,6 +12,7 @@
 #include <vector>
 #include <locale>
 
+
 #include "engine_services.h"
 #include "types.h"
 
@@ -179,9 +180,36 @@ std::string format_with_commas(T value)
 
 
 std::string str_qq_search_reply(const qq::SearchReply &reply);
-int varint_expand_and_encode(uint32_t value, std::string *buf, const int offset);
-int varint_encode(uint32_t value, std::string *buf, int offset);
-int varint_decode(const std::string &buf, int offset, uint32_t *value);
+int varint_expand_and_encode(uint32_t value, std::string *buf, const off_t offset);
+int varint_encode(uint32_t value, std::string *buf, off_t offset);
+// int varint_decode(const std::string &buf, off_t offset, uint32_t *value);
+// int varint_decode_chars(const char *buf, const off_t offset, uint32_t *value);
+
+inline int varint_decode_chars(const char *buf, const off_t offset, uint32_t *value) {
+  *value = buf[offset] & 0x7f;
+
+  int i = 1;
+  // inv: buf[offset, offset + i) has been copied to value 
+  //      (buf[offset + i] is about to be copied)
+  while ((buf[offset + i - 1] & 0x80) > 0) {
+    *value += (0x7f & buf[offset + i]) << (i * 7);
+    i++;
+  }
+  return i; 
+}
+
+// from varint code to int
+// return: length of the buffer decoded
+inline int varint_decode(const std::string &buf, const off_t offset, uint32_t *value) {
+  return varint_decode_chars(buf.data(), offset, value);
+}
+
+
+
+void MapFile(std::string path, char **ret_addr, int *ret_fd, size_t *ret_file_length);
+void UnmapFile(char *addr, int fd, size_t file_length);
+
+void RemoveDir(std::string path);
 
 } // namespace util
 #endif

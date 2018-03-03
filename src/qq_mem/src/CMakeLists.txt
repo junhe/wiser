@@ -1,7 +1,10 @@
 project(grpc-cmake-example)
 cmake_minimum_required(VERSION 3.2)
 
-add_compile_options(-std=c++11 -O3)
+#add_compile_options(-std=c++11 -O3)
+add_compile_options(-std=c++11 -O3 -g)
+#add_compile_options(-std=c++11 -O0 -g)
+set(GPROFILER profiler)
 
 # GRPC and Protocol Buffers libraries location
 list(APPEND CMAKE_PREFIX_PATH "/opt/grpc" "/opt/protobuf")
@@ -34,8 +37,9 @@ grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 set(ENGINE_SRCS 
     doc_store.cc
     posting.cc
-    intersect.cc
+    query_processing.cc
     query_pool.cc
+    types.cc
     qq_mem_engine.cc
     grpc_client_impl.cc
     grpc_server_impl.cc
@@ -57,7 +61,8 @@ set(GRPC_LIBS
     gRPC::grpc++_reflection
     )
 
-set(GLOG_LIB glog)
+
+set(GLOG_LIB glog ${GPROFILER})
 
 
 #######################################
@@ -104,6 +109,8 @@ add_executable( testmain
     tests_3.cc
     tests_4.cc
     tests_5.cc
+    tests_6.cc
+    tests_7.cc
     test_helpers.cc
     grpc_client_impl.cc
     ${ENGINE_SRCS}

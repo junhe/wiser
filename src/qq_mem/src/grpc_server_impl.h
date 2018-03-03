@@ -71,79 +71,93 @@ using qq::EchoData;
 using std::chrono::system_clock;
 
 
-// Service Inheritence:
-// Service
-//   |
-// WithAsyncMethod_StreamingSearch: Async methods are provided here
-//   |
-// QQEngineServiceImpl: Sync methods are implemented here
-class QQEngineServiceImpl: public QQEngine::WithAsyncMethod_StreamingSearch<QQEngine::Service> {
-  public:
-    void Initialize(SearchEngineServiceNew* search_engine) {
-      // TODO: This function is ugly. Need to find a better way to 
-      // initialize search engine pointer at class initialization.
-      search_engine_ = search_engine;
+
+class QqGrpcCommonService: public QQEngine::Service {
+ public:
+  void Initialize(SearchEngineServiceNew* search_engine) {
+    // TODO: This function is ugly. Need to find a better way to 
+    // initialize search engine pointer at class initialization.
+    search_engine_ = search_engine;
+  }
+
+  Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
+      StatusReply* reply) override {
+    // In this case, body must be already tokenized.
+    DocInfo doc_info(request->document().body(),
+        request->document().body(), "", "", "TOKEN_ONLY");
+    search_engine_->AddDocument(doc_info);
+
+    count++;
+
+    if (count % 10000 == 0) {
+      std::cout << count << std::endl;
     }
 
-    Status AddDocument(ServerContext* context, const AddDocumentRequest* request,
-            StatusReply* reply) override {
-        // In this case, body must be already tokenized.
-        search_engine_->AddDocument(request->document().body(), 
-            request->document().body());
+    reply->set_message("Doc added");
+    reply->set_ok(true);
+    return Status::OK;
+  }
 
-        count++;
+  Status SyncUnarySearch(ServerContext* context, const SearchRequest* request,
+          SearchReply* reply) override {
+      SearchResult result = search_engine_->Search(SearchQuery(*request));
+      result.CopyTo(reply);
 
-        if (count % 10000 == 0) {
-            std::cout << count << std::endl;
-        }
-
-        reply->set_message("Doc added");
-        reply->set_ok(true);
-        return Status::OK;
-    }
-
-    Status Search(ServerContext* context, const SearchRequest* request,
-            SearchReply* reply) override {
-        SearchResult result = search_engine_->Search(SearchQuery(*request));
-        result.CopyTo(reply);
-
-        return Status::OK;
-    }
-
-    Status StreamingEcho(ServerContext* context,
-                           ServerReaderWriter<EchoData, EchoData>* stream) override {
-      EchoData data;
-      while (stream->Read(&data)) {
-        stream->Write(data);
-      }
       return Status::OK;
+  }
+
+  Status StreamingEcho(ServerContext* context,
+      ServerReaderWriter<EchoData, EchoData>* stream) override {
+    EchoData data;
+    while (stream->Read(&data)) {
+      stream->Write(data);
     }
+    return Status::OK;
+  }
 
-    Status SyncStreamingSearch(ServerContext* context,
-                           ServerReaderWriter<SearchReply, SearchRequest>* stream) override {
-      SearchRequest request;
-      SearchReply reply;
-      while (stream->Read(&request)) {
-        SearchResult result = search_engine_->Search(SearchQuery(request));
-        result.CopyTo(&reply);
+  Status Echo(ServerContext* context, const EchoData* request,
+      EchoData* reply) override {
 
-        stream->Write(reply);
-      }
+    std::string msg = request->message();
+    reply->set_message(msg);
+
+    return Status::OK;
+  }
+
+ protected:
+  int count = 0;
+  SearchEngineServiceNew* search_engine_ = nullptr;
+};
+
+
+class AsyncQqGrpcEngineServiceImpl: 
+    public QQEngine::WithAsyncMethod_StreamingSearch<QqGrpcCommonService> 
+{
+};
+
+class SyncQqGrpcEngineServiceImpl: public QqGrpcCommonService 
+{
+ public:
+  Status UnarySearch(ServerContext* context, const SearchRequest* request,
+          SearchReply* reply) override {
+      SearchResult result = search_engine_->Search(SearchQuery(*request));
+      result.CopyTo(reply);
+
       return Status::OK;
+  }
+
+  Status StreamingSearch(ServerContext* context,
+      ServerReaderWriter<SearchReply, SearchRequest>* stream) override {
+    SearchRequest request;
+    SearchReply reply;
+    while (stream->Read(&request)) {
+      SearchResult result = search_engine_->Search(SearchQuery(request));
+      result.CopyTo(&reply);
+
+      stream->Write(reply);
     }
-
-    Status Echo(ServerContext* context, const EchoData* request,
-            EchoData* reply) override {
-
-        std::string msg = request->message();
-        reply->set_message(msg);
-        
-        return Status::OK;
-    }
-
-    private:
-        int count = 0;
-        SearchEngineServiceNew* search_engine_ = nullptr;
+    return Status::OK;
+  }
 };
 
 
@@ -151,6 +165,37 @@ class ServerService {
  public:
   virtual void Wait() = 0;  
   virtual void Shutdown() = 0;  
+  virtual void LoadEngine(SearchEngineServiceNew *engine, 
+      const GeneralConfig config) {
+    if (config.HasKey("load_source") == false) {
+      LOG(ERROR) << "load_source is not set. "
+        "You probably want to load something to the engine.\n";
+      return;
+    }
+
+    if (config.GetString("load_source") == "linedoc") {
+      if (config.HasKey("line_doc_path"))  {
+        std::string line_doc_path = config.GetString("line_doc_path");
+
+        if (line_doc_path.size() > 0) {
+          int n_rows = config.GetInt("n_line_doc_rows");
+          std::cout << "Loading documents from " << line_doc_path << std::endl;
+          int ret = engine->LoadLocalDocuments(line_doc_path, n_rows, 
+              config.GetString("line_doc_format"));
+        }
+      } else {
+        LOG(FATAL) << "load source is set to linedoc but linedoc " 
+          "path is not set.\n";
+      }
+    } else if (config.GetString("load_source") == "dump") {
+      std::cout << "Loading data from dump directory "
+        << config.GetString("dump_path") << std::endl;
+      engine->Deserialize(config.GetString("dump_path"));
+    } else {
+      LOG(FATAL) << "load source " << config.GetString("load_source") 
+        << " is not supported.\n";
+    }
+  }
 };
 
 
@@ -159,16 +204,7 @@ class AsyncServer : public ServerService {
   AsyncServer(const GeneralConfig config, std::unique_ptr<SearchEngineServiceNew> engine)
       :config_(config), search_engine_(std::move(engine)) {
 
-    if (config.HasKey("line_doc_path"))  {
-      std::string line_doc_path = config.GetString("line_doc_path");
-      if (line_doc_path.size() > 0) {
-        int n_rows = config.GetInt("n_line_doc_rows");
-        // int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows);
-        int ret = engine_loader::load_body_and_tokenized_body(search_engine_.get(), 
-                                                              line_doc_path, n_rows, 2, 2);
-        // std::cout << ret << " docs indexed to search engine." << std::endl;
-      }
-    }
+    LoadEngine(search_engine_.get(), config);
 
     ServerBuilder builder;
 
@@ -285,7 +321,7 @@ class AsyncServer : public ServerService {
 
   class ServerRpcContext {
    public:
-      ServerRpcContext(QQEngineServiceImpl *async_service,
+      ServerRpcContext(AsyncQqGrpcEngineServiceImpl *async_service,
                        grpc::ServerCompletionQueue *cq,
                        SearchEngineServiceNew *search_engine)
         : async_service_(async_service), 
@@ -366,7 +402,7 @@ class AsyncServer : public ServerService {
 
     State next_state_;
     grpc::ServerCompletionQueue *cq_;
-    QQEngineServiceImpl *async_service_;
+    AsyncQqGrpcEngineServiceImpl *async_service_;
     std::unique_ptr<grpc::ServerContext> srv_ctx_;
     SearchRequest req_;
     SearchReply response_;
@@ -381,7 +417,7 @@ class AsyncServer : public ServerService {
   std::unique_ptr<grpc::Server> server_;
   std::vector<std::unique_ptr<grpc::ServerCompletionQueue>> srv_cqs_;
   std::vector<int> cq_;
-  QQEngineServiceImpl async_service_;
+  AsyncQqGrpcEngineServiceImpl async_service_;
   std::vector<std::unique_ptr<ServerRpcContext>> contexts_;
 
   struct PerThreadShutdownState {
@@ -404,17 +440,7 @@ class SyncServer : public ServerService {
   SyncServer(const GeneralConfig config, std::unique_ptr<SearchEngineServiceNew> engine)
       :config_(config), search_engine_(std::move(engine)) {
 
-    if (config.HasKey("line_doc_path"))  {
-      std::string line_doc_path = config.GetString("line_doc_path");
-
-      if (line_doc_path.size() > 0) {
-        int n_rows = config.GetInt("n_line_doc_rows");
-        // int ret = search_engine_->LoadLocalDocuments(line_doc_path, n_rows);
-        int ret = engine_loader::load_body_and_tokenized_body(search_engine_.get(), 
-                                                              line_doc_path, n_rows, 2, 2);
-        // std::cout << ret << " docs indexed to search engine." << std::endl;
-      }
-    }
+    LoadEngine(search_engine_.get(), config);
 
     const std::string target = config.GetString("target");
 
@@ -439,7 +465,7 @@ class SyncServer : public ServerService {
  private:
   const GeneralConfig config_;
   std::unique_ptr<SearchEngineServiceNew> search_engine_;
-  QQEngineServiceImpl sync_service_;
+  SyncQqGrpcEngineServiceImpl sync_service_;
   std::unique_ptr<grpc::Server> server_;
 };
 

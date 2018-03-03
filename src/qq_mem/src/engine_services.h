@@ -6,32 +6,23 @@
 #include <vector>
 #include <map>
 #include <tuple>
+
+#include <glog/logging.h>
+
 #include "types.h"
 
 class SearchEngineServiceNew {
  public:
-  // tokenized_body is stemmed and tokenized. It may have repeated token. 
-  virtual void AddDocument(const std::string &body, const std::string &tokenized_body) = 0;
-  // tokenized_body is stemmed and tokenized. It have unqie tokens. token_offsets represent apperances of each token
-  virtual void AddDocument(const std::string &body, const std::string &tokenized_body, 
-      const std::string &token_offsets) = 0;
+  virtual void AddDocument(const DocInfo doc_info) = 0;
   virtual int LoadLocalDocuments(const std::string &line_doc_path, 
       int n_rows, const std::string loader) = 0;
   virtual int TermCount() const = 0;
   virtual std::map<std::string, int> PostinglistSizes(const TermList &terms) = 0;
   virtual SearchResult Search(const SearchQuery &query) = 0; 
+  virtual void Serialize(std::string dir_path) const = 0;
+  virtual void Deserialize(std::string dir_path) = 0;
 };
 
-
-class DocumentStoreService {
-    public:
-        virtual void Add(int id, std::string document) = 0;
-        virtual void Remove(int id) = 0;
-        virtual const std::string & Get(int id) = 0;
-        virtual bool Has(int id) = 0;
-        virtual void Clear() = 0;
-        virtual int Size() = 0;
-};
 
 struct DocScore {
   DocIdType doc_id;
@@ -82,6 +73,15 @@ class OffsetPairsIteratorService {
 };
 
 
+class PopIteratorService {
+ public:
+  virtual bool IsEnd() const = 0;
+  virtual uint32_t Pop() = 0;
+};
+
+
+class CompressedPositionIterator;
+
 class PostingListIteratorService {
  public:
   virtual int Size() const = 0;
@@ -90,21 +90,43 @@ class PostingListIteratorService {
   virtual DocIdType DocId() const = 0;
   virtual int TermFreq() const = 0;
 
-  virtual bool Advance() = 0;
+  virtual void Advance() = 0;
+  virtual void AdvanceOnly() { LOG(FATAL) << "Not Implemented"; };
+  virtual void DecodeContSizeAndDocId() { LOG(FATAL) << "Not Implemented"; };
+  virtual void DecodeTf() { LOG(FATAL) << "Not Implemented"; };
+  virtual void DecodeOffsetSize() { LOG(FATAL) << "Not Implemented"; };
+  virtual void SkipToNextSpanOnly() { LOG(FATAL) << "Not Implemented"; };
+  virtual void AdvanceAndDecode1() {};
+  virtual void Decode2() {};
   virtual void SkipForward(const DocIdType doc_id) = 0;
+  virtual void SkipForward_MinDecode(const DocIdType doc_id) {
+    LOG(FATAL) << "Not Implemented"; };
   virtual std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const = 0;
+  virtual std::unique_ptr<PopIteratorService> PositionBegin() const = 0;
+  virtual void AssignPositionBegin(CompressedPositionIterator *iterator) const {
+    LOG(FATAL) << "Not Implemented"; };
 };
+
 
 typedef std::vector<std::unique_ptr<PostingListIteratorService>> IteratorPointers;
 class InvertedIndexService {
  public:
   virtual IteratorPointers FindIterators(const TermList &terms) const = 0;
   virtual std::map<std::string, int> PostinglistSizes(const TermList &terms) const = 0;
-  virtual void AddDocument(const int &doc_id, const std::string &body, 
-      const std::string &tokens) = 0;
-  virtual void AddDocument(const int &doc_id, const std::string &body, 
-      const std::string &tokens, const std::string &token_offsets) = 0;
+  virtual void AddDocument(const int doc_id, const DocInfo doc_info) = 0;
   virtual int Size() const = 0;
+  virtual void Serialize(std::string dir_path) const {
+    LOG(FATAL) << "Not Implemented" << std::endl;
+  }
+  virtual void Deserialize(std::string dir_path) {
+    LOG(FATAL) << "Not Implemented" << std::endl;
+  }
+  virtual bool operator== (const InvertedIndexService &rhs) const {
+    LOG(FATAL) << "Not Implemented" << std::endl;
+  }
+  virtual bool operator!= (const InvertedIndexService &rhs) const {
+    LOG(FATAL) << "Not Implemented" << std::endl;
+  }
 };
 
 

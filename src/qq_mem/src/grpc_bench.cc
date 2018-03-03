@@ -13,7 +13,7 @@ void make_queries(int n_queries) {
     EchoData request, reply;
     request.set_message("");
 
-    QQEngineSyncClient qqengine(grpc::CreateChannel(
+    QqGrpcPlainClient qqengine(grpc::CreateChannel(
                 "localhost:50051", grpc::InsecureChannelCredentials()));
 
     for (int i = 0; i < n_queries; i++) {

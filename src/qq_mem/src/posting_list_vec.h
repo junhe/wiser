@@ -9,6 +9,7 @@
 
 #include "engine_services.h"
 #include "posting.h"
+#include "compression.h"
 
 
 class OffsetPairsVecIterator: public OffsetPairsIteratorService {
@@ -126,13 +127,8 @@ class PostingListStandardVec: public PostingList_Vec<StandardPosting> {
       return posting_list_->GetPosting(it_).GetTermFreq();
     }
 
-    bool Advance() {
-      if (IsEnd()) {
-        return false;
-      }
-
+    void Advance() {
       it_++;
-      return true;
     }
 
     void SkipForward(const DocIdType doc_id) {
@@ -144,6 +140,10 @@ class PostingListStandardVec: public PostingList_Vec<StandardPosting> {
       auto p = new OffsetPairsVecIterator(pairs);
       std::unique_ptr<OffsetPairsVecIterator> it(p);
       return it;
+    }
+
+    std::unique_ptr<PopIteratorService> PositionBegin() const {
+      LOG(WARNING) << "PositionBegin() has not been implemented in PostListStandardVec\n";
     }
 
    protected:

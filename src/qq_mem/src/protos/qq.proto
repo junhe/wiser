@@ -8,9 +8,10 @@ service QQEngine {
 
   rpc AddDocument (AddDocumentRequest) returns (StatusReply) {}
 
-  rpc Search (SearchRequest) returns (SearchReply) {}
+  rpc SyncUnarySearch (SearchRequest) returns (SearchReply) {}
+
+  rpc UnarySearch (SearchRequest) returns (SearchReply) {}
   rpc StreamingSearch (stream SearchRequest) returns (stream SearchReply) {}
-  rpc SyncStreamingSearch (stream SearchRequest) returns (stream SearchReply) {}
 }
 
 
@@ -41,6 +42,7 @@ message SearchRequest {
     int32 n_results = 2;
     bool return_snippets = 3;
     int32 n_snippet_passages = 4;
+    bool is_phrase = 5;
 }
 
 message SearchReplyEntry {

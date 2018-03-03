@@ -15,10 +15,7 @@
 #include "utils.h"
 #include "compression.h"
 
-
-// TODO will delete them
-typedef int Position;
-typedef std::vector<Position> Positions;
+#include "glog/logging.h"
 
 
 class PostingSimple : public QqMemPostingService {
@@ -45,6 +42,7 @@ class PostingSimple : public QqMemPostingService {
 class StandardPosting: public QqMemPostingService {
  protected:
   OffsetPairs offset_pairs_;
+  Positions positions_;
   int doc_id_;
   int term_frequency_;
 
@@ -60,9 +58,17 @@ class StandardPosting: public QqMemPostingService {
     :doc_id_(doc_id), term_frequency_(term_frequency), 
      offset_pairs_(offset_pairs) {}
 
+  StandardPosting(const int &doc_id, 
+                 const int &term_frequency, 
+                 const OffsetPairs &offset_pairs, 
+                 const Positions &positions)
+    :doc_id_(doc_id), term_frequency_(term_frequency), 
+     offset_pairs_(offset_pairs), positions_(positions) {}
+
   const int GetDocId() const {return doc_id_;}
   const int GetTermFreq() const {return term_frequency_;}
   const OffsetPairs *GetOffsetPairs() const {return &offset_pairs_;}
+  const Positions *GetPositions() const {return &positions_;}
 
   std::string ToString() {
     std::ostringstream oss;
@@ -74,21 +80,74 @@ class StandardPosting: public QqMemPostingService {
     return oss.str();
   }
 
-  // content_size | doc_id_delta | TF | off1 | off2 | off1 | off2 | ...
-  std::string Encode() const {
+  // Assume an imaginary offset=0 before the first real offset
+  // 0 (delta to prev, delta to prev), (delta to prev, delta to prev), ..
+  VarintBuffer EncodeOffsets() const {
     VarintBuffer buf;
-
-    buf.Append(doc_id_);
-    buf.Append(term_frequency_);
-
+    uint32_t last_offset = 0;
+    uint32_t delta;
     for (auto & pair : offset_pairs_) {
-      buf.Append(std::get<0>(pair));
-      buf.Append(std::get<1>(pair));
+      delta = std::get<0>(pair) - last_offset;
+      buf.Append(delta);
+      last_offset = std::get<0>(pair);
+
+      delta = std::get<1>(pair) - last_offset;
+      buf.Append(delta);
+      last_offset = std::get<1>(pair);
     }
 
-    buf.Prepend(buf.Size());
+    return buf;
+  }
 
-    return buf.Data();
+  // Assume an imaginary position = 0 before the first real position
+  VarintBuffer EncodePositions() const {
+    VarintBuffer buf;
+    uint32_t last_pos = 0;
+    uint32_t delta;
+
+    for (auto &position : positions_) {
+      delta = position - last_pos;
+      buf.Append(delta);
+      last_pos = position;
+    }
+
+    return buf;
+  }
+
+  void WarnIfNotEqual() const {
+    auto offset_cnt = offset_pairs_.size();
+    auto pos_cnt = positions_.size();
+
+    if (offset_cnt != pos_cnt) {
+      LOG(WARNING) 
+        << "The number of offset pairs and the number "
+           "of positions are not equal. "
+        << "offset_cnt: " << offset_cnt 
+        << " pos_cnt:" << pos_cnt << std::endl;
+    }
+  }
+
+  // content_size | doc_id_delta | TF | off_size | off1 | off2 | off1 | off2 | ... | pos 1 | pos 2 | ...
+  std::string Encode() const {
+    WarnIfNotEqual();
+
+    VarintBuffer info_buf;
+    info_buf.Append(doc_id_);
+    info_buf.Append(term_frequency_);
+
+    VarintBuffer offset_buf = EncodeOffsets();
+    offset_buf.Prepend(offset_buf.Size());
+    VarintBuffer pos_buf = EncodePositions();
+
+    int content_size = info_buf.Size() + offset_buf.Size() + pos_buf.Size();
+
+    VarintBuffer merge_buf;
+    merge_buf.Append(content_size);
+    merge_buf.Append(info_buf.Data());
+    merge_buf.Append(offset_buf.Data());
+    merge_buf.Append(pos_buf.Data());
+
+    return merge_buf.Data();
   }
 };
 

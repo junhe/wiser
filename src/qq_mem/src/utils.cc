@@ -11,6 +11,15 @@
 #include <utility>
 #include <locale>
 
+#include <boost/filesystem.hpp>
+
+#include <sys/mman.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
 
 namespace utils {
 
@@ -118,7 +127,6 @@ const std::vector<Offsets> parse_offsets(const std::string& s) {
 
     for(auto n:s)
     {
-    // split by .
         if(n != '.') buff+=n; else
         if(n == '.' && buff != "") {
             Offsets this_term;
@@ -221,8 +229,9 @@ std::string str_qq_search_reply(const qq::SearchReply &reply) {
   std::ostringstream oss;
   oss << "Size: " << reply.entries_size() ;
   for (int i = 0; i < reply.entries_size(); i++) {
-    oss << " doc_id: " << reply.entries(i).doc_id() 
-      << " snippet: " << reply.entries(i).snippet();
+    oss << "(doc_id: " << reply.entries(i).doc_id() 
+      << " snippet: " << reply.entries(i).snippet()
+      << ") ";
   }
   return oss.str(); 
 }
@@ -233,7 +242,7 @@ std::string str_qq_search_reply(const qq::SearchReply &reply) {
 // TODO: expand more then 5 so we do not frequently resize? but
 // C++ will expand capacity automatically. We are not actually
 // resizing memory.
-int varint_expand_and_encode(uint32_t value, std::string *buf, const int offset) {
+int varint_expand_and_encode(uint32_t value, std::string *buf, const off_t offset) {
   if ( buf->size() - offset < 5 ) {
     buf->resize(offset + 5);
   }
@@ -244,7 +253,7 @@ int varint_expand_and_encode(uint32_t value, std::string *buf, const int offset)
 // buf must be at least 5 bytes long, which is the size required
 // to store a full unsigned int
 // It returns the number of bytes stored in buf
-int varint_encode(uint32_t value, std::string *buf, const int offset) {
+int varint_encode(uint32_t value, std::string *buf, const off_t offset) {
   int i = 0;
   // inv: value has what left to be encoded
   //      buf[offset, offset+i) has encoded bytes
@@ -260,20 +269,40 @@ int varint_encode(uint32_t value, std::string *buf, const int offset) {
 }
 
 
-// from varint code to int
-// return: length of the buffer decoded
-int varint_decode(const std::string &buf, const int offset, uint32_t *value) {
-  int i = 0;
-  *value = 0;
-  // inv: buf[offset, offset + i) has been copied to value 
-  //      (buf[offset + i] is about to be copied)
-  while (i == 0 || (buf[offset + i - 1] & 0x80) > 0) {
-    *value += (0x7f & buf[offset + i]) << (i * 7);
-    i++;
-  }
-  return i; 
+
+#define handle_error(msg) \
+	do { perror(msg); exit(EXIT_FAILURE); } while (0)
+
+
+void MapFile(std::string path, char **ret_addr, int *ret_fd, size_t *ret_file_length) {
+  int fd;
+  char *addr;
+  size_t file_length;
+  struct stat sb;
+
+  fd = open(path.c_str(), O_RDONLY);
+
+  if (fstat(fd, &sb) == -1)           /* To obtain file size */
+    handle_error("fstat");
+  file_length = sb.st_size;
+
+  addr = (char *) mmap(NULL, file_length, PROT_READ, MAP_PRIVATE, fd, 0);
+  if (addr == MAP_FAILED)
+    handle_error("mmap");
+
+  *ret_addr = addr;
+  *ret_fd = fd;
+  *ret_file_length = file_length;
 }
 
 
+void UnmapFile(char *addr, int fd, size_t file_length) {
+  munmap(addr, file_length);
+  close(fd);
+}
+
+void RemoveDir(std::string path) {
+  boost::filesystem::remove_all(path); 
+}
 
 } // namespace util

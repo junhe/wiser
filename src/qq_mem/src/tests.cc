@@ -20,7 +20,7 @@
 
 #include "posting_list_vec.h"
 
-#include "intersect.h"
+#include "query_processing.h"
 #include "scoring.h"
 
 #include "highlighter.h"
@@ -650,8 +650,8 @@ TEST_CASE( "Utilities work", "[utils]" ) {
 
 
 void setup_inverted_index(InvertedIndexService &inverted_index) {
-  inverted_index.AddDocument(0, "hello world", "hello world");
-  inverted_index.AddDocument(1, "hello wisconsin", "hello wisconsin");
+  inverted_index.AddDocument(0, DocInfo("hello world", "hello world", "", "", "TOKEN_ONLY"));
+  inverted_index.AddDocument(1, DocInfo("hello wisconsin", "hello wisconsin", "", "", "TOKEN_ONLY"));
   REQUIRE(inverted_index.Size() == 3);
 }
 
@@ -666,7 +666,9 @@ void test_inverted_index(InvertedIndexService &inverted_index) {
       REQUIRE(pair == std::make_tuple(0, 4)); // in doc 0
     }
 
+    auto ret = it->IsEnd();
     it->Advance();
+    REQUIRE(ret == false);
     {
       REQUIRE(it->DocId() == 1);
       auto pairs_it = it->OffsetPairsBegin();
@@ -677,12 +679,12 @@ void test_inverted_index(InvertedIndexService &inverted_index) {
 }
 
 TEST_CASE( "Inverted index", "[engine]" ) {
-  SECTION("Unompressed") {
-    InvertedIndexQqMemVec inverted_index;
+  // SECTION("Unompressed") {
+    // InvertedIndexQqMemVec inverted_index;
 
-    setup_inverted_index(inverted_index);
-    test_inverted_index(inverted_index);
-  }
+    // setup_inverted_index(inverted_index);
+    // test_inverted_index(inverted_index);
+  // }
 
   SECTION("Compressed") {
     InvertedIndexQqMemDelta inverted_index;
@@ -698,19 +700,16 @@ QqMemEngine test_get_engine(std::string inverted_index) {
   config.SetString("inverted_index", inverted_index);
   QqMemEngine engine(config);
 
-  auto doc_id = engine.AddDocumentReturnId("hello world", "hello world");
-  REQUIRE(engine.GetDocument(doc_id) == "hello world");
-  REQUIRE(engine.GetDocLength(doc_id) == 2);
+  engine.AddDocument(
+      DocInfo("hello world", "hello world", "", "", "TOKEN_ONLY"));
   REQUIRE(engine.TermCount() == 2);
 
-  doc_id = engine.AddDocumentReturnId("hello wisconsin", "hello wisconsin");
-  REQUIRE(engine.GetDocument(doc_id) == "hello wisconsin");
-  REQUIRE(engine.GetDocLength(doc_id) == 2);
+  engine.AddDocument(
+      DocInfo("hello wisconsin", "hello wisconsin", "", "", "TOKEN_ONLY"));
   REQUIRE(engine.TermCount() == 3);
 
-  doc_id = engine.AddDocumentReturnId("hello world big world", "hello world big world");
-  REQUIRE(engine.GetDocument(doc_id) == "hello world big world");
-  REQUIRE(engine.GetDocLength(doc_id) == 4);
+  engine.AddDocument(
+      DocInfo("hello world big world", "hello world big world", "", "", "TOKEN_ONLY"));
   REQUIRE(engine.TermCount() == 4);
 
   return engine;

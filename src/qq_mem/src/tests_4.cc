@@ -112,30 +112,35 @@ TEST_CASE( "VarintBuffer", "[varint]" ) {
 
 
 TEST_CASE( "Encoding posting", "[encoding]" ) {
-  SECTION("No offsets") {
+  SECTION("No offsets and no position") {
+    // content_size | doc id delta | freq | offset size |
+    //            3 |            3 |    4 |           0 |
     StandardPosting posting(3, 4); 
     std::string buf = posting.Encode();
-    REQUIRE(buf[0] == 2); // num of bytes starting from doc id
+    REQUIRE(buf[0] == 3); // num of bytes starting from doc id
     REQUIRE(buf[1] == 3); // doc id
     REQUIRE(buf[2] == 4); //  TF
   }
 
-  SECTION("With offset pairs") {
+  SECTION("With offset pairs but no positions") {
     OffsetPairs offset_pairs;
-    for (int i = 0; i < 10; i++) {
-      offset_pairs.push_back(std::make_tuple(1, 2)); 
+    for (int i = 1; i < 11; i++) {
+      offset_pairs.push_back(std::make_tuple(i, i)); 
     }
 
     StandardPosting posting(3, 4, offset_pairs); 
+    // content_size | doc id delta | freq | offset size | ... 
+    //           23 |            3 |    4 |          20 | ... 10 x 2
     std::string buf = posting.Encode();
-    REQUIRE(buf[0] == 22); // content size: 2 + 2 * 10 = 22
+    REQUIRE(buf[0] == 23); // content size: 2 + 2 * 10 = 22
     REQUIRE(buf[1] == 3); // doc id
     REQUIRE(buf[2] == 4); //  TF
+    REQUIRE(buf[3] == 20); //  offset size
 
-    const auto PRE = 3; // size | doc_id | TF | 
+    const auto PRE = 4; // size | doc_id | TF | off size|
     for (int i = 0; i < 10; i++) {
       REQUIRE(buf[PRE + 2 * i] == 1);
-      REQUIRE(buf[PRE + 2 * i + 1] == 2);
+      REQUIRE(buf[PRE + 2 * i + 1] == 0);
     }
   }
 }
@@ -183,8 +188,6 @@ void test_posting_list_delta( StandardPosting postingA,
   REQUIRE(it->IsEnd() == false);
   REQUIRE(it->DocId() == postingA.GetDocId());
   REQUIRE(it->TermFreq() == postingA.GetTermFreq());
-  // REQUIRE(it->OffsetPairStart() == 3); // size|id|tf|offset
-  // REQUIRE(it->CurContentBytes() == postingA.Encode().size() - 1); // size|id|tf|offset
 
   // check offsets
   {
@@ -198,8 +201,6 @@ void test_posting_list_delta( StandardPosting postingA,
   REQUIRE(it->IsEnd() == false);
   REQUIRE(it->DocId() == postingB.GetDocId());
   REQUIRE(it->TermFreq() == postingB.GetTermFreq());
-  // REQUIRE(it->OffsetPairStart() == postingA.Encode().size() + 3); // size|id|tf|offset
-  // REQUIRE(it->CurContentBytes() == postingB.Encode().size() - 1); // size|id|tf|offset
 
   // check offsets
   {
@@ -250,17 +251,19 @@ TEST_CASE( "Skip list", "[postinglist0]" ) {
   SECTION("SkipIndex") {
     auto skip_index = pl.GetSkipIndex();
 
-    REQUIRE(skip_index.size() == 4);
+    REQUIRE(skip_index.vec.size() == 4);
 
     std::vector<DocIdType> doc_ids;
     std::vector<int> start_offsets;
-    for (auto meta : skip_index) {
+    for (auto meta : skip_index.vec) {
       doc_ids.push_back(meta.prev_doc_id);
       start_offsets.push_back(meta.start_offset);
     }
 
     REQUIRE(doc_ids == std::vector<DocIdType>{0, 2, 5, 8});
-    REQUIRE(start_offsets == std::vector<int>{0, 9, 9*2, 9*3});
+    // each posting takes cont_size | doc id | freq | offset size|
+    // Each span is then 4 * 3 = 12
+    REQUIRE(start_offsets == std::vector<int>{0, 12, 12*2, 12*3});
   }
 
   SECTION("Advance") {
@@ -278,16 +281,15 @@ TEST_CASE( "Skip list", "[postinglist0]" ) {
         not_has_skip.push_back(i);
       }
 
-      auto ret = it->Advance();
-      REQUIRE(ret == true);
+      REQUIRE(it->IsEnd() == false);
+      it->Advance();
     }
 
     REQUIRE(has_skip == std::vector<int>{0, 3, 6});
     REQUIRE(span_doc_ids == std::vector<int>{2, 5, 8});
     REQUIRE(not_has_skip == std::vector<int>{1, 2, 4, 5, 7, 8, 9});
 
-    auto ret = it->Advance();
-    REQUIRE(ret == false);
+    REQUIRE(it->IsEnd() == true);
   }
 
   SECTION("Skip to next span") {

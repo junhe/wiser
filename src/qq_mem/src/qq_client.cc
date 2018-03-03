@@ -19,13 +19,11 @@ void bench_async_client(const int n_threads) {
   config.SetBool("save_reply", false);
   // config.SetBool("save_reply", true);
 
-  auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
+  auto query_producer = CreateQueryProducer(TermList{"hello"},
       config.GetInt("n_threads"));
-  // auto query_pool_array = create_query_pool_array(
-      // "/mnt/ssd/downloads/wiki_QueryLog_tokenized",
-      // config.GetInt("n_threads"));
 
-  auto async_client = CreateClient(config, std::move(query_pool_array));
+  auto async_client = CreateClient(config, 
+                                   std::move(query_producer));
   async_client->Wait();
   async_client->ShowStats();
 }
@@ -41,13 +39,29 @@ void bench_sync_client(const int n_threads, std::string arity) {
   // config.SetBool("save_reply", true);
   config.SetBool("save_reply", false);
 
-  auto query_pool_array = create_query_pool_array(TermList{"hello"}, 
-      config.GetInt("n_threads"));
-  // auto query_pool_array = create_query_pool_array(
-      // "/mnt/ssd/downloads/wiki_QueryLog_tokenized",
+  // auto query_producer = CreateQueryProducer(TermList{"hello"},
       // config.GetInt("n_threads"));
 
-  auto async_client = CreateClient(config, std::move(query_pool_array));
+  int n_pools = config.GetInt("n_threads");
+  std::unique_ptr<TermPoolArray> array(new TermPoolArray(n_pools));
+  // array->LoadTerms(TermList{"hello", "world"});
+  // array->LoadTerms(TermList{"barack", "obama"});
+  // array->LoadTerms(TermList{"from", "also"});
+  // array->LoadTerms(TermList{"hello"});
+  // array->LoadTerms(TermList{"ripdo"});
+  array->LoadTerms(TermList{"from"});
+  // array->LoadTerms(TermList{"from", "also"});
+  // array->LoadTerms(TermList{"ripdo", "liftech"});
+  // array->LoadTerms(TermList{"default", "action"});
+  // array->LoadFromFile("/mnt/ssd/downloads/wiki_QueryLog_tokenized", 100);
+
+  GeneralConfig query_config;
+  query_config.SetBool("return_snippets", true);
+  query_config.SetBool("is_phrase", false);
+  std::unique_ptr<QueryProducer> query_producer(
+      new QueryProducer(std::move(array), query_config));
+
+  auto async_client = CreateClient(config, std::move(query_producer));
   async_client->Wait();
   async_client->ShowStats();
 }
@@ -59,7 +73,7 @@ void sanity_check() {
   bool ret;
   ret = client->Search("multicellular", doc_ids);
   assert(ret == true);
-  assert(doc_ids.size() >= 1);
+  assert(doc_ids.size() > 0);
 }
 
 int main(int argc, char** argv) {

@@ -7,10 +7,13 @@
 #include <climits>
 
 #define NDEBUG
+
+#include <gperftools/profiler.h>
 #include <glog/logging.h>
 
 #include "qq_mem_engine.h"
 #include "utils.h"
+#include "grpc_client_impl.h"
 #include "general_config.h"
 #include "query_pool.h"
 
@@ -18,137 +21,249 @@ const int K = 1000;
 const int M = 1000 * K;
 const int B = 1000 * M;
 
-
-
-void load_query_pool(QueryPool *pool, const GeneralConfig &config) {
-  auto query_source_ = config.GetString("query_source");
-
-  // config according to different mode
-  if (query_source_ == "hardcoded") {
-    pool->Add(config.GetStringVec("terms"));
-  } else if (query_source_ == "querylog") {
-    // read in all querys
-    load_query_pool_from_file(pool, config.GetString("querylog_path"), 0);
-  } else {
-    LOG(WARNING) << "Cannot determine query source";
+std::string Concat(TermList terms) {
+  std::string s;
+  for (int i = 0; i < terms.size(); i++) {
+    s += terms[i];
+    if (i < terms.size() - 1) {
+      // not the last term
+      s += "+";
+    }
   }
+  return s;
 }
 
 
+class Experiment {
+ public:
+  virtual void Before() {}
+  virtual void BeforeEach(const int run_id) {}
+  virtual void RunTreatment(const int run_id) = 0;
+  virtual void AfterEach(const int run_id) {}
+  virtual void After() {}
 
-std::unique_ptr<SearchEngineServiceNew> create_engine(const int &step_height, 
-    const int &step_width, const int &n_steps) {
-  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine("qq_mem_uncompressed");
+  virtual int NumberOfRuns() = 0;
+  virtual void Run() {
+    Before();
+    for (int i = 0; i < NumberOfRuns(); i++) {
+      BeforeEach(i);
+      RunTreatment(i);
+      AfterEach(i);
+    }
+    After();
+  }
+};
 
-  utils::Staircase staircase(step_height, step_width, n_steps);
 
-  std::string doc;
-  int cnt = 0;
-  while ( (doc = staircase.NextLayer()) != "" ) {
-    // std::cout << doc << std::endl;
-    engine->AddDocument(doc, doc);
-    cnt++;
+struct Treatment {
+  Treatment(TermList terms_in, 
+            bool is_phrase_in, 
+            int n_repeats_in, 
+            bool return_snippets_in)
+    :terms(terms_in), is_phrase(is_phrase_in), n_repeats(n_repeats_in),
+     return_snippets(return_snippets_in){}
+  TermList terms;
+  bool is_phrase;
+  int n_repeats;
+  bool return_snippets;
+  int n_passages = 3;
+  int n_results = 5;
+};
 
-    if (cnt % 1000 == 0) {
-      std::cout << cnt << std::endl;
+
+class TreatmentExecutor {
+ public:
+  virtual utils::ResultRow Execute(Treatment treatment) = 0;
+  virtual int NumberOfThreads() = 0;
+  virtual std::unique_ptr<QueryProducer> CreateProducer(Treatment treatment) {
+    GeneralConfig config;
+    config.SetBool("is_phrase", treatment.is_phrase);
+    config.SetBool("return_snippets", treatment.return_snippets);
+    config.SetInt("n_results", treatment.n_results);
+    return CreateQueryProducer(treatment.terms, NumberOfThreads(), config);
+  }
+};
+
+class GrpcTreatmentExecutor: public TreatmentExecutor {
+ public:
+  GrpcTreatmentExecutor(int n_threads){
+    // ASYNC Streaming
+    // client_config_.SetString("synchronization", "SYNC");
+    // client_config_.SetString("rpc_arity", "STREAMING");
+    // client_config_.SetString("target", "localhost:50051");
+    // client_config_.SetInt("n_client_channels", 64);
+    // client_config_.SetInt("n_rpcs_per_channel", 100);
+    // client_config_.SetInt("n_messages_per_call", 100000);
+    // client_config_.SetInt("n_threads", n_threads); 
+    // client_config_.SetInt("n_threads_per_cq", 1);
+    // client_config_.SetInt("benchmark_duration", 5);
+    // client_config_.SetBool("save_reply", false);
+
+    client_config_.SetString("synchronization", "SYNC");
+    client_config_.SetString("rpc_arity", "STREAMING");
+    client_config_.SetString("target", "localhost:50051");
+    client_config_.SetInt("n_client_channels", 64);
+    client_config_.SetInt("n_threads", n_threads); 
+    client_config_.SetInt("benchmark_duration", 10);
+    // client_config_.SetBool("save_reply", true);
+    client_config_.SetBool("save_reply", false);
+
+  }
+
+  int NumberOfThreads() {return client_config_.GetInt("n_threads");}
+
+  utils::ResultRow Execute(Treatment treatment) {
+    utils::ResultRow row;
+
+    auto client = CreateClient(client_config_, CreateProducer(treatment));
+    client->Wait();
+    row = client->ShowStats();
+
+    return row;
+  }
+
+ private:
+  GeneralConfig client_config_;
+};
+
+class LocalTreatmentExecutor: public TreatmentExecutor {
+ public:
+  LocalTreatmentExecutor(SearchEngineServiceNew *engine)
+     :engine_(engine) {}
+
+  int NumberOfThreads() {return 1;}
+
+  utils::ResultRow Execute(Treatment treatment) {
+    const int n_repeats = treatment.n_repeats;
+    utils::ResultRow row;
+    auto query_producer = CreateProducer(treatment);
+
+    auto start = utils::now();
+    for (int i = 0; i < n_repeats; i++) {
+      auto query = query_producer->NextNativeQuery(0);
+      query.n_snippet_passages = treatment.n_passages;
+      // std::cout << query.ToStr() << std::endl;
+      auto result = engine_->Search(query);
+
+      // std::cout << result.ToStr() << std::endl;
+    }
+    auto end = utils::now();
+    auto dur = utils::duration(start, end);
+
+    auto count_map = engine_->PostinglistSizes(treatment.terms);
+    std::cout << "--- Term Counts ---" << std::endl;
+    for (auto pair : count_map) {
+      std::cout << pair.first << " : " << pair.second << std::endl;
+    }
+
+    row["latency"] = std::to_string(dur / n_repeats); 
+    row["n_passages"] = std::to_string(treatment.n_passages);
+    row["return_snippets"] = std::to_string(treatment.return_snippets);
+    row["duration"] = std::to_string(dur); 
+    row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
+    return row;
+  }
+
+ private:
+  SearchEngineServiceNew *engine_;
+};
+
+
+class InProcExperiment: public Experiment {
+ public:
+  InProcExperiment(GeneralConfig config): config_(config) {
+    MakeTreatments();
+  }
+
+  int NumberOfRuns() {
+    return treatments_.size();
+  }
+
+  void MakeTreatments() {
+    // single term
+    std::vector<Treatment> treatments {
+      // Treatment({"hello"}, false, 1000, true),
+      Treatment({"from"}, false, 20, true),
+      // Treatment({"ripdo"}, false, 10000, true),
+
+      // Treatment({"hello", "world"}, false, 100, true),
+      // Treatment({"from", "also"}, false, 10, true),
+      // Treatment({"ripdo", "liftech"}, false, 1000000, true),
+
+      // Treatment({"hello", "world"}, true, 100, true),
+      // Treatment({"barack", "obama"}, true, 100, true),
+      // Treatment({"from", "also"}, true, 10, true)
+    };
+
+    treatments_ = treatments;
+  }
+
+  void Before() {
+    engine_ = std::move(CreateEngineFromFile());
+    treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
+
+    // treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
+    
+    // ProfilerStart("my.profile.new");
+  }
+
+  void RunTreatment(const int run_id) {
+    std::cout << "Running treatment " << run_id << std::endl;
+
+    // auto row = Search(query_producers_[run_id].get(), run_id);
+    auto row = treatment_executor_->Execute(treatments_[run_id]);
+
+    row["n_docs"] = std::to_string(config_.GetInt("n_docs"));
+    row["terms"] = Concat(treatments_[run_id].terms);
+    row["is_phrase"] = std::to_string(treatments_[run_id].is_phrase);
+    table_.Append(row);
+  }
+
+  void After() {
+    // ProfilerStop();
+    std::cout << table_.ToStr();
+  }
+
+  std::unique_ptr<SearchEngineServiceNew> CreateEngineFromFile() {
+    std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
+        config_.GetString("engine_type"));
+
+    if (config_.GetString("load_source") == "linedoc") {
+      engine->LoadLocalDocuments(config_.GetString("linedoc_path"), 
+                                 config_.GetInt("n_docs"),
+                                 config_.GetString("loader"));
+    } else if (config_.GetString("load_source") == "dump") {
+      std::cout << "Loading engine from dumpped data...." << std::endl;
+      auto start = utils::now();
+      engine->Deserialize(config_.GetString("dump_path"));
+      auto end = utils::now();
+      std::cout << "Time to load dumpped data: " << utils::duration(start, end) << std::endl;
+    } else {
+      std::cout << "You must speicify load_source" << std::endl;
+    }
+
+    // engine->Serialize("/mnt/ssd/big-engine-dump");
+
+    std::cout << "Term Count: " << engine->TermCount() << std::endl;
+    return engine;
+  }
+
+  void ShowEngineStatus(SearchEngineServiceNew *engine, const TermList &terms) {
+    auto pl_sizes = engine->PostinglistSizes(terms); 
+    for (auto pair : pl_sizes) {
+      std::cout << pair.first << " : " << pair.second << std::endl;
     }
   }
 
-  return engine;
-}
+ private:
+  GeneralConfig config_;
+  std::vector<std::unique_ptr<QueryProducer>> query_producers_;
+  std::unique_ptr<SearchEngineServiceNew> engine_;
+  std::vector<Treatment> treatments_;
+  utils::ResultTable table_;
+  std::unique_ptr<TreatmentExecutor> treatment_executor_;
+};
 
-
-std::unique_ptr<SearchEngineServiceNew> create_engine_from_file(
-    const GeneralConfig &config) {
-  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(config.GetString("engine_type"));
-  engine->LoadLocalDocuments(config.GetString("linedoc_path"), 
-                             config.GetInt("n_docs"),
-                             config.GetString("loader"));
-  std::cout << "Term Count: " << engine->TermCount() << std::endl;
-
-  // std::cout << "Sleeping 10000 sec..." << std::endl;
-  // utils::sleep(10000);
-
-  return engine;
-}
-
-void show_engine_stats(SearchEngineServiceNew *engine, const TermList &terms) {
-  auto pl_sizes = engine->PostinglistSizes(terms); 
-  for (auto pair : pl_sizes) {
-    std::cout << pair.first << " : " << pair.second << std::endl;
-  }
-}
-
-utils::ResultRow search(SearchEngineServiceNew *engine, 
-                        const GeneralConfig &config) {
-  const int n_repeats = config.GetInt("n_repeats");
-  utils::ResultRow row;
-  
-  // construct query pool
-  QueryPool query_pool;
-  load_query_pool(&query_pool, config);
-  std::cout << "Constructed query pool successfully" << std::endl;
-
-  if (config.GetString("query_source") == "hardcoded") {
-		std::cout << "Posting list sizes:" << std::endl;
-    show_engine_stats(engine, config.GetStringVec("terms"));
-  }
-
-  auto enable_snippets = config.GetBool("enable_snippets");
-  auto start = utils::now();
-  for (int i = 0; i < n_repeats; i++) {
-    // auto terms = query_pool.Next();
-    // for (auto term: terms) {
-      // std::cout << term << " ";
-    // }
-    // auto query = SearchQuery(terms, enable_snippets);
-
-    auto query = SearchQuery(query_pool.Next(), enable_snippets);
-    query.n_snippet_passages = config.GetInt("n_passages");
-    auto result = engine->Search(query);
-
-    // std::cout << result.ToStr() << std::endl;
-  }
-  auto end = utils::now();
-  auto dur = utils::duration(start, end);
-
-  row["duration"] = std::to_string(dur / n_repeats); 
-  row["QPS"] = std::to_string(n_repeats / dur);
-  return row;
-}
-
-
-void qq_uncompressed_bench() {
-  utils::ResultTable table;
-  auto engine = create_engine(1, 2, 425);
-
-  // table.Append(search(engine.get(), TermList{"0"}));
-
-  // table.Append(search(engine.get(), TermList{"0", "1"}));
-
-  std::cout << table.ToStr();
-}
-
-
-void qq_uncompressed_bench_wiki(const GeneralConfig &config) {
-  utils::ResultTable table;
-
-  auto engine = create_engine_from_file(config);
-
-  auto row = search(engine.get(), config);
-
-  row["n_docs"] = std::to_string(config.GetInt("n_docs"));
-  row["query_source"] = config.GetString("query_source");
-  if (row["query_source"] == "hardcoded") {
-    auto terms = config.GetStringVec("terms");
-    for (auto term : terms) {
-      row["query"] += term;
-    }
-  }
-  table.Append(row);
-
-  std::cout << table.ToStr();
-}
 
 GeneralConfig config_by_jun() {
 /*
@@ -174,32 +289,33 @@ GeneralConfig config_by_jun() {
 */
 
   GeneralConfig config;
-  // config.SetString("engine_type", "qq_mem_compressed");
-  config.SetString("engine_type", "qq_mem_uncompressed");
+  config.SetString("engine_type", "qq_mem_compressed");
 
-  config.SetInt("n_docs", 10000000);
+  // config.SetString("load_source", "linedoc");
+  config.SetString("load_source", "dump");
+
+  config.SetInt("n_docs", 100);
+  config.SetString("linedoc_path", 
+      "/mnt/ssd/downloads/enwiki.linedoc_tokenized.1");
+  config.SetString("loader", "WITH_POSITIONS");
 
   // config.SetString("linedoc_path", 
-      // "/mnt/ssd/downloads/enwiki.linedoc_tokenized"); // full article
-      // "/mnt/ssd/downloads/enwiki_tookenized_200000.linedoc");
-  // config.SetString("loader", "with-offsets");
+      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+  // config.SetString("loader", "TOKEN_ONLY");
+  
+  config.SetString("dump_path", "/mnt/ssd/big-engine-dump");
 
-  config.SetString("linedoc_path", 
-      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  config.SetString("loader", "naive");
-
-  config.SetInt("n_repeats", 100000);
+  config.SetInt("n_repeats", 1000);
   config.SetInt("n_passages", 3);
-  config.SetBool("enable_snippets", true);
-  // config.SetBool("enable_snippets", false);
+  // config.SetBool("enable_snippets", true);
+  config.SetBool("enable_snippets", false);
   
   
   config.SetString("query_source", "hardcoded");
-  // config.SetStringVec("terms", std::vector<std::string>{"hello", "world"});
   config.SetStringVec("terms", std::vector<std::string>{"hello"});
 
   // config.SetString("query_source", "querylog");
-  // config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
+  // config.SetString("querylog_path", "/mnt/ssd/downloads/wiki_QueryLog_tokenized");
   return config;
 }
 
@@ -222,46 +338,23 @@ GeneralConfig config_by_kan() {
                (__/_/                ((__/
 
 */
-  GeneralConfig config;
-  config.SetInt("n_docs", 10000);
-  // config.SetString("linedoc_path", 
-      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  // config.SetString("loader", "with-offsets");
 
-  config.SetString("linedoc_path", 
-      "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  config.SetString("loader", "naive");
-
-  config.SetInt("n_repeats", 500000);
-  config.SetInt("n_passages", 3);
-  config.SetBool("enable_snippets", true);
-  //config.SetBool("enable_snippets", false);
-  
-  
-  config.SetString("query_source", "hardcoded");
-  config.SetStringVec("terms", std::vector<std::string>{"hello"});
-  //config.SetStringVec("terms", std::vector<std::string>{"barack", "obama"});
-  //config.SetStringVec("terms", std::vector<std::string>{"len", "from", "mai"});
-  // config.SetStringVec("terms", std::vector<std::string>{"arsen"});
-
-  // config.SetString("query_source", "querylog");
-  // config.SetString("querylog_path", "/mnt/ssd/downloads/test_querylog");
-  return config;
 }
-
 
 
 int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
-  // FLAGS_logtostderr = 1; // print to stderr instead of file
-  FLAGS_stderrthreshold = 0; 
-  FLAGS_minloglevel = 0; 
+  FLAGS_logtostderr = 1; // print to stderr instead of file
+  FLAGS_minloglevel = 4; 
 
   // Separate our configurations to avoid messes
   auto config = config_by_jun();
   // auto config = config_by_kan();
   
-  qq_uncompressed_bench_wiki(config);
+  // qq_uncompressed_bench_wiki(config);
+
+  InProcExperiment experiment(config);
+  experiment.Run();
 }
 
 

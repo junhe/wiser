@@ -6,6 +6,7 @@
 
 #include <glog/logging.h>
 
+#include "qq.pb.h"
 #include "general_config.h"
 #include "types.h"
 #include "utils.h"
@@ -36,9 +37,18 @@ class QueryLogReader {
 };
 
 
-class QueryPool {
+class TermPool {
  public:
-  QueryPool() {}
+  TermPool() {}
+
+  void LoadFromFile(const std::string &query_log_path, const int n_queries) {
+    QueryLogReader reader(query_log_path);
+    TermList query;
+
+    while (reader.NextQuery(query)) {
+      Add(query);
+    }
+  }
 
   const TermList &Next() {
     return query_buffer_[(counter_++) % query_buffer_size_];
@@ -56,9 +66,30 @@ class QueryPool {
 };
 
 
-class QueryPoolArray {
+class TermPoolArray {
  public:
-  QueryPoolArray(const int n_pools): array_(n_pools) {
+  TermPoolArray(const int n_pools): array_(n_pools) {
+  }
+
+  void LoadTerms(const TermList &query) {
+    for (int i = 0; i < array_.size(); i++) {
+      Add(i, query);
+    }
+  }
+
+  void LoadFromFile(const std::string &query_log_path, const int n_queries) {
+    QueryLogReader reader(query_log_path);
+    TermList query;
+
+    int i = 0;
+    while (reader.NextQuery(query)) {
+      Add( i % array_.size(), query);
+      i++;
+
+      if (i == n_queries) {
+        break;
+      }
+    }
   }
 
   void Add(const int i, const TermList &query) {
@@ -73,23 +104,73 @@ class QueryPoolArray {
     return array_.size();
   }
 
-  QueryPool *GetPool(const int i) {
+  TermPool *GetPool(const int i) {
     return &array_[i];
   }
 
  private:
-  std::vector<QueryPool> array_;
+  std::vector<TermPool> array_;
 };
 
-void load_query_pool_array(QueryPoolArray *array,
-    const std::string &query_log_path, const int n_queries = 0);
-std::unique_ptr<QueryPoolArray> create_query_pool_array(const TermList &terms,
+
+class QueryProducerService {
+ public:
+  virtual SearchQuery NextNativeQuery(const int i) = 0;
+  virtual qq::SearchRequest NextGrpcQuery(const int i) = 0;
+};
+
+
+// It is a wrapper of TermPoolArray. This class will
+// return full Queries, instead of just terms
+class QueryProducer: public QueryProducerService {
+ public:
+  QueryProducer(std::unique_ptr<TermPoolArray> term_pool_array, 
+      GeneralConfig config) 
+      :term_pool_array_(std::move(term_pool_array)),
+       query_template_(term_pool_array_->Size())
+  {
+    for (auto &query : query_template_) {
+      query.n_results = config.HasKey("n_results")? 
+        config.GetInt("n_results") : 5;
+      query.return_snippets = config.HasKey("return_snippets")? 
+        config.GetBool("return_snippets") : true;
+      query.n_snippet_passages = config.HasKey("n_snippet_passages")? 
+        config.GetInt("n_snippet_passages") : 3;
+      query.is_phrase = config.HasKey("is_phrase")? 
+        config.GetBool("is_phrase") : false;
+    }
+  }
+
+  SearchQuery NextNativeQuery(const int i) {
+    query_template_[i].terms = term_pool_array_->Next(i);
+    return query_template_[i];
+  }
+
+  qq::SearchRequest NextGrpcQuery(const int i) {
+    qq::SearchRequest request;
+
+    SearchQuery query = NextNativeQuery(i);
+    query.CopyTo(&request);
+
+    return request;
+  }
+
+  int Size() {
+    return term_pool_array_->Size();
+  }
+
+ private:
+  std::unique_ptr<TermPoolArray> term_pool_array_;
+  std::vector<SearchQuery> query_template_;
+};
+
+
+std::unique_ptr<TermPoolArray> CreateTermPoolArray(const TermList &terms,
     const int n_pools);
-std::unique_ptr<QueryPoolArray> create_query_pool_array(
+std::unique_ptr<TermPoolArray> CreateTermPoolArray(
     const std::string &query_log_path, const int n_pools, const int n_queries=0);
-void load_query_pool_from_file(QueryPool *pool, 
-                     const std::string &query_log_path, 
-                     const int n_queries);
-
-
+std::unique_ptr<QueryProducer> CreateQueryProducer(const TermList &terms,
+    const int n_pools);
+std::unique_ptr<QueryProducer> CreateQueryProducer(const TermList &terms,
+    const int n_pools, GeneralConfig config);
 #endif 
