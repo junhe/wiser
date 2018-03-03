@@ -176,7 +176,9 @@ class PostingListDeltaIterator: public PostingListIteratorService {
      total_postings_(total_postings),
      cur_state_(byte_offset, 0, prev_doc_id)
   {
-    DecodeToCache();
+    // DecodeToCache();
+    DecodeContSizeAndDocId();
+    last_skipable_ = (total_postings_ / skip_span_ - 1) * skip_span_;
   }
 
   PostingListDeltaIterator(const PostingListDeltaIterator &rhs)
@@ -291,7 +293,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
 
   bool HasSkip() const {
     return cur_state_.cur_posting_index_ % skip_span_ == 0 && 
-      cur_state_.cur_posting_index_ + skip_span_ < total_postings_;
+      cur_state_.cur_posting_index_ < last_skipable_;
   }
 
   // Only call this when the iterator HasSkip() == true
@@ -352,10 +354,12 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     //   byte_offset_ is the offset of posting[cur_posting_index_]
     //   prev_doc_id_ is the doc id of posting[cur_posting_index_ - 1]
     //   cache_ has the data of posting[cur_posting_index_]
-    while (cur_state_.cur_posting_index_ < total_postings_ && cache_.cur_doc_id_ < doc_id) {
+    
+    while (cache_.cur_doc_id_ < doc_id && cur_state_.cur_posting_index_ < total_postings_) {
       if (HasSkip() && NextSpanDocId() < doc_id) {
         SkipToNextSpanOnly();
         DecodeContSizeAndDocId();
+        std::cout << "SKip" << std::endl;
       } else {
         AdvanceOnly();
         DecodeContSizeAndDocId();
@@ -363,12 +367,32 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     }
   }
 
+  void SkipForward_NoJump(DocIdType doc_id) {
+    // Move the iterator to a posting that has a doc id that is 
+    // larger or equal to doc_id
+    // It moves to the end if it cannout find such posting
+    // TODO: Advance() with less cost
+
+    // loop inv: 
+    //   posting[0, cur_posting_index_).doc_id < doc_id
+    //   byte_offset_ is the offset of posting[cur_posting_index_]
+    //   prev_doc_id_ is the doc id of posting[cur_posting_index_ - 1]
+    //   cache_ has the data of posting[cur_posting_index_]
+    while (cache_.cur_doc_id_ < doc_id && cur_state_.cur_posting_index_ < total_postings_) {
+      AdvanceOnly();
+      DecodeContSizeAndDocId();
+    }
+  }
+
+
+
+
 
   bool IsEnd() const {
     return cur_state_.cur_posting_index_ == total_postings_;
   }
 
-  DocIdType DocId() const {
+  inline DocIdType DocId() const {
     return cache_.cur_doc_id_;
   }
 
@@ -461,12 +485,13 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   PostingCache cache_;
   int last_offset_;
   int next_expected_item_;
+  int last_skipable_;
 };
 
 
 class PostingListDelta {
  public:
-  PostingListDelta(Term term) :skip_span_(100) {}
+  PostingListDelta(Term term) :skip_span_(1000) {}
   PostingListDelta(Term term, const int skip_span) 
     :skip_span_(skip_span) {}
 

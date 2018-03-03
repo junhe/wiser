@@ -2,7 +2,7 @@ project(grpc-cmake-example)
 cmake_minimum_required(VERSION 3.2)
 
 #add_compile_options(-std=c++11 -O3)
-add_compile_options(-std=c++11 -O3 -g)
+add_compile_options(-std=c++11 -O3 -g -fno-omit-frame-pointer)
 #add_compile_options(-std=c++11 -O0 -g)
 set(GPROFILER profiler)
 

@@ -104,7 +104,7 @@ class GrpcTreatmentExecutor: public TreatmentExecutor {
     client_config_.SetString("target", "localhost:50051");
     client_config_.SetInt("n_client_channels", 64);
     client_config_.SetInt("n_threads", n_threads); 
-    client_config_.SetInt("benchmark_duration", 10);
+    client_config_.SetInt("benchmark_duration", 20);
     // client_config_.SetBool("save_reply", true);
     client_config_.SetBool("save_reply", false);
 
@@ -183,11 +183,11 @@ class InProcExperiment: public Experiment {
     // single term
     std::vector<Treatment> treatments {
       // Treatment({"hello"}, false, 1000, true),
-      Treatment({"from"}, false, 20, true),
+      // Treatment({"from"}, false, 20, true),
       // Treatment({"ripdo"}, false, 10000, true),
 
       // Treatment({"hello", "world"}, false, 100, true),
-      // Treatment({"from", "also"}, false, 10, true),
+      Treatment({"from", "also"}, false, 20, true),
       // Treatment({"ripdo", "liftech"}, false, 1000000, true),
 
       // Treatment({"hello", "world"}, true, 100, true),
@@ -204,7 +204,7 @@ class InProcExperiment: public Experiment {
 
     // treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
     
-    // ProfilerStart("my.profile.new");
+    ProfilerStart("my.profile.new");
   }
 
   void RunTreatment(const int run_id) {
@@ -220,7 +220,7 @@ class InProcExperiment: public Experiment {
   }
 
   void After() {
-    // ProfilerStop();
+    ProfilerStop();
     std::cout << table_.ToStr();
   }
 

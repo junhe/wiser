@@ -939,9 +939,10 @@ class QueryProcessor {
   : n_lists_(pl_iterators->size()),
     doc_lengths_(doc_lengths),
     pl_iterators_(*pl_iterators),
+    empty_position_table_(pl_iterators->size()),
     k_(k),
     is_phrase_(is_phrase),
-    idfs_of_terms_(n_lists_),
+    idfs_of_terms_(pl_iterators->size()),
     n_total_docs_in_index_(n_total_docs_in_index),
     phrase_qp_(8)
   {
@@ -962,39 +963,19 @@ class QueryProcessor {
   }
 
   std::vector<ResultDocEntry> ProcessMultipleTerms() {
-    bool finished = false;
-    DocIdType max_doc_id;
-
-    // loop inv: all intersections before iterators have been found
-    while (finished == false) {
-      // find max doc id
-      max_doc_id = -1;
-      finished = FindMax(&max_doc_id);
-
-      if (finished == true) {
-        break;
-      }
-
-      finished = FindMatch(max_doc_id);
-    } // while
-
-    return SortHeap();
   }
 
   std::vector<ResultDocEntry> ProcessSingleTerm() {
-    auto &it = pl_iterators_[0];
-    PositionInfoTable position_table(1);
-
-    while (it->IsEnd() == false) {
-      DocIdType doc_id = it->DocId();
-      RankDoc(doc_id, position_table);
-      it->Advance();
-    }
-
-    return SortHeap();
   }
 
   std::vector<ResultDocEntry> ProcessTwoTerm() {
+    // return ProcessTwoTermNoSkip(); 
+    // return ProcessTwoTermSkip(); 
+    // return ProcessTwoTermMinDecoding(); 
+    return ProcessTwoTermNoJump(); 
+  }
+
+  std::vector<ResultDocEntry> ProcessTwoTermNoJump() {
     auto &it_0 = pl_iterators_[0];
     auto &it_1 = pl_iterators_[1];
     DocIdType doc0, doc1;
@@ -1002,101 +983,128 @@ class QueryProcessor {
     while (it_0->IsEnd() == false && it_1->IsEnd() == false) {
       doc0 = it_0->DocId();
       doc1 = it_1->DocId();
-      if (doc0 > doc1) {
-        it_1->SkipForward(doc0);
-      } else if (doc0 < doc1) {
-        it_0->SkipForward(doc1);
-      } else {
-        HandleTheFoundDoc(doc0); 
+      if ( doc0 == doc1 ) {
+        // it_0->DecodeTf();
+        // it_0->DecodeOffsetSize();
+        // it_1->DecodeTf();
+        // it_1->DecodeOffsetSize();
+        
+        // RankDoc(doc0, empty_position_table_);
 
-        it_0->Advance();
-        it_1->Advance();
+        it_0->AdvanceOnly();
+        it_0->DecodeContSizeAndDocId();
+        it_1->AdvanceOnly();
+        it_1->DecodeContSizeAndDocId();
+      } else if (doc0 < doc1) {
+        it_0->SkipForward_NoJump(doc1);
+        // it_0->AdvanceOnly();
+        // it_0->DecodeContSizeAndDocId();
+      } else {
+        it_1->SkipForward_NoJump(doc0);
+        // it_1->AdvanceOnly();
+        // it_1->DecodeContSizeAndDocId();
       }
+
     }
+
+    std::cout << "INsert cnt: " << insert_cnt_ << std::endl;
 
     return SortHeap();
   }
 
+
+
+  std::vector<ResultDocEntry> ProcessTwoTermMinDecoding() {
+    auto &it_0 = pl_iterators_[0];
+    auto &it_1 = pl_iterators_[1];
+    DocIdType doc0, doc1;
+
+    while (it_0->IsEnd() == false && it_1->IsEnd() == false) {
+      doc0 = it_0->DocId();
+      doc1 = it_1->DocId();
+      if ( doc0 == doc1 ) {
+        // it_0->DecodeTf();
+        // it_0->DecodeOffsetSize();
+        // it_1->DecodeTf();
+        // it_1->DecodeOffsetSize();
+        
+        // RankDoc(doc0, empty_position_table_);
+
+        it_0->AdvanceOnly();
+        it_0->DecodeContSizeAndDocId();
+        it_1->AdvanceOnly();
+        it_1->DecodeContSizeAndDocId();
+      } else if (doc0 < doc1) {
+        it_0->SkipForward_MinDecode(doc1);
+        // it_0->AdvanceOnly();
+        // it_0->DecodeContSizeAndDocId();
+      } else {
+        it_1->SkipForward_MinDecode(doc0);
+        // it_1->AdvanceOnly();
+        // it_1->DecodeContSizeAndDocId();
+      }
+
+    }
+
+    std::cout << "INsert cnt: " << insert_cnt_ << std::endl;
+
+    return SortHeap();
+  }
+
+
+  std::vector<ResultDocEntry> ProcessTwoTermSkip() {
+    auto &it_0 = pl_iterators_[0];
+    auto &it_1 = pl_iterators_[1];
+    DocIdType doc0, doc1;
+
+    while (it_0->IsEnd() == false && it_1->IsEnd() == false) {
+      doc0 = it_0->DocId();
+      doc1 = it_1->DocId();
+      if ( doc0 == doc1 ) {
+        it_0->Advance();
+        it_1->Advance();
+      } else if (doc0 < doc1) {
+        it_0->SkipForward(doc1);
+      } else {
+        it_1->SkipForward(doc0);
+      }
+    }
+
+    std::cout << "INsert cnt: " << insert_cnt_ << std::endl;
+
+    return SortHeap();
+  }
+
+
+  std::vector<ResultDocEntry> ProcessTwoTermNoSkip() {
+    auto &it_0 = pl_iterators_[0];
+    auto &it_1 = pl_iterators_[1];
+    DocIdType doc0, doc1;
+
+    while (it_0->IsEnd() == false && it_1->IsEnd() == false) {
+      doc0 = it_0->DocId();
+      doc1 = it_1->DocId();
+      if ( doc0 == doc1 ) {
+        it_0->Advance();
+        it_1->Advance();
+      } else if (doc0 < doc1) {
+        it_0->Advance();
+      } else {
+        it_1->Advance();
+      }
+    }
+
+    std::cout << "INsert cnt: " << insert_cnt_ << std::endl;
+
+    return SortHeap();
+  }
+
+
+
+
  private:
-  // return true: end reached
-  bool FindMax(DocIdType * max_doc_id) {
-    for (int list_i = 0; list_i < n_lists_; list_i++) {
-      auto it = pl_iterators_[list_i].get();
-
-      if (it->IsEnd()) {
-        return true;
-      }
-
-      const DocIdType cur_doc_id = it->DocId(); 
-      if (cur_doc_id > *max_doc_id) {
-        *max_doc_id = cur_doc_id; 
-      }
-    }
-    return false;
-  }
-
-  // return true: end reached
-  bool FindMatch(DocIdType max_doc_id) {
-    // Try to reach max_doc_id in all posting lists_
-    int list_i;
-    for (list_i = 0; list_i < n_lists_; list_i++) {
-      auto it = pl_iterators_[list_i].get();
-
-      it->SkipForward(max_doc_id);
-      if (it->IsEnd()) {
-        return true;
-      }
-
-      if (it->DocId() != max_doc_id) {
-        break;
-      }
-
-      if (list_i == n_lists_ - 1) {
-        // HandleTheFoundDoc(max_doc_id);
-        HandleTheFoundDoc(max_doc_id);
-        // Advance iterators
-        for (int i = 0; i < n_lists_; i++) {
-          pl_iterators_[i]->Advance();
-        }
-      }
-    }
-    return false;
-  }
-
-  PositionInfoTable FindPhrase() {
-    for (int i = 0; i < pl_iterators_.size(); i++) {
-      CompressedPositionIterator *p = phrase_qp_.Iterator(i);
-      pl_iterators_[i]->AssignPositionBegin(p);
-    }
-    phrase_qp_.SetNumTerms(pl_iterators_.size());
-
-    return phrase_qp_.Process();
-  }
-
-  PositionInfoTable FindPhraseOLD() {
-    // All iterators point to the same posting at this point
-    PositionIterators iterators;
-    for (int i = 0; i < pl_iterators_.size(); i++) {
-      iterators.push_back(std::move(pl_iterators_[i]->PositionBegin()));
-    }
-
-    PhraseQueryProcessor phrase_qp(&iterators);
-    return phrase_qp.Process();
-  }
-
-  void HandleTheFoundDoc(const DocIdType &max_doc_id) {
-    if (is_phrase_ == true && pl_iterators_.size() > 1 ) {
-      auto position_table = FindPhrase();
-      if (position_table[0].size() > 0) {
-        RankDoc(max_doc_id, position_table);
-      }
-    } else {
-      PositionInfoTable position_table(pl_iterators_.size());
-      RankDoc(max_doc_id, position_table);
-    }
-  }
-
   void RankDoc(const DocIdType &max_doc_id, const PositionInfoTable &position_table) {
+    return;
     qq_float score_of_this_doc = calc_doc_score_for_a_query(
         pl_iterators_,
         idfs_of_terms_,
@@ -1140,6 +1148,9 @@ class QueryProcessor {
 			offset_iters, position_table, is_phrase_);
   }
 
+  int rankdoc_cnt_ = 0;
+  int insert_cnt_ = 0;
+  PositionInfoTable empty_position_table_;
   const int n_lists_;
   IteratorPointers &pl_iterators_;
   const int k_;

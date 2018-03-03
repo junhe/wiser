@@ -101,6 +101,8 @@ class PostingListIteratorService {
   virtual void SkipForward(const DocIdType doc_id) = 0;
   virtual void SkipForward_MinDecode(const DocIdType doc_id) {
     LOG(FATAL) << "Not Implemented"; };
+  virtual void SkipForward_NoJump(const DocIdType doc_id) {
+    LOG(FATAL) << "Not Implemented"; };
   virtual std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const = 0;
   virtual std::unique_ptr<PopIteratorService> PositionBegin() const = 0;
   virtual void AssignPositionBegin(CompressedPositionIterator *iterator) const {
