@@ -548,6 +548,114 @@ class SingleTermQueryProcessor {
 
 
 
+class TwoTermNonPhraseQueryProcessor {
+ public:
+  TwoTermNonPhraseQueryProcessor(
+    IteratorPointers *pl_iterators, 
+    const DocLengthStore &doc_lengths,
+    const int n_total_docs_in_index,
+    const int k = 5,
+    const bool is_phrase = false)
+  : n_lists_(pl_iterators->size()),
+    doc_lengths_(doc_lengths),
+    pl_iterators_(*pl_iterators),
+    k_(k),
+    is_phrase_(is_phrase),
+    idfs_of_terms_(n_lists_),
+    n_total_docs_in_index_(n_total_docs_in_index)
+  {
+    for (int i = 0; i < n_lists_; i++) {
+      idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
+                                      pl_iterators_[i]->Size());
+    }
+  }
+
+  std::vector<ResultDocEntry> Process() {
+    auto &it_0 = pl_iterators_[0];
+    auto &it_1 = pl_iterators_[1];
+    DocIdType doc0, doc1;
+
+    while (it_0->IsEnd() == false && it_1->IsEnd() == false) {
+      doc0 = it_0->DocId();
+      doc1 = it_1->DocId();
+      if (doc0 > doc1) {
+        it_1->SkipForward(doc0);
+      } else if (doc0 < doc1) {
+        it_0->SkipForward(doc1);
+      } else {
+        HandleTheFoundDoc(doc0); 
+
+        it_0->Advance();
+        it_1->Advance();
+      }
+    }
+
+    return SortHeap();
+  }
+
+ private:
+  void HandleTheFoundDoc(const DocIdType &max_doc_id) {
+    PositionInfoTable position_table(pl_iterators_.size());
+    RankDoc(max_doc_id, position_table);
+  }
+
+  void RankDoc(const DocIdType &max_doc_id, const PositionInfoTable &position_table) {
+    qq_float score_of_this_doc = calc_doc_score_for_a_query(
+        pl_iterators_,
+        idfs_of_terms_,
+        n_total_docs_in_index_,
+        doc_lengths_.GetAvgLength(),
+        doc_lengths_.GetLength(max_doc_id));
+
+    if (min_heap_.size() < k_) {
+      InsertToHeap(max_doc_id, score_of_this_doc, position_table);
+    } else {
+      if (score_of_this_doc > min_heap_.top().score) {
+        min_heap_.pop();
+        InsertToHeap(max_doc_id, score_of_this_doc, position_table);
+      }
+    }
+  }
+
+  std::vector<ResultDocEntry> SortHeap() {
+    std::vector<ResultDocEntry> ret;
+
+    int kk = k_;
+    while(!min_heap_.empty() && kk != 0) {
+      ret.push_back(min_heap_.top());
+      min_heap_.pop();
+      kk--;
+    }
+    std::reverse(ret.begin(), ret.end());
+    return ret;
+  }
+
+  void InsertToHeap(const DocIdType &doc_id, 
+                    const qq_float &score_of_this_doc,
+                    const PositionInfoTable &position_table)
+  {
+    OffsetIterators offset_iters;
+    for (int i = 0; i < n_lists_; i++) {
+      auto p = pl_iterators_[i]->OffsetPairsBegin();
+      offset_iters.push_back(std::move(p));
+    }
+    min_heap_.emplace(doc_id, score_of_this_doc, 
+			offset_iters, position_table, is_phrase_);
+  }
+
+  const int n_lists_;
+  IteratorPointers &pl_iterators_;
+  const int k_;
+  const int n_total_docs_in_index_;
+  std::vector<qq_float> idfs_of_terms_;
+  MinHeap min_heap_;
+  const DocLengthStore &doc_lengths_;
+  bool is_phrase_;
+};
+
+
+
+
 class QueryProcessor {
  public:
   QueryProcessor(
