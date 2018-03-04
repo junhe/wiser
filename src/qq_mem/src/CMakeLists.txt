@@ -187,20 +187,6 @@ target_link_libraries(intersect_bench
     ${GLOG_LIB}
 )
 
-add_executable(scoring_bench
-    scoring_bench.cc
-    ${ENGINE_SRCS}
-    ${PROTO_SRCS}
-    ${GRPC_SRCS}
-)
-target_link_libraries(scoring_bench
-    ${GRPC_LIBS}
-    protobuf::libprotobuf
-    ${BOOST_LIBS}
-    pthread
-    ${GLOG_LIB}
-)
-
 add_executable(sorting_bench
     sorting_bench.cc
     ${ENGINE_SRCS}

@@ -34,46 +34,6 @@ array_t findIntersection(const array_t &A, const array_t &B) {
 }
 
 
-utils::ResultRow qq_mem_bench(const int &n_postings) {
-  const int n_repeats = 100;
-  utils::ResultRow row;
-
-  PostingList_Vec<PostingSimple> pl01("hello");   
-  for (int i = 0; i < n_postings; i++) {
-    pl01.AddPosting(PostingSimple(i, 1, Positions{28}));
-  }
-
-  PostingList_Vec<PostingSimple> pl02("world");   
-  for (int i = 0; i < n_postings; i++) {
-    pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
-  }
-
-  std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-
-  auto start = utils::now();
-  for (int i = 0; i < n_repeats; i++) {
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
-  }
-  auto end = utils::now();
-  auto dur = utils::duration(start, end);
-
-  assert(ret.size() == n_postings);
-  row["duration"] = std::to_string(dur / n_repeats);
-  row["n_postings"] = std::to_string(n_postings);
-
-  return row;
-}
-
-void qq_mem_bench_suite() {
-  utils::ResultTable table;
-  table.Append(qq_mem_bench(1000));
-  table.Append(qq_mem_bench(10000));
-  table.Append(qq_mem_bench(100000));
-  table.Append(qq_mem_bench(1000000));
-
-  std::cout << table.ToStr();
-}
-
 utils::ResultRow leetcode_bench(const int &n_postings) {
   const int n_repeats = 100;
   utils::ResultRow row;
@@ -115,6 +75,5 @@ int main(int argc, char** argv) {
   FLAGS_stderrthreshold = 0; 
   FLAGS_minloglevel = 0; 
 
-  qq_mem_bench_suite();
   leetcode_bench_suite();
 }

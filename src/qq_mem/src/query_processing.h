@@ -351,9 +351,6 @@ class IntersectionResult {
 
 qq_float aggregate_term_score(const TermScoreMap &term_scores);
 
-DocScoreVec score_docs(const IntersectionResult &intersection_result, 
-                       const DocLengthStore &doc_lengths);
-
 // lists is a vector of pointers, pointing to posting lists
 // TODO: This function is too long, refactor it.
 //
