@@ -1,17 +1,5 @@
 #include "query_processing.h"
 
-
-qq_float aggregate_term_score(const TermScoreMap &term_scores) {
-  qq_float doc_score = 0;
-  for (TermScoreMap::const_iterator it = term_scores.cbegin();
-       it != term_scores.cend(); it++) 
-  {
-    doc_score += it->second; 
-  }
-  return doc_score;
-}
-
-
 namespace qq_search {
   std::vector<ResultDocEntry> ProcessQuery(IteratorPointers *pl_iterators, 
                                            const DocLengthStore &doc_lengths,

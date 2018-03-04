@@ -349,8 +349,6 @@ class IntersectionResult {
   doc_cnt_dict_t doc_cnt_;
 };
 
-qq_float aggregate_term_score(const TermScoreMap &term_scores);
-
 
 // This is the score of a document for a query. This query may have multiple
 // terms.
