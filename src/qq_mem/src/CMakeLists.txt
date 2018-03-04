@@ -62,7 +62,7 @@ set(GRPC_LIBS
     )
 
 
-set(GLOG_LIB glog ${GPROFILER})
+set(GLOG_LIB glog ${GPROFILER} gflags)
 
 
 #######################################

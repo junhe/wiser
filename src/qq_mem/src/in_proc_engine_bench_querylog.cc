@@ -10,12 +10,19 @@
 
 #include <gperftools/profiler.h>
 #include <glog/logging.h>
+#include <gflags/gflags.h>
 
 #include "qq_mem_engine.h"
 #include "utils.h"
 #include "grpc_client_impl.h"
 #include "general_config.h"
 #include "query_pool.h"
+
+
+DEFINE_int32(n_threads, 1, "Number of client threads");
+DEFINE_bool(use_grpc, false, "Use this as a GRPC client");
+DEFINE_bool(use_profiler, true, "Use profiler");
+
 
 const int K = 1000;
 const int M = 1000 * K;
@@ -199,12 +206,19 @@ class InProcExperiment: public Experiment {
   }
 
   void Before() {
-    engine_ = std::move(CreateEngineFromFile());
-    treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
-
-    // treatment_executor_.reset(new GrpcTreatmentExecutor(16));//TODO
+    if (FLAGS_use_grpc == true) {
+      std::cout << "Using GRPC..." << std::endl;
+      treatment_executor_.reset(new GrpcTreatmentExecutor(FLAGS_n_threads));
+    } else {
+      std::cout << "Using in-proc engine..." << std::endl;
+      engine_ = std::move(CreateEngineFromFile());
+      treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
+    }
     
-    // ProfilerStart("my.profile.new");
+    if (FLAGS_use_profiler == true) {
+      std::cout << "Using profiler..." << std::endl;
+      ProfilerStart("my.profile.new");
+    }
   }
 
   void RunTreatment(const int run_id) {
@@ -220,7 +234,9 @@ class InProcExperiment: public Experiment {
   }
 
   void After() {
-    // ProfilerStop();
+    if (FLAGS_use_profiler == true) {
+      ProfilerStop();
+    }
     std::cout << table_.ToStr();
   }
 
@@ -346,6 +362,8 @@ int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = 1; // print to stderr instead of file
   FLAGS_minloglevel = 4; 
+
+	gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   // Separate our configurations to avoid messes
   auto config = config_by_jun();
