@@ -287,7 +287,7 @@ PositionIterators create_iterators(std::vector<VarintBuffer *> buffers, std::vec
   return iterators;
 }
 
-void AssignIterators(PhraseQueryProcessor4<VarintIterator> &pqp, 
+void AssignIterators(PhraseQueryProcessor<VarintIterator> &pqp, 
                      std::vector<VarintBuffer *> buffers, 
                      std::vector<int> sizes) {
   std::vector<VarintIterator> &iterators = *pqp.Iterators();
@@ -303,7 +303,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
     VarintBuffer buf01 = create_varint_buffer(std::vector<uint32_t>{1, 3, 5});
     VarintBuffer buf02 = create_varint_buffer(std::vector<uint32_t>{4});
     
-    PhraseQueryProcessor4<VarintIterator> qp(2);
+    PhraseQueryProcessor<VarintIterator> qp(2);
     AssignIterators(qp, {&buf01, &buf02}, {3, 1});
    
     SECTION("Returning info table") {
@@ -347,7 +347,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
     VarintBuffer buf01 = create_varint_buffer(std::vector<uint32_t>{});
     VarintBuffer buf02 = create_varint_buffer(std::vector<uint32_t>{});
 
-    PhraseQueryProcessor4<VarintIterator> qp(10);
+    PhraseQueryProcessor<VarintIterator> qp(10);
     AssignIterators(qp, {&buf01, &buf02}, {0, 0});
 
     auto table = qp.Process();
@@ -360,7 +360,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
     VarintBuffer buf01 = create_varint_buffer({1, 8, 20});
     VarintBuffer buf02 = create_varint_buffer({0, 7, 19});
 
-    PhraseQueryProcessor4<VarintIterator> qp(10);
+    PhraseQueryProcessor<VarintIterator> qp(10);
     AssignIterators(qp, {&buf01, &buf02}, {3, 3});
 
     auto table = qp.Process();
@@ -373,7 +373,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
     VarintBuffer buf01 = create_varint_buffer({0});
     VarintBuffer buf02 = create_varint_buffer({0});
 
-    PhraseQueryProcessor4<VarintIterator> qp(10);
+    PhraseQueryProcessor<VarintIterator> qp(10);
     AssignIterators(qp, {&buf01, &buf02}, {1, 1});
 
     auto table = qp.Process();
@@ -385,7 +385,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
     VarintBuffer buf01 = create_varint_buffer({10});
     VarintBuffer buf02 = create_varint_buffer({});
 
-    PhraseQueryProcessor4<VarintIterator> qp(10);
+    PhraseQueryProcessor<VarintIterator> qp(10);
     AssignIterators(qp, {&buf01, &buf02}, {1, 0});
 
     auto table = qp.Process();
@@ -397,7 +397,7 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
     VarintBuffer buf01 = create_varint_buffer({10, 20,     100, 1000});
     VarintBuffer buf02 = create_varint_buffer({11, 21, 88, 101});
 
-    PhraseQueryProcessor4<VarintIterator> qp(10);
+    PhraseQueryProcessor<VarintIterator> qp(10);
     AssignIterators(qp, {&buf01, &buf02}, {4, 4});
 
     auto table = qp.Process();

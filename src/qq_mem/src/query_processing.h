@@ -32,7 +32,6 @@ typedef std::vector<PositionInfoVec> PositionInfoTable;
 typedef std::vector<std::shared_ptr<OffsetPairsIteratorService>> OffsetIterators;
 
 
-
 inline qq_float calc_doc_score_for_a_query(
     const IteratorPointers &pl_iterators,
     const std::vector<qq_float> &idfs_of_terms,
@@ -64,9 +63,9 @@ inline qq_float calc_doc_score_for_a_query(
 // T is subclass of PopIteratorService
 // For example, it can be CompressedPositionIterator
 template <typename T>
-class PhraseQueryProcessor4 {
+class PhraseQueryProcessor {
  public:
-  PhraseQueryProcessor4(int capacity)
+  PhraseQueryProcessor(int capacity)
     :solid_iterators_(capacity), last_orig_popped_(capacity) {
   }
 
@@ -758,7 +757,7 @@ class QueryProcessor {
   MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
   bool is_phrase_;
-  PhraseQueryProcessor4<CompressedPositionIterator> phrase_qp_;
+  PhraseQueryProcessor<CompressedPositionIterator> phrase_qp_;
 };
 
 
