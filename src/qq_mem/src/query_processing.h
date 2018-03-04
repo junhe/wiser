@@ -569,6 +569,9 @@ class TwoTermNonPhraseQueryProcessor {
     }
   }
 
+  // Using minimum decoding is not worth it. 
+  // Min decoding QPS: 10.21
+  // Regular QPS: 10.47
   std::vector<ResultDocEntry> Process() {
     auto &it_0 = pl_iterators_[0];
     auto &it_1 = pl_iterators_[1];
