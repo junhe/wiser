@@ -558,6 +558,7 @@ class TwoTermNonPhraseQueryProcessor {
   : n_lists_(pl_iterators->size()),
     doc_lengths_(doc_lengths),
     pl_iterators_(*pl_iterators),
+    empty_position_table_(pl_iterators->size()),
     k_(k),
     idfs_of_terms_(n_lists_),
     n_total_docs_in_index_(n_total_docs_in_index)
@@ -593,11 +594,10 @@ class TwoTermNonPhraseQueryProcessor {
 
  private:
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
-    PositionInfoTable position_table(pl_iterators_.size());
-    RankDoc(max_doc_id, position_table);
+    RankDoc(max_doc_id);
   }
 
-  void RankDoc(const DocIdType &max_doc_id, const PositionInfoTable &position_table) {
+  void RankDoc(const DocIdType &max_doc_id) {
     qq_float score_of_this_doc = calc_doc_score_for_a_query(
         pl_iterators_,
         idfs_of_terms_,
@@ -606,11 +606,11 @@ class TwoTermNonPhraseQueryProcessor {
         doc_lengths_.GetLength(max_doc_id));
 
     if (min_heap_.size() < k_) {
-      InsertToHeap(max_doc_id, score_of_this_doc, position_table);
+      InsertToHeap(max_doc_id, score_of_this_doc);
     } else {
       if (score_of_this_doc > min_heap_.top().score) {
         min_heap_.pop();
-        InsertToHeap(max_doc_id, score_of_this_doc, position_table);
+        InsertToHeap(max_doc_id, score_of_this_doc);
       }
     }
   }
@@ -629,8 +629,7 @@ class TwoTermNonPhraseQueryProcessor {
   }
 
   void InsertToHeap(const DocIdType &doc_id, 
-                    const qq_float &score_of_this_doc,
-                    const PositionInfoTable &position_table)
+                    const qq_float &score_of_this_doc)
   {
     OffsetIterators offset_iters;
     for (int i = 0; i < n_lists_; i++) {
@@ -638,7 +637,7 @@ class TwoTermNonPhraseQueryProcessor {
       offset_iters.push_back(std::move(p));
     }
     min_heap_.emplace(doc_id, score_of_this_doc, 
-			offset_iters, position_table, false);
+			offset_iters, empty_position_table_, false);
   }
 
   const int n_lists_;
@@ -648,6 +647,7 @@ class TwoTermNonPhraseQueryProcessor {
   std::vector<qq_float> idfs_of_terms_;
   MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
+  PositionInfoTable empty_position_table_;
 };
 
 
