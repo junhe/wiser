@@ -600,41 +600,6 @@ TEST_CASE( "Scoring", "[ranking]" ) {
 
 
 
-TEST_CASE( "We can get score for each document", "[ranking]" ) {
-  SECTION("It gets the same score as ES, for one term") {
-    IntersectionResult result;
-    StandardPosting posting(0, 1); // id=0, term_freq=1
-
-    result.SetPosting(0, "term1", &posting);
-    result.SetDocCount("term1", 1);
-
-    IntersectionResult::row_iterator it = result.row_cbegin();
-
-    TermScoreMap term_scores = score_terms_in_doc(result, it, 3, 3, 1);
-
-    REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
-  }
-
-  SECTION("It gets the same score as ES, for two terms") {
-    StandardPosting p0(0, 1), p1(0, 1);
-    IntersectionResult result;
-
-    result.SetPosting(0, "term1", &p0);
-    result.SetPosting(0, "term2", &p1);
-
-    result.SetDocCount("term1", 1);
-    result.SetDocCount("term2", 1);
-
-    IntersectionResult::row_iterator it = result.row_cbegin();
-
-    TermScoreMap term_scores = score_terms_in_doc(result, it, 7, 7, 1);
-
-    REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
-    REQUIRE(utils::format_double(term_scores["term2"], 3) == "0.288"); // From an ES run
-  }
-
-}
-
 TEST_CASE( "Utilities work", "[utils]" ) {
   SECTION("Count terms") {
     REQUIRE(utils::count_terms("hello world") == 2);
