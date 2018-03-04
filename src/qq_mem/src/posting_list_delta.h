@@ -177,6 +177,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
      cur_state_(byte_offset, 0, prev_doc_id)
   {
     DecodeToCache();
+    last_skipable_ = (total_postings_ / skip_span_ - 1) * skip_span_;
   }
 
   PostingListDeltaIterator(const PostingListDeltaIterator &rhs)
@@ -291,7 +292,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
 
   bool HasSkip() const {
     return cur_state_.cur_posting_index_ % skip_span_ == 0 && 
-      cur_state_.cur_posting_index_ + skip_span_ < total_postings_;
+      cur_state_.cur_posting_index_ < last_skipable_;
   }
 
   // Only call this when the iterator HasSkip() == true
@@ -461,6 +462,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   PostingCache cache_;
   int last_offset_;
   int next_expected_item_;
+  int last_skipable_;
 };
 
 
