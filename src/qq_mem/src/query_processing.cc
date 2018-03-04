@@ -24,6 +24,3 @@ namespace qq_search {
 
 
 
-
-
-
