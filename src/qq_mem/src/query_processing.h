@@ -349,12 +349,6 @@ class IntersectionResult {
   doc_cnt_dict_t doc_cnt_;
 };
 
-TermScoreMap score_terms_in_doc(const IntersectionResult &intersection_result, 
-    IntersectionResult::row_iterator row_it,
-    const qq_float &avg_doc_length, 
-    const int &doc_length,
-    const int &total_docs);
-
 qq_float aggregate_term_score(const TermScoreMap &term_scores);
 
 DocScoreVec score_docs(const IntersectionResult &intersection_result, 
