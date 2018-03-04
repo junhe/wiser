@@ -554,13 +554,11 @@ class TwoTermNonPhraseQueryProcessor {
     IteratorPointers *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
-    const int k = 5,
-    const bool is_phrase = false)
+    const int k = 5)
   : n_lists_(pl_iterators->size()),
     doc_lengths_(doc_lengths),
     pl_iterators_(*pl_iterators),
     k_(k),
-    is_phrase_(is_phrase),
     idfs_of_terms_(n_lists_),
     n_total_docs_in_index_(n_total_docs_in_index)
   {
@@ -640,7 +638,7 @@ class TwoTermNonPhraseQueryProcessor {
       offset_iters.push_back(std::move(p));
     }
     min_heap_.emplace(doc_id, score_of_this_doc, 
-			offset_iters, position_table, is_phrase_);
+			offset_iters, position_table, false);
   }
 
   const int n_lists_;
@@ -650,7 +648,6 @@ class TwoTermNonPhraseQueryProcessor {
   std::vector<qq_float> idfs_of_terms_;
   MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
-  bool is_phrase_;
 };
 
 

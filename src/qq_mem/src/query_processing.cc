@@ -10,6 +10,10 @@ namespace qq_search {
       SingleTermQueryProcessor qp(pl_iterators, doc_lengths, 
           n_total_docs_in_index, k);
       return qp.Process();
+    } else if (pl_iterators->size() == 2 && is_phase == false) {
+      TwoTermNonPhraseQueryProcessor qp(pl_iterators, doc_lengths, 
+          n_total_docs_in_index, k);
+      return qp.Process();
     } else {
       QueryProcessor qp(pl_iterators, doc_lengths, 
           n_total_docs_in_index, k, is_phase);
