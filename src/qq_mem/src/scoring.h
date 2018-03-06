@@ -11,8 +11,6 @@ double calc_field_len_norm(const int &field_length);
 double calc_score(const int &term_freq, const int &total_docs, 
     const int &doc_freq, const int &field_length);
 
-double calc_es_idf(const int &doc_count, const int &doc_freq);
-
 // More info about ES similarity calculation
 // https://www.elastic.co/guide/en/elasticsearch/reference/current/index-modules-similarity.html
 
