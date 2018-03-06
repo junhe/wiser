@@ -177,6 +177,15 @@ class PostingListDeltaIterator: public PostingListIteratorService {
      cur_state_(byte_offset, 0, prev_doc_id)
   {
     DecodeToCache();
+
+    // Use the code below if you want to do minimum decoding
+    // DecodeContSizeAndDocId();
+    // DecodeTf();
+    // DecodeOffsetSize();
+    
+    // Reset last_offset_
+    // DecodeContSizeAndDocId();
+    // assert(next_expected_item_ == 2);
   }
 
   PostingListDeltaIterator(const PostingListDeltaIterator &rhs)

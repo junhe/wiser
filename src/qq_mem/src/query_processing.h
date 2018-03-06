@@ -685,9 +685,6 @@ class TwoTermNonPhraseQueryProcessor2 {
     }
   }
 
-  // Using minimum decoding is not worth it. 
-  // Min decoding QPS: 10.21
-  // Regular QPS: 10.47
   std::vector<ResultDocEntry> Process() {
     auto &it_0 = pl_iterators_[0];
     auto &it_1 = pl_iterators_[1];
@@ -711,11 +708,48 @@ class TwoTermNonPhraseQueryProcessor2 {
     return SortHeap();
   }
 
- private:
-  void HandleTheFoundDoc(const DocIdType &max_doc_id) {
-    RankDoc(max_doc_id);
+  // min decoding
+  //
+  // Using minimum decoding is not worthwhile. 
+  // Min decoding QPS: 11.96
+  // Regular QPS: 11.48.
+  //
+  // To do minimum decoding, change constructor of PostingListDeltaIterator  
+  std::vector<ResultDocEntry> ProcessMinDecoding() {
+    auto &it_0 = pl_iterators_[0];
+    auto &it_1 = pl_iterators_[1];
+    DocIdType doc0, doc1;
+
+    while (it_0.IsEnd() == false && it_1.IsEnd() == false) {
+      doc0 = it_0.DocId();
+      doc1 = it_1.DocId();
+      if (doc0 > doc1) {
+        it_1.SkipForward_MinDecode(doc0);
+      } else if (doc0 < doc1) {
+        it_0.SkipForward_MinDecode(doc1);
+      } else {
+        it_0.DecodeTf();
+        it_0.DecodeOffsetSize();
+
+        it_1.DecodeTf();
+        it_1.DecodeOffsetSize();
+
+        RankDoc(doc0); 
+
+        it_0.AdvanceOnly();
+        it_0.DecodeContSizeAndDocId();
+
+        it_1.AdvanceOnly();
+        it_1.DecodeContSizeAndDocId();
+      }
+    }
+
+    return SortHeap();
   }
 
+
+
+ private:
   void RankDoc(const DocIdType &max_doc_id) {
     qq_float score_of_this_doc = CalcDocScoreForOneQuery<PostingListDeltaIterator>(
         pl_iterators_,
