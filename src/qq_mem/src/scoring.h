@@ -31,9 +31,9 @@ inline double calc_es_tfnorm(const int &freq,
   
   // const double k1 = 1.2;
   // const double b = 0.75;
-  // return (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * field_length / avg_field_length));
+  // return (freq * (k1 + 1)) / (freq + k1 * (1 - b + ((b * field_length) / avg_field_length)));
 
-  return (freq * 2.2) / (freq + 1.2 * (-0.25 + 0.75 * field_length / avg_field_length));
+  return (freq * 2.2) / (freq + 1.2 * (0.25 + (0.75 * field_length / avg_field_length)));
 }
 
 
