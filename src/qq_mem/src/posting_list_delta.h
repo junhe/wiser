@@ -514,6 +514,18 @@ class PostingListDelta {
           0));
   }
 
+  PostingListDeltaIterator Begin2() const {
+    return PostingListDeltaIterator(
+          &data_, 
+          &skip_index_, 
+          skip_span_, 
+          Size(), 
+          skip_index_.vec[0].prev_doc_id, 
+          0);
+  }
+
+
+
   std::unique_ptr<PostingListDeltaIterator> NativeBegin() const {
     if (posting_idx_ == 0) {
       LOG(FATAL) << "Posting List must have at least one posting" << std::endl;

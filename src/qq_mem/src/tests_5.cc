@@ -163,6 +163,159 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
 }
 
 
+TEST_CASE( "QueryProcessor2 works", "[engine]" ) {
+  OffsetPairs offset_pairs;
+  for (int i = 0; i < 10; i++) {
+    offset_pairs.push_back(std::make_tuple(i, i)); 
+  }
+
+  PostingListDelta pl01("hello");
+  PostingListDelta pl02("world");
+  PostingListDelta pl03("again");
+
+  for (int i = 0; i < 5; i++) {
+    pl01.AddPosting(StandardPosting(i, 3, offset_pairs, {1, 5, 11, 19}));
+    pl02.AddPosting(StandardPosting(i, 3, offset_pairs, {2, 8,     20}));
+    pl03.AddPosting(StandardPosting(i, 3, offset_pairs, {7, 10}));
+  }
+
+  DocLengthStore store;
+  for (int i = 0; i < 5; i++) {
+    store.AddLength(i, (5 - i) * 10);
+  }
+
+  SECTION("Find top 5") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
+
+    QueryProcessor2 processor(&iterators, store, 100, 5, false);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 5);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3, 2, 1, 0});
+  }
+
+  SECTION("Do phrase query of 'hello world'") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
+
+    QueryProcessor2 processor(&iterators, store, 100, 5, true);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 5);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    // Table:
+    // 1 (0)    19 (3)
+    // 2 (0)    20 (2)
+    auto &pos_table = result[0].position_table;
+    REQUIRE(pos_table.size() == 2);
+    REQUIRE(pos_table[0].size() == 2);
+    REQUIRE(pos_table[0][0].pos == 1);
+    REQUIRE(pos_table[0][0].term_appearance == 0);
+    REQUIRE(pos_table[0][1].pos == 19);
+    REQUIRE(pos_table[0][1].term_appearance == 3);
+
+    REQUIRE(pos_table[1].size() == 2);
+    REQUIRE(pos_table[1][0].pos == 2);
+    REQUIRE(pos_table[1][0].term_appearance == 0);
+    REQUIRE(pos_table[1][1].pos == 20);
+    REQUIRE(pos_table[1][1].term_appearance == 2);
+    
+    // Table
+    // 0,0 3,3
+    // 0,0 2,2
+    std::vector<OffsetPairs> table = result[0].FilterOffsetByPosition();
+    REQUIRE(table.size() == 2);
+    REQUIRE(table[0].size() == 2);
+    REQUIRE(std::get<0>(table[0][0]) == 0);
+    REQUIRE(std::get<1>(table[0][0]) == 0);
+    REQUIRE(std::get<0>(table[0][1]) == 3);
+    REQUIRE(std::get<1>(table[0][1]) == 3);
+
+    REQUIRE(table[1].size() == 2);
+    REQUIRE(std::get<0>(table[1][0]) == 0);
+    REQUIRE(std::get<1>(table[1][0]) == 0);
+    REQUIRE(std::get<0>(table[1][1]) == 2);
+    REQUIRE(std::get<1>(table[1][1]) == 2);
+    
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3, 2, 1, 0});
+  }
+
+  SECTION("Do phrase query of 'world again'") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl02.Begin2());
+    iterators.push_back(pl03.Begin2());
+
+    QueryProcessor2 processor(&iterators, store, 100, 5, true);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 0);
+  }
+
+  SECTION("Find top 2") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
+
+    QueryProcessor2 processor(&iterators, store, 100, 2, false);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 2);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
+  }
+
+  SECTION("Find top 2 within one postinglist") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+
+    QueryProcessor2 processor(&iterators, store, 100, 2, false);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 2);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
+  }
+
+  SECTION("Find top 2 with three posting lists") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
+    iterators.push_back(pl03.Begin2());
+
+    QueryProcessor2 processor(&iterators, store, 100, 2, false);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 2);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
+  }
+}
+
+
+
 TEST_CASE( "PostingList_Vec iterator", "[posting_list]" ) {
   auto pl = create_posting_list_standard(10); 
 
