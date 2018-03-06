@@ -253,6 +253,16 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     return it_pointers;
   }
 
+  std::vector<PostingListDeltaIterator> FindIteratorsSolid(const TermList &terms) const {
+    std::vector<PostingListDeltaIterator> iterators;
+    PlPointers pl_pointers = FindPostinglists(terms);
+    for (auto &pl : pl_pointers) {
+      iterators.push_back(pl->Begin2());
+    }
+
+    return iterators;
+  }
+
   PlPointers FindPostinglists(const TermList &terms) const {
     PlPointers postinglist_pointers;
 
