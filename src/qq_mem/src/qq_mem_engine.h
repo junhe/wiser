@@ -435,20 +435,33 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     return doc_lengths_.GetLength(doc_id);
   }
 
-  SearchResult ProcessQueryTogether(const SearchQuery &query) {
+  std::string GenerateSnippet(const DocIdType &doc_id, 
+      std::vector<OffsetPairs> &offset_table,
+      const int n_passages) {
+    OffsetsEnums res = {};
+
+    for (int i = 0; i < offset_table.size(); i++) {
+      res.push_back(Offset_Iterator(offset_table[i]));
+    }
+
+    return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));
+  }
+
+  SearchResult Search(const SearchQuery &query) {
     SearchResult result;
 
     if (query.n_results == 0) {
       return result;
     }
 
-    IteratorPointers iterators = inverted_index_.FindIterators(query.terms);
+    std::vector<PostingListDeltaIterator> iterators = 
+        inverted_index_.FindIteratorsSolid(query.terms);
 
     if (iterators.size() == 0) {
       return result;
     }
 
-    auto top_k = qq_search::ProcessQuery(&iterators, doc_lengths_, doc_lengths_.Size(), 
+    auto top_k = qq_search::ProcessQueryDelta(&iterators, doc_lengths_, doc_lengths_.Size(), 
                              query.n_results, query.is_phrase);  
     for (auto & top_doc_entry : top_k) {
       SearchResultEntry result_entry;
@@ -465,22 +478,6 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     }
 
     return result;
-  }
-
-  std::string GenerateSnippet(const DocIdType &doc_id, 
-      std::vector<OffsetPairs> &offset_table,
-      const int n_passages) {
-    OffsetsEnums res = {};
-
-    for (int i = 0; i < offset_table.size(); i++) {
-      res.push_back(Offset_Iterator(offset_table[i]));
-    }
-
-    return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));
-  }
-
-  SearchResult Search(const SearchQuery &query) {
-    return ProcessQueryTogether(query);
   }
 
   friend bool operator == (const QqMemEngineDelta &a, const QqMemEngineDelta &b) {
