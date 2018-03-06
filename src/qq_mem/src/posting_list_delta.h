@@ -186,7 +186,8 @@ class PostingListDeltaIterator: public PostingListIteratorService {
      skip_span_(rhs.skip_span_),
      cur_state_(rhs.cur_state_),
      cache_(rhs.cache_),
-     last_offset_(rhs.last_offset_)
+     last_offset_(rhs.last_offset_),
+     next_expected_item_(rhs.next_expected_item_)
   {
   }
 
@@ -198,6 +199,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     cur_state_ = rhs.cur_state_;
     cache_ = rhs.cache_;
     last_offset_ = rhs.last_offset_;
+    next_expected_item_ = rhs.next_expected_item_;
   }
 
   int Size() const {
