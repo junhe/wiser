@@ -518,16 +518,37 @@ QqMemEngine test_get_engine(std::string inverted_index) {
   return engine;
 }
 
-void test_01(SearchEngineServiceNew &engine) {
-    SearchResult result = engine.Search(SearchQuery(TermList{"wisconsin"}));
+
+std::unique_ptr<SearchEngineServiceNew> Test_GetEngine(std::string engine_type) {
+  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(engine_type);
+
+  engine->AddDocument(
+      DocInfo("hello world", "hello world", "", "", "TOKEN_ONLY"));
+  REQUIRE(engine->TermCount() == 2);
+
+  engine->AddDocument(
+      DocInfo("hello wisconsin", "hello wisconsin", "", "", "TOKEN_ONLY"));
+  REQUIRE(engine->TermCount() == 3);
+
+  engine->AddDocument(
+      DocInfo("hello world big world", "hello world big world", "", "", "TOKEN_ONLY"));
+  REQUIRE(engine->TermCount() == 4);
+
+  return engine;
+}
+
+
+
+void test_01(SearchEngineServiceNew *engine) {
+    SearchResult result = engine->Search(SearchQuery(TermList{"wisconsin"}));
 
     REQUIRE(result.Size() == 1);
     REQUIRE(result.entries[0].doc_id == 1);
     REQUIRE(utils::format_double(result.entries[0].doc_score, 3) == "1.09");
 }
 
-void test_02(SearchEngineServiceNew &engine) {
-    SearchResult result = engine.Search(SearchQuery(TermList{"hello"}));
+void test_02(SearchEngineServiceNew *engine) {
+    SearchResult result = engine->Search(SearchQuery(TermList{"hello"}));
     REQUIRE(result.Size() == 3);
 
     // The score below is produced by ../tools/es_index_docs.py in this
@@ -539,8 +560,8 @@ void test_02(SearchEngineServiceNew &engine) {
     REQUIRE(utils::format_double(result.entries[2].doc_score, 3) == "0.111");
 }
 
-void test_03(SearchEngineServiceNew &engine) {
-    SearchResult result = engine.Search(SearchQuery(TermList{"hello", "world"}));
+void test_03(SearchEngineServiceNew *engine) {
+    SearchResult result = engine->Search(SearchQuery(TermList{"hello", "world"}));
 
     REQUIRE(result.Size() == 2);
     // The scores below are produced by ../tools/es_index_docs.py in this
@@ -551,31 +572,32 @@ void test_03(SearchEngineServiceNew &engine) {
     REQUIRE(utils::format_double(result.entries[1].doc_score, 3) == "0.672");
 }
 
-void test_04(SearchEngineServiceNew &engine) {
-    auto result = engine.Search(SearchQuery(TermList{"hello"}, true));
+void test_04(SearchEngineServiceNew *engine) {
+    auto result = engine->Search(SearchQuery(TermList{"hello"}, true));
     REQUIRE(result.Size() == 3);
     // We cannot test the snippets of the first entries because we do not know
     // their order (the first two entries have the same score).
     REQUIRE(result.entries[2].snippet == "<b>hello<\\b> world big world\n");
 }
 
-void test_05(SearchEngineServiceNew &engine) {
-    auto result = engine.Search(SearchQuery(TermList{"hello", "world"}, true));
+void test_05(SearchEngineServiceNew *engine) {
+    auto result = engine->Search(SearchQuery(TermList{"hello", "world"}, true));
     REQUIRE(result.Size() == 2);
 
     REQUIRE(result.entries[0].snippet == "<b>hello<\\b> <b>world<\\b> big <b>world<\\b>\n");
     REQUIRE(result.entries[1].snippet == "<b>hello<\\b> <b>world<\\b>\n");
 }
 
-void test_06(SearchEngineServiceNew &engine) {
+void test_06(SearchEngineServiceNew *engine) {
     auto query = SearchQuery(TermList{"hello", "world"}, true);
     query.n_results = 0;
-    auto result = engine.Search(query);
+    auto result = engine->Search(query);
     REQUIRE(result.Size() == 0);
 }
 
 TEST_CASE( "QQ Mem Compressed Engine works", "[engine]" ) {
-  auto engine = test_get_engine("compressed");
+  auto uniq_engine = Test_GetEngine("qq_mem_compressed");
+  auto engine = uniq_engine.get();
 
   SECTION("The engine can serve single-term queries") {
     test_01(engine);
@@ -601,9 +623,11 @@ TEST_CASE( "QQ Mem Compressed Engine works", "[engine]" ) {
     test_06(engine);
   }
 }
+
 
 TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
-  auto engine = test_get_engine("uncompressed");
+  auto uniq_engine = Test_GetEngine("qq_mem_uncompressed");
+  auto engine = uniq_engine.get();
 
   SECTION("The engine can serve single-term queries") {
     test_01(engine);
@@ -629,10 +653,6 @@ TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
     test_06(engine);
   }
 }
-
-
-
-
 
 
 TEST_CASE( "Sorting document works", "[ranking]" ) {

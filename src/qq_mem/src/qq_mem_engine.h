@@ -379,6 +379,186 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 };
 
 
+class QqMemEngineDelta: public SearchEngineServiceNew {
+ public:
+  QqMemEngineDelta() {}
+
+  // colum 2 should be tokens
+  int LoadLocalDocuments(const std::string &line_doc_path, 
+      int n_rows, const std::string format) {
+    int ret;
+    std::unique_ptr<LineDocParserService> parser;
+
+    if (format == "TOKEN_ONLY") {
+      parser.reset(new LineDocParserToken(line_doc_path, n_rows));
+    } else if (format == "WITH_OFFSETS") {
+      parser.reset(new LineDocParserOffset(line_doc_path, n_rows));
+    } else if (format == "WITH_POSITIONS") {
+      parser.reset(new LineDocParserPosition(line_doc_path, n_rows));
+    } else {
+      throw std::runtime_error("Format " + format + " is not supported");
+    }
+
+    DocInfo doc_info;
+    while (parser->Pop(&doc_info)) {
+      AddDocument(doc_info); 
+      if (parser->Count() % 10000 == 0) {
+        std::cout << "Indexed " << parser->Count() << " documents" << std::endl;
+      }
+    }
+
+    LOG(WARNING) << "Number of terms in inverted index: " << TermCount();
+    return ret;
+  }
+
+  void AddDocument(const DocInfo doc_info) {
+    int doc_id = NextDocId();
+
+    doc_store_.Add(doc_id, doc_info.Body());
+    inverted_index_.AddDocument(doc_id, doc_info);
+    doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); // TODO modify to count on offsets?
+  }
+
+  std::string GetDocument(const DocIdType &doc_id) {
+    return doc_store_.Get(doc_id);
+  }
+
+  int TermCount() const {
+    return inverted_index_.Size();
+  }
+
+  std::map<std::string, int> PostinglistSizes(const TermList &terms) {
+    return inverted_index_.PostinglistSizes(terms);
+  }
+
+  int GetDocLength(const DocIdType &doc_id) {
+    return doc_lengths_.GetLength(doc_id);
+  }
+
+  SearchResult ProcessQueryTogether(const SearchQuery &query) {
+    SearchResult result;
+
+    if (query.n_results == 0) {
+      return result;
+    }
+
+    IteratorPointers iterators = inverted_index_.FindIterators(query.terms);
+
+    if (iterators.size() == 0) {
+      return result;
+    }
+
+    auto top_k = qq_search::ProcessQuery(&iterators, doc_lengths_, doc_lengths_.Size(), 
+                             query.n_results, query.is_phrase);  
+    for (auto & top_doc_entry : top_k) {
+      SearchResultEntry result_entry;
+      result_entry.doc_id = top_doc_entry.doc_id;
+      result_entry.doc_score = top_doc_entry.score;
+
+      if (query.return_snippets == true) {
+        auto offset_table = top_doc_entry.OffsetsForHighliting();
+        result_entry.snippet = GenerateSnippet(top_doc_entry.doc_id,
+            offset_table, query.n_snippet_passages);
+      }
+
+      result.entries.push_back(result_entry);
+    }
+
+    return result;
+  }
+
+  std::string GenerateSnippet(const DocIdType &doc_id, 
+      std::vector<OffsetPairs> &offset_table,
+      const int n_passages) {
+    OffsetsEnums res = {};
+
+    for (int i = 0; i < offset_table.size(); i++) {
+      res.push_back(Offset_Iterator(offset_table[i]));
+    }
+
+    return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));
+  }
+
+  SearchResult Search(const SearchQuery &query) {
+    return ProcessQueryTogether(query);
+  }
+
+  friend bool operator == (const QqMemEngineDelta &a, const QqMemEngineDelta &b) {
+    if (a.next_doc_id_ != b.next_doc_id_) {
+      return false;
+    }
+
+    if (a.doc_store_.Size() != b.doc_store_.Size()) {
+      return false;
+    }
+
+    if (a.inverted_index_ != b.inverted_index_) {
+      return false;
+    }
+
+    if (a.doc_lengths_.Size() != b.doc_lengths_.Size()) {
+      return false;
+    }
+
+    return true;
+  }
+
+  void SerializeMeta(std::string path) const {
+    std::ofstream ofile(path, std::ios::binary);
+
+    ofile.write((char *)&next_doc_id_, sizeof(next_doc_id_));
+
+    ofile.close();	
+  }
+
+  void DeserializeMeta(std::string path) {
+    int fd;
+    int len;
+    char *addr;
+    size_t file_length;
+    uint32_t var;
+
+    utils::MapFile(path, &addr, &fd, &file_length);
+
+    next_doc_id_ = *((int *)addr);
+    
+    utils::UnmapFile(addr, fd, file_length);
+  }
+
+  void Serialize(std::string dir_path) const {
+    namespace boost_fs = boost::filesystem;
+    boost_fs::path p{dir_path};
+
+    if (boost_fs::exists(p) == false) {
+      boost_fs::create_directory(p);
+    }
+
+    SerializeMeta(dir_path + "/engine_meta.dump");
+    doc_store_.Serialize(dir_path + "/doc_store.dump");
+    inverted_index_.Serialize(dir_path + "/inverted_index.dump");
+    doc_lengths_.Serialize(dir_path + "/doc_lengths.dump");
+  }
+
+  void Deserialize(std::string dir_path) {
+    DeserializeMeta(dir_path + "/engine_meta.dump");
+    doc_store_.Deserialize(dir_path + "/doc_store.dump");
+    inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
+    doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
+  }
+
+ private:
+  int next_doc_id_ = 0;
+  SimpleDocStore doc_store_;
+  InvertedIndexQqMemDelta inverted_index_;
+  DocLengthStore doc_lengths_;
+  SimpleHighlighter highlighter_;
+
+  int NextDocId() {
+    return next_doc_id_++;
+  }
+};
+
+
 class QqMemEngine : public SearchEngineServiceNew {
  public:
   QqMemEngine(GeneralConfig config) {
