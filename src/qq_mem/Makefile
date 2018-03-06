@@ -37,7 +37,7 @@ grpc_benchmark:
 in_proc_engine_bench_querylog:
 	cd build && cmake ../src/ && \
 		make -j32 in_proc_engine_bench_querylog && \
-		./in_proc_engine_bench_querylog -use_grpc=false -use_profiler=true
+		CPUPROFILE_FREQUENCY=1000 ./in_proc_engine_bench_querylog -use_grpc=false -use_profiler=true
 
 profile:
 	google-pprof --text ./build/in_proc_engine_bench_querylog ./build/my.profile.new
