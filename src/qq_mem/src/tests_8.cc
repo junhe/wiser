@@ -162,15 +162,15 @@ TEST_CASE( "Scoring (Bm25Similarity) as ElasticSearch does", "[scoring]" ) {
   SECTION("Bm25Similarity Lossy TfNorm") {
     // For field length 3, 7, 8, there should be no loss  
     {
-      Bm25Similarity sim(3.0);
+      Bm25SimilarityLossy sim(3.0);
       REQUIRE(sim.TfNorm(1, 3) == 1.0);
     }
     {
-      Bm25Similarity sim(7.0);
+      Bm25SimilarityLossy sim(7.0);
       REQUIRE(sim.TfNorm(1, 7) == 1.0);
     }
     {
-      Bm25Similarity sim(8 / 3.0);
+      Bm25SimilarityLossy sim(8 / 3.0);
       REQUIRE(utils::format_double(sim.TfNorm(1, 2), 3) == "1.11");
     }
   }
