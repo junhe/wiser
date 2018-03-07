@@ -417,6 +417,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     doc_store_.Add(doc_id, doc_info.Body());
     inverted_index_.AddDocument(doc_id, doc_info);
     doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); // TODO modify to count on offsets?
+    similarity_.Reset(doc_lengths_.GetAvgLength());
   }
 
   std::string GetDocument(const DocIdType &doc_id) {
@@ -461,8 +462,10 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
       return result;
     }
 
-    auto top_k = qq_search::ProcessQueryDelta(&iterators, doc_lengths_, doc_lengths_.Size(), 
-                             query.n_results, query.is_phrase);  
+    auto top_k = qq_search::ProcessQueryDelta(
+        similarity_, &iterators, doc_lengths_, doc_lengths_.Size(), 
+        query.n_results, query.is_phrase);  
+
     for (auto & top_doc_entry : top_k) {
       SearchResultEntry result_entry;
       result_entry.doc_id = top_doc_entry.doc_id;
@@ -541,6 +544,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     doc_store_.Deserialize(dir_path + "/doc_store.dump");
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
+    similarity_.Reset(doc_lengths_.GetAvgLength());
   }
 
  private:
@@ -549,6 +553,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
   InvertedIndexQqMemDelta inverted_index_;
   DocLengthStore doc_lengths_;
   SimpleHighlighter highlighter_;
+  Bm25SimilarityLossy similarity_;
 
   int NextDocId() {
     return next_doc_id_++;

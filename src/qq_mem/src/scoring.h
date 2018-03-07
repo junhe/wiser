@@ -65,15 +65,22 @@ class Bm25Similarity {
  protected:
   static constexpr double k1_ = 1.2;
   static constexpr double b_ = 0.75;
-  const double avg_field_length_;
+  double avg_field_length_;
 };
 
 
 // It is faster, but lossy, because of the cache
 class Bm25SimilarityLossy: public Bm25Similarity {
  public:
+  Bm25SimilarityLossy() :Bm25Similarity(1) {}
+
   Bm25SimilarityLossy(const double avg_field_length)
       :Bm25Similarity(avg_field_length) {
+    BuildCache();
+  }
+
+  void Reset(const double avg_field_length) {
+    avg_field_length_ = avg_field_length;
     BuildCache();
   }
 

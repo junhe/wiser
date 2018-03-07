@@ -1801,11 +1801,13 @@ std::vector<ResultDocEntry> ProcessQuery(IteratorPointers *pl_iterators,
                                            const int n_total_docs_in_index,
                                            const int k,
                                            const bool is_phrase);
-std::vector<ResultDocEntry> ProcessQueryDelta(std::vector<PostingListDeltaIterator> *pl_iterators, 
-                                           const DocLengthStore &doc_lengths,
-                                           const int n_total_docs_in_index,
-                                           const int k,
-                                           const bool is_phrase);
+std::vector<ResultDocEntry> ProcessQueryDelta(
+    const Bm25SimilarityLossy &similarity,
+    std::vector<PostingListDeltaIterator> *pl_iterators, 
+    const DocLengthStore &doc_lengths,
+    const int n_total_docs_in_index,
+    const int k,
+    const bool is_phrase);
 
 
 
