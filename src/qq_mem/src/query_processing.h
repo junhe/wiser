@@ -554,12 +554,11 @@ class SingleTermQueryProcessor3 {
 
  private:
   void RankDoc(const DocIdType &max_doc_id) {
-    qq_float score_of_this_doc = CalcDocScoreForOneQuery<PostingListDeltaIterator>(
+    qq_float score_of_this_doc = CalcDocScore<PostingListDeltaIterator>(
         pl_iterators_,
         idfs_of_terms_,
-        n_total_docs_in_index_,
-        doc_lengths_.GetAvgLength(),
-        doc_lengths_.GetLength(max_doc_id));
+        doc_lengths_.GetLength(max_doc_id),
+        similarity_);
 
     if (min_heap_.size() < k_) {
       InsertToHeap(max_doc_id, score_of_this_doc);
@@ -855,12 +854,11 @@ class TwoTermNonPhraseQueryProcessor3 {
 
  private:
   void RankDoc(const DocIdType &max_doc_id) {
-    qq_float score_of_this_doc = CalcDocScoreForOneQuery<PostingListDeltaIterator>(
+    qq_float score_of_this_doc = CalcDocScore<PostingListDeltaIterator>(
         pl_iterators_,
         idfs_of_terms_,
-        n_total_docs_in_index_,
-        doc_lengths_.GetAvgLength(),
-        doc_lengths_.GetLength(max_doc_id));
+        doc_lengths_.GetLength(max_doc_id),
+        similarity_);
 
     if (min_heap_.size() < k_) {
       InsertToHeap(max_doc_id, score_of_this_doc);
@@ -1315,12 +1313,11 @@ class QueryProcessor3 {
   }
 
   void RankDoc(const DocIdType &max_doc_id, const PositionInfoTable &position_table) {
-    qq_float score_of_this_doc = CalcDocScoreForOneQuery<PostingListDeltaIterator>(
+    qq_float score_of_this_doc = CalcDocScore<PostingListDeltaIterator>(
         pl_iterators_,
         idfs_of_terms_,
-        n_total_docs_in_index_,
-        doc_lengths_.GetAvgLength(),
-        doc_lengths_.GetLength(max_doc_id));
+        doc_lengths_.GetLength(max_doc_id),
+        similarity_);
 
     if (min_heap_.size() < k_) {
       InsertToHeap(max_doc_id, score_of_this_doc, position_table);
