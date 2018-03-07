@@ -218,6 +218,8 @@ inline int NumOfBits(uint32_t val) {
 // Refer to longToInt4() in Lucene for details
 // Basically, we use float-like bit format: keep left-most 4 bits 
 // and the signifcance.
+//
+// val should not be larger than 0x80000000
 inline char UintToChar4(uint32_t val) {
   if (val < 0x08) {
     // value has only 3 bits

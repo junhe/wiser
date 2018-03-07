@@ -96,6 +96,14 @@ TEST_CASE( "Compress int", "[utils]" ) {
     REQUIRE(utils::Char4ToUint(char(((29 << 3) | 0x07) & 0xff)) == uint32_t(0xf0000000)); 
   }
 
+  SECTION("Shift is larger than 28") {
+    // We keep 4 left-most bits. If you shift 29, you will lost one bit
+    // In this followingn case, you will get 0.
+    REQUIRE(utils::Char4ToUint(240) == 0); 
+    REQUIRE(utils::Char4ToUint(248) == 0); 
+    REQUIRE(utils::Char4ToUint(252) == 0); 
+  }
+
   SECTION("Compress and decompress ") {
     for (uint32_t i = 0; i < 0x0fffffff; i += 777777) {
       char encoded = utils::UintToChar4(i); 
@@ -108,6 +116,53 @@ TEST_CASE( "Compress int", "[utils]" ) {
     }
   }
 }
+
+
+TEST_CASE( "Scoring as ElasticSearch does", "[scoring]" ) {
+  SECTION("ElasticSearch IDF") {
+    REQUIRE(utils::format_double(calc_es_idf(1, 1), 3) == "0.288"); // From an ES run
+    REQUIRE(utils::format_double(calc_es_idf(3, 1), 3)== "0.981"); // From an ES run
+  }
+
+  SECTION("ElasticSearch TF NORM") {
+    REQUIRE(calc_es_tfnorm(1, 3, 3.0) == 1.0); // From an ES run
+    REQUIRE(calc_es_tfnorm(1, 7, 7.0) == 1.0); // From an ES run
+    REQUIRE( utils::format_double(calc_es_tfnorm(1, 2, 8/3.0), 3) == "1.11"); // From an ES run
+  }
+}
+
+
+TEST_CASE( "Scoring (Bm25Similarity) as ElasticSearch does", "[scoring]" ) {
+  SECTION("Bm25Similarity Idf") {
+    REQUIRE(utils::format_double(Bm25Similarity::Idf(1, 1), 3) == "0.288"); // From an ES run
+    REQUIRE(utils::format_double(Bm25Similarity::Idf(3, 1), 3)== "0.981"); // From an ES run
+  }
+
+  SECTION("ElasticSearch TF NORM with Bm25Similarity") {
+    REQUIRE(Bm25Similarity::TfNormStatic(1, 3, 3.0) == 1.0);
+    REQUIRE(Bm25Similarity::TfNormStatic(1, 7, 7.0) == 1.0);
+    REQUIRE(utils::format_double(Bm25Similarity::TfNormStatic(1, 2, 8/3.0), 3) == "1.11");
+  }
+
+  SECTION("Bm25Similarity Lossy TfNorm") {
+    // For field length 3, 7, 8, there should be no loss  
+    {
+      Bm25Similarity sim(3.0);
+      REQUIRE(sim.TfNormLossy(1, 3) == 1.0);
+    }
+    {
+      Bm25Similarity sim(7.0);
+      REQUIRE(sim.TfNormLossy(1, 7) == 1.0);
+    }
+    {
+      Bm25Similarity sim(8 / 3.0);
+      REQUIRE(utils::format_double(sim.TfNormLossy(1, 2), 3) == "1.11");
+    }
+  }
+}
+
+
+
 
 
 

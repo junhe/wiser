@@ -403,7 +403,7 @@ TEST_CASE( "DocLengthStore", "[ranking]" ) {
 }
 
 
-TEST_CASE( "Scoring", "[ranking]" ) {
+TEST_CASE( "Old scoring", "[ranking]" ) {
   SECTION("TF is correct") {
     REQUIRE(calc_tf(1) == 1.0); // sample in ES document
     REQUIRE(calc_tf(4) == 2.0);
@@ -416,26 +416,10 @@ TEST_CASE( "Scoring", "[ranking]" ) {
     REQUIRE(utils::format_double(calc_idf(1, 1), 3) == "0.307");
   }
 
-
   SECTION("Field length norm is correct") {
     REQUIRE(calc_field_len_norm(4) == 0.5);
   }
-
-  SECTION("ElasticSearch IDF") {
-    REQUIRE(utils::format_double(calc_es_idf(1, 1), 3) == "0.288"); // From an ES run
-  }
-
-  SECTION("ElasticSearch IDF 2") {
-    REQUIRE(utils::format_double(calc_es_idf(3, 1), 3)== "0.981"); // From an ES run
-  }
-
-  SECTION("ElasticSearch TF NORM") {
-    REQUIRE(calc_es_tfnorm(1, 3, 3.0) == 1.0); // From an ES run
-    REQUIRE(calc_es_tfnorm(1, 7, 7.0) == 1.0); // From an ES run
-    REQUIRE( utils::format_double(calc_es_tfnorm(1, 2, 8/3.0), 3) == "1.11"); // From an ES run
-  }
 }
-
 
 
 TEST_CASE( "Utilities work", "[utils]" ) {
