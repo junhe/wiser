@@ -9,24 +9,25 @@
 #include "utils.h"
 
 class DocLengthStore {
- private:
-  std::vector<int> vec_store_;
-  qq_float avg_length_ = 0;
-  int doc_cnt_ = 0;
-
  public:
   void AddLength(const DocIdType &doc_id, const int &length) {
     if (doc_id >= vec_store_.size()) {
       vec_store_.resize(doc_id + 1, -1);
+      vec_char_store_.resize(doc_id + 1, 0);
     }
     avg_length_ = avg_length_ + (length - avg_length_) / (doc_cnt_ + 1);
 
     vec_store_[doc_id] = length;
+    vec_char_store_[doc_id] = utils::UintToChar4(length);
     doc_cnt_++;
   }
 
   int GetLength(const DocIdType &doc_id) const {
     return vec_store_[doc_id];
+  }
+
+  char GetChar4Length(const DocIdType &doc_id) const noexcept {
+    return vec_char_store_[doc_id];
   }
 
   const qq_float &GetAvgLength() const {
@@ -87,6 +88,12 @@ class DocLengthStore {
 
     utils::UnmapFile(addr, fd, file_length);
   }
+
+ private:
+  std::vector<int> vec_store_;
+  std::vector<char> vec_char_store_;
+  qq_float avg_length_ = 0;
+  int doc_cnt_ = 0;
 };
 
 #endif
