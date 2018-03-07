@@ -44,19 +44,12 @@ class Bm25Similarity {
  public:
   Bm25Similarity(const double avg_field_length)
       :avg_field_length_(avg_field_length) {
-    BuildCache();
   }
 
   static double Idf(const int doc_count, const int doc_freq) {
     // ElasticSearch: 
     // idf, computed as log(1 + (docCount - docFreq + 0.5) / (docFreq + 0.5)) 
     return log(1 + (doc_count - doc_freq + 0.5) / (doc_freq + 0.5));
-  }
-
-  double TfNormLossy(const int freq, char char4_doc_length) {
-    // (freq * (k1 + 1)) / (freq + k1 * (1 - b + ((b * field_length) / avg_field_length)));
-    //                             ----------------- cached ---------------------------      
-    return (freq * (k1_ + 1)) / (freq + cache_[char4_doc_length]);
   }
 
   double TfNorm(const int freq, const int field_length) {
@@ -69,6 +62,27 @@ class Bm25Similarity {
     return (freq * (k1_ + 1)) / (freq + k1_ * (1 - b_ + ((b_ * field_length) / avg_field_length)));
   }
   
+ protected:
+  static constexpr double k1_ = 1.2;
+  static constexpr double b_ = 0.75;
+  const double avg_field_length_;
+};
+
+
+// It is faster, but lossy, because of the cache
+class Bm25SimilarityLossy: public Bm25Similarity {
+ public:
+  Bm25SimilarityLossy(const double avg_field_length)
+      :Bm25Similarity(avg_field_length) {
+    BuildCache();
+  }
+
+  double TfNorm(const int freq, char char4_doc_length) {
+    // (freq * (k1 + 1)) / (freq + k1 * (1 - b + ((b * field_length) / avg_field_length)));
+    //                             ----------------- cached ---------------------------      
+    return (freq * (k1_ + 1)) / (freq + cache_[char4_doc_length]);
+  }
+
  private:
   // cache[compressed lengthX] = result for lengthX
   void BuildCache() {
@@ -80,10 +94,8 @@ class Bm25Similarity {
 
   // cache holds k1 * (1 - b + b * fieldLength / avgFieldLength)
   std::array<qq_float, 256> cache_;
-  static constexpr double k1_ = 1.2;
-  static constexpr double b_ = 0.75;
-  const double avg_field_length_;
 };
+
 
 
 
