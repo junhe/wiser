@@ -698,7 +698,7 @@ class TwoTermNonPhraseQueryProcessor2 {
       } else if (doc0 < doc1) {
         it_0.SkipForward(doc1);
       } else {
-        HandleTheFoundDoc(doc0); 
+        RankDoc(doc0); 
 
         it_0.Advance();
         it_1.Advance();
