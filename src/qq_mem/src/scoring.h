@@ -69,11 +69,6 @@ class Bm25Similarity {
     return (freq * (k1_ + 1)) / (freq + k1_ * (1 - b_ + ((b_ * field_length) / avg_field_length)));
   }
   
-  qq_float PeekCache(int i) {
-    return cache_[i];
-  }
-
-
  private:
   // cache[compressed lengthX] = result for lengthX
   void BuildCache() {
