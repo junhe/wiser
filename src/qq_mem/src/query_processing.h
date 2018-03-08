@@ -219,6 +219,220 @@ inline qq_float calc_doc_score_for_a_query(
 }
 
 
+
+// T is subclass of PopIteratorService
+// For example, it can be CompressedPositionIterator
+template <typename T>
+class PhraseQueryProcessor2 {
+ public:
+  PhraseQueryProcessor2(int capacity)
+    :solid_iterators_(capacity), last_orig_popped_(capacity) {
+  }
+
+  Position FindMaxAdjustedLastPopped() {
+    Position max = 0;
+    Position adjusted_pos;
+
+    // original - i = adjusted
+    //
+    //      hello world program
+    // orig:    0     1       2
+    // adj:     0     0       0
+    //
+    // if the adjusted pos are the same, it is a phrase match
+    for(int i = 0; i < n_terms_; i++) {
+      adjusted_pos = last_orig_popped_[i].pos - i;
+      if (adjusted_pos > max) {
+        max = adjusted_pos;
+      }
+    }
+    return max;
+  }
+
+  // Return false if any of the lists has no pos larger than or equal to
+  // max_adjusted_pos
+  bool MovePoppedBeyond(Position max_adjusted_pos) {
+    bool ret;
+    for (int i = 0; i < n_terms_; i++) {
+      ret = MovePoppedBeyond(i, max_adjusted_pos);
+      if (ret == false) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  bool MovePoppedBeyond(int i, Position max_adjusted_pos) {
+    // the last popped will be larger than or equal to max_pos
+    // If the last popped is larger than or equal to max_adjusted_pos
+    auto &it = solid_iterators_[i];
+
+    while (it.IsEnd() == false && last_orig_popped_[i].pos - i < max_adjusted_pos) {
+      last_orig_popped_[i].pos = it.Pop();
+      last_orig_popped_[i].term_appearance++;
+    }
+    
+    if (it.IsEnd() == true && last_orig_popped_[i].pos - i < max_adjusted_pos) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  bool IsPoppedMatch(Position max_adjusted_pos) {
+    Position adjusted_pos;
+
+    for(int i = 0; i < n_terms_; i++) {
+      adjusted_pos = last_orig_popped_[i].pos - i;
+      if (adjusted_pos != max_adjusted_pos) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool InitializeLastPopped() {
+    for (int i = 0; i < n_terms_; i++) {
+      if (solid_iterators_[i].IsEnd()) {
+        // one list is empty
+        return false;
+      }
+      last_orig_popped_[i].pos = solid_iterators_[i].Pop();
+      last_orig_popped_[i].term_appearance = 0;
+    }
+    return true;
+  }
+
+  //          --- table ---
+  // term01: info_col  info_col ...
+  // term02: info_col  info_col ...
+  // term03: info_col  info_col ...
+  // ...
+  void AppendPositionCol(PositionInfoTable2 *table) {
+    for (int i = 0; i < n_terms_; i++) {
+      PositionInfo &info = last_orig_popped_[i];
+      table->Append(i, info.pos, info.term_appearance);
+    }
+  }
+
+  PositionInfoTable2 Process() {
+    if (n_terms_ == 2) {
+      return ProcessTwoTerm();
+    } else {
+      return ProcessGeneral();
+    }
+  }
+
+  PositionInfoTable2 ProcessTwoTerm() {
+    pos_table_.Clear();
+
+    auto *it0 = &solid_iterators_[0]; 
+    auto *it1 = &solid_iterators_[1];
+    int pos0, pos1;
+    int apr0 = -1, apr1 = -1;
+
+    pos0 = -100;
+    pos1 = -200;
+
+    // loop inv: 
+    //   iterator points to first unpoped item
+    //   pos is the last poped (it - 1). Pos is adjusted
+    //   everything before pos has been checked
+    //   apr is the appearance of the iterator
+    bool tried_pop_end = false;
+    while(tried_pop_end == false) {
+      if (pos0 < pos1) {
+        if (it0->IsEnd() == false) {
+          pos0 = it0->Pop();  
+          apr0++;
+        } else {
+          tried_pop_end = true;
+        }
+      } else if (pos0 > pos1) {
+        if (it1->IsEnd() == false) { // add test for it0
+          pos1 = it1->Pop() - 1;  
+          apr1++;
+        } else {
+          tried_pop_end = true;
+        }
+      } else {
+        pos_table_.Append(0, pos0, apr0);
+        pos_table_.Append(1, pos1 + 1, apr1);
+
+        if (it0->IsEnd() == false) {
+          pos0 = it0->Pop();  
+          apr0++;
+        } else {
+          tried_pop_end = true;
+        }
+
+        if (it1->IsEnd() == false) {
+          pos1 = it1->Pop() - 1;  
+          apr1++;
+        } else {
+          tried_pop_end = true;
+        }
+      }
+    }
+
+    return pos_table_;
+  }
+
+  PositionInfoTable2 ProcessGeneral() {
+    bool any_list_exhausted = false;
+    pos_table_.Clear();
+
+    if (InitializeLastPopped() == false) {
+      return pos_table_;
+    }
+
+    while (any_list_exhausted == false) {
+      Position max_adjusted_pos = FindMaxAdjustedLastPopped(); 
+      bool found = MovePoppedBeyond(max_adjusted_pos);
+
+      if (found == false) {
+        any_list_exhausted = true;
+        continue;
+      } 
+
+      bool match = IsPoppedMatch(max_adjusted_pos);        
+      if (match == true) {
+        AppendPositionCol(&pos_table_);
+
+        bool found = MovePoppedBeyond(max_adjusted_pos + 1);
+        if (found == false) {
+          any_list_exhausted = true;
+        }
+      }
+    }
+
+    return pos_table_;
+  }
+
+  T *Iterator(int i) {
+    return &solid_iterators_[i];
+  }
+
+  std::vector<T> *Iterators() {
+    return &solid_iterators_;
+  }
+
+  void SetNumTerms(int n) {
+    n_terms_ = n;
+  }
+
+ private:
+  PositionInfoTable2 pos_table_;
+  int n_terms_;
+  std::vector<T> solid_iterators_;
+  std::vector<PositionInfo> last_orig_popped_;
+  bool list_exhausted_ = false;
+};
+
+
+
+
 // T is subclass of PopIteratorService
 // For example, it can be CompressedPositionIterator
 template <typename T>
