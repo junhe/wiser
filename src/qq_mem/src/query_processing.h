@@ -2,6 +2,7 @@
 #define QUERY_PROCESSING_H
 
 #include <vector>
+#include <array>
 #include <cassert>
 #include <unordered_map>
 #include <queue>
@@ -24,10 +25,50 @@ struct PositionInfo {
   //                   hello readers, this is my hello world program
   // term_appearance   0                         1
   int term_appearance = 0;
+
+  constexpr PositionInfo() {}
+
+  void Update(const int pos_in, const int term_appr_in) {
+    pos = pos_in;
+    term_appearance = term_appr_in;
+  }
 };
 
 typedef std::vector<PositionInfo> PositionInfoVec;
 typedef std::vector<PositionInfoVec> PositionInfoTable;
+
+
+class PositionInfoArray {
+ public:
+  void Clear() {
+    next_ = 0;
+  }
+  
+  int Size() const {
+    return next_;
+  }
+
+  constexpr int Capacity() const {
+    return capacity_;
+  }
+
+  // next_ may overflow, be very carefule
+  void Append(const int pos, const int term_appearance) {
+    arr_[next_].Update(pos, term_appearance);
+    next_++;
+  }
+
+  const PositionInfo &At(int i) {
+    return arr_[i];
+  }
+
+ private:
+  constexpr static int capacity_ = 100;
+  std::array<PositionInfo, capacity_> arr_;
+  int next_ = 0;
+};
+
+
 
 typedef std::vector<std::shared_ptr<OffsetPairsIteratorService>> OffsetIterators;
 

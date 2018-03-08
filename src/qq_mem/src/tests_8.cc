@@ -122,6 +122,20 @@ TEST_CASE( "Scoring (Bm25Similarity) as ElasticSearch does", "[scoring]" ) {
 }
 
 
+TEST_CASE( "Position info related", "[engine]" ) {
+  SECTION("Position Info Array") {
+    PositionInfoArray array;
+
+    REQUIRE(array.Size() == 0);
+
+    array.Append(1, 2);
+    REQUIRE(array.Size() == 1);
+
+    REQUIRE(array.At(0).pos == 1);
+    REQUIRE(array.At(0).term_appearance == 2);
+  }
+
+}
 
 
 
