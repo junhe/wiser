@@ -448,9 +448,13 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
     int byte_offset_; // start byte of posting[cur_posting_index_]
     int cur_posting_index_;
     DocIdType prev_doc_id_; // doc id of posting[cur_posting_index_ - 1]
+    const char *cur_addr_;
 
     State(int offset, int index, DocIdType id)
       :byte_offset_(offset), cur_posting_index_(index), prev_doc_id_(id) {}
+
+    State(const State &rhs) = default;
+    State & operator=(const State &rhs) = default;
 
     void Update(int offset, int index, DocIdType id) {
       byte_offset_ = offset;
@@ -469,6 +473,11 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
     int cur_position_start_;
 
     int next_posting_byte_offset_;
+    const char *next_posting_addr_;
+
+    PostingCache() {}
+    PostingCache(const PostingCache &rhs) = default;
+    PostingCache & operator=(const PostingCache &rhs) = default;
   };
   // Cached data of cur_posting_index_
   PostingCache cache_;
