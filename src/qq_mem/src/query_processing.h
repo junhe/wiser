@@ -491,15 +491,6 @@ struct ResultDocEntry {
     }
   }
 
-  void FillOffsetIters() {
-    OffsetIterators offset_iters;
-    for (int i = 0; i < pl_iterators.size(); i++) {
-      pl_iterators[i].Decode2();
-      auto p = pl_iterators[i].OffsetPairsBegin();
-      offset_iters.push_back(std::move(p));
-    }
-  }
-
   std::vector<OffsetPairs> ExpandOffsets() {
     std::vector<OffsetPairs> table(offset_iters.size());
     for (int i = 0; i < offset_iters.size(); i++) {
@@ -852,45 +843,6 @@ class TwoTermNonPhraseQueryProcessor3 {
     return SortHeap();
   }
 
-  // min decoding
-  //
-  // Using minimum decoding is not worthwhile. 
-  // Min decoding QPS: 11.96
-  // Regular QPS: 11.48.
-  //
-  // To do minimum decoding, change constructor of PostingListDeltaIterator  
-  std::vector<ResultDocEntry> ProcessMinDecoding() {
-    auto &it_0 = pl_iterators_[0];
-    auto &it_1 = pl_iterators_[1];
-    DocIdType doc0, doc1;
-
-    while (it_0.IsEnd() == false && it_1.IsEnd() == false) {
-      doc0 = it_0.DocId();
-      doc1 = it_1.DocId();
-      if (doc0 > doc1) {
-        it_1.SkipForward_MinDecode(doc0);
-      } else if (doc0 < doc1) {
-        it_0.SkipForward_MinDecode(doc1);
-      } else {
-        it_0.DecodeTf();
-        it_0.DecodeOffsetSize();
-
-        it_1.DecodeTf();
-        it_1.DecodeOffsetSize();
-
-        RankDoc(doc0); 
-
-        it_0.AdvanceOnly();
-        it_0.DecodeContSizeAndDocId();
-
-        it_1.AdvanceOnly();
-        it_1.DecodeContSizeAndDocId();
-      }
-    }
-
-    return SortHeap();
-  }
-
  private:
   void RankDoc(const DocIdType &max_doc_id) {
     qq_float score_of_this_doc = CalcDocScore<PostingListDeltaIterator>(
@@ -986,45 +938,6 @@ class TwoTermNonPhraseQueryProcessor2 {
 
         it_0.Advance();
         it_1.Advance();
-      }
-    }
-
-    return SortHeap();
-  }
-
-  // min decoding
-  //
-  // Using minimum decoding is not worthwhile. 
-  // Min decoding QPS: 11.96
-  // Regular QPS: 11.48.
-  //
-  // To do minimum decoding, change constructor of PostingListDeltaIterator  
-  std::vector<ResultDocEntry> ProcessMinDecoding() {
-    auto &it_0 = pl_iterators_[0];
-    auto &it_1 = pl_iterators_[1];
-    DocIdType doc0, doc1;
-
-    while (it_0.IsEnd() == false && it_1.IsEnd() == false) {
-      doc0 = it_0.DocId();
-      doc1 = it_1.DocId();
-      if (doc0 > doc1) {
-        it_1.SkipForward_MinDecode(doc0);
-      } else if (doc0 < doc1) {
-        it_0.SkipForward_MinDecode(doc1);
-      } else {
-        it_0.DecodeTf();
-        it_0.DecodeOffsetSize();
-
-        it_1.DecodeTf();
-        it_1.DecodeOffsetSize();
-
-        RankDoc(doc0); 
-
-        it_0.AdvanceOnly();
-        it_0.DecodeContSizeAndDocId();
-
-        it_1.AdvanceOnly();
-        it_1.DecodeContSizeAndDocId();
       }
     }
 
