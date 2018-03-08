@@ -283,6 +283,33 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
   }
 
  private:
+  // Note: it changes cur_state_.cur_addr_
+  void DecodeVarint(uint32_t *value) {
+    uint32_t v = *cur_state_.cur_addr_;
+    if (v < 0x80) {
+      *value = v;
+      cur_state_.cur_addr_++;
+      return;
+    }
+
+    DecodeVarintFallback(value);
+  }
+
+  // Note: it changes cur_state_.cur_addr_
+  void DecodeVarintFallback(uint32_t *value) {
+    uint32_t result = 0;
+    int count = 0;
+    uint32_t b;
+
+    do {
+      b = *cur_state_.cur_addr_;
+      result |= static_cast<uint32_t>(b & 0x7F) << (7 * count);
+      cur_state_.cur_addr_++;
+      ++count;
+    } while (b & 0x80);
+
+    *value = result;
+  }
 
   void DecodeToCache() noexcept {
     int offset = cur_state_.byte_offset_;
