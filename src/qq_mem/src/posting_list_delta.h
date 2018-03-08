@@ -859,6 +859,15 @@ class PostingListDelta {
           0);
   }
 
+  PostingListDeltaIterator2 BeginForTest() const {
+    return PostingListDeltaIterator2(
+          &data_, 
+          &skip_index_, 
+          skip_span_, 
+          Size(), 
+          skip_index_.vec[0].prev_doc_id, 
+          0);
+  }
 
 
   std::unique_ptr<PostingListDeltaIterator> NativeBegin() const {
