@@ -177,7 +177,8 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
      skip_index_(skip_index),
      skip_span_(skip_span),
      total_postings_(total_postings),
-     cur_state_(data->DataPointer()->data(), byte_offset, 0, prev_doc_id)
+     cur_state_((const uint8_t *)(data->DataPointer()->data()), 
+         byte_offset, 0, prev_doc_id)
   {
     DecodeToCache();
   }
@@ -217,7 +218,7 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
 
     auto &meta = skip_index_->vec[next_span_index];
     cur_state_.Update(
-        data_pointer_->data() + meta.start_offset,
+        (const uint8_t *)(data_pointer_->data()) + meta.start_offset,
         meta.start_offset, 
         next_span_index * skip_span_, 
         meta.prev_doc_id);
@@ -282,6 +283,7 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
   }
 
  private:
+
   void DecodeToCache() noexcept {
     int offset = cur_state_.byte_offset_;
     uint32_t delta;
@@ -317,16 +319,16 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
     int byte_offset_; // start byte of posting[cur_posting_index_]
     int cur_posting_index_;
     DocIdType prev_doc_id_; // doc id of posting[cur_posting_index_ - 1]
-    const char *cur_addr_;
+    const uint8_t *cur_addr_;
 
-    State(const char *cur_addr, int offset, int index, DocIdType id)
+    State(const uint8_t *cur_addr, int offset, int index, DocIdType id)
       :cur_addr_(cur_addr), byte_offset_(offset), cur_posting_index_(index), 
        prev_doc_id_(id) {}
 
     State(const State &rhs) = default;
     State & operator=(const State &rhs) = default;
 
-    void Update(const char *cur_addr, int offset, int index, DocIdType id) {
+    void Update(const uint8_t *cur_addr, int offset, int index, DocIdType id) {
       cur_addr_ = cur_addr;
       byte_offset_ = offset;
       cur_posting_index_ = index;
@@ -350,7 +352,7 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
     int cur_position_start_;
 
     int next_posting_byte_offset_;
-    const char *next_posting_addr_;
+    const uint8_t *next_posting_addr_;
 
     PostingCache() {}
     PostingCache(const PostingCache &rhs) = default;
