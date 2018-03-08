@@ -131,8 +131,21 @@ TEST_CASE( "Position info related", "[engine]" ) {
     array.Append(1, 2);
     REQUIRE(array.Size() == 1);
 
-    REQUIRE(array.At(0).pos == 1);
-    REQUIRE(array.At(0).term_appearance == 2);
+    REQUIRE(array[0].pos == 1);
+    REQUIRE(array[0].term_appearance == 2);
+  }
+
+  SECTION("Position info table") {
+    PositionInfoTable2 tab;
+
+    tab.Append(0, 2, 3);
+    tab.Append(1, 5, 6);
+
+    REQUIRE(tab[0][0].pos == 2);
+    REQUIRE(tab[0][0].term_appearance == 3);
+
+    REQUIRE(tab[1][0].pos == 5);
+    REQUIRE(tab[1][0].term_appearance == 6);
   }
 
 }

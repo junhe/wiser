@@ -40,6 +40,8 @@ typedef std::vector<PositionInfoVec> PositionInfoTable;
 
 class PositionInfoArray {
  public:
+  constexpr PositionInfoArray() {}
+
   void Clear() {
     next_ = 0;
   }
@@ -58,7 +60,7 @@ class PositionInfoArray {
     next_++;
   }
 
-  const PositionInfo &At(int i) {
+  const PositionInfo &operator[](const int i) const {
     return arr_[i];
   }
 
@@ -66,6 +68,29 @@ class PositionInfoArray {
   constexpr static int capacity_ = 100;
   std::array<PositionInfo, capacity_> arr_;
   int next_ = 0;
+};
+
+
+// This class is performance-critical, we do not do any checking...
+class PositionInfoTable2 {
+ public:
+  void Clear() {
+    for (int i = 0; i < capacity_; i++) {
+      rows_[i].Clear();
+    }
+  }
+
+  void Append(const int i, const int pos, const int term_appearance) {
+    rows_[i].Append(pos, term_appearance);
+  }
+
+  const PositionInfoArray &operator[](const int i) const {
+    return rows_[i];
+  }
+
+ private:
+  constexpr static int capacity_ = 10;
+  std::array<PositionInfoArray, capacity_> rows_;
 };
 
 
