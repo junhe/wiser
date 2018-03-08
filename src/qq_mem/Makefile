@@ -42,6 +42,9 @@ in_proc_engine_bench_querylog:
 profile:
 	google-pprof --text ./build/in_proc_engine_bench_querylog ./build/my.profile.new
 
+profile_gv:
+	google-pprof --pdf ./build/in_proc_engine_bench_querylog ./build/my.profile.new > profile.pdf
+
 run_qq_mem:
 	./build.sh
 	python ./tools/run_client_server.py ./build/client "" ./build/qq_server 50051,0
