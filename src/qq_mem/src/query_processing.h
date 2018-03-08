@@ -40,18 +40,24 @@ typedef std::vector<PositionInfoVec> PositionInfoTable;
 
 class PositionInfoArray {
  public:
-  constexpr PositionInfoArray() {}
+  PositionInfoArray() {}
+  PositionInfoArray(const int n_cols) :arr_(n_cols) {}
+
+  void FastClear() {
+    next_ = 0;
+  }
 
   void Clear() {
     next_ = 0;
+    arr_.clear();
   }
   
-  int Size() const {
+  int UsedSize() const {
     return next_;
   }
 
-  constexpr int Capacity() const {
-    return capacity_;
+  int Capacity() const {
+    return arr_.size();
   }
 
   // next_ may overflow, be very carefule
@@ -65,8 +71,7 @@ class PositionInfoArray {
   }
 
  private:
-  constexpr static int capacity_ = 100;
-  std::array<PositionInfo, capacity_> arr_;
+  std::vector<PositionInfo> arr_;
   int next_ = 0;
 };
 
@@ -74,9 +79,22 @@ class PositionInfoArray {
 // This class is performance-critical, we do not do any checking...
 class PositionInfoTable2 {
  public:
+  PositionInfoTable2(const int n_rows, const int n_cols) {
+    for (int i = 0; i < n_rows; i++) {
+      rows_.emplace_back(n_cols);
+    }
+  }
+
+  void FastClear() {
+    for (auto &row : rows_) {
+      row.FastClear();
+    }
+  }
+
+  // The number of rows stays the same
   void Clear() {
-    for (int i = 0; i < capacity_; i++) {
-      rows_[i].Clear();
+    for (auto &row : rows_) {
+      row.Clear();
     }
   }
 
@@ -89,8 +107,7 @@ class PositionInfoTable2 {
   }
 
  private:
-  constexpr static int capacity_ = 10;
-  std::array<PositionInfoArray, capacity_> rows_;
+  std::vector<PositionInfoArray> rows_;
 };
 
 
