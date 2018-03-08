@@ -553,7 +553,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
   InvertedIndexQqMemDelta inverted_index_;
   DocLengthStore doc_lengths_;
   SimpleHighlighter highlighter_;
-  Bm25SimilarityLossy similarity_;
+  Bm25Similarity similarity_;
 
   int NextDocId() {
     return next_doc_id_++;

@@ -525,7 +525,7 @@ typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>,
 class SingleTermQueryProcessor3 {
  public:
   SingleTermQueryProcessor3(
-    const Bm25SimilarityLossy &similarity,
+    const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
@@ -594,7 +594,7 @@ class SingleTermQueryProcessor3 {
     return ret;
   }
 
-  const Bm25SimilarityLossy &similarity_;
+  const Bm25Similarity &similarity_;
   std::vector<PostingListDeltaIterator> &pl_iterators_;
   const int k_;
   const int n_total_docs_in_index_;
@@ -770,7 +770,7 @@ class SingleTermQueryProcessor {
 class TwoTermNonPhraseQueryProcessor3 {
  public:
   TwoTermNonPhraseQueryProcessor3(
-    const Bm25SimilarityLossy &similarity,
+    const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
@@ -895,7 +895,7 @@ class TwoTermNonPhraseQueryProcessor3 {
 			offset_iters, empty_position_table_, false);
   }
 
-  const Bm25SimilarityLossy &similarity_;
+  const Bm25Similarity &similarity_;
   const int n_lists_;
   std::vector<PostingListDeltaIterator> &pl_iterators_;
   const int k_;
@@ -1156,7 +1156,7 @@ class TwoTermNonPhraseQueryProcessor {
 class QueryProcessor3 {
  public:
   QueryProcessor3(
-    const Bm25SimilarityLossy &similarity,
+    const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators,
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
@@ -1355,7 +1355,7 @@ class QueryProcessor3 {
 			offset_iters, position_table, is_phrase_);
   }
 
-  const Bm25SimilarityLossy &similarity_;
+  const Bm25Similarity &similarity_;
   const int n_lists_;
   std::vector<PostingListDeltaIterator> &pl_iterators_;
   const int k_;
@@ -1802,7 +1802,7 @@ std::vector<ResultDocEntry> ProcessQuery(IteratorPointers *pl_iterators,
                                            const int k,
                                            const bool is_phrase);
 std::vector<ResultDocEntry> ProcessQueryDelta(
-    const Bm25SimilarityLossy &similarity,
+    const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,

@@ -23,7 +23,7 @@ std::vector<ResultDocEntry> ProcessQuery(IteratorPointers *pl_iterators,
 
 
 std::vector<ResultDocEntry> ProcessQueryDelta(
-     const Bm25SimilarityLossy &similarity,
+     const Bm25Similarity &similarity,
      std::vector<PostingListDeltaIterator> *pl_iterators, 
      const DocLengthStore &doc_lengths,
      const int n_total_docs_in_index,
