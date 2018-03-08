@@ -165,7 +165,9 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
      skip_index_(nullptr),
      skip_span_(-1),
      total_postings_(0),
-     cur_state_(nullptr, 0, 0, 0) {}
+     cur_state_(nullptr, 0, 0, 0),
+     pl_addr_(nullptr)
+  {}
 
   PostingListDeltaIterator2(const VarintBuffer *data, 
                            const SkipIndex *skip_index,
@@ -174,6 +176,7 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
                            DocIdType prev_doc_id, 
                            int byte_offset)
     :data_pointer_(data->DataPointer()),
+     pl_addr_((const uint8_t *)data->DataPointer()->data()),
      skip_index_(skip_index),
      skip_span_(skip_span),
      total_postings_(total_postings),
@@ -262,27 +265,48 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
   std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() const {
     std::unique_ptr<OffsetPairsIteratorService> p(new
         CompressedPairIterator(data_pointer_, 
-                               cache_.cur_offset_pairs_start_,
-                               cache_.cur_position_start_)); 
+                  cache_.cur_offset_pairs_start_addr_ - pl_addr_,
+                  cache_.cur_position_start_addr_ - pl_addr_));
     return p; 
   }
 
   std::unique_ptr<PopIteratorService> PositionBegin() const {
     std::unique_ptr<PopIteratorService> p(new CompressedPositionIterator(
           data_pointer_, 
-          cache_.cur_position_start_, 
-          cache_.next_posting_byte_offset_));
+          cache_.cur_offset_pairs_start_addr_ - pl_addr_,
+          cache_.cur_position_start_addr_ - pl_addr_));
     return p;
   }
 
   void AssignPositionBegin(CompressedPositionIterator *iterator) const {
     new (iterator) CompressedPositionIterator(  
           data_pointer_, 
-          cache_.cur_position_start_, 
-          cache_.next_posting_byte_offset_);
+          cache_.cur_offset_pairs_start_addr_ - pl_addr_,
+          cache_.cur_position_start_addr_ - pl_addr_);
   }
 
  private:
+  // cur_state_.cur_addr_ must at the beginning of a posting
+  void DecodeToCache() noexcept {
+    uint32_t delta;
+
+    // 0. Content bytes
+    DecodeVarint(&cache_.cur_content_bytes_);
+    cache_.next_posting_addr_ = cur_state_.cur_addr_ + cache_.cur_content_bytes_;
+
+    // 1. Doc Id delta
+    DecodeVarint(&delta);
+    cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
+
+    // 2. Term freq
+    DecodeVarint(&cache_.cur_term_freq_);
+
+    // 3. offset size
+    DecodeVarint(&cache_.offset_size_);
+    cache_.cur_offset_pairs_start_addr_ = cur_state_.cur_addr_;
+    cache_.cur_position_start_addr_ = cur_state_.cur_addr_ + cache_.offset_size_;
+  }
+
   // Note: it changes cur_state_.cur_addr_
   void DecodeVarint(uint32_t *value) {
     uint32_t v = *cur_state_.cur_addr_;
@@ -311,7 +335,7 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
     *value = result;
   }
 
-  void DecodeToCache() noexcept {
+  void DecodeToCacheOld() noexcept {
     int offset = cur_state_.byte_offset_;
     uint32_t delta;
     int len;
@@ -338,6 +362,7 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
   }
 
   const std::string *data_pointer_;
+  const uint8_t *pl_addr_;
   const SkipIndex *skip_index_;
   int total_postings_;
   int skip_span_;
@@ -380,6 +405,8 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
 
     int next_posting_byte_offset_;
     const uint8_t *next_posting_addr_;
+    const uint8_t *cur_offset_pairs_start_addr_;
+    const uint8_t *cur_position_start_addr_;
 
     PostingCache() {}
     PostingCache(const PostingCache &rhs) = default;
