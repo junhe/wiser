@@ -185,7 +185,8 @@ int varint_encode(uint32_t value, std::string *buf, off_t offset);
 // int varint_decode(const std::string &buf, off_t offset, uint32_t *value);
 // int varint_decode_chars(const char *buf, const off_t offset, uint32_t *value);
 
-inline int varint_decode_chars(const char *buf, const off_t offset, uint32_t *value) {
+inline int varint_decode_chars(
+    const char *buf, const off_t offset, uint32_t *value) noexcept {
   *value = buf[offset] & 0x7f;
 
   int i = 1;
@@ -200,7 +201,8 @@ inline int varint_decode_chars(const char *buf, const off_t offset, uint32_t *va
 
 // from varint code to int
 // return: length of the buffer decoded
-inline int varint_decode(const std::string &buf, const off_t offset, uint32_t *value) {
+inline int varint_decode(
+    const std::string &buf, const off_t offset, uint32_t *value) noexcept {
   return varint_decode_chars(buf.data(), offset, value);
 }
 

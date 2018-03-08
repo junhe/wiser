@@ -62,17 +62,19 @@ class Bm25Similarity {
   }
 
   // field_length here must be a compressed length
-  double TfNormLossy(const int freq, const char field_length) const {
+  double TfNormLossy(const int freq, const char field_length) const noexcept {
     // (freq * (k1 + 1)) / (freq + k1 * (1 - b + ((b * field_length) / avg_field_length)));
     //                             ----------------- cached ---------------------------      
     return (freq * (k1_ + 1)) / (freq + cache_[field_length]);
   }
 
-  double TfNorm(const int freq, const int field_length) const {
+  double TfNorm(const int freq, const int field_length) const noexcept {
     return TfNormStatic(freq, field_length, avg_field_length_);
   }
 
-  static double TfNormStatic(const int freq, const int field_length, const double avg_field_length) {
+  static double TfNormStatic(const int freq, 
+                             const int field_length, 
+                             const double avg_field_length) noexcept {
     // tfNorm, computed as 
     // (freq * (k1 + 1)) / (freq + k1 * (1 - b + b * fieldLength / avgFieldLength))
     return (freq * (k1_ + 1)) / (freq + k1_ * (1 - b_ + ((b_ * field_length) / avg_field_length)));

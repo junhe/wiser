@@ -411,7 +411,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   }
 
  private:
-  void DecodeToCache() {
+  void DecodeToCache() noexcept {
     int offset = cur_state_.byte_offset_;
     uint32_t delta;
     int len;
