@@ -189,11 +189,11 @@ class PostingListDeltaIterator: public PostingListIteratorService {
 
   PostingListDeltaIterator& operator=(const PostingListDeltaIterator &rhs) = default;
 
-  int Size() const {
+  int Size() const noexcept {
     return total_postings_;
   }
 
-  void Advance() {
+  void Advance() noexcept {
     cur_state_.Update(
                   cache_.next_posting_addr_,
                   cur_state_.cur_posting_index_ + 1,
@@ -202,19 +202,19 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     DecodeToCache();
   }
 
-  bool HasSkip() const {
+  bool HasSkip() const noexcept {
     return cur_state_.cur_posting_index_ % skip_span_ == 0 && 
       cur_state_.cur_posting_index_ + skip_span_ < total_postings_;
   }
 
   // Only call this when the iterator HasSkip() == true
-  DocIdType NextSpanDocId() const {
+  DocIdType NextSpanDocId() const noexcept {
     int index = (cur_state_.cur_posting_index_ / skip_span_) + 1;
     return skip_index_->vec[index].prev_doc_id;
   }
   
   // Only call this when the iterator HasSkip() == true
-  void SkipToNextSpan() {
+  void SkipToNextSpan() noexcept {
     int next_span_index = cur_state_.cur_posting_index_ / skip_span_ + 1;
 
     auto &meta = skip_index_->vec[next_span_index];
@@ -226,7 +226,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     DecodeToCache();
   }
 
-  void SkipForward(DocIdType doc_id) {
+  void SkipForward(DocIdType doc_id) noexcept {
     // Move the iterator to a posting that has a doc id that is 
     // larger or equal to doc_id
     // It moves to the end if it cannout find such posting
@@ -247,15 +247,15 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     }
   }
 
-  bool IsEnd() const {
+  bool IsEnd() const noexcept {
     return cur_state_.cur_posting_index_ == total_postings_;
   }
 
-  DocIdType DocId() const {
+  DocIdType DocId() const noexcept {
     return cache_.cur_doc_id_;
   }
 
-  int TermFreq() const {
+  int TermFreq() const noexcept {
     return cache_.cur_term_freq_;
   }
 
@@ -305,7 +305,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   }
 
   // Note: it changes cur_state_.cur_addr_
-  void DecodeVarint(uint32_t *value) {
+  void DecodeVarint(uint32_t *value) noexcept {
     uint32_t v = *cur_state_.cur_addr_;
     if (v < 0x80) {
       *value = v;
@@ -317,7 +317,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   }
 
   // Note: it changes cur_state_.cur_addr_
-  void DecodeVarintFallback(uint32_t *value) {
+  void DecodeVarintFallback(uint32_t *value) noexcept {
     uint32_t result = 0;
     int count = 0;
     uint32_t b;
