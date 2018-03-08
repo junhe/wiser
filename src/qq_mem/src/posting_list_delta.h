@@ -273,16 +273,16 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
   std::unique_ptr<PopIteratorService> PositionBegin() const {
     std::unique_ptr<PopIteratorService> p(new CompressedPositionIterator(
           data_pointer_, 
-          cache_.cur_offset_pairs_start_addr_ - pl_addr_,
-          cache_.cur_position_start_addr_ - pl_addr_));
+          cache_.cur_position_start_addr_ - pl_addr_,
+          cache_.next_posting_addr_ - pl_addr_));
     return p;
   }
 
   void AssignPositionBegin(CompressedPositionIterator *iterator) const {
     new (iterator) CompressedPositionIterator(  
           data_pointer_, 
-          cache_.cur_offset_pairs_start_addr_ - pl_addr_,
-          cache_.cur_position_start_addr_ - pl_addr_);
+          cache_.cur_position_start_addr_ - pl_addr_,
+          cache_.next_posting_addr_ - pl_addr_);
   }
 
  private:
