@@ -261,8 +261,8 @@ class PhraseQueryProcessor {
   PositionInfoTable ProcessTwoTerm() {
     PositionInfoTable ret_table(n_terms_); 
 
-    PopIteratorService *it0 = &solid_iterators_[0]; 
-    PopIteratorService *it1 = &solid_iterators_[1];
+    auto *it0 = &solid_iterators_[0]; 
+    auto *it1 = &solid_iterators_[1];
     int pos0, pos1;
     int apr0 = -1, apr1 = -1;
 
