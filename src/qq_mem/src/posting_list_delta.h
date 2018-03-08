@@ -165,7 +165,8 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
      skip_index_(nullptr),
      skip_span_(-1),
      total_postings_(0),
-     cur_state_(0, 0, 0) {}
+     cur_state_(nullptr, 0, 0, 0) {}
+
   PostingListDeltaIterator2(const VarintBuffer *data, 
                            const SkipIndex *skip_index,
                            const int skip_span,
@@ -176,7 +177,7 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
      skip_index_(skip_index),
      skip_span_(skip_span),
      total_postings_(total_postings),
-     cur_state_(byte_offset, 0, prev_doc_id)
+     cur_state_(data->DataPointer()->data(), byte_offset, 0, prev_doc_id)
   {
     DecodeToCache();
 
@@ -190,65 +191,24 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
     // assert(next_expected_item_ == 2);
   }
 
-  PostingListDeltaIterator2(const PostingListDeltaIterator2 &rhs)
-    :data_pointer_(rhs.data_pointer_),
-     skip_index_(rhs.skip_index_),
-     total_postings_(rhs.total_postings_),
-     skip_span_(rhs.skip_span_),
-     cur_state_(rhs.cur_state_),
-     cache_(rhs.cache_),
-     last_offset_(rhs.last_offset_),
-     next_expected_item_(rhs.next_expected_item_)
-  {
-  }
+  PostingListDeltaIterator2(const PostingListDeltaIterator2 &rhs) = default;
 
-  PostingListDeltaIterator2& operator=(const PostingListDeltaIterator2 &rhs) {
-    data_pointer_ = rhs.data_pointer_; 
-    skip_index_ = rhs.skip_index_;
-    total_postings_ = rhs.total_postings_;
-    skip_span_ = rhs.skip_span_;
-    cur_state_ = rhs.cur_state_;
-    cache_ = rhs.cache_;
-    last_offset_ = rhs.last_offset_;
-    next_expected_item_ = rhs.next_expected_item_;
-  }
+  PostingListDeltaIterator2& operator=(const PostingListDeltaIterator2 &rhs) = default;
 
   int Size() const {
     return total_postings_;
   }
 
   void Advance() {
-    cur_state_.Update(cache_.next_posting_byte_offset_, 
+    cur_state_.Update(
+                  cache_.next_posting_addr_,
+                  cache_.next_posting_byte_offset_, 
                   cur_state_.cur_posting_index_ + 1,
                   cache_.cur_doc_id_);
                   
     DecodeToCache();
   }
 
-  void AdvanceAndDecode1() {
-    int offset = cur_state_.byte_offset_;
-    uint32_t delta;
-    int len;
-
-    cur_state_.Update(cache_.next_posting_byte_offset_, 
-                  cur_state_.cur_posting_index_ + 1,
-                  cache_.cur_doc_id_);
-
-    // Content bytes
-    len = utils::varint_decode(*data_pointer_, offset, &cache_.cur_content_bytes_);
-    offset += len;
-    cache_.next_posting_byte_offset_ = offset + cache_.cur_content_bytes_;
-
-    // Delta
-    len = utils::varint_decode(*data_pointer_, offset, &delta);
-    offset += len;
-    cache_.cur_doc_id_ = cur_state_.prev_doc_id_ + delta;
-
-    // Term Freq
-    len = utils::varint_decode(*data_pointer_, offset, &cache_.cur_term_freq_);
-    last_offset_ = offset + len;
-  }
-  
   // must be called after Advance1()
   void Decode2() {
     int offset = last_offset_;
@@ -450,11 +410,19 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
     DocIdType prev_doc_id_; // doc id of posting[cur_posting_index_ - 1]
     const char *cur_addr_;
 
-    State(int offset, int index, DocIdType id)
-      :byte_offset_(offset), cur_posting_index_(index), prev_doc_id_(id) {}
+    State(const char *cur_addr, int offset, int index, DocIdType id)
+      :cur_addr_(cur_addr), byte_offset_(offset), cur_posting_index_(index), 
+       prev_doc_id_(id) {}
 
     State(const State &rhs) = default;
     State & operator=(const State &rhs) = default;
+
+    void Update(const char *cur_addr, int offset, int index, DocIdType id) {
+      cur_addr_ = cur_addr;
+      byte_offset_ = offset;
+      cur_posting_index_ = index;
+      prev_doc_id_ = id;
+    }
 
     void Update(int offset, int index, DocIdType id) {
       byte_offset_ = offset;
