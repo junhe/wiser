@@ -187,8 +187,13 @@ int varint_encode(uint32_t value, std::string *buf, off_t offset);
 
 inline int varint_decode_chars(
     const char *buf, const off_t offset, uint32_t *value) noexcept {
-  *value = buf[offset] & 0x7f;
+  uint32_t v = buf[offset];
+  if (v < 0x80) {
+    *value = v;
+    return 1;
+  }
 
+  *value = buf[offset] & 0x7f;
   int i = 1;
   // inv: buf[offset, offset + i) has been copied to value 
   //      (buf[offset + i] is about to be copied)
