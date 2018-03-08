@@ -451,45 +451,6 @@ TEST_CASE( "PostingList_Vec iterator", "[posting_list]" ) {
   }
 }
 
-TEST_CASE( "PostingListDeltaIterator2", "[posting_list]" ) {
-  auto pl = create_posting_list_delta(10); 
-
-  SECTION("Test Advance()") {
-    auto it = pl.BeginForTest();
-
-    for (int i = 0; i < 10; i++, it.Advance()) {
-      REQUIRE(it.IsEnd() == false);
-      REQUIRE(it.DocId() == i);
-      REQUIRE(it.TermFreq() == i * 2);
-    }
-    REQUIRE(it.IsEnd() == true);
-  }
-
-  SECTION("Test Offset Iterator") {
-    auto it = pl.BeginForTest();
-    std::unique_ptr<OffsetPairsIteratorService> off_it = it.OffsetPairsBegin();
-
-    for (int i = 0; i < 5; i++) {
-      OffsetPair pair;
-      off_it->Pop(&pair);
-      REQUIRE(std::get<0>(pair) == i * 2);
-      REQUIRE(std::get<1>(pair) == i * 2 + 1);
-    }
-    REQUIRE(off_it->IsEnd());
-  }
-
-  SECTION("Test position iterator") {
-    auto it = pl.BeginForTest();
-    std::unique_ptr<PopIteratorService> pos_it = it.PositionBegin();
-    for (int i = 0; i < 6; i++) {
-      REQUIRE(pos_it->IsEnd() == false);
-      Position pos = pos_it->Pop();
-      REQUIRE(pos == i);
-    }
-    REQUIRE(pos_it->IsEnd() == true);
-  }
-}
-
 
 TEST_CASE( "PostingListDelta iterator", "[posting_list]" ) {
   auto pl = create_posting_list_delta(10); 
