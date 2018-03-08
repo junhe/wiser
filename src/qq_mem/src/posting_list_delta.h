@@ -374,9 +374,6 @@ class PostingListDeltaIterator2: public PostingListIteratorService {
   };
   // Cached data of cur_posting_index_
   PostingCache cache_;
-  int last_offset_;
-  int next_expected_item_;
-  int last_skipable_;
 };
 
 
