@@ -47,11 +47,6 @@ class PositionInfoArray {
     next_ = 0;
   }
 
-  void Clear() {
-    next_ = 0;
-    arr_.clear();
-  }
-  
   int UsedSize() const {
     return next_;
   }
@@ -77,6 +72,7 @@ class PositionInfoArray {
 
 
 // This class is performance-critical, we do not do any checking...
+// The Table cannot be resized.
 class PositionInfoTable2 {
  public:
   PositionInfoTable2(const int n_rows, const int n_cols) {
@@ -88,13 +84,6 @@ class PositionInfoTable2 {
   void FastClear() {
     for (auto &row : rows_) {
       row.FastClear();
-    }
-  }
-
-  // The number of rows stays the same
-  void Clear() {
-    for (auto &row : rows_) {
-      row.Clear();
     }
   }
 
@@ -243,7 +232,9 @@ template <typename T>
 class PhraseQueryProcessor2 {
  public:
   PhraseQueryProcessor2(int capacity)
-    :solid_iterators_(capacity), last_orig_popped_(capacity) {
+    :solid_iterators_(capacity), 
+     last_orig_popped_(capacity), 
+     pos_table_(5, 40) {
   }
 
   Position FindMaxAdjustedLastPopped() {
@@ -342,7 +333,7 @@ class PhraseQueryProcessor2 {
   }
 
   PositionInfoTable2 ProcessTwoTerm() {
-    pos_table_.Clear();
+    pos_table_.FastClear();
 
     auto *it0 = &solid_iterators_[0]; 
     auto *it1 = &solid_iterators_[1];
@@ -398,7 +389,7 @@ class PhraseQueryProcessor2 {
 
   PositionInfoTable2 ProcessGeneral() {
     bool any_list_exhausted = false;
-    pos_table_.Clear();
+    pos_table_.FastClear();
 
     if (InitializeLastPopped() == false) {
       return pos_table_;
