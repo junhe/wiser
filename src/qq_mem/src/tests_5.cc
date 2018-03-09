@@ -452,6 +452,7 @@ TEST_CASE( "PostingList_Vec iterator", "[posting_list]" ) {
 }
 
 
+
 TEST_CASE( "PostingListDelta iterator", "[posting_list]" ) {
   auto pl = create_posting_list_delta(10); 
 
@@ -556,6 +557,8 @@ void AssignIterators(PhraseQueryProcessor<VarintIterator> &pqp,
   }
   pqp.SetNumTerms(buffers.size());
 }
+
+
 
 TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
   SECTION("Simple") {

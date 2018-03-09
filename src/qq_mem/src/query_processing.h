@@ -81,6 +81,25 @@ class PositionInfoTable2 {
     }
   }
 
+  int NumUsedCols() {
+    if (rows_.size() == 0) 
+      return 0;
+    else 
+      return rows_[0].UsedSize();
+  }
+
+  int NumUsedRows() {
+    int count = 0;
+    for (auto &row : rows_) {
+      if (row.UsedSize() > 0) {
+        count++;
+      } else {
+        break;
+      }
+    }
+    return count;
+  }
+
   void FastClear() {
     for (auto &row : rows_) {
       row.FastClear();

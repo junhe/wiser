@@ -146,6 +146,16 @@ TEST_CASE( "Position info related", "[engine]" ) {
 
     REQUIRE(tab[1][0].pos == 5);
     REQUIRE(tab[1][0].term_appearance == 6);
+
+    REQUIRE(tab.NumUsedCols() == 1);
+    REQUIRE(tab.NumUsedRows() == 2);
+  }
+
+  SECTION("Position info table empty") {
+    PositionInfoTable2 tab(2, 2);
+    
+    REQUIRE(tab.NumUsedCols() == 0);
+    REQUIRE(tab.NumUsedRows() == 0);
   }
 
 }
