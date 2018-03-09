@@ -11,7 +11,6 @@
 #include "query_processing.h"
 #include "scoring.h"
 #include "utils.h"
-#include "posting_list_vec.h"
 #include "qq_mem_engine.h"
 
 

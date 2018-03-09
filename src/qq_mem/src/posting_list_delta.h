@@ -3,6 +3,7 @@
 
 #include <glog/logging.h>
 
+#include "posting.h"
 #include "compression.h"
 #include "engine_services.h"
 

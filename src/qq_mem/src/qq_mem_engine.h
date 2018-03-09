@@ -5,6 +5,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include "posting.h"
 #include "doc_length_store.h"
 #include "query_processing.h"
 #include "utils.h"

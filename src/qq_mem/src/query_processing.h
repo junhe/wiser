@@ -11,7 +11,6 @@
 
 #include "doc_length_store.h"
 #include "engine_services.h"
-#include "posting_list_vec.h"
 #include "posting_list_delta.h"
 #include "scoring.h"
 #include "utils.h"
@@ -214,35 +213,6 @@ inline qq_float CalcDocScore(
   // return CalcDocScoreNonLossy<IteratorT>(pl_iterators, idfs_of_terms,
       // length_of_this_doc, similarity);
 }
-
-
-inline qq_float calc_doc_score_for_a_query(
-    const IteratorPointers &pl_iterators,
-    const std::vector<qq_float> &idfs_of_terms,
-    const int &n_total_docs_in_index, 
-    const qq_float &avg_doc_length_in_index,
-    const int &length_of_this_doc) 
-{
-  qq_float final_doc_score = 0;
-
-  for (int list_i = 0; list_i < pl_iterators.size(); list_i++) {
-    // calc score of a term in one loop
-
-    const int cur_term_freq = pl_iterators[list_i]->TermFreq(); 
-
-    qq_float idf = idfs_of_terms[list_i];
-    qq_float tfnorm = calc_es_tfnorm(cur_term_freq, length_of_this_doc, 
-        avg_doc_length_in_index);
-
-    // ES 6.1 uses tfnorm * idf 
-    qq_float term_doc_score = idf * tfnorm;
-
-    final_doc_score += term_doc_score;
-  }
-
-  return final_doc_score;
-}
-
 
 
 // T is subclass of PopIteratorService
@@ -676,61 +646,6 @@ class PhraseQueryProcessor {
   std::vector<PositionInfo> last_orig_popped_;
   bool list_exhausted_ = false;
 };
-
-
-// This is the score of a document for a query. This query may have multiple
-// terms.
-//
-// Input:
-//   postings is a set of postings
-//         term0        term1
-//    doc  posting[0]   posting[1]
-//
-//   doc_freqs_of_terms: number of docs that have a term
-//         term0        term1
-//         doc_freq[0]   doc_freq[1]
-//
-// Note that lists[i], posting_iters[i] and doc_freqs_of_terms[i] must 
-// for the same term.
-// All posting_iters[] must point to postings of the same document.
-//
-// T is a class for a posting.
-template <class T>
-inline qq_float calc_doc_score_for_a_query(
-    const std::vector<const PostingList_Vec<T>*> &lists, 
-    const std::vector<typename PostingList_Vec<T>::iterator_t> &posting_iters,
-    // const std::vector<int> &doc_freqs_of_terms,
-    const std::vector<qq_float> &idfs_of_terms,
-    const int &n_total_docs_in_index, 
-    const qq_float &avg_doc_length_in_index,
-    const int &length_of_this_doc) 
-{
-  qq_float final_doc_score = 0;
-
-  for (int list_i = 0; list_i < lists.size(); list_i++) {
-    // calc score of a term in one loop
-
-    // get term freq
-    const PostingList_Vec<T> *postinglist = lists[list_i];
-    const typename PostingList_Vec<T>::iterator_t it = posting_iters[list_i];
-    const int cur_term_freq = postinglist->GetPosting(it).GetTermFreq(); 
-
-    // get the number of documents that have the current term
-    // const int doc_freq = doc_freqs_of_terms[list_i];
-
-    // qq_float idf = calc_es_idf(n_total_docs_in_index, doc_freq);
-    qq_float idf = idfs_of_terms[list_i];
-    qq_float tfnorm = calc_es_tfnorm(cur_term_freq, length_of_this_doc, 
-        avg_doc_length_in_index);
-
-    // ES 6.1 uses tfnorm * idf 
-    qq_float term_doc_score = idf * tfnorm;
-
-    final_doc_score += term_doc_score;
-  }
-
-  return final_doc_score;
-}
 
 
 struct ResultDocEntry {
