@@ -558,6 +558,134 @@ void AssignIterators(PhraseQueryProcessor<VarintIterator> &pqp,
   pqp.SetNumTerms(buffers.size());
 }
 
+void AssignIterators(PhraseQueryProcessor2<VarintIterator> &pqp, 
+                     std::vector<VarintBuffer *> buffers, 
+                     std::vector<int> sizes) {
+  std::vector<VarintIterator> &iterators = *pqp.Iterators();
+  for (int i = 0; i < buffers.size(); i++) {
+    iterators[i] =  VarintIterator(*buffers[i], sizes[i]);
+  }
+  pqp.SetNumTerms(buffers.size());
+}
+
+
+TEST_CASE( "PhraseQueryProcessor2", "[engine00]" ) {
+  SECTION("Simple") {
+    // 3, 4 is a match
+    VarintBuffer buf01 = create_varint_buffer(std::vector<uint32_t>{1, 3, 5});
+    VarintBuffer buf02 = create_varint_buffer(std::vector<uint32_t>{4});
+    
+    PhraseQueryProcessor2<VarintIterator> qp(2);
+    AssignIterators(qp, {&buf01, &buf02}, {3, 1});
+   
+    SECTION("Returning info table") {
+      auto info_table = qp.Process();
+      // REQUIRE(info_table[0][0].pos == 3);
+      // REQUIRE(info_table[0][0].term_appearance == 1);
+
+      // REQUIRE(info_table[1][0].pos == 4);
+      // REQUIRE(info_table[1][0].term_appearance == 0);
+    }
+
+    SECTION("FindMaxAdjustedLastPopped() and MovePoppedBeyond()") {
+      bool found;
+      qp.InitializeLastPopped();
+      auto max = qp.FindMaxAdjustedLastPopped();  
+      REQUIRE(max == 3);
+
+      found = qp.MovePoppedBeyond(1);
+      REQUIRE(found == true);
+      max = qp.FindMaxAdjustedLastPopped();  
+      REQUIRE(max == 3);
+
+      // stay where you are
+      found = qp.MovePoppedBeyond(1);
+      REQUIRE(found == true);
+      max = qp.FindMaxAdjustedLastPopped();  
+      REQUIRE(max == 3);
+
+      found = qp.MovePoppedBeyond(3);
+      REQUIRE(found == true);
+      max = qp.FindMaxAdjustedLastPopped();  
+      REQUIRE(max == 3);
+      REQUIRE(qp.IsPoppedMatch(3) == true);
+
+      found = qp.MovePoppedBeyond(5);
+      REQUIRE(found == false); // coundn't find 5 in the second list
+    }
+  }
+
+  SECTION("Two empty lists") {
+    VarintBuffer buf01 = create_varint_buffer(std::vector<uint32_t>{});
+    VarintBuffer buf02 = create_varint_buffer(std::vector<uint32_t>{});
+
+    PhraseQueryProcessor2<VarintIterator> qp(10);
+    AssignIterators(qp, {&buf01, &buf02}, {0, 0});
+
+    auto table = qp.Process();
+    REQUIRE(table.NumUsedRows() == 0);
+    REQUIRE(table[0].UsedSize() == 0);
+    REQUIRE(table[1].UsedSize() == 0);
+  }
+
+  SECTION("No matches") {
+    VarintBuffer buf01 = create_varint_buffer({1, 8, 20});
+    VarintBuffer buf02 = create_varint_buffer({0, 7, 19});
+
+    PhraseQueryProcessor2<VarintIterator> qp(10);
+    AssignIterators(qp, {&buf01, &buf02}, {3, 3});
+
+    auto table = qp.Process();
+
+    REQUIRE(table.NumUsedRows() == 0);
+  }
+ 
+  SECTION("Bad positions") {
+    // Two terms cannot be at the same position
+    VarintBuffer buf01 = create_varint_buffer({0});
+    VarintBuffer buf02 = create_varint_buffer({0});
+
+    PhraseQueryProcessor2<VarintIterator> qp(10);
+    AssignIterators(qp, {&buf01, &buf02}, {1, 1});
+
+    auto table = qp.Process();
+
+    REQUIRE(table.NumUsedRows() == 0);
+  }
+ 
+  SECTION("One list is empty") {
+    VarintBuffer buf01 = create_varint_buffer({10});
+    VarintBuffer buf02 = create_varint_buffer({});
+
+    PhraseQueryProcessor2<VarintIterator> qp(10);
+    AssignIterators(qp, {&buf01, &buf02}, {1, 0});
+
+    auto table = qp.Process();
+
+    REQUIRE(table.NumUsedRows() == 0);
+  }
+
+  SECTION("Multiple matches") {
+    VarintBuffer buf01 = create_varint_buffer({10, 20,     100, 1000});
+    VarintBuffer buf02 = create_varint_buffer({11, 21, 88, 101});
+
+    PhraseQueryProcessor2<VarintIterator> qp(10);
+    AssignIterators(qp, {&buf01, &buf02}, {4, 4});
+
+    auto table = qp.Process();
+
+    REQUIRE(table.NumUsedRows() == 2);
+    REQUIRE(table[0].UsedSize() == 3);
+    REQUIRE(table[0][0].pos == 10);
+    REQUIRE(table[0][1].pos == 20);
+    REQUIRE(table[0][2].pos == 100);
+
+    REQUIRE(table[1].UsedSize() == 3);
+    REQUIRE(table[1][0].pos == 11);
+    REQUIRE(table[1][1].pos == 21);
+    REQUIRE(table[1][2].pos == 101);
+  }
+}
 
 
 TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
