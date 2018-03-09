@@ -855,9 +855,9 @@ class SingleTermQueryProcessor {
 };
 
 
-class TwoTermNonPhraseQueryProcessor3 {
+class TwoTermNonPhraseQueryProcessor {
  public:
-  TwoTermNonPhraseQueryProcessor3(
+  TwoTermNonPhraseQueryProcessor(
     const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators, 
     const DocLengthStore &doc_lengths,
