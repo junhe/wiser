@@ -215,18 +215,4 @@ target_link_libraries(snippet_bench
     ${GLOG_LIB}
 )
 
-add_executable(compression_bench
-    compression_bench.cc
-    ${ENGINE_SRCS}
-    ${PROTO_SRCS}
-    ${GRPC_SRCS}
-)
-target_link_libraries(compression_bench
-    ${GRPC_LIBS}
-    protobuf::libprotobuf
-    ${BOOST_LIBS}
-    pthread
-    ${GLOG_LIB}
-)
-
 
