@@ -858,7 +858,6 @@ typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>,
     std::greater<ResultDocEntry> > MinHeap;
 
 
-
 class SingleTermQueryProcessor3 {
  public:
   SingleTermQueryProcessor3(
