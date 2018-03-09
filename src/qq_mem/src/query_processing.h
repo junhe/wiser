@@ -150,68 +150,6 @@ inline qq_float CalcDocScoreForOneQuery(
 }
 
 
-template<typename IteratorT>
-inline qq_float CalcDocScoreNonLossy(
-    const std::vector<IteratorT> &pl_iterators,
-    const std::vector<qq_float> &idfs_of_terms,
-    const int &length_of_this_doc, 
-    const Bm25Similarity &similarity) 
-{
-  qq_float final_doc_score = 0;
-
-  for (int list_i = 0; list_i < pl_iterators.size(); list_i++) {
-    const int cur_term_freq = pl_iterators[list_i].TermFreq(); 
-
-    qq_float idf = idfs_of_terms[list_i];
-    qq_float tfnorm = similarity.TfNorm(cur_term_freq, length_of_this_doc);
-
-    qq_float term_doc_score = idf * tfnorm;
-
-    final_doc_score += term_doc_score;
-  }
-
-  return final_doc_score;
-}
-
-
-template<typename IteratorT>
-inline qq_float CalcDocScoreLossy(
-    const std::vector<IteratorT> &pl_iterators,
-    const std::vector<qq_float> &idfs_of_terms,
-    const int &length_of_this_doc, 
-    const Bm25Similarity &similarity) 
-{
-  qq_float final_doc_score = 0;
-
-  for (int list_i = 0; list_i < pl_iterators.size(); list_i++) {
-    const int cur_term_freq = pl_iterators[list_i].TermFreq(); 
-
-    qq_float idf = idfs_of_terms[list_i];
-    qq_float tfnorm = similarity.TfNormLossy(cur_term_freq, length_of_this_doc);
-
-    qq_float term_doc_score = idf * tfnorm;
-
-    final_doc_score += term_doc_score;
-  }
-
-  return final_doc_score;
-}
-
-
-template<typename IteratorT>
-inline qq_float CalcDocScore(
-    const std::vector<IteratorT> &pl_iterators,
-    const std::vector<qq_float> &idfs_of_terms,
-    const int &length_of_this_doc, 
-    const Bm25Similarity &similarity) 
-{
-  return CalcDocScoreLossy<IteratorT>(pl_iterators, idfs_of_terms,
-      length_of_this_doc, similarity);
-
-  // return CalcDocScoreNonLossy<IteratorT>(pl_iterators, idfs_of_terms,
-      // length_of_this_doc, similarity);
-}
-
 
 // T is subclass of PopIteratorService
 // For example, it can be CompressedPositionIterator
