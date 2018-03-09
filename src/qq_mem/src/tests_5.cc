@@ -11,7 +11,7 @@
 
 
 
-TEST_CASE( "QueryProcessor3 works", "[engine]" ) {
+TEST_CASE( "QueryProcessor works", "[engine]" ) {
   OffsetPairs offset_pairs;
   for (int i = 0; i < 10; i++) {
     offset_pairs.push_back(std::make_tuple(i, i)); 
@@ -39,7 +39,7 @@ TEST_CASE( "QueryProcessor3 works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    QueryProcessor3 processor(similarity, &iterators, store, 100, 5, false);
+    QueryProcessor processor(similarity, &iterators, store, 100, 5, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -56,7 +56,7 @@ TEST_CASE( "QueryProcessor3 works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    QueryProcessor3 processor(similarity, &iterators, store, 100, 5, true);
+    QueryProcessor processor(similarity, &iterators, store, 100, 5, true);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -107,7 +107,7 @@ TEST_CASE( "QueryProcessor3 works", "[engine]" ) {
     iterators.push_back(pl02.Begin2());
     iterators.push_back(pl03.Begin2());
 
-    QueryProcessor3 processor(similarity, &iterators, store, 100, 5, true);
+    QueryProcessor processor(similarity, &iterators, store, 100, 5, true);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 0);
   }
@@ -117,7 +117,7 @@ TEST_CASE( "QueryProcessor3 works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    QueryProcessor3 processor(similarity, &iterators, store, 100, 2, false);
+    QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -133,7 +133,7 @@ TEST_CASE( "QueryProcessor3 works", "[engine]" ) {
     std::vector<PostingListDeltaIterator> iterators;
     iterators.push_back(pl01.Begin2());
 
-    QueryProcessor3 processor(similarity, &iterators, store, 100, 2, false);
+    QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -151,7 +151,7 @@ TEST_CASE( "QueryProcessor3 works", "[engine]" ) {
     iterators.push_back(pl02.Begin2());
     iterators.push_back(pl03.Begin2());
 
-    QueryProcessor3 processor(&iterators, store, 100, 2, false);
+    QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
