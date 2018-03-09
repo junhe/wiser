@@ -3,6 +3,7 @@
 
 #include "posting.h"
 #include "posting_list_delta.h"
+#include "posting_list_vec.h"
 
 StandardPosting create_posting(DocIdType doc_id, 
                                int term_freq, 
