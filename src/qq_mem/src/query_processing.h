@@ -16,8 +16,6 @@
 #include "utils.h"
 
 
-typedef std::vector<PostingListDeltaIterator> PostingListIterators;
-typedef std::vector<std::unique_ptr<PopIteratorService>> PositionIterators;
 
 struct PositionInfo {
   int pos = 0;

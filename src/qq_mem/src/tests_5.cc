@@ -9,7 +9,7 @@
 
 #include "test_helpers.h"
 
-
+typedef std::vector<std::unique_ptr<PopIteratorService>> PositionIterators;
 
 TEST_CASE( "QueryProcessor works", "[engine]" ) {
   OffsetPairs offset_pairs;
