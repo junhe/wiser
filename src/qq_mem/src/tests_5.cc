@@ -4,7 +4,6 @@
 #include "compression.h"
 #include "posting.h"
 #include "posting_list_delta.h"
-#include "posting_list_vec.h"
 #include "query_processing.h"
 #include "qq_mem_engine.h"
 

@@ -5,6 +5,7 @@
 #include "highlighter.h"
 #include "query_processing.h"
 #include "utils.h"
+#include "posting_list_vec.h"
 #include "general_config.h"
 #include "query_pool.h"
 #include "histogram.h"

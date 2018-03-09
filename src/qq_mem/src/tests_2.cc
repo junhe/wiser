@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "general_config.h"
 #include "query_pool.h"
+#include "posting_list_vec.h"
 #include "histogram.h"
 #include <grpc/support/histogram.h>
 
