@@ -773,9 +773,9 @@ typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>,
     std::greater<ResultDocEntry> > MinHeap;
 
 
-class SingleTermQueryProcessor3 {
+class SingleTermQueryProcessor {
  public:
-  SingleTermQueryProcessor3(
+  SingleTermQueryProcessor(
     const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators, 
     const DocLengthStore &doc_lengths,
