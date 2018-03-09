@@ -466,40 +466,12 @@ void test_inverted_index(InvertedIndexService &inverted_index) {
 }
 
 TEST_CASE( "Inverted index", "[engine]" ) {
-  // SECTION("Unompressed") {
-    // InvertedIndexQqMemVec inverted_index;
-
-    // setup_inverted_index(inverted_index);
-    // test_inverted_index(inverted_index);
-  // }
-
   SECTION("Compressed") {
     InvertedIndexQqMemDelta inverted_index;
 
     setup_inverted_index(inverted_index);
     test_inverted_index(inverted_index);
   }
-}
-
-// compressed or uncompressed
-QqMemEngine test_get_engine(std::string inverted_index) {
-  GeneralConfig config;
-  config.SetString("inverted_index", inverted_index);
-  QqMemEngine engine(config);
-
-  engine.AddDocument(
-      DocInfo("hello world", "hello world", "", "", "TOKEN_ONLY"));
-  REQUIRE(engine.TermCount() == 2);
-
-  engine.AddDocument(
-      DocInfo("hello wisconsin", "hello wisconsin", "", "", "TOKEN_ONLY"));
-  REQUIRE(engine.TermCount() == 3);
-
-  engine.AddDocument(
-      DocInfo("hello world big world", "hello world big world", "", "", "TOKEN_ONLY"));
-  REQUIRE(engine.TermCount() == 4);
-
-  return engine;
 }
 
 
@@ -581,36 +553,6 @@ void test_06(SearchEngineServiceNew *engine) {
 
 TEST_CASE( "QQ Mem Compressed Engine works", "[engine]" ) {
   auto uniq_engine = Test_GetEngine("qq_mem_compressed");
-  auto engine = uniq_engine.get();
-
-  SECTION("The engine can serve single-term queries") {
-    test_01(engine);
-  }
-
-  SECTION("The engine can serve single-term queries with multiple results") {
-    test_02(engine);
-  }
-
-  SECTION("The engine can server two-term queries") {
-    test_03(engine);
-  }
-
-  SECTION("It can generate snippets") {
-    test_04(engine);
-  }
-
-  SECTION("It can generate snippets for two-term query") {
-    test_05(engine);
-  }
-
-  SECTION("The engine behaves correct when n_results is 0") {
-    test_06(engine);
-  }
-}
-
-
-TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
-  auto uniq_engine = Test_GetEngine("qq_mem_uncompressed");
   auto engine = uniq_engine.get();
 
   SECTION("The engine can serve single-term queries") {

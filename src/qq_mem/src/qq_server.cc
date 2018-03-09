@@ -71,7 +71,6 @@ int main(int argc, char** argv) {
   GeneralConfig config;
   config.SetString("target", std::string("localhost:") + FLAGS_port);
   config.SetString("engine_name", "qq_mem_compressed");
-  // config.SetString("engine_name", "qq_mem_uncompressed");
   config.SetString("sync_type", sync_type);
 
   config.SetString("load_source", "dump");
