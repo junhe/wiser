@@ -369,6 +369,65 @@ TEST_CASE( "SingleTermQueryProcessor3 works", "[engine]" ) {
   }
 }
 
+TEST_CASE( "TwoTermNonPhraseQueryProcessor3 works", "[engine]" ) {
+  OffsetPairs offset_pairs;
+  for (int i = 0; i < 10; i++) {
+    offset_pairs.push_back(std::make_tuple(i, i)); 
+  }
+
+  PostingListDelta pl01("hello");
+  PostingListDelta pl02("world");
+  PostingListDelta pl03("again");
+
+  for (int i = 0; i < 5; i++) {
+    pl01.AddPosting(StandardPosting(i, 3, offset_pairs, {1, 5, 11, 19}));
+    pl02.AddPosting(StandardPosting(i, 3, offset_pairs, {2, 8,     20}));
+    pl03.AddPosting(StandardPosting(i, 3, offset_pairs, {7, 10}));
+  }
+
+  DocLengthStore store;
+  for (int i = 0; i < 5; i++) {
+    store.AddLength(i, (5 - i) * 10);
+  }
+
+  Bm25Similarity similarity(store.GetAvgLength());
+
+  SECTION("Find top 5") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
+
+    TwoTermNonPhraseQueryProcessor3 processor(similarity, &iterators, store, 100, 5);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 5);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3, 2, 1, 0});
+  }
+
+  SECTION("Find top 2") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
+
+    TwoTermNonPhraseQueryProcessor3 processor(similarity, &iterators, store, 100, 2);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 2);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
+  }
+}
+
+
 
 TEST_CASE( "TwoTermNonPhraseQueryProcessor2 works", "[engine]" ) {
   OffsetPairs offset_pairs;
