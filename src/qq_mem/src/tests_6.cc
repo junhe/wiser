@@ -246,41 +246,7 @@ TEST_CASE( "Filter offsets by positions in ResultDocEntry2", "[result]" ) {
   REQUIRE(std::get<1>(ret[1][1]) == 75);
 }
 
-
-TEST_CASE( "Filter offsets by positions", "[result]" ) {
-  PositionInfoTable position_table{
-    CreateInfoVec({0, 2,   0, 4}),
-    CreateInfoVec({0, 1,   0, 2})
-  };
-
-  //                                        0, 1,   3, 6,   10,15   21,28,  36,45
-  VarintBuffer buf_1 = CreateOffsetPairBuf({0, 1,   2, 3,   4, 5,   6, 7,   8, 9});
-  auto iter_1 = CreateOffsetIter(&buf_1);
-  //                                        10, 21,   33, 46,  60, 75
-  VarintBuffer buf_2 = CreateOffsetPairBuf({10, 11,   12, 13,  14, 15});
-  auto iter_2 = CreateOffsetIter(&buf_2);
-  OffsetIterators offset_iters{iter_1, iter_2};
-  
-  ResultDocEntry entry(0, 1.0, offset_iters, position_table, true);
-  std::vector<OffsetPairs> ret = entry.FilterOffsetByPosition();
-
-  REQUIRE(ret.size() == 2);
-  // first term
-  REQUIRE(std::get<0>(ret[0][0]) == 10);
-  REQUIRE(std::get<1>(ret[0][0]) == 15);
-
-  REQUIRE(std::get<0>(ret[0][1]) == 36);
-  REQUIRE(std::get<1>(ret[0][1]) == 45);
-    
-  // second term
-  REQUIRE(std::get<0>(ret[1][0]) == 33);
-  REQUIRE(std::get<1>(ret[1][0]) == 46);
-
-  REQUIRE(std::get<0>(ret[1][1]) == 60);
-  REQUIRE(std::get<1>(ret[1][1]) == 75);
-}
-
-TEST_CASE( "Return offset vector", "[result]" ) {
+TEST_CASE( "Return offset vector by ResultDocEntry2", "[result]" ) {
   //                                        0, 1,   3, 6   
   VarintBuffer buf_1 = CreateOffsetPairBuf({0, 1,   2, 3});
   auto iter_1 = CreateOffsetIter(&buf_1);
@@ -289,7 +255,7 @@ TEST_CASE( "Return offset vector", "[result]" ) {
   auto iter_2 = CreateOffsetIter(&buf_2);
   OffsetIterators offset_iters{iter_1, iter_2};
 
-  ResultDocEntry entry(0, 1.0);
+  ResultDocEntry2 entry(0, 1.0);
   entry.offset_iters = offset_iters;
 
   std::vector<OffsetPairs> table = entry.ExpandOffsets();
@@ -308,6 +274,7 @@ TEST_CASE( "Return offset vector", "[result]" ) {
   REQUIRE(std::get<0>(table[1][2]) == 60);
   REQUIRE(std::get<1>(table[1][2]) == 75);
 }
+
 
 
 TEST_CASE( "QueryProducer", "[query]" ) {
