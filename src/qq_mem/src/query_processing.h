@@ -1388,6 +1388,223 @@ class QueryProcessor {
 };
 
 
+class QueryProcessor2 {
+ public:
+  QueryProcessor2(
+    const Bm25Similarity &similarity,
+    std::vector<PostingListDeltaIterator> *pl_iterators,
+    const DocLengthStore &doc_lengths,
+    const int n_total_docs_in_index,
+    const int k = 5,
+    const bool is_phrase = false)
+  : similarity_(similarity),
+    n_lists_(pl_iterators->size()),
+    doc_lengths_(doc_lengths),
+    pl_iterators_(*pl_iterators),
+    k_(k),
+    is_phrase_(is_phrase),
+    idfs_of_terms_(n_lists_),
+    n_total_docs_in_index_(n_total_docs_in_index),
+    phrase_qp_(8)
+  {
+    for (int i = 0; i < n_lists_; i++) {
+      idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
+                                      pl_iterators_[i].Size());
+    }
+  }
+
+  std::vector<ResultDocEntry2> Process() {
+    if (pl_iterators_.size() == 1) {
+      return ProcessSingleTerm();
+    } else if (pl_iterators_.size() == 2) {
+      return ProcessTwoTerm();
+    } else {
+      return ProcessMultipleTerms();
+    }
+  }
+
+  std::vector<ResultDocEntry2> ProcessMultipleTerms() {
+    bool finished = false;
+    DocIdType max_doc_id;
+
+    // loop inv: all intersections before iterators have been found
+    while (finished == false) {
+      // find max doc id
+      max_doc_id = -1;
+      finished = FindMax(&max_doc_id);
+
+      if (finished == true) {
+        break;
+      }
+
+      finished = FindMatch(max_doc_id);
+    } // while
+
+    return SortHeap();
+  }
+
+  std::vector<ResultDocEntry2> ProcessSingleTerm() {
+    auto &it = pl_iterators_[0];
+    PositionInfoTable2 position_table(0, 0);
+
+    while (it.IsEnd() == false) {
+      DocIdType doc_id = it.DocId();
+      RankDoc(doc_id, position_table);
+      it.Advance();
+    }
+
+    return SortHeap();
+  }
+
+  std::vector<ResultDocEntry2> ProcessTwoTerm() {
+    auto &it_0 = pl_iterators_[0];
+    auto &it_1 = pl_iterators_[1];
+    DocIdType doc0, doc1;
+
+    while (it_0.IsEnd() == false && it_1.IsEnd() == false) {
+      doc0 = it_0.DocId();
+      doc1 = it_1.DocId();
+      if (doc0 > doc1) {
+        it_1.SkipForward(doc0);
+      } else if (doc0 < doc1) {
+        it_0.SkipForward(doc1);
+      } else {
+        HandleTheFoundDoc(doc0); 
+
+        it_0.Advance();
+        it_1.Advance();
+      }
+    }
+
+    return SortHeap();
+  }
+
+ private:
+  // return true: end reached
+  bool FindMax(DocIdType * max_doc_id) {
+    for (int list_i = 0; list_i < n_lists_; list_i++) {
+      auto &it = pl_iterators_[list_i];
+
+      if (it.IsEnd()) {
+        return true;
+      }
+
+      const DocIdType cur_doc_id = it.DocId(); 
+      if (cur_doc_id > *max_doc_id) {
+        *max_doc_id = cur_doc_id; 
+      }
+    }
+    return false;
+  }
+
+  // return true: end reached
+  bool FindMatch(DocIdType max_doc_id) {
+    // Try to reach max_doc_id in all posting lists_
+    int list_i;
+    for (list_i = 0; list_i < n_lists_; list_i++) {
+      auto &it = pl_iterators_[list_i];
+
+      it.SkipForward(max_doc_id);
+      if (it.IsEnd()) {
+        return true;
+      }
+
+      if (it.DocId() != max_doc_id) {
+        break;
+      }
+
+      if (list_i == n_lists_ - 1) {
+        // HandleTheFoundDoc(max_doc_id);
+        HandleTheFoundDoc(max_doc_id);
+        // Advance iterators
+        for (int i = 0; i < n_lists_; i++) {
+          pl_iterators_[i].Advance();
+        }
+      }
+    }
+    return false;
+  }
+
+  PositionInfoTable2 FindPhrase() {
+    for (int i = 0; i < pl_iterators_.size(); i++) {
+      CompressedPositionIterator *p = phrase_qp_.Iterator(i);
+      pl_iterators_[i].AssignPositionBegin(p);
+    }
+    phrase_qp_.SetNumTerms(pl_iterators_.size());
+
+    return phrase_qp_.Process();
+  }
+
+  void HandleTheFoundDoc(const DocIdType &max_doc_id) {
+    if (is_phrase_ == true && pl_iterators_.size() > 1 ) {
+      auto position_table = FindPhrase();
+      if (position_table.NumUsedCols() > 0) {
+        RankDoc(max_doc_id, position_table);
+      }
+    } else {
+      PositionInfoTable2 position_table(0, 0);
+      RankDoc(max_doc_id, position_table);
+    }
+  }
+
+  void RankDoc(const DocIdType &max_doc_id, 
+      const PositionInfoTable2 &position_table) {
+    qq_float score_of_this_doc = CalcDocScore<PostingListDeltaIterator>(
+        pl_iterators_,
+        idfs_of_terms_,
+        doc_lengths_.GetLength(max_doc_id),
+        similarity_);
+
+    if (min_heap_.size() < k_) {
+      InsertToHeap(max_doc_id, score_of_this_doc, position_table);
+    } else {
+      if (score_of_this_doc > min_heap_.top().score) {
+        min_heap_.pop();
+        InsertToHeap(max_doc_id, score_of_this_doc, position_table);
+      }
+    }
+  }
+
+  std::vector<ResultDocEntry2> SortHeap() {
+    std::vector<ResultDocEntry2> ret;
+
+    int kk = k_;
+    while(!min_heap_.empty() && kk != 0) {
+      ret.push_back(min_heap_.top());
+      min_heap_.pop();
+      kk--;
+    }
+    std::reverse(ret.begin(), ret.end());
+    return ret;
+  }
+
+  void InsertToHeap(const DocIdType &doc_id, 
+                    const qq_float &score_of_this_doc,
+                    const PositionInfoTable2 &position_table)
+  {
+    OffsetIterators offset_iters;
+    for (int i = 0; i < n_lists_; i++) {
+      auto p = pl_iterators_[i].OffsetPairsBegin();
+      offset_iters.push_back(std::move(p));
+    }
+    min_heap_.emplace(doc_id, score_of_this_doc, 
+			offset_iters, position_table, is_phrase_);
+  }
+
+  const Bm25Similarity &similarity_;
+  const int n_lists_;
+  std::vector<PostingListDeltaIterator> &pl_iterators_;
+  const int k_;
+  const int n_total_docs_in_index_;
+  std::vector<qq_float> idfs_of_terms_;
+  MinHeap2 min_heap_;
+  const DocLengthStore &doc_lengths_;
+  bool is_phrase_;
+  PhraseQueryProcessor2<CompressedPositionIterator> phrase_qp_;
+};
+
+
+
 namespace qq_search {
 
 std::vector<ResultDocEntry> ProcessQueryDelta(
