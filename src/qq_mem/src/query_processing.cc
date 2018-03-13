@@ -10,15 +10,15 @@ std::vector<ResultDocEntry2> ProcessQueryDelta(
      const int k,
      const bool is_phase) {
   if (pl_iterators->size() == 1) {
-    SingleTermQueryProcessor2 qp(similarity, pl_iterators, doc_lengths, 
+    SingleTermQueryProcessor qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k);
     return qp.Process();
   } else if (pl_iterators->size() == 2 && is_phase == false) {
-    TwoTermNonPhraseQueryProcessor2 qp(similarity, pl_iterators, doc_lengths, 
+    TwoTermNonPhraseQueryProcessor qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k);
     return qp.Process();
   } else {
-    QueryProcessor2 qp(similarity, pl_iterators, doc_lengths, 
+    QueryProcessor qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k, is_phase);
     return qp.Process();
   }

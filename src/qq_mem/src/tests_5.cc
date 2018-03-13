@@ -12,7 +12,7 @@
 typedef std::vector<std::unique_ptr<PopIteratorService>> PositionIterators;
 
 
-TEST_CASE( "QueryProcessor2 works", "[engine]" ) {
+TEST_CASE( "QueryProcessor works", "[engine]" ) {
   OffsetPairs offset_pairs;
   for (int i = 0; i < 10; i++) {
     offset_pairs.push_back(std::make_tuple(i, i)); 
@@ -40,7 +40,7 @@ TEST_CASE( "QueryProcessor2 works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    QueryProcessor2 processor(similarity, &iterators, store, 100, 5, false);
+    QueryProcessor processor(similarity, &iterators, store, 100, 5, false);
     std::vector<ResultDocEntry2> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -57,7 +57,7 @@ TEST_CASE( "QueryProcessor2 works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    QueryProcessor2 processor(similarity, &iterators, store, 100, 5, true);
+    QueryProcessor processor(similarity, &iterators, store, 100, 5, true);
     std::vector<ResultDocEntry2> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -108,7 +108,7 @@ TEST_CASE( "QueryProcessor2 works", "[engine]" ) {
     iterators.push_back(pl02.Begin2());
     iterators.push_back(pl03.Begin2());
 
-    QueryProcessor2 processor(similarity, &iterators, store, 100, 5, true);
+    QueryProcessor processor(similarity, &iterators, store, 100, 5, true);
     std::vector<ResultDocEntry2> result = processor.Process();
     REQUIRE(result.size() == 0);
   }
@@ -118,7 +118,7 @@ TEST_CASE( "QueryProcessor2 works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    QueryProcessor2 processor(similarity, &iterators, store, 100, 2, false);
+    QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry2> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -134,7 +134,7 @@ TEST_CASE( "QueryProcessor2 works", "[engine]" ) {
     std::vector<PostingListDeltaIterator> iterators;
     iterators.push_back(pl01.Begin2());
 
-    QueryProcessor2 processor(similarity, &iterators, store, 100, 2, false);
+    QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry2> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -152,7 +152,7 @@ TEST_CASE( "QueryProcessor2 works", "[engine]" ) {
     iterators.push_back(pl02.Begin2());
     iterators.push_back(pl03.Begin2());
 
-    QueryProcessor2 processor(similarity, &iterators, store, 100, 2, false);
+    QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry2> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -166,9 +166,9 @@ TEST_CASE( "QueryProcessor2 works", "[engine]" ) {
 }
 
 
-// Note that SingleTermQueryProcessor2 may do lossy/nonlossy calculation
+// Note that SingleTermQueryProcessor may do lossy/nonlossy calculation
 // which may change the results.
-TEST_CASE( "SingleTermQueryProcessor2 works", "[engine]" ) {
+TEST_CASE( "SingleTermQueryProcessor works", "[engine]" ) {
   OffsetPairs offset_pairs;
   for (int i = 0; i < 10; i++) {
     offset_pairs.push_back(std::make_tuple(i, i)); 
@@ -192,7 +192,7 @@ TEST_CASE( "SingleTermQueryProcessor2 works", "[engine]" ) {
     std::vector<PostingListDeltaIterator> iterators;
     iterators.push_back(pl01.Begin2());
 
-    SingleTermQueryProcessor2 processor(similarity, &iterators, store, 100, 5);
+    SingleTermQueryProcessor processor(similarity, &iterators, store, 100, 5);
     std::vector<ResultDocEntry2> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -208,7 +208,7 @@ TEST_CASE( "SingleTermQueryProcessor2 works", "[engine]" ) {
     std::vector<PostingListDeltaIterator> iterators;
     iterators.push_back(pl01.Begin2());
 
-    SingleTermQueryProcessor2 processor(similarity, &iterators, store, 100, 2);
+    SingleTermQueryProcessor processor(similarity, &iterators, store, 100, 2);
     std::vector<ResultDocEntry2> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -222,7 +222,7 @@ TEST_CASE( "SingleTermQueryProcessor2 works", "[engine]" ) {
 }
 
 
-TEST_CASE( "TwoTermNonPhraseQueryProcessor2 works", "[engine]" ) {
+TEST_CASE( "TwoTermNonPhraseQueryProcessor works", "[engine]" ) {
   OffsetPairs offset_pairs;
   for (int i = 0; i < 10; i++) {
     offset_pairs.push_back(std::make_tuple(i, i)); 
@@ -250,7 +250,7 @@ TEST_CASE( "TwoTermNonPhraseQueryProcessor2 works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    TwoTermNonPhraseQueryProcessor2 processor(similarity, &iterators, store, 100, 5);
+    TwoTermNonPhraseQueryProcessor processor(similarity, &iterators, store, 100, 5);
     std::vector<ResultDocEntry2> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -267,7 +267,7 @@ TEST_CASE( "TwoTermNonPhraseQueryProcessor2 works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    TwoTermNonPhraseQueryProcessor2 processor(similarity, &iterators, store, 100, 2);
+    TwoTermNonPhraseQueryProcessor processor(similarity, &iterators, store, 100, 2);
     std::vector<ResultDocEntry2> result = processor.Process();
     REQUIRE(result.size() == 2);
 

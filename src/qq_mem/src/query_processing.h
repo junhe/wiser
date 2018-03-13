@@ -805,9 +805,9 @@ typedef std::priority_queue<ResultDocEntry2, std::vector<ResultDocEntry2>,
     std::greater<ResultDocEntry2> > MinHeap2;
 
 
-class SingleTermQueryProcessor2 {
+class SingleTermQueryProcessor {
  public:
-  SingleTermQueryProcessor2(
+  SingleTermQueryProcessor(
     const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators, 
     const DocLengthStore &doc_lengths,
@@ -887,9 +887,9 @@ class SingleTermQueryProcessor2 {
 };
 
 
-class TwoTermNonPhraseQueryProcessor2 {
+class TwoTermNonPhraseQueryProcessor {
  public:
-  TwoTermNonPhraseQueryProcessor2(
+  TwoTermNonPhraseQueryProcessor(
     const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators, 
     const DocLengthStore &doc_lengths,
@@ -988,9 +988,9 @@ class TwoTermNonPhraseQueryProcessor2 {
 };
 
 
-class QueryProcessor2 {
+class QueryProcessor {
  public:
-  QueryProcessor2(
+  QueryProcessor(
     const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators,
     const DocLengthStore &doc_lengths,
