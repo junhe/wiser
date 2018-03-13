@@ -2,7 +2,7 @@
 
 namespace qq_search {
 
-std::vector<ResultDocEntry2> ProcessQueryDelta(
+std::vector<ResultDocEntry> ProcessQueryDelta(
      const Bm25Similarity &similarity,
      std::vector<PostingListDeltaIterator> *pl_iterators, 
      const DocLengthStore &doc_lengths,

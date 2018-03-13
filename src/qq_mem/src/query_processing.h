@@ -554,7 +554,7 @@ class PhraseQueryProcessor {
 };
 
 
-struct ResultDocEntry2 {
+struct ResultDocEntry {
   DocIdType doc_id;
   qq_float score;
   
@@ -568,10 +568,10 @@ struct ResultDocEntry2 {
   OffsetIterators offset_iters;
   bool is_phrase = false;
 
-  ResultDocEntry2(const DocIdType &doc_id_in, const qq_float &score_in)
+  ResultDocEntry(const DocIdType &doc_id_in, const qq_float &score_in)
     :doc_id(doc_id_in), score(score_in), position_table(0, 0) {}
 
-  ResultDocEntry2(const DocIdType &doc_id_in, 
+  ResultDocEntry(const DocIdType &doc_id_in, 
                  const qq_float &score_in, 
                  IteratorPointers &pl_iters,
                  const PositionInfoTable2 position_table_in, 
@@ -590,7 +590,7 @@ struct ResultDocEntry2 {
     }
   }
 
-  ResultDocEntry2(const DocIdType &doc_id_in, 
+  ResultDocEntry(const DocIdType &doc_id_in, 
                  const qq_float &score_in, 
                  const OffsetIterators offset_iters_in, 
                  const bool is_phrase_in)
@@ -600,7 +600,7 @@ struct ResultDocEntry2 {
      is_phrase(is_phrase_in),
      position_table(0, 0) {}
 
-  ResultDocEntry2(const DocIdType &doc_id_in, 
+  ResultDocEntry(const DocIdType &doc_id_in, 
                  const qq_float &score_in, 
                  const OffsetIterators offset_iters_in, 
                  const PositionInfoTable2 position_table_in, 
@@ -659,12 +659,12 @@ struct ResultDocEntry2 {
     return offset_table;
   }
 
-  friend bool operator<(const ResultDocEntry2 &a, const ResultDocEntry2 &b)
+  friend bool operator<(const ResultDocEntry &a, const ResultDocEntry &b)
   {
     return a.score < b.score;
   }
 
-  friend bool operator>(const ResultDocEntry2 &a, const ResultDocEntry2 &b)
+  friend bool operator>(const ResultDocEntry &a, const ResultDocEntry &b)
   {
     return a.score > b.score;
   }
@@ -675,8 +675,8 @@ struct ResultDocEntry2 {
 };
 
 
-typedef std::priority_queue<ResultDocEntry2, std::vector<ResultDocEntry2>, 
-    std::greater<ResultDocEntry2> > MinHeap;
+typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
+    std::greater<ResultDocEntry> > MinHeap;
 
 
 class SingleTermQueryProcessor {
@@ -698,7 +698,7 @@ class SingleTermQueryProcessor {
         pl_iterators_[0].Size());
   }
 
-  std::vector<ResultDocEntry2> Process() {
+  std::vector<ResultDocEntry> Process() {
     auto &it = pl_iterators_[0];
 
     while (it.IsEnd() == false) {
@@ -738,8 +738,8 @@ class SingleTermQueryProcessor {
         false);
   }
 
-  std::vector<ResultDocEntry2> SortHeap() {
-    std::vector<ResultDocEntry2> ret;
+  std::vector<ResultDocEntry> SortHeap() {
+    std::vector<ResultDocEntry> ret;
 
     int kk = k_;
     while(!min_heap_.empty() && kk != 0) {
@@ -784,7 +784,7 @@ class TwoTermNonPhraseQueryProcessor {
     }
   }
 
-  std::vector<ResultDocEntry2> Process() {
+  std::vector<ResultDocEntry> Process() {
     auto &it_0 = pl_iterators_[0];
     auto &it_1 = pl_iterators_[1];
     DocIdType doc0, doc1;
@@ -825,8 +825,8 @@ class TwoTermNonPhraseQueryProcessor {
     }
   }
 
-  std::vector<ResultDocEntry2> SortHeap() {
-    std::vector<ResultDocEntry2> ret;
+  std::vector<ResultDocEntry> SortHeap() {
+    std::vector<ResultDocEntry> ret;
 
     int kk = k_;
     while(!min_heap_.empty() && kk != 0) {
@@ -887,7 +887,7 @@ class QueryProcessor {
     }
   }
 
-  std::vector<ResultDocEntry2> Process() {
+  std::vector<ResultDocEntry> Process() {
     if (pl_iterators_.size() == 1) {
       return ProcessSingleTerm();
     } else if (pl_iterators_.size() == 2) {
@@ -897,7 +897,7 @@ class QueryProcessor {
     }
   }
 
-  std::vector<ResultDocEntry2> ProcessMultipleTerms() {
+  std::vector<ResultDocEntry> ProcessMultipleTerms() {
     bool finished = false;
     DocIdType max_doc_id;
 
@@ -917,7 +917,7 @@ class QueryProcessor {
     return SortHeap();
   }
 
-  std::vector<ResultDocEntry2> ProcessSingleTerm() {
+  std::vector<ResultDocEntry> ProcessSingleTerm() {
     auto &it = pl_iterators_[0];
     PositionInfoTable2 position_table(0, 0);
 
@@ -930,7 +930,7 @@ class QueryProcessor {
     return SortHeap();
   }
 
-  std::vector<ResultDocEntry2> ProcessTwoTerm() {
+  std::vector<ResultDocEntry> ProcessTwoTerm() {
     auto &it_0 = pl_iterators_[0];
     auto &it_1 = pl_iterators_[1];
     DocIdType doc0, doc1;
@@ -1039,8 +1039,8 @@ class QueryProcessor {
     }
   }
 
-  std::vector<ResultDocEntry2> SortHeap() {
-    std::vector<ResultDocEntry2> ret;
+  std::vector<ResultDocEntry> SortHeap() {
+    std::vector<ResultDocEntry> ret;
 
     int kk = k_;
     while(!min_heap_.empty() && kk != 0) {
@@ -1081,7 +1081,7 @@ class QueryProcessor {
 
 namespace qq_search {
 
-std::vector<ResultDocEntry2> ProcessQueryDelta(
+std::vector<ResultDocEntry> ProcessQueryDelta(
     const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators, 
     const DocLengthStore &doc_lengths,
