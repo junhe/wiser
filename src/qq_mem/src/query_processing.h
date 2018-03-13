@@ -37,7 +37,7 @@ typedef std::vector<PositionInfoVec> PositionInfoTable;
 
 class PositionInfoArray {
  public:
-  PositionInfoArray() {}
+  PositionInfoArray() {} 
   PositionInfoArray(const int n_cols) :arr_(n_cols) {}
 
   void FastClear() {
@@ -552,6 +552,129 @@ class PhraseQueryProcessor {
   std::vector<PositionInfo> last_orig_popped_;
   bool list_exhausted_ = false;
 };
+
+
+struct ResultDocEntry2 {
+  DocIdType doc_id;
+  qq_float score;
+  
+  std::vector<PostingListDeltaIterator> pl_iterators;
+  // table[0]: row of position info structs for the first term
+  // table[1]: row of position info structs for the second term
+  PositionInfoTable2 position_table;
+  // offset_iters[0]: offset iterator for the first term
+  // offset_iters[1]: offset iterator for the second term
+  // ...
+  OffsetIterators offset_iters;
+  bool is_phrase = false;
+
+  ResultDocEntry2(const DocIdType &doc_id_in, const qq_float &score_in)
+    :doc_id(doc_id_in), score(score_in), position_table(0, 0) {}
+
+  ResultDocEntry2(const DocIdType &doc_id_in, 
+                 const qq_float &score_in, 
+                 IteratorPointers &pl_iters,
+                 const PositionInfoTable2 position_table_in, 
+                 const bool is_phrase_in)
+    :doc_id(doc_id_in), 
+     score(score_in), 
+     position_table(position_table_in), 
+     is_phrase(is_phrase_in) {
+
+    for (auto &p : pl_iters) {
+      PostingListDeltaIterator *pp = 
+        dynamic_cast<PostingListDeltaIterator *>(p.get());
+      LOG_IF(FATAL, p == nullptr) << "Cannot convert";
+
+      pl_iterators.push_back(*pp);
+    }
+  }
+
+  ResultDocEntry2(const DocIdType &doc_id_in, 
+                 const qq_float &score_in, 
+                 const OffsetIterators offset_iters_in, 
+                 const bool is_phrase_in)
+    :doc_id(doc_id_in), 
+     score(score_in), 
+     offset_iters(offset_iters_in),
+     is_phrase(is_phrase_in),
+     position_table(0, 0) {}
+
+  ResultDocEntry2(const DocIdType &doc_id_in, 
+                 const qq_float &score_in, 
+                 const OffsetIterators offset_iters_in, 
+                 const PositionInfoTable2 position_table_in, 
+                 const bool is_phrase_in)
+    :doc_id(doc_id_in), 
+     score(score_in), 
+     offset_iters(offset_iters_in),
+     position_table(position_table_in), 
+     is_phrase(is_phrase_in) {}
+
+  std::vector<OffsetPairs> OffsetsForHighliting() {
+    if (is_phrase == true) {
+      return FilterOffsetByPosition();
+    } else {
+      return ExpandOffsets();
+    }
+  }
+
+  std::vector<OffsetPairs> ExpandOffsets() {
+    std::vector<OffsetPairs> table(offset_iters.size());
+    for (int i = 0; i < offset_iters.size(); i++) {
+      auto &it = offset_iters[i];
+      while (it->IsEnd() == false) {
+        OffsetPair pair;
+        it->Pop(&pair);
+        table[i].push_back(pair);
+      }
+    }
+    return table;
+  }
+
+  // Make sure you have valid offset and positions in this object
+  // before calling this function
+  std::vector<OffsetPairs> FilterOffsetByPosition() {
+    std::vector<OffsetPairs> offset_table(position_table.NumUsedRows());
+
+    for (int row_i = 0; row_i < position_table.NumUsedRows(); row_i++) {
+      auto offset_iter = offset_iters[row_i];
+      const auto &row = position_table[row_i];
+
+      int offset_cur = -1;
+      for (int col_i = 0; col_i < row.UsedSize(); col_i++) {
+        OffsetPair pair;
+        while (offset_cur < row[col_i].term_appearance) {
+          // assert(offset_iter->IsEnd() == false);
+          LOG_IF(FATAL, offset_iter->IsEnd()) 
+            << "offset_iter does not suppose to reach the end." << std::endl;
+          offset_iter->Pop(&pair);
+          offset_cur++;
+        }
+
+        offset_table[row_i].push_back(pair);
+      }
+    }
+
+    return offset_table;
+  }
+
+  friend bool operator<(const ResultDocEntry2 &a, const ResultDocEntry2 &b)
+  {
+    return a.score < b.score;
+  }
+
+  friend bool operator>(const ResultDocEntry2 &a, const ResultDocEntry2 &b)
+  {
+    return a.score > b.score;
+  }
+
+  std::string ToStr() {
+    return std::to_string(doc_id) + " (" + std::to_string(score) + ")";
+  }
+};
+
+
 
 
 struct ResultDocEntry {
