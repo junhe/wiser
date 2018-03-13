@@ -801,6 +801,9 @@ struct ResultDocEntry {
 typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
     std::greater<ResultDocEntry> > MinHeap;
 
+typedef std::priority_queue<ResultDocEntry2, std::vector<ResultDocEntry2>, 
+    std::greater<ResultDocEntry2> > MinHeap2;
+
 
 class SingleTermQueryProcessor {
  public:
@@ -880,6 +883,88 @@ class SingleTermQueryProcessor {
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
   MinHeap min_heap_;
+  const DocLengthStore &doc_lengths_;
+};
+
+
+class SingleTermQueryProcessor2 {
+ public:
+  SingleTermQueryProcessor2(
+    const Bm25Similarity &similarity,
+    std::vector<PostingListDeltaIterator> *pl_iterators, 
+    const DocLengthStore &doc_lengths,
+    const int n_total_docs_in_index,
+    const int k = 5)
+   : similarity_(similarity),
+     doc_lengths_(doc_lengths),
+     pl_iterators_(*pl_iterators),
+     k_(k),
+     idfs_of_terms_(1),
+     n_total_docs_in_index_(n_total_docs_in_index)
+  {
+    idfs_of_terms_[0] = calc_es_idf(n_total_docs_in_index_, 
+        pl_iterators_[0].Size());
+  }
+
+  std::vector<ResultDocEntry2> Process() {
+    auto &it = pl_iterators_[0];
+
+    while (it.IsEnd() == false) {
+      RankDoc(it.DocId());
+      it.Advance();
+    }
+
+    return SortHeap();
+  }
+
+ private:
+  void RankDoc(const DocIdType &max_doc_id) {
+    qq_float score_of_this_doc = CalcDocScore<PostingListDeltaIterator>(
+        pl_iterators_,
+        idfs_of_terms_,
+        doc_lengths_.GetLength(max_doc_id),
+        similarity_);
+
+    if (min_heap_.size() < k_) {
+      InsertToHeap(max_doc_id, score_of_this_doc);
+    } else {
+      if (score_of_this_doc > min_heap_.top().score) {
+        min_heap_.pop();
+        InsertToHeap(max_doc_id, score_of_this_doc);
+      }
+    }
+  }
+
+  void InsertToHeap(const DocIdType &doc_id, 
+                    const qq_float &score_of_this_doc)
+  {
+    OffsetIterators offset_iters;
+    auto p = pl_iterators_[0].OffsetPairsBegin();
+    offset_iters.push_back(std::move(p));
+
+    min_heap_.emplace(doc_id, score_of_this_doc, offset_iters, 
+        false);
+  }
+
+  std::vector<ResultDocEntry2> SortHeap() {
+    std::vector<ResultDocEntry2> ret;
+
+    int kk = k_;
+    while(!min_heap_.empty() && kk != 0) {
+      ret.push_back(min_heap_.top());
+      min_heap_.pop();
+      kk--;
+    }
+    std::reverse(ret.begin(), ret.end());
+    return ret;
+  }
+
+  const Bm25Similarity &similarity_;
+  std::vector<PostingListDeltaIterator> &pl_iterators_;
+  const int k_;
+  const int n_total_docs_in_index_;
+  std::vector<qq_float> idfs_of_terms_;
+  MinHeap2 min_heap_;
   const DocLengthStore &doc_lengths_;
 };
 

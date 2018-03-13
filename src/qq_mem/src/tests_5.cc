@@ -220,6 +220,63 @@ TEST_CASE( "SingleTermQueryProcessor works", "[engine]" ) {
   }
 }
 
+
+// Note that SingleTermQueryProcessor2 may do lossy/nonlossy calculation
+// which may change the results.
+TEST_CASE( "SingleTermQueryProcessor2 works", "[engine]" ) {
+  OffsetPairs offset_pairs;
+  for (int i = 0; i < 10; i++) {
+    offset_pairs.push_back(std::make_tuple(i, i)); 
+  }
+
+  PostingListDelta pl01("hello");
+
+  for (int i = 0; i < 5; i++) {
+    pl01.AddPosting(StandardPosting(i, 3, offset_pairs, {1, 5, 11, 19}));
+  }
+
+  // larger doc id -> shorter length -> higher score
+  DocLengthStore store;
+  for (int i = 0; i < 5; i++) {
+    store.AddLength(i, (5 - i) * 10);
+  }
+
+  Bm25Similarity similarity(store.GetAvgLength());
+
+  SECTION("Find top 5") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+
+    SingleTermQueryProcessor2 processor(similarity, &iterators, store, 100, 5);
+    std::vector<ResultDocEntry2> result = processor.Process();
+    REQUIRE(result.size() == 5);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3, 2, 1, 0});
+  }
+
+  SECTION("Find top 2") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+
+    SingleTermQueryProcessor2 processor(similarity, &iterators, store, 100, 2);
+    std::vector<ResultDocEntry2> result = processor.Process();
+    REQUIRE(result.size() == 2);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
+  }
+}
+
+
 TEST_CASE( "TwoTermNonPhraseQueryProcessor works", "[engine]" ) {
   OffsetPairs offset_pairs;
   for (int i = 0; i < 10; i++) {
