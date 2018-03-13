@@ -798,11 +798,8 @@ struct ResultDocEntry {
 };
 
 
-typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
-    std::greater<ResultDocEntry> > MinHeap;
-
 typedef std::priority_queue<ResultDocEntry2, std::vector<ResultDocEntry2>, 
-    std::greater<ResultDocEntry2> > MinHeap2;
+    std::greater<ResultDocEntry2> > MinHeap;
 
 
 class SingleTermQueryProcessor {
@@ -882,7 +879,7 @@ class SingleTermQueryProcessor {
   const int k_;
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
-  MinHeap2 min_heap_;
+  MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
 };
 
@@ -982,7 +979,7 @@ class TwoTermNonPhraseQueryProcessor {
   const int k_;
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
-  MinHeap2 min_heap_;
+  MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
   PositionInfoTable2 empty_position_table_;
 };
@@ -1197,7 +1194,7 @@ class QueryProcessor {
   const int k_;
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
-  MinHeap2 min_heap_;
+  MinHeap min_heap_;
   const DocLengthStore &doc_lengths_;
   bool is_phrase_;
   PhraseQueryProcessor2<CompressedPositionIterator> phrase_qp_;
