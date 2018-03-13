@@ -1607,7 +1607,7 @@ class QueryProcessor2 {
 
 namespace qq_search {
 
-std::vector<ResultDocEntry> ProcessQueryDelta(
+std::vector<ResultDocEntry2> ProcessQueryDelta(
     const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators, 
     const DocLengthStore &doc_lengths,

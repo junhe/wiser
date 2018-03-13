@@ -2,7 +2,7 @@
 
 namespace qq_search {
 
-std::vector<ResultDocEntry> ProcessQueryDelta(
+std::vector<ResultDocEntry2> ProcessQueryDelta(
      const Bm25Similarity &similarity,
      std::vector<PostingListDeltaIterator> *pl_iterators, 
      const DocLengthStore &doc_lengths,
@@ -10,15 +10,15 @@ std::vector<ResultDocEntry> ProcessQueryDelta(
      const int k,
      const bool is_phase) {
   if (pl_iterators->size() == 1) {
-    SingleTermQueryProcessor qp(similarity, pl_iterators, doc_lengths, 
+    SingleTermQueryProcessor2 qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k);
     return qp.Process();
   } else if (pl_iterators->size() == 2 && is_phase == false) {
-    TwoTermNonPhraseQueryProcessor qp(similarity, pl_iterators, doc_lengths, 
+    TwoTermNonPhraseQueryProcessor2 qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k);
     return qp.Process();
   } else {
-    QueryProcessor qp(similarity, pl_iterators, doc_lengths, 
+    QueryProcessor2 qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k, is_phase);
     return qp.Process();
   }
