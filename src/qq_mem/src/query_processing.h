@@ -129,7 +129,7 @@ class PhraseQueryProcessor2 {
   PhraseQueryProcessor2(int capacity)
     :solid_iterators_(capacity), 
      last_orig_popped_(capacity), 
-     pos_table_(5, 40) {
+     pos_table_(2, 100) {
   }
 
   Position FindMaxAdjustedLastPopped() {
@@ -459,6 +459,20 @@ typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>,
     std::greater<ResultDocEntry> > MinHeap;
 
 
+class EntryGreater {
+ public:
+  bool operator() (const std::unique_ptr<ResultDocEntry> &a, 
+                   const std::unique_ptr<ResultDocEntry> &b) {
+    return a->score > b->score;
+  }
+};
+
+typedef std::priority_queue<
+          std::unique_ptr<ResultDocEntry>, 
+          std::vector<std::unique_ptr<ResultDocEntry>>, 
+          EntryGreater> MinPointerHeap;
+
+
 class SingleTermQueryProcessor {
  public:
   SingleTermQueryProcessor(
@@ -500,7 +514,7 @@ class SingleTermQueryProcessor {
     if (min_heap_.size() < k_) {
       InsertToHeap(max_doc_id, score_of_this_doc);
     } else {
-      if (score_of_this_doc > min_heap_.top().score) {
+      if (score_of_this_doc > min_heap_.top()->score) {
         min_heap_.pop();
         InsertToHeap(max_doc_id, score_of_this_doc);
       }
@@ -514,8 +528,8 @@ class SingleTermQueryProcessor {
     auto p = pl_iterators_[0].OffsetPairsBegin();
     offset_iters.push_back(std::move(p));
 
-    min_heap_.emplace(doc_id, score_of_this_doc, offset_iters, 
-        false);
+    min_heap_.emplace(new ResultDocEntry(doc_id, score_of_this_doc, offset_iters, 
+        false));
   }
 
   std::vector<ResultDocEntry> SortHeap() {
@@ -523,7 +537,7 @@ class SingleTermQueryProcessor {
 
     int kk = k_;
     while(!min_heap_.empty() && kk != 0) {
-      ret.push_back(min_heap_.top());
+      ret.push_back(*min_heap_.top().get());
       min_heap_.pop();
       kk--;
     }
@@ -536,7 +550,7 @@ class SingleTermQueryProcessor {
   const int k_;
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
-  MinHeap min_heap_;
+  MinPointerHeap min_heap_;
   const DocLengthStore &doc_lengths_;
 };
 
@@ -598,7 +612,7 @@ class TwoTermNonPhraseQueryProcessor {
     if (min_heap_.size() < k_) {
       InsertToHeap(max_doc_id, score_of_this_doc);
     } else {
-      if (score_of_this_doc > min_heap_.top().score) {
+      if (score_of_this_doc > min_heap_.top()->score) {
         min_heap_.pop();
         InsertToHeap(max_doc_id, score_of_this_doc);
       }
@@ -610,7 +624,7 @@ class TwoTermNonPhraseQueryProcessor {
 
     int kk = k_;
     while(!min_heap_.empty() && kk != 0) {
-      ret.push_back(min_heap_.top());
+      ret.push_back(*min_heap_.top().get());
       min_heap_.pop();
       kk--;
     }
@@ -626,8 +640,8 @@ class TwoTermNonPhraseQueryProcessor {
       auto p = pl_iterators_[i].OffsetPairsBegin();
       offset_iters.push_back(std::move(p));
     }
-    min_heap_.emplace(doc_id, score_of_this_doc, 
-			offset_iters, empty_position_table_, false);
+    min_heap_.emplace(new ResultDocEntry(doc_id, score_of_this_doc, 
+			offset_iters, empty_position_table_, false));
   }
 
   const Bm25Similarity &similarity_;
@@ -636,7 +650,7 @@ class TwoTermNonPhraseQueryProcessor {
   const int k_;
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
-  MinHeap min_heap_;
+  MinPointerHeap min_heap_;
   const DocLengthStore &doc_lengths_;
   PositionInfoTable2 empty_position_table_;
 };
@@ -812,7 +826,7 @@ class QueryProcessor {
     if (min_heap_.size() < k_) {
       InsertToHeap(max_doc_id, score_of_this_doc, position_table);
     } else {
-      if (score_of_this_doc > min_heap_.top().score) {
+      if (score_of_this_doc > min_heap_.top()->score) {
         min_heap_.pop();
         InsertToHeap(max_doc_id, score_of_this_doc, position_table);
       }
@@ -824,7 +838,7 @@ class QueryProcessor {
 
     int kk = k_;
     while(!min_heap_.empty() && kk != 0) {
-      ret.push_back(min_heap_.top());
+      ret.push_back(*min_heap_.top().get());
       min_heap_.pop();
       kk--;
     }
@@ -841,8 +855,8 @@ class QueryProcessor {
       auto p = pl_iterators_[i].OffsetPairsBegin();
       offset_iters.push_back(std::move(p));
     }
-    min_heap_.emplace(doc_id, score_of_this_doc, 
-			offset_iters, position_table, is_phrase_);
+    min_heap_.emplace(new ResultDocEntry(doc_id, score_of_this_doc, 
+			offset_iters, position_table, is_phrase_));
   }
 
   const Bm25Similarity &similarity_;
@@ -851,7 +865,7 @@ class QueryProcessor {
   const int k_;
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
-  MinHeap min_heap_;
+  MinPointerHeap min_heap_;
   const DocLengthStore &doc_lengths_;
   bool is_phrase_;
   PhraseQueryProcessor2<CompressedPositionIterator> phrase_qp_;
