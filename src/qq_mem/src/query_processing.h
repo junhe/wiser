@@ -757,11 +757,10 @@ class QueryProcessor {
 
   std::vector<ResultDocEntry> ProcessSingleTerm() {
     auto &it = pl_iterators_[0];
-    PositionInfoTable2 position_table(0, 0);
 
     while (it.IsEnd() == false) {
       DocIdType doc_id = it.DocId();
-      RankDoc(doc_id, position_table);
+      RankDocNonPhrase(doc_id);
       it.Advance();
     }
 
@@ -853,16 +852,14 @@ class QueryProcessor {
     if (is_phrase_ == true && pl_iterators_.size() > 1 ) {
       int n_matches = FindPhrase();
       if (n_matches > 0) {
-        RankDoc(max_doc_id, phrase_qp_.Table());
+        RankDocForPhrase(max_doc_id);
       }
     } else {
-      PositionInfoTable2 position_table(0, 0);
-      RankDoc(max_doc_id, position_table);
+      RankDocNonPhrase(max_doc_id);
     }
   }
 
-  void RankDoc(const DocIdType &max_doc_id, 
-      const PositionInfoTable2 &position_table) {
+  void RankDocForPhrase(const DocIdType &max_doc_id) {
     qq_float score_of_this_doc = CalcDocScore<PostingListDeltaIterator>(
         pl_iterators_,
         idfs_of_terms_,
@@ -870,10 +867,30 @@ class QueryProcessor {
         similarity_);
 
     if (min_heap_.size() < k_) {
+      InsertToHeap(max_doc_id, score_of_this_doc, phrase_qp_.Table());
+    } else {
+      if (score_of_this_doc > min_heap_.top()->score) {
+        min_heap_.pop();
+        InsertToHeap(max_doc_id, score_of_this_doc, phrase_qp_.Table());
+      }
+    }
+  }
+
+  void RankDocNonPhrase(const DocIdType &max_doc_id) {
+    qq_float score_of_this_doc = CalcDocScore<PostingListDeltaIterator>(
+        pl_iterators_,
+        idfs_of_terms_,
+        doc_lengths_.GetLength(max_doc_id),
+        similarity_);
+
+    if (min_heap_.size() < k_) {
+      PositionInfoTable2 position_table(0, 0);
       InsertToHeap(max_doc_id, score_of_this_doc, position_table);
     } else {
       if (score_of_this_doc > min_heap_.top()->score) {
         min_heap_.pop();
+
+        PositionInfoTable2 position_table(0, 0);
         InsertToHeap(max_doc_id, score_of_this_doc, position_table);
       }
     }
