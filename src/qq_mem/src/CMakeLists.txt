@@ -62,7 +62,7 @@ set(GRPC_LIBS
     )
 
 
-set(GLOG_LIB glog ${GPROFILER})
+set(GLOG_LIB glog ${GPROFILER} gflags)
 
 
 #######################################
@@ -111,6 +111,7 @@ add_executable( testmain
     tests_5.cc
     tests_6.cc
     tests_7.cc
+    tests_8.cc
     test_helpers.cc
     grpc_client_impl.cc
     ${ENGINE_SRCS}
@@ -186,20 +187,6 @@ target_link_libraries(intersect_bench
     ${GLOG_LIB}
 )
 
-add_executable(scoring_bench
-    scoring_bench.cc
-    ${ENGINE_SRCS}
-    ${PROTO_SRCS}
-    ${GRPC_SRCS}
-)
-target_link_libraries(scoring_bench
-    ${GRPC_LIBS}
-    protobuf::libprotobuf
-    ${BOOST_LIBS}
-    pthread
-    ${GLOG_LIB}
-)
-
 add_executable(sorting_bench
     sorting_bench.cc
     ${ENGINE_SRCS}
@@ -221,20 +208,6 @@ add_executable(snippet_bench
     ${GRPC_SRCS}
 )
 target_link_libraries(snippet_bench
-    ${GRPC_LIBS}
-    protobuf::libprotobuf
-    ${BOOST_LIBS}
-    pthread
-    ${GLOG_LIB}
-)
-
-add_executable(compression_bench
-    compression_bench.cc
-    ${ENGINE_SRCS}
-    ${PROTO_SRCS}
-    ${GRPC_SRCS}
-)
-target_link_libraries(compression_bench
     ${GRPC_LIBS}
     protobuf::libprotobuf
     ${BOOST_LIBS}

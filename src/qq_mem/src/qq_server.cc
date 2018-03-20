@@ -35,6 +35,14 @@ using qq::QQEngine;
 using std::chrono::system_clock;
 
 
+DEFINE_string(port, "50051", "GRPC listening port.");
+DEFINE_int32(n_secs, 0, "Server running time (seconds).");
+DEFINE_int32(n_threads, 1, "Number of async GRPC threads (it has no effect in SYNC mode.");
+DEFINE_int32(n_docs, 1000, "Number of documents to load");
+DEFINE_string(sync_type, "ASYNC", "Type of GPRC sync [ASYNC/SYNC]");
+
+
+
 static bool got_sigint = false;
 
 
@@ -50,23 +58,19 @@ int main(int argc, char** argv) {
   FLAGS_logtostderr = 1; // print to stderr instead of file
   FLAGS_minloglevel = 0; 
 
-  if (argc != 6) {
-    std::cout << "Usage: exefile port secs threads n_docs sync_type" << std::endl;
-    exit(1);
-  }
+  gflags::SetUsageMessage("Usage: " + std::string(argv[0]));
+	gflags::ParseCommandLineFlags(&argc, &argv, true);
 
   signal(SIGINT, sigint_handler);
 
-  std::string port(argv[1]);
-  int n_secs = std::stoi(argv[2]);
-  const int n_threads = std::atoi(argv[3]);
-  const int n_docs = std::atoi(argv[4]);
-  auto sync_type = argv[5];
+  int n_secs = FLAGS_n_secs;
+  const int n_threads = FLAGS_n_threads;
+  const int n_docs = FLAGS_n_docs;
+  auto sync_type = FLAGS_sync_type;
 
   GeneralConfig config;
-  config.SetString("target", std::string("localhost:") + port);
+  config.SetString("target", std::string("localhost:") + FLAGS_port);
   config.SetString("engine_name", "qq_mem_compressed");
-  // config.SetString("engine_name", "qq_mem_uncompressed");
   config.SetString("sync_type", sync_type);
 
   config.SetString("load_source", "dump");

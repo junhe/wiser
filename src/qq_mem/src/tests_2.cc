@@ -7,6 +7,7 @@
 #include "utils.h"
 #include "general_config.h"
 #include "query_pool.h"
+#include "posting_list_vec.h"
 #include "histogram.h"
 #include <grpc/support/histogram.h>
 
@@ -90,53 +91,6 @@ TEST_CASE( "SimpleHighlighter works for some corner cases", "[highlighter]" ) {
 
 
 
-TEST_CASE( "IntersectionResult works", "[intersection]" ) {
-  IntersectionResult res;
-
-  SECTION("Doc count works") {
-    res.SetDocCount("term1", 8);
-    REQUIRE(res.GetDocCount("term1") == 8);
-  }
-
-  SECTION("Basic Posting setting and getting work") {
-    StandardPosting *p0, *p1, *p2;
-    const QqMemPostingService *p;
-
-    res.SetPosting(0, "term1", p0);
-    res.SetPosting(1, "term1", p1);
-    res.SetPosting(2, "term1", p2);
-
-    auto row_it = res.row_cbegin();
-    auto col_it = IntersectionResult::col_cbegin(row_it);
-    p = IntersectionResult::GetPosting(col_it);
-    REQUIRE(IntersectionResult::GetCurDocId(row_it) == 0);
-    REQUIRE(p == p0);
-
-    col_it++;
-    REQUIRE(col_it == IntersectionResult::col_cend(row_it));
-
-
-    row_it++;
-    col_it = IntersectionResult::col_cbegin(row_it);
-    p = IntersectionResult::GetPosting(col_it);
-    REQUIRE(IntersectionResult::GetCurDocId(row_it) == 1);
-    REQUIRE(p == p1);
-
-    row_it++;
-    col_it = IntersectionResult::col_cbegin(row_it);
-    p = IntersectionResult::GetPosting(col_it);
-    REQUIRE(IntersectionResult::GetCurDocId(row_it) == 2);
-    REQUIRE(p == p2);
-
-    SECTION("GetRow()") {
-      const IntersectionResult::row_dict_t *row = res.GetRow(0);
-      auto row_it = res.row_cbegin();  
-      REQUIRE(&row_it->second == row);
-    }
-  }
-}
-
-
 TEST_CASE( "Extract offset pairs from a string", "[utils]" ) {
   SECTION("Adding entry") {
     std::map<Term, OffsetPairs> result;
@@ -217,43 +171,45 @@ TEST_CASE( "score_terms_in_doc()", "[score]" ) {
   SECTION("Query wisconsin") {
     // This is document "hello wisconsin"
     int length_of_this_doc = 2;
-    PostingList_Vec<PostingSimple> pl01("wisconsin");   
-    pl01.AddPosting(PostingSimple(0, 1, Positions{28}));
+    PostingListStandardVec pl01("wisconsin");
+    pl01.AddPosting(StandardPosting(0, 1));
 
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01};
-    std::vector<PostingList_Vec<PostingSimple>::iterator_t> posting_iters{0};
+    PostingListStandardVec::PostingListVecIterator it = 
+      pl01.Begin2();
     std::vector<qq_float> idfs_of_terms(1);
     idfs_of_terms[0] = calc_es_idf(3, 1);
 
-    qq_float doc_score = calc_doc_score_for_a_query<PostingSimple>(
-          lists, 
-          posting_iters,
-          idfs_of_terms,
-          n_total_docs_in_index,
-          avg_doc_length_in_index,
-          length_of_this_doc);
+    std::vector<PostingListStandardVec::PostingListVecIterator> iters{it};
+
+    qq_float doc_score = 
+      CalcDocScoreForOneQuery
+      <typename PostingListStandardVec::PostingListVecIterator>(
+        iters, idfs_of_terms, n_total_docs_in_index, avg_doc_length_in_index,
+        length_of_this_doc);
+
     REQUIRE(utils::format_double(doc_score, 3) == "1.09");
   }
 
   SECTION("Query hello") {
     // This is document "hello world"
     int length_of_this_doc = 2;
+  
+    PostingListStandardVec pl01("hello");
+    pl01.AddPosting(StandardPosting(0, 1));
 
-    PostingList_Vec<PostingSimple> pl01("hello");   
-    pl01.AddPosting(PostingSimple(0, 1, Positions{28}));
-
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01};
-    std::vector<PostingList_Vec<PostingSimple>::iterator_t> posting_iters{0};
+    PostingListStandardVec::PostingListVecIterator it = 
+      pl01.Begin2();
     std::vector<qq_float> idfs_of_terms(1);
     idfs_of_terms[0] = calc_es_idf(3, 3);
 
-    qq_float doc_score = calc_doc_score_for_a_query<PostingSimple>(
-          lists, 
-          posting_iters,
-          idfs_of_terms,
-          n_total_docs_in_index,
-          avg_doc_length_in_index,
-          length_of_this_doc);
+    std::vector<PostingListStandardVec::PostingListVecIterator> iters{it};
+
+    qq_float doc_score = 
+      CalcDocScoreForOneQuery
+      <typename PostingListStandardVec::PostingListVecIterator>(
+        iters, idfs_of_terms, n_total_docs_in_index, avg_doc_length_in_index,
+        length_of_this_doc);
+
     REQUIRE(utils::format_double(doc_score, 3) == "0.149");
   }
 
@@ -261,25 +217,29 @@ TEST_CASE( "score_terms_in_doc()", "[score]" ) {
     // This is document "hello world"
     int length_of_this_doc = 2;
 
-    PostingList_Vec<PostingSimple> pl01("hello");   
-    pl01.AddPosting(PostingSimple(0, 1, Positions{28}));
+    PostingListStandardVec pl01("hello");
+    pl01.AddPosting(StandardPosting(0, 1));
 
-    PostingList_Vec<PostingSimple> pl02("world");   
-    pl02.AddPosting(PostingSimple(0, 1, Positions{28}));
+    PostingListStandardVec pl02("world");
+    pl02.AddPosting(StandardPosting(0, 1));
 
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-    std::vector<PostingList_Vec<PostingSimple>::iterator_t> posting_iters{0, 0};
+    PostingListStandardVec::PostingListVecIterator it01 = 
+      pl01.Begin2();
+    PostingListStandardVec::PostingListVecIterator it02 = 
+      pl02.Begin2();
+
     std::vector<qq_float> idfs_of_terms(2);
     idfs_of_terms[0] = calc_es_idf(3, 3);
     idfs_of_terms[1] = calc_es_idf(3, 2);
 
-    qq_float doc_score = calc_doc_score_for_a_query<PostingSimple>(
-          lists, 
-          posting_iters,
-          idfs_of_terms,
-          n_total_docs_in_index,
-          avg_doc_length_in_index,
-          length_of_this_doc);
+    std::vector<PostingListStandardVec::PostingListVecIterator> iters{it01, it02};
+
+    qq_float doc_score = 
+      CalcDocScoreForOneQuery
+      <typename PostingListStandardVec::PostingListVecIterator>(
+        iters, idfs_of_terms, n_total_docs_in_index, avg_doc_length_in_index,
+        length_of_this_doc);
+
     REQUIRE(utils::format_double(doc_score, 3) == "0.672");
   }
 }

@@ -4,11 +4,12 @@
 #include "compression.h"
 #include "posting.h"
 #include "posting_list_delta.h"
-#include "posting_list_vec.h"
 #include "query_processing.h"
 #include "qq_mem_engine.h"
 
 #include "test_helpers.h"
+
+typedef std::vector<std::unique_ptr<PopIteratorService>> PositionIterators;
 
 
 TEST_CASE( "QueryProcessor works", "[engine]" ) {
@@ -32,12 +33,14 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     store.AddLength(i, (5 - i) * 10);
   }
 
-  SECTION("Find top 5") {
-    IteratorPointers iterators;
-    iterators.push_back(std::move(pl01.Begin()));
-    iterators.push_back(std::move(pl02.Begin()));
+  Bm25Similarity similarity(store.GetAvgLength());
 
-    QueryProcessor processor(&iterators, store, 100, 5, false);
+  SECTION("Find top 5") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
+
+    QueryProcessor processor(similarity, &iterators, store, 100, 5, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -50,11 +53,11 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
   }
 
   SECTION("Do phrase query of 'hello world'") {
-    IteratorPointers iterators;
-    iterators.push_back(std::move(pl01.Begin()));
-    iterators.push_back(std::move(pl02.Begin()));
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
 
-    QueryProcessor processor(&iterators, store, 100, 5, true);
+    QueryProcessor processor(similarity, &iterators, store, 100, 5, true);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -67,14 +70,14 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     // 1 (0)    19 (3)
     // 2 (0)    20 (2)
     auto &pos_table = result[0].position_table;
-    REQUIRE(pos_table.size() == 2);
-    REQUIRE(pos_table[0].size() == 2);
+    REQUIRE(pos_table.NumUsedRows() == 2);
+    REQUIRE(pos_table[0].UsedSize() == 2);
     REQUIRE(pos_table[0][0].pos == 1);
     REQUIRE(pos_table[0][0].term_appearance == 0);
     REQUIRE(pos_table[0][1].pos == 19);
     REQUIRE(pos_table[0][1].term_appearance == 3);
 
-    REQUIRE(pos_table[1].size() == 2);
+    REQUIRE(pos_table[1].UsedSize() == 2);
     REQUIRE(pos_table[1][0].pos == 2);
     REQUIRE(pos_table[1][0].term_appearance == 0);
     REQUIRE(pos_table[1][1].pos == 20);
@@ -101,21 +104,21 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
   }
 
   SECTION("Do phrase query of 'world again'") {
-    IteratorPointers iterators;
-    iterators.push_back(std::move(pl02.Begin()));
-    iterators.push_back(std::move(pl03.Begin()));
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl02.Begin2());
+    iterators.push_back(pl03.Begin2());
 
-    QueryProcessor processor(&iterators, store, 100, 5, true);
+    QueryProcessor processor(similarity, &iterators, store, 100, 5, true);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 0);
   }
 
   SECTION("Find top 2") {
-    IteratorPointers iterators;
-    iterators.push_back(std::move(pl01.Begin()));
-    iterators.push_back(std::move(pl02.Begin()));
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
 
-    QueryProcessor processor(&iterators, store, 100, 2, false);
+    QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -128,10 +131,10 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
   }
 
   SECTION("Find top 2 within one postinglist") {
-    IteratorPointers iterators;
-    iterators.push_back(std::move(pl01.Begin()));
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
 
-    QueryProcessor processor(&iterators, store, 100, 2, false);
+    QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -144,12 +147,127 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
   }
 
   SECTION("Find top 2 with three posting lists") {
-    IteratorPointers iterators;
-    iterators.push_back(std::move(pl01.Begin()));
-    iterators.push_back(std::move(pl02.Begin()));
-    iterators.push_back(std::move(pl03.Begin()));
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
+    iterators.push_back(pl03.Begin2());
 
-    QueryProcessor processor(&iterators, store, 100, 2, false);
+    QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 2);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
+  }
+}
+
+
+// Note that SingleTermQueryProcessor may do lossy/nonlossy calculation
+// which may change the results.
+TEST_CASE( "SingleTermQueryProcessor works", "[engine]" ) {
+  OffsetPairs offset_pairs;
+  for (int i = 0; i < 10; i++) {
+    offset_pairs.push_back(std::make_tuple(i, i)); 
+  }
+
+  PostingListDelta pl01("hello");
+
+  for (int i = 0; i < 5; i++) {
+    pl01.AddPosting(StandardPosting(i, 3, offset_pairs, {1, 5, 11, 19}));
+  }
+
+  // larger doc id -> shorter length -> higher score
+  DocLengthStore store;
+  for (int i = 0; i < 5; i++) {
+    store.AddLength(i, (5 - i) * 10);
+  }
+
+  Bm25Similarity similarity(store.GetAvgLength());
+
+  SECTION("Find top 5") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+
+    SingleTermQueryProcessor processor(similarity, &iterators, store, 100, 5);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 5);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3, 2, 1, 0});
+  }
+
+  SECTION("Find top 2") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+
+    SingleTermQueryProcessor processor(similarity, &iterators, store, 100, 2);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 2);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3});
+  }
+}
+
+
+TEST_CASE( "TwoTermNonPhraseQueryProcessor works", "[engine]" ) {
+  OffsetPairs offset_pairs;
+  for (int i = 0; i < 10; i++) {
+    offset_pairs.push_back(std::make_tuple(i, i)); 
+  }
+
+  PostingListDelta pl01("hello");
+  PostingListDelta pl02("world");
+  PostingListDelta pl03("again");
+
+  for (int i = 0; i < 5; i++) {
+    pl01.AddPosting(StandardPosting(i, 3, offset_pairs, {1, 5, 11, 19}));
+    pl02.AddPosting(StandardPosting(i, 3, offset_pairs, {2, 8,     20}));
+    pl03.AddPosting(StandardPosting(i, 3, offset_pairs, {7, 10}));
+  }
+
+  DocLengthStore store;
+  for (int i = 0; i < 5; i++) {
+    store.AddLength(i, (5 - i) * 10);
+  }
+
+  Bm25Similarity similarity(store.GetAvgLength());
+
+  SECTION("Find top 5") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
+
+    TwoTermNonPhraseQueryProcessor processor(similarity, &iterators, store, 100, 5);
+    std::vector<ResultDocEntry> result = processor.Process();
+    REQUIRE(result.size() == 5);
+
+    std::vector<DocIdType> doc_ids;
+    for (auto & entry : result) {
+      doc_ids.push_back(entry.doc_id);
+    }
+
+    REQUIRE(doc_ids == std::vector<DocIdType>{4, 3, 2, 1, 0});
+  }
+
+  SECTION("Find top 2") {
+    std::vector<PostingListDeltaIterator> iterators;
+    iterators.push_back(pl01.Begin2());
+    iterators.push_back(pl02.Begin2());
+
+    TwoTermNonPhraseQueryProcessor processor(similarity, &iterators, store, 100, 2);
     std::vector<ResultDocEntry> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -190,6 +308,7 @@ TEST_CASE( "PostingList_Vec iterator", "[posting_list]" ) {
     REQUIRE(off_it->IsEnd());
   }
 }
+
 
 
 TEST_CASE( "PostingListDelta iterator", "[posting_list]" ) {
@@ -287,17 +406,32 @@ PositionIterators create_iterators(std::vector<VarintBuffer *> buffers, std::vec
   return iterators;
 }
 
-TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
+void AssignIterators(PhraseQueryProcessor2<VarintIterator> &pqp, 
+                     std::vector<VarintBuffer *> buffers, 
+                     std::vector<int> sizes) {
+  std::vector<VarintIterator> &iterators = *pqp.Iterators();
+  for (int i = 0; i < buffers.size(); i++) {
+    iterators[i] =  VarintIterator(*buffers[i], sizes[i]);
+  }
+  pqp.SetNumTerms(buffers.size());
+}
+
+
+TEST_CASE( "PhraseQueryProcessor2", "[engine00]" ) {
   SECTION("Simple") {
     // 3, 4 is a match
     VarintBuffer buf01 = create_varint_buffer(std::vector<uint32_t>{1, 3, 5});
     VarintBuffer buf02 = create_varint_buffer(std::vector<uint32_t>{4});
-    auto iterators = create_iterators({&buf01, &buf02}, {3, 1});
-
-    PhraseQueryProcessor qp(&iterators);
+    
+    PhraseQueryProcessor2<VarintIterator> qp(2);
+    AssignIterators(qp, {&buf01, &buf02}, {3, 1});
    
     SECTION("Returning info table") {
-      auto info_table = qp.Process();
+      qp.Process();
+      auto info_table = qp.Table();
+      
+      REQUIRE(qp.NumOfMatches() == 1);
+
       REQUIRE(info_table[0][0].pos == 3);
       REQUIRE(info_table[0][0].term_appearance == 1);
 
@@ -336,69 +470,85 @@ TEST_CASE( "PhraseQueryProcessor", "[engine00]" ) {
   SECTION("Two empty lists") {
     VarintBuffer buf01 = create_varint_buffer(std::vector<uint32_t>{});
     VarintBuffer buf02 = create_varint_buffer(std::vector<uint32_t>{});
-    auto iterators = create_iterators({&buf01, &buf02}, {0, 0});
 
-    PhraseQueryProcessor qp(&iterators);
-    auto table = qp.Process();
-    REQUIRE(table.size() == 2); // two rows, each for a term
-    REQUIRE(table[0].size() == 0);
-    REQUIRE(table[1].size() == 0);
+    PhraseQueryProcessor2<VarintIterator> qp(10);
+    AssignIterators(qp, {&buf01, &buf02}, {0, 0});
+
+    qp.Process();
+
+    auto table = qp.Table();
+    REQUIRE(table.NumUsedRows() == 0);
+    REQUIRE(qp.NumOfMatches() == 0);
   }
 
   SECTION("No matches") {
     VarintBuffer buf01 = create_varint_buffer({1, 8, 20});
     VarintBuffer buf02 = create_varint_buffer({0, 7, 19});
-    auto iterators = create_iterators({&buf01, &buf02}, {3, 3});
 
-    PhraseQueryProcessor qp(&iterators);
-    auto table = qp.Process();
+    PhraseQueryProcessor2<VarintIterator> qp(10);
+    AssignIterators(qp, {&buf01, &buf02}, {3, 3});
 
-    REQUIRE(table[0].size() == 0);
+    qp.Process();
+
+    auto table = qp.Table();
+    REQUIRE(table.NumUsedRows() == 0);
+
+    REQUIRE(qp.NumOfMatches() == 0);
   }
  
   SECTION("Bad positions") {
     // Two terms cannot be at the same position
     VarintBuffer buf01 = create_varint_buffer({0});
     VarintBuffer buf02 = create_varint_buffer({0});
-    auto iterators = create_iterators({&buf01, &buf02}, {1, 1});
 
-    PhraseQueryProcessor qp(&iterators);
-    auto table = qp.Process();
+    PhraseQueryProcessor2<VarintIterator> qp(10);
+    AssignIterators(qp, {&buf01, &buf02}, {1, 1});
 
-    REQUIRE(table[0].size() == 0);
+    qp.Process();
+
+    auto table = qp.Table();
+    REQUIRE(table.NumUsedRows() == 0);
+
+    REQUIRE(qp.NumOfMatches() == 0);
   }
  
   SECTION("One list is empty") {
     VarintBuffer buf01 = create_varint_buffer({10});
     VarintBuffer buf02 = create_varint_buffer({});
-    auto iterators = create_iterators({&buf01, &buf02}, {1, 0});
 
-    PhraseQueryProcessor qp(&iterators);
-    auto table = qp.Process();
+    PhraseQueryProcessor2<VarintIterator> qp(10);
+    AssignIterators(qp, {&buf01, &buf02}, {1, 0});
+    
+    qp.Process();
 
-    REQUIRE(table[0].size() == 0);
+    auto table = qp.Table();
+    REQUIRE(table.NumUsedRows() == 0);
+
+    REQUIRE(qp.NumOfMatches() == 0);
   }
 
   SECTION("Multiple matches") {
     VarintBuffer buf01 = create_varint_buffer({10, 20,     100, 1000});
     VarintBuffer buf02 = create_varint_buffer({11, 21, 88, 101});
-    auto iterators = create_iterators({&buf01, &buf02}, {4, 4});
 
-    PhraseQueryProcessor qp(&iterators);
-    auto table = qp.Process();
+    PhraseQueryProcessor2<VarintIterator> qp(10);
+    AssignIterators(qp, {&buf01, &buf02}, {4, 4});
 
-    REQUIRE(table.size() == 2);
-    REQUIRE(table[0].size() == 3);
+    qp.Process();
+    auto table = qp.Table();
+
+    REQUIRE(qp.NumOfMatches() == 3);
+
+    REQUIRE(table.NumUsedRows() == 2);
+    REQUIRE(table[0].UsedSize() == 3);
     REQUIRE(table[0][0].pos == 10);
     REQUIRE(table[0][1].pos == 20);
     REQUIRE(table[0][2].pos == 100);
 
-    REQUIRE(table[1].size() == 3);
+    REQUIRE(table[1].UsedSize() == 3);
     REQUIRE(table[1][0].pos == 11);
     REQUIRE(table[1][1].pos == 21);
     REQUIRE(table[1][2].pos == 101);
-
-    // REQUIRE(positions == Positions{10, 20, 100});
   }
 }
 

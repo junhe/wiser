@@ -470,12 +470,6 @@ class SyncServer : public ServerService {
 };
 
 
-
-std::unique_ptr<AsyncServer> CreateServer(const std::string &target, 
-    int n_threads_per_cq, int n_server_threads, int n_secs);
-std::unique_ptr<AsyncServer> CreateServer(const std::string &target, 
-    int n_threads_per_cq, int n_server_threads, int n_secs,
-    const std::string &line_doc_path, const int &n_rows);
 std::unique_ptr<ServerService> CreateServer(const GeneralConfig config);
 
 #endif

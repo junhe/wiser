@@ -28,14 +28,22 @@ compression_bench:
 
 grpc_benchmark:
 	./build.sh
-	python ./tools/run_client_server.py ./build/grpc_benchmark ./build/qq_server
-
+	echo ------------------------------------------------------
+	python ./tools/run_client_server2.py \
+		./build/in_proc_engine_bench_querylog '-use_grpc=true -n_threads=16 -use_profiler=false' \
+		./build/qq_server '-sync_type=ASYNC -n_threads=1' \
+		30
 
 in_proc_engine_bench_querylog:
-	cd build && cmake ../src/ && make -j32 in_proc_engine_bench_querylog && ./in_proc_engine_bench_querylog
+	cd build && cmake ../src/ && \
+		make -j32 in_proc_engine_bench_querylog && \
+		CPUPROFILE_FREQUENCY=1000 ./in_proc_engine_bench_querylog -use_grpc=false -use_profiler=true
 
 profile:
 	google-pprof --text ./build/in_proc_engine_bench_querylog ./build/my.profile.new
+
+profile_gv:
+	google-pprof --pdf ./build/in_proc_engine_bench_querylog ./build/my.profile.new > profile.pdf
 
 run_qq_mem:
 	./build.sh

@@ -155,27 +155,23 @@ TEST_CASE( "Serialization", "[serial]" ) {
   }
 }
 
-TEST_CASE( "Whole engine test", "[serial]" ) {
+TEST_CASE( "Whole engine serialization test", "[serial]" ) {
   SECTION("The whole engine") {
-    GeneralConfig config;
-    config.SetString("inverted_index", "compressed");
-    QqMemEngine engine(config);
+    QqMemEngineDelta engine;
 
     DocInfo info("hello world hello", "hello world", "", "", "TOKEN_ONLY");
     engine.AddDocument(info);
 
     engine.Serialize("/tmp/test_folder");
 
-    QqMemEngine engine2(config);
+    QqMemEngineDelta engine2;
     engine2.Deserialize("/tmp/test_folder");
 
     REQUIRE(engine == engine2);
   }
 
   SECTION("The whole engine, a lot docs") {
-    GeneralConfig config;
-    config.SetString("inverted_index", "compressed");
-    QqMemEngine engine(config);
+    QqMemEngineDelta engine;
 
     for (int i = 0; i < 1000; i++) {
       DocInfo info("hello world hello", 
@@ -185,7 +181,7 @@ TEST_CASE( "Whole engine test", "[serial]" ) {
 
     engine.Serialize("/tmp/test_folder");
 
-    QqMemEngine engine2(config);
+    QqMemEngineDelta engine2;
     engine2.Deserialize("/tmp/test_folder");
 
     REQUIRE(engine == engine2);
@@ -195,16 +191,14 @@ TEST_CASE( "Whole engine test", "[serial]" ) {
     std::string path = "/tmp/test_folder";
     utils::RemoveDir(path);
 
-    GeneralConfig config;
-    config.SetString("inverted_index", "compressed");
-    QqMemEngine engine(config);
+    QqMemEngineDelta engine;
 
     engine.LoadLocalDocuments("src/testdata/line_doc_with_positions", 1000, 
         "WITH_POSITIONS");
 
     engine.Serialize(path);
 
-    QqMemEngine engine2(config);
+    QqMemEngineDelta engine2;
     engine2.Deserialize(path);
 
     REQUIRE(engine == engine2);

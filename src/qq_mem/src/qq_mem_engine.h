@@ -5,6 +5,7 @@
 
 #include <boost/filesystem.hpp>
 
+#include "posting.h"
 #include "doc_length_store.h"
 #include "query_processing.h"
 #include "utils.h"
@@ -39,129 +40,6 @@ class InvertedIndexImpl: public InvertedIndexService {
       const std::string &tokens, const std::string &token_offsets) = 0;
   virtual void AddDocumentWithPositions(const int &doc_id, 
       const DocInfo &doc_info) = 0;
-};
-
-
-class InvertedIndexQqMemVec: public InvertedIndexImpl {
- private:
-  typedef PostingListStandardVec PostingListType;
-  typedef std::unordered_map<Term, PostingListType> IndexStore;
-  IndexStore index_;
-
- public:
-  typedef IndexStore::const_iterator const_iterator;
-  typedef std::vector<const PostingListType*> PlPointers;
-
-  PlPointers FindPostinglists(const TermList &terms) const {
-    PlPointers postinglist_pointers;
-
-    for (auto term : terms) {
-      auto it = index_.find(term);
-      if (it == index_.end()) {
-        break;
-      }
-
-      postinglist_pointers.push_back(&it->second);
-    }
-
-    return postinglist_pointers;
-  }
-
-  IteratorPointers FindIterators(const TermList &terms) const {
-    IteratorPointers it_pointers;
-    PlPointers pl_pointers = FindPostinglists(terms);
-    for (auto &pl : pl_pointers) {
-      it_pointers.push_back(std::move(pl->Begin()));
-    }
-
-    return it_pointers;
-  }
-
-  std::map<std::string, int> PostinglistSizes(const TermList &terms) const {
-    std::map<std::string, int> ret;
-
-    auto pointers = FindPostinglists(terms);
-    for (auto p : pointers) {
-      ret[p->GetTerm()] = p->Size();
-    }
-
-    return ret;
-  }
-
-  int Size() const {
-    return index_.size();
-  }
-
- protected:
-	void AddDocumentWithPositions(const int &doc_id, const DocInfo &doc_info) {
-		TermList token_vec = doc_info.GetTokens();
-		std::vector<Offsets> offsets_parsed = doc_info.GetOffsetPairsVec();
-		std::vector<Positions> positions_table = doc_info.GetPositions();
-
-		assert(token_vec.size() == offsets_parsed.size());
-
-		for (int i = 0; i < token_vec.size(); i++) {
-			IndexStore::iterator it = index_.find(token_vec[i]);
-
-			if (it == index_.cend()) {
-				std::pair<IndexStore::iterator, bool> ret;
-				ret = index_.insert( std::make_pair(token_vec[i], PostingListType(token_vec[i])) );
-				it = ret.first;
-			} 
-
-			PostingListType &postinglist = it->second;
-			postinglist.AddPosting(
-					StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i],
-						positions_table[i]));
-		}
-	}
-
-  void AddDocumentNaive(const int &doc_id, const std::string &body, 
-      const std::string &tokens) {
-    utils::CountMapType token_counts = utils::count_tokens(tokens);
-    std::map<Term, OffsetPairs> term_offsets = utils::extract_offset_pairs(tokens);
-
-    for (auto token_it = token_counts.begin(); token_it != token_counts.end(); 
-        token_it++) {
-      IndexStore::iterator it;
-      auto term = token_it->first;
-      it = index_.find(term);
-
-      if (it == index_.cend()) {
-        // term does not exist
-        std::pair<IndexStore::iterator, bool> ret;
-        ret = index_.insert( std::make_pair(term, PostingListType(term)) );
-        it = ret.first;
-      } 
-
-      PostingListType &postinglist = it->second;        
-      postinglist.AddPosting(
-          StandardPosting(doc_id, token_it->second, term_offsets[term]));
-    }
-  }
-
-  void AddDocumentWithOffsets(const int &doc_id, const std::string &body, 
-      const std::string &tokens, const std::string &token_offsets) {
-    TermList token_vec = utils::explode(tokens, ' ');
-    std::vector<Offsets> offsets_parsed = utils::parse_offsets(token_offsets);
-    
-    assert(token_vec.size() == offsets_parsed.size());
-
-    for (int i = 0; i < token_vec.size(); i++) {
-      IndexStore::iterator it = index_.find(token_vec[i]);
-
-      if (it == index_.cend()) {
-        // term does not exist
-        std::pair<IndexStore::iterator, bool> ret;
-        ret = index_.insert( std::make_pair(token_vec[i], PostingListType(token_vec[i])) );
-        it = ret.first;
-      } 
-      
-      PostingListType &postinglist = it->second;
-      postinglist.AddPosting(
-          StandardPosting(doc_id, offsets_parsed[i].size(), offsets_parsed[i]));
-    }
-  }
 };
 
 
@@ -251,6 +129,16 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     }
 
     return it_pointers;
+  }
+
+  std::vector<PostingListDeltaIterator> FindIteratorsSolid(const TermList &terms) const {
+    std::vector<PostingListDeltaIterator> iterators;
+    PlPointers pl_pointers = FindPostinglists(terms);
+    for (auto &pl : pl_pointers) {
+      iterators.push_back(pl->Begin2());
+    }
+
+    return iterators;
   }
 
   PlPointers FindPostinglists(const TermList &terms) const {
@@ -369,19 +257,9 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 };
 
 
-class QqMemEngine : public SearchEngineServiceNew {
+class QqMemEngineDelta: public SearchEngineServiceNew {
  public:
-  QqMemEngine(GeneralConfig config) {
-    if (config.HasKey("inverted_index") == false || 
-        config.GetString("inverted_index") == "compressed") {
-      inverted_index_.reset(new InvertedIndexQqMemDelta);
-    } else if (config.GetString("inverted_index") == "uncompressed") {
-      inverted_index_.reset(new InvertedIndexQqMemVec);
-    } else {
-      LOG(FATAL) << "inverted_index: " << config.GetString("inverted_index") 
-        << " not supported" << std::endl;
-    }
-  }
+  QqMemEngineDelta() {}
 
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
@@ -415,8 +293,9 @@ class QqMemEngine : public SearchEngineServiceNew {
     int doc_id = NextDocId();
 
     doc_store_.Add(doc_id, doc_info.Body());
-    inverted_index_->AddDocument(doc_id, doc_info);
+    inverted_index_.AddDocument(doc_id, doc_info);
     doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); // TODO modify to count on offsets?
+    similarity_.Reset(doc_lengths_.GetAvgLength());
   }
 
   std::string GetDocument(const DocIdType &doc_id) {
@@ -424,32 +303,47 @@ class QqMemEngine : public SearchEngineServiceNew {
   }
 
   int TermCount() const {
-    return inverted_index_->Size();
+    return inverted_index_.Size();
   }
 
   std::map<std::string, int> PostinglistSizes(const TermList &terms) {
-    return inverted_index_->PostinglistSizes(terms);
+    return inverted_index_.PostinglistSizes(terms);
   }
 
   int GetDocLength(const DocIdType &doc_id) {
     return doc_lengths_.GetLength(doc_id);
   }
 
-  SearchResult ProcessQueryTogether(const SearchQuery &query) {
+  std::string GenerateSnippet(const DocIdType &doc_id, 
+      std::vector<OffsetPairs> &offset_table,
+      const int n_passages) {
+    OffsetsEnums res = {};
+
+    for (int i = 0; i < offset_table.size(); i++) {
+      res.push_back(Offset_Iterator(offset_table[i]));
+    }
+
+    return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));
+  }
+
+  SearchResult Search(const SearchQuery &query) {
     SearchResult result;
 
     if (query.n_results == 0) {
       return result;
     }
 
-    IteratorPointers iterators = inverted_index_->FindIterators(query.terms);
+    std::vector<PostingListDeltaIterator> iterators = 
+        inverted_index_.FindIteratorsSolid(query.terms);
 
     if (iterators.size() == 0) {
       return result;
     }
 
-    auto top_k = qq_search::ProcessQuery(&iterators, doc_lengths_, doc_lengths_.Size(), 
-                             query.n_results, query.is_phrase);  
+    auto top_k = qq_search::ProcessQueryDelta(
+        similarity_, &iterators, doc_lengths_, doc_lengths_.Size(), 
+        query.n_results, query.is_phrase);  
+
     for (auto & top_doc_entry : top_k) {
       SearchResultEntry result_entry;
       result_entry.doc_id = top_doc_entry.doc_id;
@@ -467,23 +361,7 @@ class QqMemEngine : public SearchEngineServiceNew {
     return result;
   }
 
-  std::string GenerateSnippet(const DocIdType &doc_id, 
-      std::vector<OffsetPairs> &offset_table,
-      const int n_passages) {
-    OffsetsEnums res = {};
-
-    for (int i = 0; i < offset_table.size(); i++) {
-      res.push_back(Offset_Iterator(offset_table[i]));
-    }
-
-    return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));
-  }
-
-  SearchResult Search(const SearchQuery &query) {
-    return ProcessQueryTogether(query);
-  }
-
-  friend bool operator == (const QqMemEngine &a, const QqMemEngine &b) {
+  friend bool operator == (const QqMemEngineDelta &a, const QqMemEngineDelta &b) {
     if (a.next_doc_id_ != b.next_doc_id_) {
       return false;
     }
@@ -492,7 +370,7 @@ class QqMemEngine : public SearchEngineServiceNew {
       return false;
     }
 
-    if (*a.inverted_index_.get() != *b.inverted_index_.get()) {
+    if (a.inverted_index_ != b.inverted_index_) {
       return false;
     }
 
@@ -535,30 +413,30 @@ class QqMemEngine : public SearchEngineServiceNew {
 
     SerializeMeta(dir_path + "/engine_meta.dump");
     doc_store_.Serialize(dir_path + "/doc_store.dump");
-    inverted_index_->Serialize(dir_path + "/inverted_index.dump");
+    inverted_index_.Serialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Serialize(dir_path + "/doc_lengths.dump");
   }
 
   void Deserialize(std::string dir_path) {
     DeserializeMeta(dir_path + "/engine_meta.dump");
     doc_store_.Deserialize(dir_path + "/doc_store.dump");
-    inverted_index_->Deserialize(dir_path + "/inverted_index.dump");
+    inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
+    similarity_.Reset(doc_lengths_.GetAvgLength());
   }
 
  private:
   int next_doc_id_ = 0;
   SimpleDocStore doc_store_;
-  // InvertedIndexQqMemDelta inverted_index_;
-  std::unique_ptr<InvertedIndexService> inverted_index_;
+  InvertedIndexQqMemDelta inverted_index_;
   DocLengthStore doc_lengths_;
   SimpleHighlighter highlighter_;
+  Bm25Similarity similarity_;
 
   int NextDocId() {
     return next_doc_id_++;
   }
 };
-
 
 
 std::unique_ptr<SearchEngineServiceNew> CreateSearchEngine(

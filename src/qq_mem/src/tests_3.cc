@@ -5,6 +5,7 @@
 #include "highlighter.h"
 #include "query_processing.h"
 #include "utils.h"
+#include "posting_list_vec.h"
 #include "general_config.h"
 #include "query_pool.h"
 #include "histogram.h"
@@ -12,9 +13,26 @@
 #include "grpc_client_impl.h"
 #include <grpc/support/histogram.h>
 
+static std::unique_ptr<AsyncServer> CreateTestServer(const std::string &target, 
+    int n_threads_per_cq, int n_server_threads, int n_secs) {
+
+  GeneralConfig config;
+  config.SetString("target", target);
+  config.SetInt("n_threads_per_cq", n_threads_per_cq);
+  config.SetInt("n_server_threads", n_server_threads);
+  config.SetInt("server_duration", n_secs);
+  config.SetString("line_doc_path", "");
+  config.SetInt("n_line_doc_rows", 0);
+
+  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
+      "qq_mem_compressed");
+
+  std::unique_ptr<AsyncServer> server(new AsyncServer(config, std::move(engine)));
+  return server;
+}
 
 TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
-  auto server = CreateServer(std::string("localhost:50051"), 1, 1, 0);
+	auto server = CreateTestServer(std::string("localhost:50051"), 1, 1, 0);
   utils::sleep(1); // warm up the server
 
   auto client = CreateSyncClient("localhost:50051");
@@ -103,7 +121,7 @@ TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
 
 
 TEST_CASE( "GRPC Async Client and Server", "[grpc]" ) {
-  auto server = CreateServer(std::string("localhost:50051"), 1, 4, 0);
+  auto server = CreateTestServer(std::string("localhost:50051"), 1, 4, 0);
   utils::sleep(1); // warm up the server
 
   // Use another thread to create client
@@ -236,7 +254,7 @@ IteratorPointers create_iterator_pointers(std::vector<PostingListStandardVec> *p
 TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
   GeneralConfig config;
   config.SetString("sync_type", "SYNC");
-  config.SetString("engine_name", "qq_mem_uncompressed");
+  config.SetString("engine_name", "qq_mem_compressed");
 
   SECTION("Start and shutdown") {
     config.SetString("target", "localhost:50054");
@@ -315,7 +333,7 @@ TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
 TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
   GeneralConfig server_config;
   server_config.SetString("sync_type", "SYNC");
-  server_config.SetString("engine_name", "qq_mem_uncompressed");
+  server_config.SetString("engine_name", "qq_mem_compressed");
 
   GeneralConfig client_config;
   client_config.SetInt("n_threads", 2);
