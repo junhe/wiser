@@ -517,7 +517,39 @@ typedef std::priority_queue<
           EntryGreater> MinPointerHeap;
 
 
-class SingleTermQueryProcessor {
+class ProcessorBase {
+ public:
+  ProcessorBase(
+    const Bm25Similarity &similarity,
+    std::vector<PostingListDeltaIterator> *pl_iterators, 
+    const DocLengthStore &doc_lengths,
+    const int n_total_docs_in_index,
+    const int k)
+   : similarity_(similarity),
+     doc_lengths_(doc_lengths),
+     pl_iterators_(*pl_iterators),
+     k_(k),
+     idfs_of_terms_(pl_iterators->size()),
+     n_total_docs_in_index_(n_total_docs_in_index)
+  {
+    for (int i = 0; i < pl_iterators_.size(); i++) {
+      idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
+                                      pl_iterators_[i].Size());
+    }
+  }
+
+ protected:
+  const Bm25Similarity &similarity_;
+  std::vector<PostingListDeltaIterator> &pl_iterators_;
+  const int k_;
+  const int n_total_docs_in_index_;
+  std::vector<qq_float> idfs_of_terms_;
+  MinPointerHeap min_heap_;
+  const DocLengthStore &doc_lengths_;
+};
+
+
+class SingleTermQueryProcessor :public ProcessorBase {
  public:
   SingleTermQueryProcessor(
     const Bm25Similarity &similarity,
@@ -525,16 +557,8 @@ class SingleTermQueryProcessor {
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5)
-   : similarity_(similarity),
-     doc_lengths_(doc_lengths),
-     pl_iterators_(*pl_iterators),
-     k_(k),
-     idfs_of_terms_(1),
-     n_total_docs_in_index_(n_total_docs_in_index)
-  {
-    idfs_of_terms_[0] = calc_es_idf(n_total_docs_in_index_, 
-        pl_iterators_[0].Size());
-  }
+   :ProcessorBase(similarity,            pl_iterators, doc_lengths, 
+                  n_total_docs_in_index, k) {}
 
   std::vector<ResultDocEntry> Process() {
     auto &it = pl_iterators_[0];
@@ -588,14 +612,6 @@ class SingleTermQueryProcessor {
     std::reverse(ret.begin(), ret.end());
     return ret;
   }
-
-  const Bm25Similarity &similarity_;
-  std::vector<PostingListDeltaIterator> &pl_iterators_;
-  const int k_;
-  const int n_total_docs_in_index_;
-  std::vector<qq_float> idfs_of_terms_;
-  MinPointerHeap min_heap_;
-  const DocLengthStore &doc_lengths_;
 };
 
 
