@@ -116,6 +116,86 @@ class Passage {
     }
 };
 
+class SentenceBreakIteratorNew {
+ public:
+  SentenceBreakIteratorNew(const std::string &content, const std::locale & locale) {
+    startoffset = endoffset = -1;
+    content_ = & content;
+    
+    last_offset = content.size()-1;
+    return;
+  }
+  
+  // get current sentence's start offset
+  int getStartOffset() {
+      return startoffset;
+  }
+
+  // get current sentence's end offset
+  int getEndOffset() {
+    return endoffset;
+  }
+
+  // get to the next 'passage' (next sentence)
+  int next() {
+      if (endoffset >= last_offset) {
+          return 0;
+      }
+      
+      startoffset = endoffset + 1;
+      for (endoffset++; endoffset < last_offset; endoffset++) {
+          char this_char = (*content_)[endoffset];
+          if (this_char == '?' || this_char == '!') {
+              break;
+          }
+          if (this_char == '.') {
+              if (endoffset - startoffset > 3) {  // not short
+                  if ((*content_)[endoffset-3] != ' ' && (*content_)[endoffset-2] != '.') { // last word not short or U.S.
+                      while (endoffset < last_offset) {
+                          if ((*content_)[endoffset+1] != ' ') break;
+                          endoffset++;
+                      }
+                      if (isupper((*content_)[endoffset+1])) // next char should be upper
+                          break;
+                  }
+              }
+          }
+      }
+      
+      while (endoffset < last_offset) {
+          if ((*content_)[endoffset+1] != ' ') break;
+          endoffset++;
+      }
+      
+      return 1; // Success
+  }
+
+  // get to the next 'passage' contains offset
+  int next(int offset) {
+      if (offset > last_offset) {
+          return 0;
+      }
+      for (endoffset = offset; endoffset < last_offset; endoffset++) {
+          if ((*content_)[endoffset] == '.')
+              break;
+      }
+      for (startoffset = std::max(0, offset - 1);  startoffset > 0; startoffset--) {
+          if ((*content_)[startoffset] == '.') {
+              startoffset++;
+              break;
+          }
+      }
+      return 1; // Success
+  }
+
+
+  const std::string * content_;
+  int startoffset;
+  int endoffset;
+ private:
+  int last_offset;
+};
+
 
 class SentenceBreakIterator {
  public:
@@ -227,7 +307,7 @@ class SimpleHighlighter {
     if (offsetsEnums.size() == 0) return "";
     // break the document according to sentence
     //std::cout << doc_str << std::endl;
-    SentenceBreakIterator breakiterator(doc_str, locale_);
+    SentenceBreakIteratorNew breakiterator(doc_str, locale_);
     
     // "merge sorting" to calculate all sentence's score
     
