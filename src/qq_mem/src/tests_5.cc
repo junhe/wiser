@@ -427,12 +427,16 @@ TEST_CASE( "PhraseQueryProcessor2", "[engine00]" ) {
     AssignIterators(qp, {&buf01, &buf02}, {3, 1});
    
     SECTION("Returning info table") {
-      auto info_table = qp.Process();
-      // REQUIRE(info_table[0][0].pos == 3);
-      // REQUIRE(info_table[0][0].term_appearance == 1);
+      qp.Process();
+      auto info_table = qp.Table();
+      
+      REQUIRE(qp.NumOfMatches() == 1);
 
-      // REQUIRE(info_table[1][0].pos == 4);
-      // REQUIRE(info_table[1][0].term_appearance == 0);
+      REQUIRE(info_table[0][0].pos == 3);
+      REQUIRE(info_table[0][0].term_appearance == 1);
+
+      REQUIRE(info_table[1][0].pos == 4);
+      REQUIRE(info_table[1][0].term_appearance == 0);
     }
 
     SECTION("FindMaxAdjustedLastPopped() and MovePoppedBeyond()") {
@@ -470,8 +474,11 @@ TEST_CASE( "PhraseQueryProcessor2", "[engine00]" ) {
     PhraseQueryProcessor2<VarintIterator> qp(10);
     AssignIterators(qp, {&buf01, &buf02}, {0, 0});
 
-    auto table = qp.Process();
+    qp.Process();
+
+    auto table = qp.Table();
     REQUIRE(table.NumUsedRows() == 0);
+    REQUIRE(qp.NumOfMatches() == 0);
   }
 
   SECTION("No matches") {
@@ -481,9 +488,12 @@ TEST_CASE( "PhraseQueryProcessor2", "[engine00]" ) {
     PhraseQueryProcessor2<VarintIterator> qp(10);
     AssignIterators(qp, {&buf01, &buf02}, {3, 3});
 
-    auto table = qp.Process();
+    qp.Process();
 
+    auto table = qp.Table();
     REQUIRE(table.NumUsedRows() == 0);
+
+    REQUIRE(qp.NumOfMatches() == 0);
   }
  
   SECTION("Bad positions") {
@@ -494,9 +504,12 @@ TEST_CASE( "PhraseQueryProcessor2", "[engine00]" ) {
     PhraseQueryProcessor2<VarintIterator> qp(10);
     AssignIterators(qp, {&buf01, &buf02}, {1, 1});
 
-    auto table = qp.Process();
+    qp.Process();
 
+    auto table = qp.Table();
     REQUIRE(table.NumUsedRows() == 0);
+
+    REQUIRE(qp.NumOfMatches() == 0);
   }
  
   SECTION("One list is empty") {
@@ -505,10 +518,13 @@ TEST_CASE( "PhraseQueryProcessor2", "[engine00]" ) {
 
     PhraseQueryProcessor2<VarintIterator> qp(10);
     AssignIterators(qp, {&buf01, &buf02}, {1, 0});
+    
+    qp.Process();
 
-    auto table = qp.Process();
-
+    auto table = qp.Table();
     REQUIRE(table.NumUsedRows() == 0);
+
+    REQUIRE(qp.NumOfMatches() == 0);
   }
 
   SECTION("Multiple matches") {
@@ -518,7 +534,10 @@ TEST_CASE( "PhraseQueryProcessor2", "[engine00]" ) {
     PhraseQueryProcessor2<VarintIterator> qp(10);
     AssignIterators(qp, {&buf01, &buf02}, {4, 4});
 
-    auto table = qp.Process();
+    qp.Process();
+    auto table = qp.Table();
+
+    REQUIRE(qp.NumOfMatches() == 3);
 
     REQUIRE(table.NumUsedRows() == 2);
     REQUIRE(table[0].UsedSize() == 3);

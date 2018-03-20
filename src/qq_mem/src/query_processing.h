@@ -259,15 +259,23 @@ class PhraseQueryProcessor2 {
     }
   }
 
-  PositionInfoTable2 Process() {
+  void Process() {
     if (n_terms_ == 2) {
-      return ProcessTwoTerm();
+      ProcessTwoTerm();
     } else {
-      return ProcessGeneral();
+      ProcessGeneral();
     }
   }
 
-  PositionInfoTable2 ProcessTwoTerm() {
+  int NumOfMatches() const {
+    return pos_table_.NumUsedCols();
+  }
+
+  PositionInfoTable2 Table() const {
+    return pos_table_.CompactCopy();
+  }
+
+  void ProcessTwoTerm() {
     pos_table_.FastClear();
 
     auto *it0 = &solid_iterators_[0]; 
@@ -318,16 +326,14 @@ class PhraseQueryProcessor2 {
         }
       }
     }
-
-    return pos_table_;
   }
 
-  PositionInfoTable2 ProcessGeneral() {
+  void ProcessGeneral() {
     bool any_list_exhausted = false;
     pos_table_.FastClear();
 
     if (InitializeLastPopped() == false) {
-      return pos_table_;
+      return;
     }
 
     while (any_list_exhausted == false) {
@@ -349,8 +355,6 @@ class PhraseQueryProcessor2 {
         }
       }
     }
-
-    return pos_table_;
   }
 
   T *Iterator(int i) {
@@ -833,21 +837,23 @@ class QueryProcessor {
     return false;
   }
 
-  PositionInfoTable2 FindPhrase() {
+  int FindPhrase() {
     for (int i = 0; i < pl_iterators_.size(); i++) {
       CompressedPositionIterator *p = phrase_qp_.Iterator(i);
       pl_iterators_[i].AssignPositionBegin(p);
     }
     phrase_qp_.SetNumTerms(pl_iterators_.size());
 
-    return phrase_qp_.Process();
+    phrase_qp_.Process();
+
+    return phrase_qp_.NumOfMatches();
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
     if (is_phrase_ == true && pl_iterators_.size() > 1 ) {
-      auto position_table = FindPhrase();
-      if (position_table.NumUsedCols() > 0) {
-        RankDoc(max_doc_id, position_table);
+      int n_matches = FindPhrase();
+      if (n_matches > 0) {
+        RankDoc(max_doc_id, phrase_qp_.Table());
       }
     } else {
       PositionInfoTable2 position_table(0, 0);
