@@ -700,7 +700,7 @@ class TwoTermNonPhraseQueryProcessor: public ProcessorBase {
 };
 
 
-class QueryProcessor {
+class QueryProcessor: public ProcessorBase {
  public:
   QueryProcessor(
     const Bm25Similarity &similarity,
@@ -709,21 +709,11 @@ class QueryProcessor {
     const int n_total_docs_in_index,
     const int k = 5,
     const bool is_phrase = false)
-  : similarity_(similarity),
-    n_lists_(pl_iterators->size()),
-    doc_lengths_(doc_lengths),
-    pl_iterators_(*pl_iterators),
-    k_(k),
-    is_phrase_(is_phrase),
-    idfs_of_terms_(n_lists_),
-    n_total_docs_in_index_(n_total_docs_in_index),
-    phrase_qp_(8)
-  {
-    for (int i = 0; i < n_lists_; i++) {
-      idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
-                                      pl_iterators_[i].Size());
-    }
-  }
+   :ProcessorBase(similarity,            pl_iterators, doc_lengths, 
+                  n_total_docs_in_index, k),
+    phrase_qp_(8),
+    is_phrase_(is_phrase)
+  {}
 
   std::vector<ResultDocEntry> Process() {
     if (pl_iterators_.size() == 1) {
@@ -922,14 +912,6 @@ class QueryProcessor {
 			offset_iters, position_table, is_phrase_));
   }
 
-  const Bm25Similarity &similarity_;
-  const int n_lists_;
-  std::vector<PostingListDeltaIterator> &pl_iterators_;
-  const int k_;
-  const int n_total_docs_in_index_;
-  std::vector<qq_float> idfs_of_terms_;
-  MinPointerHeap min_heap_;
-  const DocLengthStore &doc_lengths_;
   bool is_phrase_;
   PhraseQueryProcessor2<CompressedPositionIterator> phrase_qp_;
 };
