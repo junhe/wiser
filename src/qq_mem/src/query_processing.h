@@ -528,6 +528,7 @@ class ProcessorBase {
    : similarity_(similarity),
      doc_lengths_(doc_lengths),
      pl_iterators_(*pl_iterators),
+     n_lists_(pl_iterators->size()),
      k_(k),
      idfs_of_terms_(pl_iterators->size()),
      n_total_docs_in_index_(n_total_docs_in_index)
@@ -542,6 +543,7 @@ class ProcessorBase {
   const Bm25Similarity &similarity_;
   std::vector<PostingListDeltaIterator> &pl_iterators_;
   const int k_;
+  const int n_lists_;
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
   MinPointerHeap min_heap_;
@@ -615,7 +617,7 @@ class SingleTermQueryProcessor :public ProcessorBase {
 };
 
 
-class TwoTermNonPhraseQueryProcessor {
+class TwoTermNonPhraseQueryProcessor: public ProcessorBase {
  public:
   TwoTermNonPhraseQueryProcessor(
     const Bm25Similarity &similarity,
@@ -623,20 +625,10 @@ class TwoTermNonPhraseQueryProcessor {
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5)
-  : similarity_(similarity),
-    n_lists_(pl_iterators->size()),
-    doc_lengths_(doc_lengths),
-    pl_iterators_(*pl_iterators),
-    empty_position_table_(0, 0),
-    k_(k),
-    idfs_of_terms_(n_lists_),
-    n_total_docs_in_index_(n_total_docs_in_index)
-  {
-    for (int i = 0; i < n_lists_; i++) {
-      idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
-                                      pl_iterators_[i].Size());
-    }
-  }
+   :ProcessorBase(similarity,            pl_iterators, doc_lengths, 
+                  n_total_docs_in_index, k),
+    empty_position_table_(0, 0)
+  {}
 
   std::vector<ResultDocEntry> Process() {
     auto &it_0 = pl_iterators_[0];
@@ -704,14 +696,6 @@ class TwoTermNonPhraseQueryProcessor {
 			offset_iters, empty_position_table_, false));
   }
 
-  const Bm25Similarity &similarity_;
-  const int n_lists_;
-  std::vector<PostingListDeltaIterator> &pl_iterators_;
-  const int k_;
-  const int n_total_docs_in_index_;
-  std::vector<qq_float> idfs_of_terms_;
-  MinPointerHeap min_heap_;
-  const DocLengthStore &doc_lengths_;
   PositionInfoTable2 empty_position_table_;
 };
 
