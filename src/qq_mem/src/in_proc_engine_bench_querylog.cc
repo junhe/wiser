@@ -198,9 +198,13 @@ class InProcExperiment: public Experiment {
       Treatment({"ripdo", "liftech"}, false, 1000000, true),
 
       Treatment({"hello", "world"}, true, 100, true),
-      Treatment({"barack", "obama"}, true, 100, true),
+      Treatment({"barack", "obama"}, true, 1000, true),
       Treatment({"from", "also"}, true, 10, true)
     };
+
+    // for (auto &t : treatments) {
+      // t.return_snippets = false;
+    // }
 
     treatments_ = treatments;
   }
