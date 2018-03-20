@@ -102,7 +102,7 @@ inline qq_float CalcDocScoreNonLossy(
     const std::vector<IteratorT> &pl_iterators,
     const std::vector<qq_float> &idfs_of_terms,
     const int &length_of_this_doc, 
-    const Bm25Similarity &similarity) 
+    const Bm25Similarity &similarity) noexcept
 {
   qq_float final_doc_score = 0;
 
@@ -126,7 +126,7 @@ inline qq_float CalcDocScoreLossy(
     const std::vector<IteratorT> &pl_iterators,
     const std::vector<qq_float> &idfs_of_terms,
     const int &length_of_this_doc, 
-    const Bm25Similarity &similarity) 
+    const Bm25Similarity &similarity) noexcept
 {
   qq_float final_doc_score = 0;
 
@@ -150,7 +150,7 @@ inline qq_float CalcDocScore(
     const std::vector<IteratorT> &pl_iterators,
     const std::vector<qq_float> &idfs_of_terms,
     const int &length_of_this_doc, 
-    const Bm25Similarity &similarity) 
+    const Bm25Similarity &similarity) noexcept
 {
   return CalcDocScoreLossy<IteratorT>(pl_iterators, idfs_of_terms,
       length_of_this_doc, similarity);

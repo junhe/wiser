@@ -22,7 +22,7 @@ class DocLengthStore {
     doc_cnt_++;
   }
 
-  int GetLength(const DocIdType &doc_id) const {
+  int GetLength(const DocIdType &doc_id) const noexcept {
     return vec_store_[doc_id];
   }
 
@@ -30,7 +30,7 @@ class DocLengthStore {
     return vec_char_store_[doc_id];
   }
 
-  const qq_float &GetAvgLength() const {
+  const qq_float &GetAvgLength() const noexcept {
     return avg_length_;
   }
 
