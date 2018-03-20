@@ -193,7 +193,7 @@ class InProcExperiment: public Experiment {
       Treatment({"from"}, false, 20, true),
       Treatment({"ripdo"}, false, 10000, true),
 
-      Treatment({"hello", "world"}, false, 100, true),
+      Treatment({"hello", "world"}, false, 1000, true),
       Treatment({"from", "also"}, false, 10, true),
       Treatment({"ripdo", "liftech"}, false, 1000000, true),
 
