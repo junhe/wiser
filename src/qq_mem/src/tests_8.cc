@@ -181,6 +181,25 @@ TEST_CASE( "Position info related", "[engine]" ) {
     }
   }
 
+  SECTION("Position info table") {
+    PositionInfoTable2 tab(0, 0);
+
+    REQUIRE(tab.RowCapacity() == std::vector<int>({}));
+    REQUIRE(tab.NumOfRows() == 0);
+
+    tab.Append(0, 2, 3);
+    tab.Append(1, 5, 6);
+
+    REQUIRE(tab[0][0].pos == 2);
+    REQUIRE(tab[0][0].term_appearance == 3);
+
+    REQUIRE(tab[1][0].pos == 5);
+    REQUIRE(tab[1][0].term_appearance == 6);
+
+    REQUIRE(tab.NumUsedCols() == 1);
+    REQUIRE(tab.NumUsedRows() == 2);
+  }
+
   SECTION("Position info table empty") {
     PositionInfoTable2 tab(2, 2);
     

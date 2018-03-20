@@ -472,8 +472,6 @@ TEST_CASE( "PhraseQueryProcessor2", "[engine00]" ) {
 
     auto table = qp.Process();
     REQUIRE(table.NumUsedRows() == 0);
-    REQUIRE(table[0].UsedSize() == 0);
-    REQUIRE(table[1].UsedSize() == 0);
   }
 
   SECTION("No matches") {

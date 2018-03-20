@@ -62,6 +62,9 @@ class PositionInfoArray {
 
   // next_ may overflow, be very carefule
   void Append(const int pos, const int term_appearance) {
+    if (next_ >= arr_.size()) {
+      arr_.resize(next_ + 1);
+    }
     arr_[next_].Update(pos, term_appearance);
     next_++;
   }
@@ -138,6 +141,9 @@ class PositionInfoTable2 {
   }
 
   void Append(const int i, const int pos, const int term_appearance) {
+    if (i >= rows_.size()) {
+      rows_.resize(i + 1);
+    }
     rows_[i].Append(pos, term_appearance);
   }
 
@@ -163,7 +169,7 @@ class PhraseQueryProcessor2 {
   PhraseQueryProcessor2(int capacity)
     :solid_iterators_(capacity), 
      last_orig_popped_(capacity), 
-     pos_table_(2, 100) {
+     pos_table_(0, 0) {
   }
 
   Position FindMaxAdjustedLastPopped() {
