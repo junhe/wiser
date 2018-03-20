@@ -127,16 +127,30 @@ TEST_CASE( "Position info related", "[engine]" ) {
     PositionInfoArray array(10);
 
     REQUIRE(array.UsedSize() == 0);
+    REQUIRE(array.Capacity() == 10);
 
     array.Append(1, 2);
     REQUIRE(array.UsedSize() == 1);
+    REQUIRE(array.Capacity() == 10);
 
     REQUIRE(array[0].pos == 1);
     REQUIRE(array[0].term_appearance == 2);
+
+    SECTION("Compactly copy it") {
+      PositionInfoArray array2 = array.CompactCopy();
+      REQUIRE(array2[0].pos == 1);
+      REQUIRE(array2[0].term_appearance == 2);
+
+      REQUIRE(array2.UsedSize() == 1);
+      REQUIRE(array2.Capacity() == 1);
+    }
   }
 
   SECTION("Position info table") {
-    PositionInfoTable2 tab(2, 2);
+    PositionInfoTable2 tab(3, 20);
+
+    REQUIRE(tab.RowCapacity() == std::vector<int>({20, 20, 20}));
+    REQUIRE(tab.NumOfRows() == 3);
 
     tab.Append(0, 2, 3);
     tab.Append(1, 5, 6);
@@ -149,6 +163,22 @@ TEST_CASE( "Position info related", "[engine]" ) {
 
     REQUIRE(tab.NumUsedCols() == 1);
     REQUIRE(tab.NumUsedRows() == 2);
+
+    SECTION("Compactly copy it") {
+      PositionInfoTable2 tab2 = tab.CompactCopy();      
+
+      REQUIRE(tab2.RowCapacity() == std::vector<int>({1, 1}));
+      REQUIRE(tab2.NumOfRows() == 2);
+
+      REQUIRE(tab2[0][0].pos == 2);
+      REQUIRE(tab2[0][0].term_appearance == 3);
+
+      REQUIRE(tab2[1][0].pos == 5);
+      REQUIRE(tab2[1][0].term_appearance == 6);
+
+      REQUIRE(tab2.NumUsedCols() == 1);
+      REQUIRE(tab2.NumUsedRows() == 2);
+    }
   }
 
   SECTION("Position info table empty") {
@@ -157,8 +187,8 @@ TEST_CASE( "Position info related", "[engine]" ) {
     REQUIRE(tab.NumUsedCols() == 0);
     REQUIRE(tab.NumUsedRows() == 0);
   }
-
 }
+
 
 
 

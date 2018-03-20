@@ -52,6 +52,14 @@ class PositionInfoArray {
     return arr_.size();
   }
 
+  PositionInfoArray CompactCopy() const {
+    PositionInfoArray ret(next_);
+    for (int i = 0; i < next_; i++) {
+      ret.Append(arr_[i].pos, arr_[i].term_appearance);
+    }
+    return ret;
+  }
+
   // next_ may overflow, be very carefule
   void Append(const int pos, const int term_appearance) {
     arr_[next_].Update(pos, term_appearance);
@@ -78,14 +86,27 @@ class PositionInfoTable2 {
     }
   }
 
-  int NumUsedCols() {
+  std::vector<int> RowCapacity() const {
+    std::vector<int> ret;
+    for (auto &row : rows_) {
+      ret.push_back(row.Capacity());
+    }
+
+    return ret;
+  }
+
+  int NumOfRows() const {
+    return rows_.size();
+  }
+
+  int NumUsedCols() const {
     if (rows_.size() == 0) 
       return 0;
     else 
       return rows_[0].UsedSize();
   }
 
-  int NumUsedRows() {
+  int NumUsedRows() const {
     int count = 0;
     for (auto &row : rows_) {
       if (row.UsedSize() > 0) {
@@ -95,6 +116,19 @@ class PositionInfoTable2 {
       }
     }
     return count;
+  }
+
+  PositionInfoTable2 CompactCopy() const {
+    PositionInfoTable2 ret(0, 0);
+
+    for (auto &row : rows_) {
+      if (row.UsedSize() > 0) 
+        ret.rows_.push_back(row.CompactCopy());
+      else
+        break;
+    }
+
+    return ret;
   }
 
   void FastClear() {
