@@ -152,7 +152,7 @@ class SentenceBreakIteratorNew {
               if (endoffset - startoffset > 3) {  // not short
                   if ((*content_)[endoffset-3] != ' ' && (*content_)[endoffset-2] != '.') { // last word not short or U.S.
                       while (endoffset < last_offset) {
-                          if ((*content_)[endoffset+1] != ' ') break;
+                          if ((*content_)[endoffset+1] != ' ') break;  // TODO change to not numbre or chars
                           endoffset++;
                       }
                       if (isupper((*content_)[endoffset+1])) // next char should be upper
@@ -163,7 +163,7 @@ class SentenceBreakIteratorNew {
       }
       
       while (endoffset < last_offset) {
-          if ((*content_)[endoffset+1] != ' ') break;
+          if ((*content_)[endoffset+1] != ' ') break;   // TODO change to not number or chars
           endoffset++;
       }
       
@@ -176,11 +176,11 @@ class SentenceBreakIteratorNew {
           return 0;
       }
       for (endoffset = offset; endoffset < last_offset; endoffset++) {
-          if ((*content_)[endoffset] == '.')
+          if ((*content_)[endoffset] == '.')    //TODO
               break;
       }
       for (startoffset = std::max(0, offset - 1);  startoffset > 0; startoffset--) {
-          if ((*content_)[startoffset] == '.') {
+          if ((*content_)[startoffset] == '.') { //TODO
               startoffset++;
               break;
           }
