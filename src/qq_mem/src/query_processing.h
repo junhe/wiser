@@ -564,29 +564,18 @@ class ProcessorBase {
 };
 
 
-class SingleTermQueryProcessor :public ProcessorBase {
+class NonPhraseProcessorBase: public ProcessorBase {
  public:
-  SingleTermQueryProcessor(
+  NonPhraseProcessorBase(
     const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
-    const int k = 5)
+    const int k)
    :ProcessorBase(similarity,            pl_iterators, doc_lengths, 
                   n_total_docs_in_index, k) {}
 
-  std::vector<ResultDocEntry> Process() {
-    auto &it = pl_iterators_[0];
-
-    while (it.IsEnd() == false) {
-      RankDoc(it.DocId());
-      it.Advance();
-    }
-
-    return SortHeap();
-  }
-
- private:
+ protected:
   void RankDoc(const DocIdType &max_doc_id) {
     qq_float score_of_this_doc = CalcDocScore<PostingListDeltaIterator>(
         pl_iterators_,
@@ -617,7 +606,31 @@ class SingleTermQueryProcessor :public ProcessorBase {
 };
 
 
-class TwoTermNonPhraseQueryProcessor: public ProcessorBase {
+class SingleTermQueryProcessor :public NonPhraseProcessorBase {
+ public:
+  SingleTermQueryProcessor(
+    const Bm25Similarity &similarity,
+    std::vector<PostingListDeltaIterator> *pl_iterators, 
+    const DocLengthStore &doc_lengths,
+    const int n_total_docs_in_index,
+    const int k = 5)
+   :NonPhraseProcessorBase(similarity,            pl_iterators, doc_lengths, 
+                           n_total_docs_in_index, k) {}
+
+  std::vector<ResultDocEntry> Process() {
+    auto &it = pl_iterators_[0];
+
+    while (it.IsEnd() == false) {
+      RankDoc(it.DocId());
+      it.Advance();
+    }
+
+    return SortHeap();
+  }
+};
+
+
+class TwoTermNonPhraseQueryProcessor: public NonPhraseProcessorBase {
  public:
   TwoTermNonPhraseQueryProcessor(
     const Bm25Similarity &similarity,
@@ -625,10 +638,8 @@ class TwoTermNonPhraseQueryProcessor: public ProcessorBase {
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5)
-   :ProcessorBase(similarity,            pl_iterators, doc_lengths, 
-                  n_total_docs_in_index, k),
-    empty_position_table_(0, 0)
-  {}
+   :NonPhraseProcessorBase(similarity,            pl_iterators, doc_lengths, 
+                           n_total_docs_in_index, k) {}
 
   std::vector<ResultDocEntry> Process() {
     auto &it_0 = pl_iterators_[0];
@@ -652,38 +663,6 @@ class TwoTermNonPhraseQueryProcessor: public ProcessorBase {
 
     return SortHeap();
   }
-
- private:
-  void RankDoc(const DocIdType &max_doc_id) {
-    qq_float score_of_this_doc = CalcDocScore<PostingListDeltaIterator>(
-        pl_iterators_,
-        idfs_of_terms_,
-        doc_lengths_.GetLength(max_doc_id),
-        similarity_);
-
-    if (min_heap_.size() < k_) {
-      InsertToHeap(max_doc_id, score_of_this_doc);
-    } else {
-      if (score_of_this_doc > min_heap_.top()->score) {
-        min_heap_.pop();
-        InsertToHeap(max_doc_id, score_of_this_doc);
-      }
-    }
-  }
-
-  void InsertToHeap(const DocIdType &doc_id, 
-                    const qq_float &score_of_this_doc)
-  {
-    OffsetIterators offset_iters;
-    for (int i = 0; i < n_lists_; i++) {
-      auto p = pl_iterators_[i].OffsetPairsBegin();
-      offset_iters.push_back(std::move(p));
-    }
-    min_heap_.emplace(new ResultDocEntry(doc_id, score_of_this_doc, 
-			offset_iters, empty_position_table_, false));
-  }
-
-  PositionInfoTable2 empty_position_table_;
 };
 
 
