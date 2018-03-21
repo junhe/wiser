@@ -540,6 +540,19 @@ class ProcessorBase {
   }
 
  protected:
+  std::vector<ResultDocEntry> SortHeap() {
+    std::vector<ResultDocEntry> ret;
+
+    int kk = k_;
+    while(!min_heap_.empty() && kk != 0) {
+      ret.push_back(*min_heap_.top().get());
+      min_heap_.pop();
+      kk--;
+    }
+    std::reverse(ret.begin(), ret.end());
+    return ret;
+  }
+
   const Bm25Similarity &similarity_;
   std::vector<PostingListDeltaIterator> &pl_iterators_;
   const int k_;
@@ -601,19 +614,6 @@ class SingleTermQueryProcessor :public ProcessorBase {
     min_heap_.emplace(new ResultDocEntry(doc_id, score_of_this_doc, offset_iters, 
         false));
   }
-
-  std::vector<ResultDocEntry> SortHeap() {
-    std::vector<ResultDocEntry> ret;
-
-    int kk = k_;
-    while(!min_heap_.empty() && kk != 0) {
-      ret.push_back(*min_heap_.top().get());
-      min_heap_.pop();
-      kk--;
-    }
-    std::reverse(ret.begin(), ret.end());
-    return ret;
-  }
 };
 
 
@@ -669,19 +669,6 @@ class TwoTermNonPhraseQueryProcessor: public ProcessorBase {
         InsertToHeap(max_doc_id, score_of_this_doc);
       }
     }
-  }
-
-  std::vector<ResultDocEntry> SortHeap() {
-    std::vector<ResultDocEntry> ret;
-
-    int kk = k_;
-    while(!min_heap_.empty() && kk != 0) {
-      ret.push_back(*min_heap_.top().get());
-      min_heap_.pop();
-      kk--;
-    }
-    std::reverse(ret.begin(), ret.end());
-    return ret;
   }
 
   void InsertToHeap(const DocIdType &doc_id, 
@@ -884,19 +871,6 @@ class QueryProcessor: public ProcessorBase {
         InsertToHeap(max_doc_id, score_of_this_doc, position_table);
       }
     }
-  }
-
-  std::vector<ResultDocEntry> SortHeap() {
-    std::vector<ResultDocEntry> ret;
-
-    int kk = k_;
-    while(!min_heap_.empty() && kk != 0) {
-      ret.push_back(*min_heap_.top().get());
-      min_heap_.pop();
-      kk--;
-    }
-    std::reverse(ret.begin(), ret.end());
-    return ret;
   }
 
   void InsertToHeap(const DocIdType &doc_id, 
