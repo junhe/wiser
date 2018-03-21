@@ -11,8 +11,11 @@ public class sentencebreaker
     public static void main(String[] args) throws Exception {
         //read in file
         //String str = "how soft works?Java!Python";
-        BufferedReader brTest = new BufferedReader(new FileReader("test.out"));
-        String str = brTest.readLine();
+        BufferedReader brTest = new BufferedReader(new FileReader("/mnt/ssd/wiki/sample_docs"));
+        String str = null;
+        while ((str = brTest.readLine())!=null) {
+        //System.out.println("=============");
+        int last_offset = str.length();
 
         BreakIterator itor = BreakIterator.getSentenceInstance(Locale.ENGLISH);
         itor.setText(str);
@@ -20,8 +23,14 @@ public class sentencebreaker
         for (int end = itor.next();
                 end != BreakIterator.DONE;
                 start = end, end = itor.next()) {
-            System.out.print(start + ", " + (end-1));
-            System.out.print(" *" + str.substring(start, end) + "*\n");
+            if (end == last_offset) {
+                System.out.print(start + "," + end + ";");
+            } else {
+                System.out.print(start + "," + (end-1) + ";");
+            }
+            //System.out.print("\t*" + str.substring(start, end) + "*\n");
+        }
+        System.out.print("\n");
         }
     }
 }

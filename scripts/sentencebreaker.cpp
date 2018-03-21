@@ -88,17 +88,18 @@ class SentenceBreakIteratorNew {
 int main() {
     //string str = "how soft works?Java!Python";
     std::ifstream infile_;
-    infile_.open("test.out");
+    infile_.open("/mnt/ssd/wiki/sample_docs");
     string str;
-    getline(infile_, str);
-
+    while (getline(infile_, str)){
+    //cout << "=============" << endl;
     SentenceBreakIteratorNew itor(str);
     int start_offset, end_offset;
     while ( itor.next() > 0 ) {
         start_offset = itor.getStartOffset();
         end_offset = itor.getEndOffset();
-        cout << start_offset << ", " << end_offset;
-        cout << " *" << str.substr(start_offset, end_offset-start_offset+1) << "*" << endl;
+        cout << start_offset << "," << end_offset << ";";
+        //cout << "\t*" << str.substr(start_offset, end_offset-start_offset+1) << "*" << endl;
     }
-
+    cout << endl;
+    }
 }

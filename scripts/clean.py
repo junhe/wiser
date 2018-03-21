@@ -3,8 +3,10 @@ import re
 import string
 
 def do_clean(input_file, output): 
+    printable = set(string.printable)
     content = str(input_file.read())
-    content = re.sub(r'<.*>','', content)
+    #content = re.sub(r'<.*>','', content)
+    content = ''.join(filter(lambda x: x in printable, content))
     output.write(content)
 
 if __name__=='__main__':
