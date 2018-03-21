@@ -597,8 +597,10 @@ class NonPhraseProcessorBase: public ProcessorBase {
                     const qq_float &score_of_this_doc)
   {
     OffsetIterators offset_iters;
-    auto p = pl_iterators_[0].OffsetPairsBegin();
-    offset_iters.push_back(std::move(p));
+    for (int i = 0; i < n_lists_; i++) {
+      auto p = pl_iterators_[i].OffsetPairsBegin();
+      offset_iters.push_back(std::move(p));
+    }
 
     min_heap_.emplace(new ResultDocEntry(doc_id, score_of_this_doc, offset_iters, 
         false));
