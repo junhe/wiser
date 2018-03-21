@@ -69,6 +69,40 @@ TEST_CASE( "Document store implemented by C++ map", "[docstore]" ) {
     REQUIRE(store.Has(doc_id) == false);
 }
 
+TEST_CASE( "Compressed Doc Store", "[docstore]" ) {
+  SECTION("Regular") {
+    CompressedDocStore store;
+    int doc_id = 88;
+    std::string doc = "it is a doc";
+
+    REQUIRE(store.Has(doc_id) == false);
+
+    store.Add(doc_id, doc);
+    REQUIRE(store.Get(doc_id) == doc);
+
+    store.Add(89, "doc89");
+    REQUIRE(store.Size() == 2);
+
+    store.Remove(89);
+    REQUIRE(store.Size() == 1);
+
+    REQUIRE(store.Has(doc_id) == true);
+
+    store.Clear();
+    REQUIRE(store.Has(doc_id) == false);
+  }
+
+  SECTION("Empty doc") {
+    CompressedDocStore store;
+    int doc_id = 88;
+    std::string doc = "";
+    REQUIRE(store.Has(doc_id) == false);
+
+    store.Add(doc_id, doc);
+    REQUIRE(store.Get(doc_id) == doc);
+  }
+}
+
 
 TEST_CASE( "Utilities", "[utils]" ) {
     SECTION("Leading space and Two spaces") {
@@ -308,19 +342,6 @@ TEST_CASE( "Flash based LRUCache Template essential put/get opeartions are OK", 
     // miss
     REQUIRE(cache_lru.exists(17) == false);
     REQUIRE_THROWS_AS(cache_lru.get(17), std::range_error);
-}
-
-TEST_CASE("Precompute and store document sentence segments successfully", "[Precompute_StorePassages]") {
-    SimpleDocStore store;
-    int doc_id = 88;
-    std::string doc = "it is a doc. We are the second sentence. I'm the third sentence! ";
-    store.Add(doc_id, doc);
-    
-    if (FLAG_SNIPPETS_PRECOMPUTE) {
-        store.Add(doc_id, doc);
-        // check document body
-        REQUIRE(store.Get(doc_id) == doc);
-    }
 }
 
 

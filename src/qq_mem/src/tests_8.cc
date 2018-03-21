@@ -209,6 +209,3 @@ TEST_CASE( "Position info related", "[engine]" ) {
 }
 
 
-
-
-

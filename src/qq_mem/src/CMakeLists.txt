@@ -50,10 +50,11 @@ set(ENGINE_SRCS
     flashreader.cc
     )
 
-set(BOOST_LIBS
+set(QQ_LIBS
     boost_system
     boost_filesystem
     boost_locale
+    lz4
     )
 
 set(GRPC_LIBS
@@ -77,7 +78,7 @@ add_executable(qq_server
 target_link_libraries(qq_server
     ${GRPC_LIBS}
     protobuf::libprotobuf
-    ${BOOST_LIBS}
+    ${QQ_LIBS}
     pthread
     ${GLOG_LIB}
 )
@@ -92,7 +93,7 @@ add_executable(qq_client
 target_link_libraries(qq_client
     ${GRPC_LIBS}
     protobuf::libprotobuf
-    ${BOOST_LIBS}
+    ${QQ_LIBS}
     pthread
     ${GLOG_LIB}
 )
@@ -121,7 +122,7 @@ add_executable( testmain
 target_link_libraries(testmain
     ${GRPC_LIBS}
     protobuf::libprotobuf
-    ${BOOST_LIBS}
+    ${QQ_LIBS}
     ${GLOG_LIB}
 )
 
@@ -137,7 +138,7 @@ add_executable(hash_benchmark
 target_link_libraries(hash_benchmark
     ${GRPC_LIBS}
     protobuf::libprotobuf
-    ${BOOST_LIBS}
+    ${QQ_LIBS}
     ${GLOG_LIB}
 )
 
@@ -153,7 +154,7 @@ add_executable(in_proc_engine_bench_querylog
 target_link_libraries(in_proc_engine_bench_querylog
     ${GRPC_LIBS}
     protobuf::libprotobuf
-    ${BOOST_LIBS}
+    ${QQ_LIBS}
     pthread
     ${GLOG_LIB}
 )
@@ -168,7 +169,7 @@ add_executable(grpc_benchmark
 target_link_libraries(grpc_benchmark
     ${GRPC_LIBS}
     protobuf::libprotobuf
-    ${BOOST_LIBS}
+    ${QQ_LIBS}
     pthread
     ${GLOG_LIB}
 )
@@ -182,7 +183,7 @@ add_executable(intersect_bench
 target_link_libraries(intersect_bench
     ${GRPC_LIBS}
     protobuf::libprotobuf
-    ${BOOST_LIBS}
+    ${QQ_LIBS}
     pthread
     ${GLOG_LIB}
 )
@@ -196,7 +197,7 @@ add_executable(sorting_bench
 target_link_libraries(sorting_bench
     ${GRPC_LIBS}
     protobuf::libprotobuf
-    ${BOOST_LIBS}
+    ${QQ_LIBS}
     pthread
     ${GLOG_LIB}
 )
@@ -210,7 +211,7 @@ add_executable(snippet_bench
 target_link_libraries(snippet_bench
     ${GRPC_LIBS}
     protobuf::libprotobuf
-    ${BOOST_LIBS}
+    ${QQ_LIBS}
     pthread
     ${GLOG_LIB}
 )
