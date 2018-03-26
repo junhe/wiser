@@ -44,6 +44,17 @@ sudo make install
 sudo apt-get install -y libboost-all-dev
 
 
+# lz4
+sudo apt-get install -y liblz4-dev
+
+# google perftools
+sudo apt-get install -y google-perftools libgoogle-perftools-dev
+
 # configure the shared libraries
 sudo ldconfig
+
+
+
+echo "Now, run"
+echo "source ~/.bashrc"
 
