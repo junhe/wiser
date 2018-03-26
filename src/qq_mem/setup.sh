@@ -31,6 +31,9 @@ tar xf cmake-3.10.0-Linux-x86_64.tar.gz
 echo 'export PATH=$HOME/cmake-3.10.0-Linux-x86_64/bin:$PATH' >> $HOME/.bashrc
 
 # install GLOG
+# If you encounter the problem of GFLAGS_NAMESPACE is not defined, 
+# re-install gflags according to the following article.
+# https://github.com/google/glog/wiki/Installing-Glog-on-Ubuntu-14.04
 cd $HOME
 wget https://github.com/google/glog/archive/v0.3.5.tar.gz
 tar xf v0.3.5.tar.gz
