@@ -53,6 +53,17 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
   typedef IndexStore::const_iterator const_iterator;
   typedef std::vector<const PostingListType*> PlPointers;
 
+  void PrintByteCounts() const {
+    int cnt = 0;
+    for (auto &entry : index_) {
+      std::cout << entry.second.ByteCount();
+      cnt++;
+
+      if (cnt == 8) 
+        break;
+    }
+  }
+
   void Serialize(std::string path) const {
     std::ofstream ofile(path, std::ios::binary);
 
@@ -423,6 +434,10 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
     similarity_.Reset(doc_lengths_.GetAvgLength());
+  }
+
+  void PrintByteCounts() const {
+    inverted_index_.PrintByteCounts();
   }
 
  private:

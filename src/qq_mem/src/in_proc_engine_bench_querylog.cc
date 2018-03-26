@@ -230,12 +230,14 @@ class InProcExperiment: public Experiment {
     std::cout << "Running treatment " << run_id << std::endl;
 
     // auto row = Search(query_producers_[run_id].get(), run_id);
-    auto row = treatment_executor_->Execute(treatments_[run_id]);
+    // auto row = treatment_executor_->Execute(treatments_[run_id]);
+    
+    engine_->PrintByteCounts();
 
-    row["n_docs"] = std::to_string(config_.GetInt("n_docs"));
-    row["terms"] = Concat(treatments_[run_id].terms);
-    row["is_phrase"] = std::to_string(treatments_[run_id].is_phrase);
-    table_.Append(row);
+    // row["n_docs"] = std::to_string(config_.GetInt("n_docs"));
+    // row["terms"] = Concat(treatments_[run_id].terms);
+    // row["is_phrase"] = std::to_string(treatments_[run_id].is_phrase);
+    // table_.Append(row);
   }
 
   void After() {
