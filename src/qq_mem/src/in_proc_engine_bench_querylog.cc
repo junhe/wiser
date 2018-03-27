@@ -20,7 +20,7 @@
 
 
 DEFINE_int32(n_threads, 1, "Number of client threads");
-DEFINE_bool(use_grpc, false, "Use this as a GRPC client");
+DEFINE_string(exp_mode, "local", "local/grpc/localquerylog");
 DEFINE_bool(use_profiler, true, "Use profiler");
 
 
@@ -114,7 +114,6 @@ class GrpcTreatmentExecutor: public TreatmentExecutor {
     client_config_.SetInt("benchmark_duration", 10);
     // client_config_.SetBool("save_reply", true);
     client_config_.SetBool("save_reply", false);
-
   }
 
   int NumberOfThreads() {return client_config_.GetInt("n_threads");}
@@ -176,6 +175,54 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
 };
 
 
+class LocalStatsExecutor: public TreatmentExecutor {
+ public:
+  LocalStatsExecutor(SearchEngineServiceNew *engine)
+     :engine_(engine) {}
+
+  int NumberOfThreads() {return 1;}
+
+  auto array = CreateTermPoolArray(
+      "/mnt/ssd/downloads/wiki_QueryLog_tokenized", 1, 100);
+
+  utils::ResultRow Execute(Treatment treatment) {
+    const int n_repeats = treatment.n_repeats;
+    utils::ResultRow row;
+    auto query_producer = CreateProducer(treatment);
+
+    auto start = utils::now();
+    for (int i = 0; i < n_repeats; i++) {
+      auto query = query_producer->NextNativeQuery(0);
+      query.n_snippet_passages = treatment.n_passages;
+      // std::cout << query.ToStr() << std::endl;
+      auto result = engine_->Search(query);
+
+      // std::cout << result.ToStr() << std::endl;
+    }
+    auto end = utils::now();
+    auto dur = utils::duration(start, end);
+
+    auto count_map = engine_->PostinglistSizes(treatment.terms);
+    std::cout << "--- Term Counts ---" << std::endl;
+    for (auto pair : count_map) {
+      std::cout << pair.first << " : " << pair.second << std::endl;
+    }
+
+    row["latency"] = std::to_string(dur / n_repeats); 
+    row["n_passages"] = std::to_string(treatment.n_passages);
+    row["return_snippets"] = std::to_string(treatment.return_snippets);
+    row["duration"] = std::to_string(dur); 
+    row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
+    return row;
+  }
+
+ private:
+  SearchEngineServiceNew *engine_;
+};
+
+
+
+
 class InProcExperiment: public Experiment {
  public:
   InProcExperiment(GeneralConfig config): config_(config) {
@@ -211,11 +258,16 @@ class InProcExperiment: public Experiment {
   }
 
   void Before() {
-    if (FLAGS_use_grpc == true) {
+    if (FLAGS_exp_mode == "grpc") {
       std::cout << "Using GRPC..." << std::endl;
       treatment_executor_.reset(new GrpcTreatmentExecutor(FLAGS_n_threads));
-    } else {
+    } else if (FLAGS_exp_mode == "local") {
       std::cout << "Using in-proc engine..." << std::endl;
+      engine_ = std::move(CreateEngineFromFile());
+      treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
+    } else if (FLAGS_exp_mode == "localquerylog") {
+      std::cout << "Using in-proc engine with query log..." << std::endl;
+
       engine_ = std::move(CreateEngineFromFile());
       treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
     }
