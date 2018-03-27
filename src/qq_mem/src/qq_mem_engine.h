@@ -125,7 +125,9 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     IteratorPointers it_pointers;
     PlPointers pl_pointers = FindPostinglists(terms);
     for (auto &pl : pl_pointers) {
-      it_pointers.push_back(std::move(pl->Begin()));
+      if (pl != nullptr) {
+        it_pointers.push_back(std::move(pl->Begin()));
+      }
     }
 
     return it_pointers;
@@ -135,7 +137,9 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     std::vector<PostingListDeltaIterator> iterators;
     PlPointers pl_pointers = FindPostinglists(terms);
     for (auto &pl : pl_pointers) {
-      iterators.push_back(pl->Begin2());
+      if (pl != nullptr) {
+        iterators.push_back(pl->Begin2());
+      }
     }
 
     return iterators;
@@ -147,10 +151,10 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     for (auto term : terms) {
       auto it = index_.find(term);
       if (it == index_.end()) {
-        break;
+        postinglist_pointers.push_back(nullptr);
+      } else {
+        postinglist_pointers.push_back(&it->second);
       }
-
-      postinglist_pointers.push_back(&it->second);
     }
 
     return postinglist_pointers;
@@ -161,7 +165,11 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
     auto pointers = FindPostinglists(terms);
     for (int i = 0; i < terms.size(); i++) {
-      ret[terms[i]] = pointers[i]->Size();
+      if (pointers[i] != nullptr) {
+        ret[terms[i]] = pointers[i]->Size();
+      } else {
+        ret[terms[i]] = 0;
+      }
     }
 
     return ret;
@@ -336,7 +344,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     std::vector<PostingListDeltaIterator> iterators = 
         inverted_index_.FindIteratorsSolid(query.terms);
 
-    if (iterators.size() == 0) {
+    if (iterators.size() == 0 || iterators.size() < query.terms.size()) {
       return result;
     }
 
