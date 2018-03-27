@@ -2,6 +2,8 @@
 #define QQ_MEM_ENGINE_H
 
 #include <assert.h>
+#include <iostream>
+#include <fstream>
 
 #include <boost/filesystem.hpp>
 
@@ -55,13 +57,18 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
   void PrintByteCounts() const {
     int cnt = 0;
-    for (auto &entry : index_) {
-      std::cout << entry.second.ByteCount();
-      cnt++;
+    std::ofstream count_file;
 
-      if (cnt == 8) 
-        break;
+    count_file.open("posting_size.txt");
+
+    for (auto &entry : index_) {
+      // std::cout << entry.first << " " << entry.second.ByteCount() << std::endl;;
+      count_file << entry.second.ByteCount() << std::endl;;
+      cnt++;
+      // if (cnt == 8) 
+        // break;
     }
+    count_file.close();
   }
 
   void Serialize(std::string path) const {
