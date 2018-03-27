@@ -182,31 +182,42 @@ class LocalStatsExecutor: public TreatmentExecutor {
 
   int NumberOfThreads() {return 1;}
 
-  auto array = CreateTermPoolArray(
-      "/mnt/ssd/downloads/wiki_QueryLog_tokenized", 1, 100);
+  std::unique_ptr<QueryProducer> CreateProducer(Treatment treatment) override {
+    GeneralConfig config;
+    config.SetBool("is_phrase", treatment.is_phrase);
+    config.SetBool("return_snippets", treatment.return_snippets);
+    config.SetInt("n_results", treatment.n_results);
+
+    auto array = CreateTermPoolArray(
+        "/mnt/ssd/downloads/wiki_QueryLog_tokenized", NumberOfThreads(), 100);
+
+    return std::unique_ptr<QueryProducer>(
+        new QueryProducer(std::move(array), config));
+  }
 
   utils::ResultRow Execute(Treatment treatment) {
     const int n_repeats = treatment.n_repeats;
     utils::ResultRow row;
+
     auto query_producer = CreateProducer(treatment);
 
     auto start = utils::now();
     for (int i = 0; i < n_repeats; i++) {
       auto query = query_producer->NextNativeQuery(0);
       query.n_snippet_passages = treatment.n_passages;
-      // std::cout << query.ToStr() << std::endl;
-      auto result = engine_->Search(query);
+      std::cout << query.ToStr() << std::endl;
+      // auto result = engine_->Search(query);
+
+      auto count_map = engine_->PostinglistSizes(query.terms);
+      for (auto &pair : count_map) {
+        std::cout << pair.first << " : " << pair.second << std::endl;
+      }
 
       // std::cout << result.ToStr() << std::endl;
     }
     auto end = utils::now();
     auto dur = utils::duration(start, end);
 
-    auto count_map = engine_->PostinglistSizes(treatment.terms);
-    std::cout << "--- Term Counts ---" << std::endl;
-    for (auto pair : count_map) {
-      std::cout << pair.first << " : " << pair.second << std::endl;
-    }
 
     row["latency"] = std::to_string(dur / n_repeats); 
     row["n_passages"] = std::to_string(treatment.n_passages);
@@ -219,8 +230,6 @@ class LocalStatsExecutor: public TreatmentExecutor {
  private:
   SearchEngineServiceNew *engine_;
 };
-
-
 
 
 class InProcExperiment: public Experiment {
@@ -269,7 +278,9 @@ class InProcExperiment: public Experiment {
       std::cout << "Using in-proc engine with query log..." << std::endl;
 
       engine_ = std::move(CreateEngineFromFile());
-      treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
+      treatment_executor_.reset(new LocalStatsExecutor(engine_.get()));
+    } else {
+      LOG(FATAL) << "Mode not supported";
     }
     
     if (FLAGS_use_profiler == true) {
