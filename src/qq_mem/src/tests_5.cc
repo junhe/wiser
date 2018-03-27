@@ -592,10 +592,10 @@ TEST_CASE( "Loading Engine From Local Line Doc", "[engine]" ) {
   REQUIRE(result.Size() > 0);
 
   {
-    SearchQuery query({"solar", "radiation"}, true);
+    SearchQuery query({"solar", "body"}, true);
     result = engine->Search(query);
     std::cout << result.ToStr() << std::endl;
-    REQUIRE(result.Size() > 0);
+    REQUIRE(result.Size() == 0); // only solar is a valid term
   }
 }
 
