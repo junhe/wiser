@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <iostream>
+#include <fstream>
 #include <string>
 #include <memory>
 #include <thread>
@@ -189,41 +190,39 @@ class LocalStatsExecutor: public TreatmentExecutor {
     config.SetInt("n_results", treatment.n_results);
 
     auto array = CreateTermPoolArray(
-        "/mnt/ssd/downloads/wiki_QueryLog_tokenized", NumberOfThreads(), 100);
+        "/mnt/ssd/downloads/wiki_QueryLog_tokenized", NumberOfThreads(), 60795915);
 
     return std::unique_ptr<QueryProducer>(
         new QueryProducer(std::move(array), config));
   }
 
   utils::ResultRow Execute(Treatment treatment) {
-    const int n_repeats = treatment.n_repeats;
+    // const int n_repeats = treatment.n_repeats;
+    const int n_repeats = 60795915;
     utils::ResultRow row;
 
     auto query_producer = CreateProducer(treatment);
+
+    std::ofstream myfile;
+    myfile.open ("query_postinglist_sizes.txt");
 
     auto start = utils::now();
     for (int i = 0; i < n_repeats; i++) {
       auto query = query_producer->NextNativeQuery(0);
       query.n_snippet_passages = treatment.n_passages;
-      std::cout << query.ToStr() << std::endl;
-      // auto result = engine_->Search(query);
+      // std::cout << query.ToStr() << std::endl;
 
       auto count_map = engine_->PostinglistSizes(query.terms);
       for (auto &pair : count_map) {
-        std::cout << pair.first << " : " << pair.second << std::endl;
+        // std::cout << pair.first << " : " << pair.second << std::endl;
+        myfile << pair.second << std::endl;
       }
-
-      // std::cout << result.ToStr() << std::endl;
     }
     auto end = utils::now();
     auto dur = utils::duration(start, end);
 
+    myfile.close();
 
-    row["latency"] = std::to_string(dur / n_repeats); 
-    row["n_passages"] = std::to_string(treatment.n_passages);
-    row["return_snippets"] = std::to_string(treatment.return_snippets);
-    row["duration"] = std::to_string(dur); 
-    row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
     return row;
   }
 
@@ -247,16 +246,16 @@ class InProcExperiment: public Experiment {
     std::vector<Treatment> treatments {
 
       Treatment({"hello"}, false, 1000, true),
-      Treatment({"from"}, false, 20, true),
-      Treatment({"ripdo"}, false, 10000, true),
+      // Treatment({"from"}, false, 20, true),
+      // Treatment({"ripdo"}, false, 10000, true),
 
-      Treatment({"hello", "world"}, false, 1000, true),
-      Treatment({"from", "also"}, false, 10, true),
-      Treatment({"ripdo", "liftech"}, false, 1000000, true),
+      // Treatment({"hello", "world"}, false, 1000, true),
+      // Treatment({"from", "also"}, false, 10, true),
+      // Treatment({"ripdo", "liftech"}, false, 1000000, true),
 
-      Treatment({"hello", "world"}, true, 100, true),
-      Treatment({"barack", "obama"}, true, 1000, true),
-      Treatment({"from", "also"}, true, 10, true)
+      // Treatment({"hello", "world"}, true, 100, true),
+      // Treatment({"barack", "obama"}, true, 1000, true),
+      // Treatment({"from", "also"}, true, 10, true)
     };
 
     // for (auto &t : treatments) {

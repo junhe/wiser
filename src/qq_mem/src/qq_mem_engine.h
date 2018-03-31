@@ -166,7 +166,8 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     auto pointers = FindPostinglists(terms);
     for (int i = 0; i < terms.size(); i++) {
       if (pointers[i] != nullptr) {
-        ret[terms[i]] = pointers[i]->Size();
+        // ret[terms[i]] = pointers[i]->Size();
+        ret[terms[i]] = pointers[i]->ByteCount();
       } else {
         ret[terms[i]] = 0;
       }
@@ -435,7 +436,8 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
 
  private:
   int next_doc_id_ = 0;
-  CompressedDocStore doc_store_;
+  // CompressedDocStore doc_store_;
+  SimpleDocStore doc_store_;
   InvertedIndexQqMemDelta inverted_index_;
   DocLengthStore doc_lengths_;
   SimpleHighlighter highlighter_;
