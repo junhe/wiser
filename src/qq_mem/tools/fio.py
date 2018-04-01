@@ -1,22 +1,8 @@
 import unittest
+import random
 from pyreuse.apputils.fio import *
 from pyreuse.macros import *
 from pyreuse.helpers import parameter_combinations
-
-
-baselist = [
-                ("global", {
-                    'ioengine'  : 'libaio',
-                    'size'      : 4096,
-                    }
-                ),
-                ("writer", {
-                    'group_reporting': NOVALUE,
-                    'numjobs'   : 1,
-                    'rw'        : 'write'
-                    }
-                )
-            ]
 
 
 def read(expname, depth, bs):
@@ -59,37 +45,13 @@ def main():
                     'n_pages' : [1, 2, 4, 8, 16, 32, 64]
                     }
     params_comb = parameter_combinations(parameter_dict)
+    params_comb = params_comb * 3
+    random.shuffle(params_comb)
 
     for param in params_comb:
         read(get_expname(param), param['depth'], param['n_pages'] * 4096)
 
-    # for depth in [1, 2, 4, 8, 16, 32, 64]:
-        # read(str(depth).zfill(5), depth)
-
-    # for n_pages in [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192]:
-        # read_size(str(n_pages).zfill(6), n_pages * 4096)
 
 if __name__ == "__main__":
     main()
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
