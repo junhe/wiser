@@ -375,8 +375,8 @@ GeneralConfig config_by_jun() {
   GeneralConfig config;
   config.SetString("engine_type", "qq_mem_compressed");
 
-  // config.SetString("load_source", "linedoc");
-  config.SetString("load_source", "dump");
+  config.SetString("load_source", "linedoc");
+  // config.SetString("load_source", "dump");
 
   config.SetInt("n_docs", 100);
   config.SetString("linedoc_path", 

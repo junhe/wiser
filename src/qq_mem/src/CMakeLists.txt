@@ -39,6 +39,7 @@ set(ENGINE_SRCS
     posting.cc
     query_processing.cc
     query_pool.cc
+    packed_value.cc
     types.cc
     qq_mem_engine.cc
     grpc_client_impl.cc
@@ -113,6 +114,7 @@ add_executable( testmain
     tests_6.cc
     tests_7.cc
     tests_8.cc
+    tests_9.cc
     test_helpers.cc
     grpc_client_impl.cc
     ${ENGINE_SRCS}

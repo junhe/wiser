@@ -83,6 +83,15 @@ test_args:
 	cd ..
 	./build/testmain ${args}
 
+test_qqflash:
+	rm -f ./build/testmain
+	mkdir -p ./build
+	cd build
+	cmake ../src/
+	make -j16 testmain
+	cd ..
+	./build/testmain "[qqflash]"
+
 snippet_bench:
 	./build.sh
 	./build/snippet_bench
