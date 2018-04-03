@@ -1,6 +1,7 @@
 #include "utils.h"
 
-int AppendToByte(long val, int n_bits, uint8_t *buf, int next_empty_bit);
+int AppendToByte(long val, const int n_bits, uint8_t *buf, const int next_empty_bit);
+int AppendValue(long val, int n_bits, uint8_t *buf, int next_empty_bit);
 int NumBitsInByte(int next_empty_bit);
 
 class PackedIntsWriter {
@@ -19,7 +20,7 @@ class PackedIntsWriter {
   }
 
   std::string Serialize() {
-
+    
   }
 
  private:

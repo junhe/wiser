@@ -48,6 +48,56 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
       REQUIRE(next == 9);
     }
   }
+
+
+  SECTION("Append value") {
+    uint8_t buf[8];
+    memset(buf, 0, 8);
+
+    SECTION("Append a simple one") {
+      int next = AppendValue(0x01, 1, buf, 0);
+      REQUIRE(buf[0] == (const uint8_t)(0x80));
+      REQUIRE(next == 1);
+    }
+
+    SECTION("Append two bits") {
+      int next = AppendValue(0x01, 1, buf, 0);
+      REQUIRE(buf[0] == (const uint8_t)(0x80));
+      REQUIRE(next == 1);
+
+      next = AppendValue(0x01, 1, buf, 1);
+      REQUIRE(buf[0] == (const uint8_t)(0xC0));
+      REQUIRE(next == 2);
+    }
+
+    SECTION("Exact one byte") {
+      int next = AppendValue(0xFF, 8, buf, 0);
+      REQUIRE(buf[0] == (const uint8_t)(0xFF));
+      REQUIRE(next == 8);
+    }
+
+    SECTION("One byte across two bytes") {
+      int next = AppendValue(0xFF, 8, buf, 4);
+      REQUIRE(buf[0] == (const uint8_t)(0x0F));
+      REQUIRE(buf[1] == (const uint8_t)(0xF0));
+      REQUIRE(next == 12);
+    }
+
+    SECTION("Two bytes to two bytes") {
+      int next = AppendValue(0xFFFF, 16, buf, 0);
+      REQUIRE(buf[0] == (const uint8_t)(0xFF));
+      REQUIRE(buf[1] == (const uint8_t)(0xFF));
+      REQUIRE(next == 16);
+    }
+ 
+    SECTION("Two bytes to three bytes") {
+      int next = AppendValue(0xFFFF, 16, buf, 4);
+      REQUIRE(buf[0] == (const uint8_t)(0x0F));
+      REQUIRE(buf[1] == (const uint8_t)(0xFF));
+      REQUIRE(buf[2] == (const uint8_t)(0xF0));
+      REQUIRE(next == 20);
+    }
+  }
 }
 
 
