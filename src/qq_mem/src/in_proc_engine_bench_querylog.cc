@@ -326,7 +326,7 @@ class InProcExperiment: public Experiment {
       std::cout << "You must speicify load_source" << std::endl;
     }
 
-    // engine->Serialize("/mnt/ssd/big-engine-dump");
+    // engine->Serialize("/mnt/ssd/big-engine-dump-compressed-text");
 
     std::cout << "Term Count: " << engine->TermCount() << std::endl;
     return engine;
@@ -387,7 +387,7 @@ GeneralConfig config_by_jun() {
       // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
   // config.SetString("loader", "TOKEN_ONLY");
   
-  config.SetString("dump_path", "/mnt/ssd/big-engine-dump");
+  config.SetString("dump_path", "/mnt/ssd/big-engine-dump-compressed-text");
 
   config.SetInt("n_repeats", 1000);
   config.SetInt("n_passages", 3);

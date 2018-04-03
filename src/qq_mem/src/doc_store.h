@@ -205,8 +205,8 @@ class CompressedDocStore {
     
     std::string text(data + offset, text_size);
     
-    // AddRaw(doc_id, text); // Use this when the file is compressed
-    Add(doc_id, text); // Use this when the file is not compressed
+    AddRaw(doc_id, text); // Use this when the file is compressed
+    // Add(doc_id, text); // Use this when the file is not compressed
 
     // return the length of this entry
     return offset + text_size;
