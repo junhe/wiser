@@ -1,4 +1,5 @@
 import unittest
+import time
 import random
 from pyreuse.apputils.fio import *
 from pyreuse.macros import *
@@ -33,7 +34,7 @@ def read(expname, depth, bs):
     fio.run()
 
     # shcmd("rm " + conf_path)
-    shcmd("mv /tmp/fio.result.json.parsed /tmp/" + expname + ".result")
+    shcmd("mv /tmp/fio.result.json.parsed /tmp/" + expname + ".result." + str(time.time()) )
 
 
 def get_expname(param):
