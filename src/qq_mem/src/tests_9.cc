@@ -3,17 +3,29 @@
 #include "packed_value.h"
 
 TEST_CASE( "PackedInts", "[qqflash]" ) {
-  PackedIntsWriter writer;
-  
-  writer.Add(3);
-  writer.Add(8);
-  writer.Add(1);
-
   SECTION("NumBitsInByte") {
     REQUIRE(NumBitsInByte(0) == 8);
     REQUIRE(NumBitsInByte(1) == 7);
     REQUIRE(NumBitsInByte(7) == 1);
     REQUIRE(NumBitsInByte(8) == 8);
+  }
+
+  SECTION("Max bits per value") {
+    PackedIntsWriter writer;
+
+    REQUIRE(writer.MaxBitsPerValue() == 0);
+
+    writer.Add(0x01);
+    REQUIRE(writer.MaxBitsPerValue() == 1);
+
+    writer.Add(0x01);
+    REQUIRE(writer.MaxBitsPerValue() == 1);
+
+    writer.Add(0x0F);
+    REQUIRE(writer.MaxBitsPerValue() == 4);
+
+    writer.Add(0x01);
+    REQUIRE(writer.MaxBitsPerValue() == 4);
   }
 
   SECTION("Append to byte") {
@@ -96,6 +108,38 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
       REQUIRE(buf[1] == (const uint8_t)(0xFF));
       REQUIRE(buf[2] == (const uint8_t)(0xF0));
       REQUIRE(next == 20);
+    }
+  }
+
+  SECTION("Serialize") {
+    PackedIntsWriter writer;
+
+    SECTION("All values are 0") {
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        writer.Add(0);
+      }
+      REQUIRE(writer.MaxBitsPerValue() == 1);
+
+      std::string data = writer.Serialize();
+      REQUIRE(data.size() == (128 / 8)); // 128 bits in total
+
+      for (int i = 0; i < data.size(); i++) {
+        REQUIRE(data[i] == 0);
+      }
+    }
+
+    SECTION("All values are 1") {
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        writer.Add(1);
+      }
+      REQUIRE(writer.MaxBitsPerValue() == 1);
+
+      std::string data = writer.Serialize();
+      REQUIRE(data.size() == (128 / 8)); // 128 bits in total
+
+      for (int i = 0; i < data.size(); i++) {
+        REQUIRE(data[i] == (char)0xff);
+      }
     }
   }
 }

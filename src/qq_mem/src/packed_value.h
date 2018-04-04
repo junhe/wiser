@@ -6,28 +6,40 @@ int NumBitsInByte(int next_empty_bit);
 
 class PackedIntsWriter {
  public:
+  static const int PACK_SIZE = 128;
+
   void Add(long value) {
     values_.push_back(value);
     int n_bits = utils::NumOfBits(value);
+    n_bits = n_bits == 0? 1 : n_bits;
     if (n_bits > max_bits_per_value_)
       max_bits_per_value_ = n_bits;
-
-    for (auto &v : values_) {
-      std::cout << v << ",";
-    }
-    std::cout << "max_bits_per_value_: " << max_bits_per_value_ << std::endl;
-    std::cout << std::endl;
   }
 
   std::string Serialize() {
-    
+    if (values_.size() != PACK_SIZE)
+      LOG(FATAL) << "Number of values is not " << PACK_SIZE;
+
+    constexpr int size = sizeof(long) * PACK_SIZE;
+    uint8_t buf[size];
+    memset(buf, 0, size);
+
+    int next_empty_bit = 0;
+    for (auto &v : values_) {
+      next_empty_bit = AppendValue(v, max_bits_per_value_, buf, next_empty_bit);
+    }
+
+    return std::string((char *)buf, (next_empty_bit + 7) / 8); // ceiling(next_empty_bit/8)
+  }
+
+  int MaxBitsPerValue() const {
+    return max_bits_per_value_;
   }
 
  private:
   std::vector<long> values_;
   int max_bits_per_value_ = 0;
 };
-
 
 
 

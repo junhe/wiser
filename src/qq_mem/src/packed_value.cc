@@ -41,6 +41,3 @@ int NumBitsInByte(int next_empty_bit) {
 }
 
 
-
-
-
