@@ -40,4 +40,30 @@ int NumBitsInByte(int next_empty_bit) {
   return 8 - (next_empty_bit % 8);
 }
 
+long ExtractBits(uint8_t *buf, const int bit_start, const int n_bits) {
+  long val = 0;  
+  int n_bits_remain = n_bits;
+  int next_bit = bit_start;
+
+  while (n_bits_remain > 0) {
+    const int byte_index = next_bit / 8;
+    const int in_byte_off = next_bit % 8;
+    const int n_unread_bits = 8 - in_byte_off;
+    const int n_bits_to_read = 
+      n_bits_remain < n_unread_bits?  n_bits_remain : n_unread_bits;
+
+    // number of bits to the left of the current bits
+    const int n_bits_on_left = 64 - n_bits + (next_bit - bit_start); 
+    uint8_t tmp = (buf[byte_index] << in_byte_off) >> (8 - n_bits_to_read);
+
+    val |= tmp << (64 - n_bits_to_read) - n_bits_on_left;
+
+    n_bits_remain -= n_bits_to_read;
+    next_bit += n_bits_to_read;
+  }
+
+  return val;
+}
+
+
 

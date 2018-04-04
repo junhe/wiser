@@ -111,6 +111,32 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
     }
   }
 
+  SECTION("Extracting bits") {
+    uint8_t buf[8];
+    memset(buf, 0, 8);
+
+    SECTION("Just 1") {
+      buf[0] = 0x80;
+      REQUIRE(ExtractBits(buf, 0, 1) == 1);
+    }
+
+    SECTION("Just 0") {
+      buf[0] = 0x00;
+      REQUIRE(ExtractBits(buf, 0, 1) == 0);
+    }
+
+    SECTION("Across two bytes") {
+      buf[0] = 0x0F;
+      buf[1] = 0xF0;
+      REQUIRE(ExtractBits(buf, 4, 8) == 0xFF);
+    }
+
+    SECTION("Across 8 bytes") {
+      memset(buf, 0xFF, 8);
+      REQUIRE(ExtractBits(buf, 0, 64) == ~((long)0x00));
+    }
+  }
+
   SECTION("Serialize") {
     PackedIntsWriter writer;
 

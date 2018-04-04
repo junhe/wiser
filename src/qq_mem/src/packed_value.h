@@ -2,6 +2,7 @@
 
 int AppendToByte(long val, const int n_bits, uint8_t *buf, const int next_empty_bit);
 int AppendValue(long val, int n_bits, uint8_t *buf, int next_empty_bit);
+long ExtractBits(uint8_t *buf, const int bit_start, const int n_bits);
 int NumBitsInByte(int next_empty_bit);
 
 class PackedIntsWriter {
@@ -40,6 +41,23 @@ class PackedIntsWriter {
   std::vector<long> values_;
   int max_bits_per_value_ = 0;
 };
+
+class PackedIntsReader {
+ public:
+  PackedIntsReader(const uint8_t *buf, const int n_bits_per_value)
+    : buf_(buf), n_bits_per_value_(n_bits_per_value) {
+  }
+
+  long Get(const int index) {
+     
+  }
+
+ private:
+  const uint8_t *buf_;
+  const int n_bits_per_value_;
+};
+
+
 
 
 
