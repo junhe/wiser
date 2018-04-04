@@ -185,9 +185,15 @@ int varint_encode(uint32_t value, std::string *buf, off_t offset);
 // int varint_decode(const std::string &buf, off_t offset, uint32_t *value);
 // int varint_decode_chars(const char *buf, const off_t offset, uint32_t *value);
 
-inline int varint_decode_chars(const char *buf, const off_t offset, uint32_t *value) {
-  *value = buf[offset] & 0x7f;
+inline int varint_decode_chars(
+    const char *buf, const off_t offset, uint32_t *value) noexcept {
+  uint32_t v = buf[offset];
+  if (v < 0x80) {
+    *value = v;
+    return 1;
+  }
 
+  *value = buf[offset] & 0x7f;
   int i = 1;
   // inv: buf[offset, offset + i) has been copied to value 
   //      (buf[offset + i] is about to be copied)
@@ -200,9 +206,60 @@ inline int varint_decode_chars(const char *buf, const off_t offset, uint32_t *va
 
 // from varint code to int
 // return: length of the buffer decoded
-inline int varint_decode(const std::string &buf, const off_t offset, uint32_t *value) {
+inline int varint_decode(
+    const std::string &buf, const off_t offset, uint32_t *value) noexcept {
   return varint_decode_chars(buf.data(), offset, value);
 }
+
+
+inline int NumOfBits(uint32_t val) {
+  int n = 0;
+  while (val > 0) {
+    val >>= 1;
+    n++;
+  }
+
+  return n;
+}
+
+// Refer to longToInt4() in Lucene for details
+// Basically, we use float-like bit format: keep left-most 4 bits 
+// and the signifcance.
+//
+// val should not be larger than 0x80000000
+inline char UintToChar4(uint32_t val) {
+  if (val < 0x08) {
+    // value has only 3 bits
+    return val & 0xFF;
+  } else {
+    int num_of_bits = NumOfBits(val);
+    int shift = num_of_bits - 4;
+    uint32_t encoded = val >> shift;
+    encoded &= 0x07;
+    encoded |= (shift + 1) << 3;
+    return encoded;
+  }
+}
+
+inline uint32_t Char4ToUint(char val) {
+	uint32_t bits = val & 0x07;
+	int shift = ((val & 0xff) >> 3) - 1;
+	uint32_t decoded;
+
+	if (shift == -1) {
+		// subnormal value
+		decoded = bits;
+	} else {
+		// normal value
+		decoded = (bits | 0x08) << shift;
+	}
+
+	return decoded;
+}
+
+
+
+
 
 
 

@@ -436,7 +436,7 @@ class Client {
 
     std::cout << "Duration: " << n_secs << std::endl;
     std::cout << "Total roundtrips: " << GetTotalRoundtrips() << std::endl;
-    auto qps = GetTotalRoundtrips() / n_secs;
+    double qps = GetTotalRoundtrips() / (float) n_secs;
     std::cout << "Roundtrip Per Second (QPS): " << qps << std::endl;
     row["QPS"] = std::to_string(qps);
 

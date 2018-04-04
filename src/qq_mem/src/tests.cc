@@ -69,6 +69,40 @@ TEST_CASE( "Document store implemented by C++ map", "[docstore]" ) {
     REQUIRE(store.Has(doc_id) == false);
 }
 
+TEST_CASE( "Compressed Doc Store", "[docstore]" ) {
+  SECTION("Regular") {
+    CompressedDocStore store;
+    int doc_id = 88;
+    std::string doc = "it is a doc";
+
+    REQUIRE(store.Has(doc_id) == false);
+
+    store.Add(doc_id, doc);
+    REQUIRE(store.Get(doc_id) == doc);
+
+    store.Add(89, "doc89");
+    REQUIRE(store.Size() == 2);
+
+    store.Remove(89);
+    REQUIRE(store.Size() == 1);
+
+    REQUIRE(store.Has(doc_id) == true);
+
+    store.Clear();
+    REQUIRE(store.Has(doc_id) == false);
+  }
+
+  SECTION("Empty doc") {
+    CompressedDocStore store;
+    int doc_id = 88;
+    std::string doc = "";
+    REQUIRE(store.Has(doc_id) == false);
+
+    store.Add(doc_id, doc);
+    REQUIRE(store.Get(doc_id) == doc);
+  }
+}
+
 
 TEST_CASE( "Utilities", "[utils]" ) {
     SECTION("Leading space and Two spaces") {
@@ -310,19 +344,6 @@ TEST_CASE( "Flash based LRUCache Template essential put/get opeartions are OK", 
     REQUIRE_THROWS_AS(cache_lru.get(17), std::range_error);
 }
 
-TEST_CASE("Precompute and store document sentence segments successfully", "[Precompute_StorePassages]") {
-    SimpleDocStore store;
-    int doc_id = 88;
-    std::string doc = "it is a doc. We are the second sentence. I'm the third sentence! ";
-    store.Add(doc_id, doc);
-    
-    if (FLAG_SNIPPETS_PRECOMPUTE) {
-        store.Add(doc_id, doc);
-        // check document body
-        REQUIRE(store.Get(doc_id) == doc);
-    }
-}
-
 
 TEST_CASE("String to char *, back to string works", "[String_To_Char*]") {
     std::string test_str= "hello world";
@@ -390,168 +411,6 @@ TEST_CASE( "Vector-based posting list works fine", "[posting_list]" ) {
 }
 
 
-TEST_CASE( "Intersection", "[intersect]" ) {
-  PostingList_Vec<PostingSimple> pl01("hello");   
-  for (int i = 0; i < 10; i++) {
-    pl01.AddPosting(PostingSimple(i, 1, Positions{28}));
-  }
-
-  SECTION("It intersects a subset") {
-    PostingList_Vec<PostingSimple> pl02("world");   
-    for (int i = 5; i < 10; i++) {
-      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
-    }
-
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
-    REQUIRE(ret == std::vector<DocIdType>{5, 6, 7, 8, 9});
-  }
-
-  SECTION("It intersects an empty posting list") {
-    PostingList_Vec<PostingSimple> pl02("world");   
-
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
-    REQUIRE(ret == std::vector<DocIdType>{});
-  }
-
-  SECTION("It intersects a non-overlapping posting list") {
-    PostingList_Vec<PostingSimple> pl02("world");   
-    for (int i = 10; i < 20; i++) {
-      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
-    }
-
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
-    REQUIRE(ret == std::vector<DocIdType>{});
-  }
-
-  SECTION("It intersects a partial-overlapping posting list") {
-    PostingList_Vec<PostingSimple> pl02("world");   
-    for (int i = 5; i < 15; i++) {
-      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
-    }
-
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
-    REQUIRE(ret == std::vector<DocIdType>{5, 6, 7, 8, 9});
-  }
-
-  SECTION("It intersects a super set") {
-    PostingList_Vec<PostingSimple> pl02("world");   
-    for (int i = 0; i < 15; i++) {
-      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
-    }
-
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
-    REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
-  }
-
-  SECTION("It intersects a single list") {
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01};
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
-    REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
-  }
-
-  SECTION("It intersects three lists") {
-    PostingList_Vec<PostingSimple> pl02("world");   
-    for (int i = 0; i < 5; i++) {
-      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
-    }
-
-    PostingList_Vec<PostingSimple> pl03("more");   
-    for (int i = 0; i < 2; i++) {
-      pl03.AddPosting(PostingSimple(i, 1, Positions{28}));
-    }
-
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02, &pl03};
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
-    REQUIRE(ret == std::vector<DocIdType>{0, 1});
-  }
-
-  SECTION("It intersects two empty list") {
-    PostingList_Vec<PostingSimple> pl01("hello");   
-    PostingList_Vec<PostingSimple> pl02("world");   
-
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
-    REQUIRE(ret == std::vector<DocIdType>{});
-  }
-
-  SECTION("It handles a previous bug") {
-    PostingList_Vec<PostingSimple> pl01("hello");   
-    pl01.AddPosting(PostingSimple(8, 1, Positions{28}));
-    pl01.AddPosting(PostingSimple(10, 1, Positions{28}));
-
-    PostingList_Vec<PostingSimple> pl02("world");   
-    pl02.AddPosting(PostingSimple(7, 1, Positions{28}));
-    pl02.AddPosting(PostingSimple(10, 1, Positions{28}));
-    pl02.AddPosting(PostingSimple(15, 1, Positions{28}));
-
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists);
-    REQUIRE(ret == std::vector<DocIdType>{10});
-  }
-
-
-  SECTION("It returns doc counts of each term") {
-    PostingList_Vec<PostingSimple> pl02("world");   
-    for (int i = 0; i < 15; i++) {
-      pl02.AddPosting(PostingSimple(i, 1, Positions{28}));
-    }
-
-    std::vector<const PostingList_Vec<PostingSimple>*> lists{&pl01, &pl02};
-    IntersectionResult result;
-
-    std::vector<DocIdType> ret = intersect<PostingSimple>(lists, &result);
-    REQUIRE(ret == std::vector<DocIdType>{0, 1, 2, 3, 4, 5, 6, 7, 8, 9});
-    REQUIRE(result.GetDocCount("hello") == 10);
-    REQUIRE(result.GetDocCount("world") == 15);
-  }
-
-  SECTION("It returns term freqs") {
-    PostingList_Vec<StandardPosting> pl01("hello");   
-    pl01.AddPosting(StandardPosting(8, 1));
-    pl01.AddPosting(StandardPosting(10, 2));
-
-    PostingList_Vec<StandardPosting> pl02("world");   
-    pl02.AddPosting(StandardPosting(7, 1));
-    pl02.AddPosting(StandardPosting(10, 8));
-    pl02.AddPosting(StandardPosting(15, 1));
-
-    std::vector<const PostingList_Vec<StandardPosting>*> lists{&pl01, &pl02};
-    IntersectionResult result;
-
-    std::vector<DocIdType> ret = intersect<StandardPosting>(lists, &result);
-
-    REQUIRE(ret == std::vector<DocIdType>{10});
-    REQUIRE(result.GetPosting(10, "hello")->GetTermFreq() == 2);
-    REQUIRE(result.GetPosting(10, "world")->GetTermFreq() == 8);
-  }
-
-  SECTION("It returns term freqs (new)") {
-    PostingList_Vec<StandardPosting> pl01("hello");   
-    pl01.AddPosting(StandardPosting(8, 1));
-    pl01.AddPosting(StandardPosting(10, 2));
-
-    PostingList_Vec<StandardPosting> pl02("world");   
-    pl02.AddPosting(StandardPosting(7, 1));
-    pl02.AddPosting(StandardPosting(10, 8));
-    pl02.AddPosting(StandardPosting(15, 1));
-
-    std::vector<const PostingList_Vec<StandardPosting>*> lists{&pl01, &pl02};
-    IntersectionResult result;
-
-    std::vector<DocIdType> ret = intersect<StandardPosting>(lists, &result);
-
-    REQUIRE(ret == std::vector<DocIdType>{10});
-    REQUIRE(result.GetPosting(10, "hello")->GetTermFreq() == 2);
-    REQUIRE(result.GetPosting(10, "world")->GetTermFreq() == 8);
-  }
-
-}
-
 TEST_CASE( "DocLengthStore", "[ranking]" ) {
   SECTION("It can add some lengths.") {
     DocLengthStore store;
@@ -565,7 +424,7 @@ TEST_CASE( "DocLengthStore", "[ranking]" ) {
 }
 
 
-TEST_CASE( "Scoring", "[ranking]" ) {
+TEST_CASE( "Old scoring", "[ranking]" ) {
   SECTION("TF is correct") {
     REQUIRE(calc_tf(1) == 1.0); // sample in ES document
     REQUIRE(calc_tf(4) == 2.0);
@@ -578,62 +437,11 @@ TEST_CASE( "Scoring", "[ranking]" ) {
     REQUIRE(utils::format_double(calc_idf(1, 1), 3) == "0.307");
   }
 
-
   SECTION("Field length norm is correct") {
     REQUIRE(calc_field_len_norm(4) == 0.5);
   }
-
-  SECTION("ElasticSearch IDF") {
-    REQUIRE(utils::format_double(calc_es_idf(1, 1), 3) == "0.288"); // From an ES run
-  }
-
-  SECTION("ElasticSearch IDF 2") {
-    REQUIRE(utils::format_double(calc_es_idf(3, 1), 3)== "0.981"); // From an ES run
-  }
-
-  SECTION("ElasticSearch TF NORM") {
-    REQUIRE(calc_es_tfnorm(1, 3, 3.0) == 1.0); // From an ES run
-    REQUIRE(calc_es_tfnorm(1, 7, 7.0) == 1.0); // From an ES run
-    REQUIRE( utils::format_double(calc_es_tfnorm(1, 2, 8/3.0), 3) == "1.11"); // From an ES run
-  }
 }
 
-
-
-TEST_CASE( "We can get score for each document", "[ranking]" ) {
-  SECTION("It gets the same score as ES, for one term") {
-    IntersectionResult result;
-    StandardPosting posting(0, 1); // id=0, term_freq=1
-
-    result.SetPosting(0, "term1", &posting);
-    result.SetDocCount("term1", 1);
-
-    IntersectionResult::row_iterator it = result.row_cbegin();
-
-    TermScoreMap term_scores = score_terms_in_doc(result, it, 3, 3, 1);
-
-    REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
-  }
-
-  SECTION("It gets the same score as ES, for two terms") {
-    StandardPosting p0(0, 1), p1(0, 1);
-    IntersectionResult result;
-
-    result.SetPosting(0, "term1", &p0);
-    result.SetPosting(0, "term2", &p1);
-
-    result.SetDocCount("term1", 1);
-    result.SetDocCount("term2", 1);
-
-    IntersectionResult::row_iterator it = result.row_cbegin();
-
-    TermScoreMap term_scores = score_terms_in_doc(result, it, 7, 7, 1);
-
-    REQUIRE(utils::format_double(term_scores["term1"], 3) == "0.288"); // From an ES run
-    REQUIRE(utils::format_double(term_scores["term2"], 3) == "0.288"); // From an ES run
-  }
-
-}
 
 TEST_CASE( "Utilities work", "[utils]" ) {
   SECTION("Count terms") {
@@ -679,13 +487,6 @@ void test_inverted_index(InvertedIndexService &inverted_index) {
 }
 
 TEST_CASE( "Inverted index", "[engine]" ) {
-  // SECTION("Unompressed") {
-    // InvertedIndexQqMemVec inverted_index;
-
-    // setup_inverted_index(inverted_index);
-    // test_inverted_index(inverted_index);
-  // }
-
   SECTION("Compressed") {
     InvertedIndexQqMemDelta inverted_index;
 
@@ -694,37 +495,37 @@ TEST_CASE( "Inverted index", "[engine]" ) {
   }
 }
 
-// compressed or uncompressed
-QqMemEngine test_get_engine(std::string inverted_index) {
-  GeneralConfig config;
-  config.SetString("inverted_index", inverted_index);
-  QqMemEngine engine(config);
 
-  engine.AddDocument(
+std::unique_ptr<SearchEngineServiceNew> Test_GetEngine(std::string engine_type) {
+  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(engine_type);
+
+  engine->AddDocument(
       DocInfo("hello world", "hello world", "", "", "TOKEN_ONLY"));
-  REQUIRE(engine.TermCount() == 2);
+  REQUIRE(engine->TermCount() == 2);
 
-  engine.AddDocument(
+  engine->AddDocument(
       DocInfo("hello wisconsin", "hello wisconsin", "", "", "TOKEN_ONLY"));
-  REQUIRE(engine.TermCount() == 3);
+  REQUIRE(engine->TermCount() == 3);
 
-  engine.AddDocument(
+  engine->AddDocument(
       DocInfo("hello world big world", "hello world big world", "", "", "TOKEN_ONLY"));
-  REQUIRE(engine.TermCount() == 4);
+  REQUIRE(engine->TermCount() == 4);
 
   return engine;
 }
 
-void test_01(SearchEngineServiceNew &engine) {
-    SearchResult result = engine.Search(SearchQuery(TermList{"wisconsin"}));
+
+
+void test_01(SearchEngineServiceNew *engine) {
+    SearchResult result = engine->Search(SearchQuery(TermList{"wisconsin"}));
 
     REQUIRE(result.Size() == 1);
     REQUIRE(result.entries[0].doc_id == 1);
     REQUIRE(utils::format_double(result.entries[0].doc_score, 3) == "1.09");
 }
 
-void test_02(SearchEngineServiceNew &engine) {
-    SearchResult result = engine.Search(SearchQuery(TermList{"hello"}));
+void test_02(SearchEngineServiceNew *engine) {
+    SearchResult result = engine->Search(SearchQuery(TermList{"hello"}));
     REQUIRE(result.Size() == 3);
 
     // The score below is produced by ../tools/es_index_docs.py in this
@@ -736,8 +537,8 @@ void test_02(SearchEngineServiceNew &engine) {
     REQUIRE(utils::format_double(result.entries[2].doc_score, 3) == "0.111");
 }
 
-void test_03(SearchEngineServiceNew &engine) {
-    SearchResult result = engine.Search(SearchQuery(TermList{"hello", "world"}));
+void test_03(SearchEngineServiceNew *engine) {
+    SearchResult result = engine->Search(SearchQuery(TermList{"hello", "world"}));
 
     REQUIRE(result.Size() == 2);
     // The scores below are produced by ../tools/es_index_docs.py in this
@@ -748,31 +549,32 @@ void test_03(SearchEngineServiceNew &engine) {
     REQUIRE(utils::format_double(result.entries[1].doc_score, 3) == "0.672");
 }
 
-void test_04(SearchEngineServiceNew &engine) {
-    auto result = engine.Search(SearchQuery(TermList{"hello"}, true));
+void test_04(SearchEngineServiceNew *engine) {
+    auto result = engine->Search(SearchQuery(TermList{"hello"}, true));
     REQUIRE(result.Size() == 3);
     // We cannot test the snippets of the first entries because we do not know
     // their order (the first two entries have the same score).
     REQUIRE(result.entries[2].snippet == "<b>hello<\\b> world big world\n");
 }
 
-void test_05(SearchEngineServiceNew &engine) {
-    auto result = engine.Search(SearchQuery(TermList{"hello", "world"}, true));
+void test_05(SearchEngineServiceNew *engine) {
+    auto result = engine->Search(SearchQuery(TermList{"hello", "world"}, true));
     REQUIRE(result.Size() == 2);
 
     REQUIRE(result.entries[0].snippet == "<b>hello<\\b> <b>world<\\b> big <b>world<\\b>\n");
     REQUIRE(result.entries[1].snippet == "<b>hello<\\b> <b>world<\\b>\n");
 }
 
-void test_06(SearchEngineServiceNew &engine) {
+void test_06(SearchEngineServiceNew *engine) {
     auto query = SearchQuery(TermList{"hello", "world"}, true);
     query.n_results = 0;
-    auto result = engine.Search(query);
+    auto result = engine->Search(query);
     REQUIRE(result.Size() == 0);
 }
 
 TEST_CASE( "QQ Mem Compressed Engine works", "[engine]" ) {
-  auto engine = test_get_engine("compressed");
+  auto uniq_engine = Test_GetEngine("qq_mem_compressed");
+  auto engine = uniq_engine.get();
 
   SECTION("The engine can serve single-term queries") {
     test_01(engine);
@@ -798,38 +600,6 @@ TEST_CASE( "QQ Mem Compressed Engine works", "[engine]" ) {
     test_06(engine);
   }
 }
-
-TEST_CASE( "QQ Mem Uncompressed Engine works", "[engine]" ) {
-  auto engine = test_get_engine("uncompressed");
-
-  SECTION("The engine can serve single-term queries") {
-    test_01(engine);
-  }
-
-  SECTION("The engine can serve single-term queries with multiple results") {
-    test_02(engine);
-  }
-
-  SECTION("The engine can server two-term queries") {
-    test_03(engine);
-  }
-
-  SECTION("It can generate snippets") {
-    test_04(engine);
-  }
-
-  SECTION("It can generate snippets for two-term query") {
-    test_05(engine);
-  }
-
-  SECTION("The engine behaves correct when n_results is 0") {
-    test_06(engine);
-  }
-}
-
-
-
-
 
 
 TEST_CASE( "Sorting document works", "[ranking]" ) {

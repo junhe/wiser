@@ -30,8 +30,30 @@ The initial grpc files are from https://github.com/IvanSafonov/grpc-cmake-exampl
 Simply run:
 
 ```
-./runtest.sh
+make test_fast
 ```
+
+or
+
+```
+make test
+```
+
+## Run benchmark
+
+Run QQ-mem with 1 async server and 16 sync clients
+
+```
+make grpc_benchmark
+```
+
+
+Run in-process QQ-mem benchmark
+
+```
+make in_proc_engine_bench_querylog
+```
+
 
 ## How to use GLOG
 
@@ -60,7 +82,6 @@ Let's use
 - WARNING for warning
 - ERROR for error
 - FATAL for fatal error, which will shut down the program
-
 
 
 You may see log files in `/tmp/`.
