@@ -243,7 +243,6 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
         REQUIRE(reader.Get(i) == ~(long)0x00);
       }
     }
- 
   }
 }
 
