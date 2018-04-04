@@ -2,7 +2,7 @@
 
 #include "packed_value.h"
 
-TEST_CASE( "PackedInts", "[qqflash]" ) {
+TEST_CASE( "PackedInts utilities", "[qqflash]" ) {
   SECTION("NumBitsInByte") {
     REQUIRE(NumBitsInByte(0) == 8);
     REQUIRE(NumBitsInByte(1) == 7);
@@ -126,17 +126,26 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
     }
 
     SECTION("Across two bytes") {
-      buf[0] = 0x0F;
+      buf[0] = 0x04;
       buf[1] = 0xF0;
-      REQUIRE(ExtractBits(buf, 4, 8) == 0xFF);
+      REQUIRE(ExtractBits(buf, 4, 8) == 0x4F);
     }
 
     SECTION("Across 8 bytes") {
       memset(buf, 0xFF, 8);
       REQUIRE(ExtractBits(buf, 0, 64) == ~((long)0x00));
     }
-  }
 
+    SECTION("Extract second bit") {
+      // We used to have a bug for this case
+      memset(buf, 0xFF, 8);
+      REQUIRE(ExtractBits(buf, 1, 1) == 1);
+    }
+  }
+}
+
+
+TEST_CASE( "PackedInts", "[qqflash]" ) {
   SECTION("Serialize") {
     PackedIntsWriter writer;
 
@@ -167,6 +176,74 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
         REQUIRE(data[i] == (char)0xff);
       }
     }
+
+    SECTION("All values are 0, read by Reader") {
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        writer.Add(0);
+      }
+      REQUIRE(writer.MaxBitsPerValue() == 1);
+
+      std::string data = writer.Serialize();
+
+      PackedIntsReader reader((const uint8_t *)data.data(), writer.MaxBitsPerValue());
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        REQUIRE(reader.Get(i) == 0);
+      }
+    }
+
+    SECTION("All values are 1, read by Reader") {
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        writer.Add(1);
+      }
+      REQUIRE(writer.MaxBitsPerValue() == 1);
+
+      std::string data = writer.Serialize();
+
+      PackedIntsReader reader((const uint8_t *)data.data(), writer.MaxBitsPerValue());
+
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        REQUIRE(reader.Get(i) == 1);
+      }
+    }
+
+    SECTION("Psuedo random numbers, read by Reader") {
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        writer.Add(i * 10 % 7);
+      }
+      REQUIRE(writer.MaxBitsPerValue() == utils::NumOfBits(6)); // max number is 6
+
+      std::string data = writer.Serialize();
+
+      PackedIntsReader reader((const uint8_t *)data.data(), writer.MaxBitsPerValue());
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        REQUIRE(reader.Get(i) == (i * 10 % 7));
+      }
+    }
+
+    SECTION("Psuedo large random numbers, read by Reader") {
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        writer.Add(i * 1000 % 9973); // 9973 is just a prime number
+      }
+      std::string data = writer.Serialize();
+
+      PackedIntsReader reader((const uint8_t *)data.data(), writer.MaxBitsPerValue());
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        REQUIRE(reader.Get(i) == (i * 1000 % 9973));
+      }
+    }
+ 
+    SECTION("Full bits, read by Reader") {
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        writer.Add(~(long)0x00); 
+      }
+      std::string data = writer.Serialize();
+
+      PackedIntsReader reader((const uint8_t *)data.data(), writer.MaxBitsPerValue());
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        REQUIRE(reader.Get(i) == ~(long)0x00);
+      }
+    }
+ 
   }
 }
 
