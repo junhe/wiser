@@ -1,7 +1,62 @@
 #include "qq_mem_engine.h"
+#include "packed_value.h"
+
+
+class PositionTermEntry {
+ public:
+  PositionTermEntry(PopIteratorService* pos_iter) {
+    int prev_pos = 0;
+    while (pos_iter->IsEnd() != true) {
+      uint32_t pos = pos_iter->Pop();
+      deltas_.push_back(pos - prev_pos);
+      prev_pos = pos;
+    }
+
+    Fill();
+  }
+
+  std::vector<uint32_t> Deltas() const {
+    return deltas_;
+  }
+
+  const VarintBuffer &VInts() const {
+    return vints_;
+  }
+
+  const std::vector<PackedIntsWriter> &PackWriters() const {
+    return pack_writers_;
+  }
+
+ private:
+  void Fill() {
+    const int pack_size = PackedIntsWriter::PACK_SIZE;
+    const int n_packs = deltas_.size() / pack_size;
+    const int n_remains = deltas_.size() % pack_size;
+
+    pack_writers_.resize(n_packs);
+    for (int pack_i = 0; pack_i < n_packs; pack_i++) {
+      for (int offset = 0; offset < pack_size; offset++) {
+        int delta_idx = pack_i * pack_size + offset;
+        pack_writers_[pack_i].Add(deltas_[delta_idx]);
+      }
+    }
+    
+    for (int i = n_packs * pack_size; i < deltas_.size(); i++) {
+      vints_.Append(deltas_[i]);
+    }
+  }
+
+  std::vector<uint32_t> deltas_;
+  std::vector<PackedIntsWriter> pack_writers_;
+  VarintBuffer vints_;
+};
 
 
 class InvertedIndexDumper : public InvertedIndexQqMemDelta {
+ public:
+  void Dump(const std::string dir_path) {
+    std::cout << "Dumping Inverted Index...." << std::endl; 
+  }
 };
 
 
@@ -56,10 +111,17 @@ class FlashEngineDumper {
     return inverted_index_.PostinglistSizes(terms);
   }
 
+  void Dump(std::string dir_path) {
+  }
+
+  void DumpInvertedIndex(const std::string dir_path) {
+    inverted_index_.Dump(dir_path);
+  }
+
  private:
   int next_doc_id_ = 0;
   CompressedDocStore doc_store_;
-  InvertedIndexQqMemDelta inverted_index_;
+  InvertedIndexDumper inverted_index_;
   DocLengthStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
