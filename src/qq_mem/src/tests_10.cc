@@ -78,6 +78,31 @@ TEST_CASE( "Dumping Engine", "[qqflash]" ) {
 }
 
 
+TEST_CASE( "Write and Read works", "[qqflash]" ) {
+  int fd = open("/tmp/tmp.writer.test", O_CREAT|O_RDWR|O_TRUNC, 00666);
+  const int BUFSIZE = 10000;
+  REQUIRE(fd != -1);
+
+  // Write
+  char *buf = (char *) malloc(BUFSIZE);
+  memset(buf, 'a', BUFSIZE);
+
+  REQUIRE(utils::Write(fd, buf, BUFSIZE) == BUFSIZE);
+
+  // Read
+  char *buf2 = (char *) malloc(BUFSIZE);
+  lseek(fd, 0, SEEK_SET);
+  REQUIRE(utils::Read(fd, buf2, BUFSIZE) == BUFSIZE);
+
+  REQUIRE(memcmp(buf, buf2, BUFSIZE) == 0);
+
+  close(fd);
+}
+
+
+
+
+
 
 
 

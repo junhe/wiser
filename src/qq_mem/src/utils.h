@@ -258,9 +258,33 @@ inline uint32_t Char4ToUint(char val) {
 }
 
 
+inline ssize_t Write(int fd, const char *buf, size_t size) {
+  size_t written = 0;
+  while (size - written > 0) {
+    auto n = write(fd, buf + written, size - written);
+    if (n == -1) {
+      LOG(FATAL) << "Failed to write.";
+    }
 
+    written += n;
+  }
 
+  return written;
+}
 
+inline ssize_t Read(int fd, char *buf, size_t size) {
+  size_t n_read = 0;
+  while (size - n_read > 0) {
+    auto n = read(fd, buf + n_read, size - n_read);
+    if (n == -1) {
+      LOG(FATAL) << "Failed to write.";
+    }
+
+    n_read += n;
+  }
+
+  return n_read;
+}
 
 
 void MapFile(std::string path, char **ret_addr, int *ret_fd, size_t *ret_file_length);
