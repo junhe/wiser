@@ -1,3 +1,11 @@
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
+#include <string>
+#include <iostream>
+
 #include "qq_mem_engine.h"
 #include "packed_value.h"
 
@@ -49,6 +57,45 @@ class PositionTermEntry {
   std::vector<uint32_t> deltas_;
   std::vector<PackedIntsWriter> pack_writers_;
   VarintBuffer vints_;
+};
+
+
+class PositionDumper {
+ public:
+  PositionDumper(const std::string path) {
+    fd = open(path.c_str(), O_WRONLY | O_CREAT, 0666); 
+    if (fd == -1) 
+      LOG(FATAL) << "Cannot open file: " << path;
+  }
+
+  void Dump(const PositionTermEntry &entry) {
+    
+  }
+
+  off_t CurrentOffset() const {
+    off_t off = lseek(fd, 0, SEEK_CUR);
+    if (off == -1)
+      LOG(FATAL) << "Failed to get the current offset.";
+
+    return off;
+  }
+
+  ~PositionDumper() {
+    close(fd);
+  }
+
+ private:
+  void DumpPackedBlocks(const std::vector<PackedIntsWriter> &pack_writers) {
+
+  }
+
+  off_t DumpPackedBlock(const PackedIntsWriter &writer) {
+    off_t start_byte = CurrentOffset();
+    std::string data = writer.Serialize();      
+    write(fd, data.data(), data.size());
+  }
+
+  int fd;
 };
 
 

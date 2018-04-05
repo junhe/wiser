@@ -17,7 +17,7 @@ class PackedIntsWriter {
       max_bits_per_value_ = n_bits;
   }
 
-  std::string Serialize() {
+  std::string Serialize() const {
     if (values_.size() != PACK_SIZE)
       LOG(FATAL) << "Number of values is not " << PACK_SIZE;
 

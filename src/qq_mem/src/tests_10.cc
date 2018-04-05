@@ -46,6 +46,22 @@ TEST_CASE( "Test PositionTermEntry", "[qqflash]" ) {
 }
 
 
+TEST_CASE( "Test Position Dumper", "[qqflash]" ) {
+  SECTION("initialize and destruct") {
+    PositionDumper dumper("/tmp/tmp.pos.dumper");
+  }
+  
+  SECTION("It returns the right metadata about the dumpped entry") {
+    PositionDumper dumper("/tmp/tmp.pos.dumper");
+  }
+
+  SECTION("Get the current position") {
+    PositionDumper dumper("/tmp/tmp.pos.dumper");
+    REQUIRE(dumper.CurrentOffset() == 0);
+  }
+}
+
+
 TEST_CASE( "Dumping Engine", "[qqflash]" ) {
   FlashEngineDumper engine;
   REQUIRE(engine.TermCount() == 0);
