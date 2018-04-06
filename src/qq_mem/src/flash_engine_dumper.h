@@ -10,20 +10,10 @@
 #include "packed_value.h"
 
 
-class PositionTermEntry {
+// Provide functions to copy deltas to pack writer and VInts
+class TermEntryBase {
  public:
-  PositionTermEntry(PopIteratorService* pos_iter) {
-    int prev_pos = 0;
-    while (pos_iter->IsEnd() != true) {
-      uint32_t pos = pos_iter->Pop();
-      deltas_.push_back(pos - prev_pos);
-      prev_pos = pos;
-    }
-
-    Fill();
-  }
-
-  std::vector<uint32_t> Deltas() const {
+  const std::vector<uint32_t> &Deltas() const {
     return deltas_;
   }
 
@@ -35,7 +25,7 @@ class PositionTermEntry {
     return pack_writers_;
   }
 
- private:
+ protected:
   void Fill() {
     const int pack_size = PackedIntsWriter::PACK_SIZE;
     const int n_packs = deltas_.size() / pack_size;
@@ -57,6 +47,45 @@ class PositionTermEntry {
   std::vector<uint32_t> deltas_;
   std::vector<PackedIntsWriter> pack_writers_;
   VarintBuffer vints_;
+};
+
+
+class OffsetTermEntry :public TermEntryBase {
+ public:
+  OffsetTermEntry(CompressedPairIterator iterator) {
+    int prev_off = 0;
+    int delta;
+    while (iterator.IsEnd() != true) {
+      OffsetPair pair;
+      iterator.Pop(&pair);
+
+      uint32_t off1, off2;
+      off1 = std::get<0>(pair);
+      off2 = std::get<1>(pair);
+
+      deltas_.push_back(off1 - prev_off);
+      deltas_.push_back(off2 - off1);
+
+      prev_off = off2;
+    }
+
+    Fill();
+  }
+};
+
+
+class PositionTermEntry :public TermEntryBase {
+ public:
+  PositionTermEntry(PopIteratorService *pos_iter) {
+    int prev_pos = 0;
+    while (pos_iter->IsEnd() != true) {
+      uint32_t pos = pos_iter->Pop();
+      deltas_.push_back(pos - prev_pos);
+      prev_pos = pos;
+    }
+
+    Fill();
+  }
 };
 
 
