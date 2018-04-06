@@ -34,8 +34,8 @@ class TermEntryBase {
     pack_writers_.resize(n_packs);
     for (int pack_i = 0; pack_i < n_packs; pack_i++) {
       for (int offset = 0; offset < pack_size; offset++) {
-        int delta_idx = pack_i * pack_size + offset;
-        pack_writers_[pack_i].Add(values_[delta_idx]);
+        int value_idx = pack_i * pack_size + offset;
+        pack_writers_[pack_i].Add(values_[value_idx]);
       }
     }
     
