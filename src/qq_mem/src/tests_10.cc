@@ -133,7 +133,7 @@ TEST_CASE( "Write and Read works", "[qqflash]" ) {
 }
 
 
-TEST_CASE( "Offset Term Entry", "[qqflash]" ) {
+TEST_CASE( "Offset Term Entry", "[qqflash][termentry]" ) {
   // There are deltas. The actual offsets are
   // 1, 4    12, 21
   VarintBuffer buf = CreateVarintBuffer({1, 3, 8, 9}); 
@@ -141,6 +141,8 @@ TEST_CASE( "Offset Term Entry", "[qqflash]" ) {
 
   OffsetTermEntry entry(it);  
   REQUIRE(entry.Deltas() == std::vector<uint32_t>{1, 3, 8, 9});
+
+  
 }
 
 

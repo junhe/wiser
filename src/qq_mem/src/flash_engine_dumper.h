@@ -116,10 +116,9 @@ class EntryMetadata {
   std::vector<off_t> vint_offs_;
 };
 
-
-class PositionDumper {
+class FileDumper {
  public:
-  PositionDumper(const std::string path) {
+  FileDumper(const std::string path) {
     fd_ = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666); 
     if (fd_ == -1) 
       LOG(FATAL) << "Cannot open file: " << path;
@@ -148,7 +147,7 @@ class PositionDumper {
     close(fd_);
   }
 
- private:
+ protected:
   std::vector<off_t> DumpVInts(const VarintBuffer &varint_buf) {
     if (varint_buf.Size() == 0) {
       return std::vector<off_t>{};
@@ -178,6 +177,12 @@ class PositionDumper {
 
   int fd_;
 };
+
+typedef FileDumper PositionDumper;
+typedef FileDumper OffsetDumper;
+typedef FileDumper TermFreqDumper;
+
+
 
 
 class InvertedIndexDumper : public InvertedIndexQqMemDelta {
