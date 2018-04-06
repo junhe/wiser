@@ -60,42 +60,94 @@ class PositionTermEntry {
 };
 
 
+class PositionMetadata {
+ public:
+  PositionMetadata(std::vector<off_t> pack_offs, std::vector<off_t> vint_offs)
+      : pack_offs_(pack_offs), vint_offs_(vint_offs) {
+  }
+
+  int PackOffSize() const {
+    return pack_offs_.size();
+  }
+
+  int VIntsSize() const {
+    return vint_offs_.size();
+  }
+
+  const std::vector<off_t> &PackOffs() const {
+    return pack_offs_;
+  }
+
+  const std::vector<off_t> &VIntsOffs() const {
+    return vint_offs_;
+  }
+
+ private:
+  std::vector<off_t> pack_offs_;
+  std::vector<off_t> vint_offs_;
+};
+
+
 class PositionDumper {
  public:
   PositionDumper(const std::string path) {
-    fd = open(path.c_str(), O_WRONLY | O_CREAT, 0666); 
-    if (fd == -1) 
+    fd_ = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666); 
+    if (fd_ == -1) 
       LOG(FATAL) << "Cannot open file: " << path;
   }
 
-  void Dump(const PositionTermEntry &entry) {
-    
+  PositionMetadata Dump(const PositionTermEntry &entry) {
+    std::vector<off_t> pack_offs = DumpPackedBlocks(entry.PackWriters());
+    std::vector<off_t> vint_offs = DumpVInts(entry.VInts());
+
+    return PositionMetadata(pack_offs, vint_offs);
   }
 
   off_t CurrentOffset() const {
-    off_t off = lseek(fd, 0, SEEK_CUR);
+    off_t off = lseek(fd_, 0, SEEK_CUR);
     if (off == -1)
       LOG(FATAL) << "Failed to get the current offset.";
 
     return off;
   }
 
-  ~PositionDumper() {
-    close(fd);
+  void Flush() const {
+    fsync(fd_);
+  }
+
+  void Close() const {
+    close(fd_);
   }
 
  private:
-  void DumpPackedBlocks(const std::vector<PackedIntsWriter> &pack_writers) {
+  std::vector<off_t> DumpVInts(const VarintBuffer &varint_buf) {
+    if (varint_buf.Size() == 0) {
+      return std::vector<off_t>{};
+    } else {
+      off_t start_byte = CurrentOffset();
+      utils::Write(fd_, varint_buf.Data().data(), varint_buf.Size());
+      return std::vector<off_t>{start_byte};
+    }
+  }
 
+  std::vector<off_t> DumpPackedBlocks(
+      const std::vector<PackedIntsWriter> &pack_writers) {
+    std::vector<off_t> offs;
+
+    for (auto &writer : pack_writers) {
+      offs.push_back(DumpPackedBlock(writer));
+    }
+
+    return offs;
   }
 
   off_t DumpPackedBlock(const PackedIntsWriter &writer) {
     off_t start_byte = CurrentOffset();
     std::string data = writer.Serialize();      
-    write(fd, data.data(), data.size());
+    utils::Write(fd_, data.data(), data.size());
   }
 
-  int fd;
+  int fd_;
 };
 
 

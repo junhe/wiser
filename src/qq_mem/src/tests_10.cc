@@ -21,6 +21,15 @@ TEST_CASE( "Test PositionTermEntry", "[qqflash]" ) {
     REQUIRE(entry.Deltas() == std::vector<uint32_t>{1, 2, 5, 1});
     REQUIRE(entry.VInts().Size() == 4);
     REQUIRE(entry.PackWriters().size() == 0);
+
+    SECTION("Dump it") {
+      PositionDumper dumper("/tmp/tmp.pos.dumper");
+      PositionMetadata metadata = dumper.Dump(entry);
+      REQUIRE(dumper.CurrentOffset() == 4); // Only the vints are in it
+      
+      REQUIRE(metadata.PackOffSize() == 0); 
+      REQUIRE(metadata.VIntsSize() == 1); 
+    }
   }
 
   SECTION("More than one packed block") {
@@ -42,6 +51,25 @@ TEST_CASE( "Test PositionTermEntry", "[qqflash]" ) {
     REQUIRE(entry.Deltas() == deltas);
     REQUIRE(entry.VInts().Size() == (200 - PackedIntsWriter::PACK_SIZE));
     REQUIRE(entry.PackWriters().size() == 1);
+
+    SECTION("Dump it and read it") {
+      // Dump it
+      PositionDumper dumper("/tmp/tmp.pos.dumper");
+      PositionMetadata metadata = dumper.Dump(entry);
+      
+      REQUIRE(metadata.PackOffSize() == 1); 
+      REQUIRE(metadata.VIntsSize() == 1); 
+      dumper.Flush();
+      dumper.Close();
+
+      // Read it
+      int fd;
+      char *addr;
+      size_t file_length;
+      utils::MapFile("/tmp/tmp.pos.dumper", &addr, &fd, &file_length);
+
+      utils::UnmapFile(addr, fd, file_length);
+    }
   }
 }
 
@@ -60,6 +88,9 @@ TEST_CASE( "Test Position Dumper", "[qqflash]" ) {
     REQUIRE(dumper.CurrentOffset() == 0);
   }
 }
+
+
+
 
 
 TEST_CASE( "Dumping Engine", "[qqflash]" ) {
