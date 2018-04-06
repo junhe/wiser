@@ -90,9 +90,6 @@ TEST_CASE( "Test Position Dumper", "[qqflash]" ) {
 }
 
 
-
-
-
 TEST_CASE( "Dumping Engine", "[qqflash]" ) {
   FlashEngineDumper engine;
   REQUIRE(engine.TermCount() == 0);

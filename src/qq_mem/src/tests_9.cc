@@ -156,9 +156,11 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
       REQUIRE(writer.MaxBitsPerValue() == 1);
 
       std::string data = writer.Serialize();
-      REQUIRE(data.size() == (128 / 8)); // 128 bits in total
+      // 128 bits in total, + 1 byte for the header
+      REQUIRE(data.size() == (128 / 8 + 1)); 
 
-      for (int i = 0; i < data.size(); i++) {
+      REQUIRE(data[0] == 1); // the header
+      for (int i = 1; i < data.size(); i++) {
         REQUIRE(data[i] == 0);
       }
     }
@@ -170,9 +172,10 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
       REQUIRE(writer.MaxBitsPerValue() == 1);
 
       std::string data = writer.Serialize();
-      REQUIRE(data.size() == (128 / 8)); // 128 bits in total
+      REQUIRE(data.size() == (128 / 8 + 1)); // 128 bits in total
 
-      for (int i = 0; i < data.size(); i++) {
+      REQUIRE(data[0] == 1); // the header
+      for (int i = 1; i < data.size(); i++) {
         REQUIRE(data[i] == (char)0xff);
       }
     }
@@ -185,7 +188,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       std::string data = writer.Serialize();
 
-      PackedIntsReader reader((const uint8_t *)data.data(), writer.MaxBitsPerValue());
+      PackedIntsReader reader((const uint8_t *)data.data());
       for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
         REQUIRE(reader.Get(i) == 0);
       }
@@ -199,7 +202,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       std::string data = writer.Serialize();
 
-      PackedIntsReader reader((const uint8_t *)data.data(), writer.MaxBitsPerValue());
+      PackedIntsReader reader((const uint8_t *)data.data());
 
       for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
         REQUIRE(reader.Get(i) == 1);
@@ -214,7 +217,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       std::string data = writer.Serialize();
 
-      PackedIntsReader reader((const uint8_t *)data.data(), writer.MaxBitsPerValue());
+      PackedIntsReader reader((const uint8_t *)data.data());
       for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
         REQUIRE(reader.Get(i) == (i * 10 % 7));
       }
@@ -226,7 +229,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
       }
       std::string data = writer.Serialize();
 
-      PackedIntsReader reader((const uint8_t *)data.data(), writer.MaxBitsPerValue());
+      PackedIntsReader reader((const uint8_t *)data.data());
       for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
         REQUIRE(reader.Get(i) == (i * 1000 % 9973));
       }
@@ -238,7 +241,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
       }
       std::string data = writer.Serialize();
 
-      PackedIntsReader reader((const uint8_t *)data.data(), writer.MaxBitsPerValue());
+      PackedIntsReader reader((const uint8_t *)data.data());
       for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
         REQUIRE(reader.Get(i) == ~(long)0x00);
       }

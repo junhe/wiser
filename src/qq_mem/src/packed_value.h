@@ -17,15 +17,23 @@ class PackedIntsWriter {
       max_bits_per_value_ = n_bits;
   }
 
+  // Format
+  // byte 0                1
+  // data n_bits_per_value start of the block
   std::string Serialize() const {
     if (values_.size() != PACK_SIZE)
       LOG(FATAL) << "Number of values is not " << PACK_SIZE;
 
-    constexpr int size = sizeof(long) * PACK_SIZE;
+    constexpr int size = sizeof(long) * PACK_SIZE + 1;
     uint8_t buf[size];
     memset(buf, 0, size);
 
-    int next_empty_bit = 0;
+    if (max_bits_per_value_ > 64)
+      LOG(FATAL) << "Max bits per value should not be larger than 64";
+
+    buf[0] = max_bits_per_value_;
+
+    int next_empty_bit = 8;
     for (auto &v : values_) {
       next_empty_bit = AppendValue(v, max_bits_per_value_, buf, next_empty_bit);
     }
@@ -45,17 +53,17 @@ class PackedIntsWriter {
 
 class PackedIntsReader {
  public:
-  PackedIntsReader(const uint8_t *buf, const int n_bits_per_value)
-    : buf_(buf), n_bits_per_value_(n_bits_per_value) {
+  PackedIntsReader(const uint8_t *buf): buf_(buf) {
+    n_bits_per_value_ = buf[0];
   }
 
   long Get(const int index) {
-    return ExtractBits(buf_, index * n_bits_per_value_, n_bits_per_value_);     
+    return ExtractBits(buf_ + 1, index * n_bits_per_value_, n_bits_per_value_);     
   }
 
  private:
   const uint8_t *buf_;
-  const int n_bits_per_value_;
+  int n_bits_per_value_;
 };
 
 
