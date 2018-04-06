@@ -24,7 +24,7 @@ TEST_CASE( "Test PositionTermEntry", "[qqflash]" ) {
 
     SECTION("Dump it") {
       PositionDumper dumper("/tmp/tmp.pos.dumper");
-      PositionMetadata metadata = dumper.Dump(entry);
+      EntryMetadata metadata = dumper.Dump(entry);
       REQUIRE(dumper.CurrentOffset() == 4); // Only the vints are in it
       
       REQUIRE(metadata.PackOffSize() == 0); 
@@ -55,7 +55,7 @@ TEST_CASE( "Test PositionTermEntry", "[qqflash]" ) {
     SECTION("Dump it and read it") {
       // Dump it
       PositionDumper dumper("/tmp/tmp.pos.dumper");
-      PositionMetadata metadata = dumper.Dump(entry);
+      EntryMetadata metadata = dumper.Dump(entry);
       
       REQUIRE(metadata.PackOffSize() == 1); 
       REQUIRE(metadata.VIntsSize() == 1); 

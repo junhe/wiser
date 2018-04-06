@@ -89,9 +89,9 @@ class PositionTermEntry :public TermEntryBase {
 };
 
 
-class PositionMetadata {
+class EntryMetadata {
  public:
-  PositionMetadata(std::vector<off_t> pack_offs, std::vector<off_t> vint_offs)
+  EntryMetadata(std::vector<off_t> pack_offs, std::vector<off_t> vint_offs)
       : pack_offs_(pack_offs), vint_offs_(vint_offs) {
   }
 
@@ -125,11 +125,11 @@ class PositionDumper {
       LOG(FATAL) << "Cannot open file: " << path;
   }
 
-  PositionMetadata Dump(const PositionTermEntry &entry) {
+  EntryMetadata Dump(const PositionTermEntry &entry) {
     std::vector<off_t> pack_offs = DumpPackedBlocks(entry.PackWriters());
     std::vector<off_t> vint_offs = DumpVInts(entry.VInts());
 
-    return PositionMetadata(pack_offs, vint_offs);
+    return EntryMetadata(pack_offs, vint_offs);
   }
 
   off_t CurrentOffset() const {
@@ -258,6 +258,7 @@ class FlashEngineDumper {
     return next_doc_id_++;
   }
 };
+
 
 
 
