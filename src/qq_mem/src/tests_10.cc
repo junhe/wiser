@@ -68,6 +68,11 @@ TEST_CASE( "Test PositionTermEntry", "[qqflash]" ) {
       size_t file_length;
       utils::MapFile("/tmp/tmp.pos.dumper", &addr, &fd, &file_length);
 
+      PackedIntsReader reader((uint8_t *)addr + metadata.PackOffs()[0]);
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        REQUIRE(reader.Get(i) == deltas[i]);
+      }
+
       utils::UnmapFile(addr, fd, file_length);
     }
   }
