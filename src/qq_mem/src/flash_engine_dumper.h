@@ -10,11 +10,11 @@
 #include "packed_value.h"
 
 
-// Provide functions to copy deltas to pack writer and VInts
+// Provide functions to copy values to pack writer and VInts
 class TermEntryBase {
  public:
-  const std::vector<uint32_t> &Deltas() const {
-    return deltas_;
+  const std::vector<uint32_t> &Values() const {
+    return values_;
   }
 
   const VarintBuffer &VInts() const {
@@ -28,26 +28,27 @@ class TermEntryBase {
  protected:
   void Fill() {
     const int pack_size = PackedIntsWriter::PACK_SIZE;
-    const int n_packs = deltas_.size() / pack_size;
-    const int n_remains = deltas_.size() % pack_size;
+    const int n_packs = values_.size() / pack_size;
+    const int n_remains = values_.size() % pack_size;
 
     pack_writers_.resize(n_packs);
     for (int pack_i = 0; pack_i < n_packs; pack_i++) {
       for (int offset = 0; offset < pack_size; offset++) {
         int delta_idx = pack_i * pack_size + offset;
-        pack_writers_[pack_i].Add(deltas_[delta_idx]);
+        pack_writers_[pack_i].Add(values_[delta_idx]);
       }
     }
     
-    for (int i = n_packs * pack_size; i < deltas_.size(); i++) {
-      vints_.Append(deltas_[i]);
+    for (int i = n_packs * pack_size; i < values_.size(); i++) {
+      vints_.Append(values_[i]);
     }
   }
 
-  std::vector<uint32_t> deltas_;
+  std::vector<uint32_t> values_;
   std::vector<PackedIntsWriter> pack_writers_;
   VarintBuffer vints_;
 };
+
 
 
 class OffsetTermEntry :public TermEntryBase {
@@ -63,8 +64,8 @@ class OffsetTermEntry :public TermEntryBase {
       off1 = std::get<0>(pair);
       off2 = std::get<1>(pair);
 
-      deltas_.push_back(off1 - prev_off);
-      deltas_.push_back(off2 - off1);
+      values_.push_back(off1 - prev_off);
+      values_.push_back(off2 - off1);
 
       prev_off = off2;
     }
@@ -80,7 +81,7 @@ class PositionTermEntry :public TermEntryBase {
     int prev_pos = 0;
     while (pos_iter->IsEnd() != true) {
       uint32_t pos = pos_iter->Pop();
-      deltas_.push_back(pos - prev_pos);
+      values_.push_back(pos - prev_pos);
       prev_pos = pos;
     }
 

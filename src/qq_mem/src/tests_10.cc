@@ -18,7 +18,7 @@ TEST_CASE( "Test PositionTermEntry", "[qqflash]" ) {
     VarintIteratorEndBound iterator(buf);
 
     PositionTermEntry entry(&iterator);
-    REQUIRE(entry.Deltas() == std::vector<uint32_t>{1, 2, 5, 1});
+    REQUIRE(entry.Values() == std::vector<uint32_t>{1, 2, 5, 1});
     REQUIRE(entry.VInts().Size() == 4);
     REQUIRE(entry.PackWriters().size() == 0);
 
@@ -48,7 +48,7 @@ TEST_CASE( "Test PositionTermEntry", "[qqflash]" ) {
     VarintIteratorEndBound iterator(buf);
 
     PositionTermEntry entry(&iterator);
-    REQUIRE(entry.Deltas() == deltas);
+    REQUIRE(entry.Values() == deltas);
     REQUIRE(entry.VInts().Size() == (200 - PackedIntsWriter::PACK_SIZE));
     REQUIRE(entry.PackWriters().size() == 1);
 
@@ -140,9 +140,7 @@ TEST_CASE( "Offset Term Entry", "[qqflash][termentry]" ) {
   CompressedPairIterator it(buf.DataPointer(), 0, buf.End());
 
   OffsetTermEntry entry(it);  
-  REQUIRE(entry.Deltas() == std::vector<uint32_t>{1, 3, 8, 9});
-
-  
+  REQUIRE(entry.Values() == std::vector<uint32_t>{1, 3, 8, 9});
 }
 
 
