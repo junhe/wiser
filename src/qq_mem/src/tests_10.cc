@@ -141,12 +141,38 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
   }
 }
 
+
 TEST_CASE( "PackFileOffsets", "[qqflash]" ) {
   PackFileOffsets offs({1, 10, 100}, {1000});
   REQUIRE(offs.FileOffset(0) == 1);
   REQUIRE(offs.FileOffset(1) == 10);
   REQUIRE(offs.FileOffset(2) == 100);
   REQUIRE(offs.FileOffset(3) == 1000);
+}
+
+TEST_CASE( "SkipPostingLocations", "[qqflash]" ) {
+  PostingLocationTable posting_locations; 
+
+  int n_postings = SKIP_INTERVAL * 3 + 10;
+  for (int i = 0; i < n_postings; i++) {
+    posting_locations.AddRow(i / 23, i);
+  }
+
+  std::vector<off_t> pack_offs;
+  int n_packs = n_postings / 23;
+  for (int i = 0; i < n_packs; i++) {
+    pack_offs.push_back(i);
+  }
+  std::vector<off_t> vint_offs{1000};
+  PackFileOffsets file_offs(pack_offs, vint_offs);
+
+  SkipPostingLocations skip_locations(posting_locations, file_offs);
+
+  REQUIRE(skip_locations.Size() == 3);
+  REQUIRE(skip_locations[0].block_file_offset == 128 / 23);
+  REQUIRE(skip_locations[1].block_file_offset == (128 * 2) / 23);
+  REQUIRE(skip_locations[2].block_file_offset == (128 * 3) / 23);
+
 }
 
 

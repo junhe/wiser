@@ -10,6 +10,7 @@
 #include "packed_value.h"
 #include "compression.h"
 
+constexpr int SKIP_INTERVAL = PackedIntsWriter::PACK_SIZE;
 
 // Provide functions to copy values to pack writer and VInts
 class TermEntryBase {
@@ -108,7 +109,7 @@ class PostingLocationTable {
     return locations_.size();
   }
 
-  PostingLocation & operator[] (int i) {
+  const PostingLocation & operator[] (int i) const {
     return locations_[i];
   }
 
@@ -241,7 +242,7 @@ class PackFileOffsets {
     return vint_offs_;
   }
 
-  off_t FileOffset(int pack_index) {
+  off_t FileOffset(int pack_index) const {
     const int n_packs = pack_offs_.size();
     if (pack_index < n_packs) {
       return pack_offs_[pack_index];
@@ -322,6 +323,42 @@ class FileDumper {
 };
 
 
+struct SkipPostingLocation {
+  SkipPostingLocation(off_t offset, int index)
+    : block_file_offset(offset), in_block_index(index) {}
+
+  off_t block_file_offset;
+  int in_block_index;
+};
+
+
+class SkipPostingLocations {
+ public:
+  SkipPostingLocations(const PostingLocationTable &table, 
+      const PackFileOffsets &file_offs) {
+    for (int posting_index = SKIP_INTERVAL; 
+        posting_index < table.NumRows(); 
+        posting_index += SKIP_INTERVAL) 
+    {
+      const int pack_id = table[posting_index].packed_block_idx;
+      const int in_block_idx = table[posting_index].in_block_idx;
+      locations_.emplace_back(file_offs.FileOffset(pack_id), in_block_idx);
+    }
+  }
+
+  int Size() const {
+    return locations_.size();
+  }
+
+  const SkipPostingLocation &operator [](int i) const {
+    return locations_[i];
+  }
+
+ private:
+  std::vector<SkipPostingLocation> locations_;
+};
+
+
 class InvertedIndexDumper : public InvertedIndexQqMemDelta {
  public:
   InvertedIndexDumper(const std::string dump_dir_path)
@@ -330,25 +367,25 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
   {}
 
   void Dump(const std::string dir_path) {
-    std::cout << "Dumping Inverted Index...." << std::endl; 
+    // std::cout << "Dumping Inverted Index...." << std::endl; 
 
     for (auto it = index_.cbegin(); it != index_.cend(); it++) {
-      std::cout << "At '" << it->first << "'" << std::endl;
+      // std::cout << "At '" << it->first << "'" << std::endl;
       DumpPostingList(it->second);
     }
   }
 
   void DumpPostingList(const PostingListDelta &posting_list) {
     PostingListDeltaIterator posting_it = posting_list.Begin2();
-    std::cout << "Dumping One Posting List ...." << std::endl;
-    std::cout << "Number of postings: " << posting_it.Size() << std::endl;
+    // std::cout << "Dumping One Posting List ...." << std::endl;
+    // std::cout << "Number of postings: " << posting_it.Size() << std::endl;
 
     std::vector<uint32_t> doc_ids, term_freqs;
     GeneralTermEntry position_term_entry;
     GeneralTermEntry offset_term_entry;
 
     while (posting_it.IsEnd() == false) {
-      std::cout << "DocId: " << posting_it.DocId() << std::endl;
+      // std::cout << "DocId: " << posting_it.DocId() << std::endl;
 
       doc_ids.push_back(posting_it.DocId());
       term_freqs.push_back(posting_it.TermFreq());
