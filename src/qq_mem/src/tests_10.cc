@@ -67,7 +67,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     REQUIRE(entry.Values() == std::vector<uint32_t>{7});
     REQUIRE(entry.PostingSizes() == std::vector<int>{1});
 
-    PostingLocations table = entry.LocationTable();
+    PostingLocations table = entry.GetPostingLocations();
 
     REQUIRE(table.NumRows() == 1);
     REQUIRE(table[0].packed_block_idx == 0);
@@ -83,7 +83,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     REQUIRE(entry.Values() == std::vector<uint32_t>{7, 9, 10, 11, 18});
     REQUIRE(entry.PostingSizes() == std::vector<int>{1, 2, 2});
 
-    PostingLocations table = entry.LocationTable();
+    PostingLocations table = entry.GetPostingLocations();
 
     REQUIRE(table.NumRows() == 3);
     REQUIRE(table[0].packed_block_idx == 0);

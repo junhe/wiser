@@ -149,7 +149,7 @@ class GeneralTermEntry {
     }
   }
 
-  PostingLocations LocationTable() const {
+  PostingLocations GetPostingLocations() const {
     int val_index = 0;  
     PostingLocations table;
     
