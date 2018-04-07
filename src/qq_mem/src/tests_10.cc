@@ -118,10 +118,10 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     SECTION("Dump it and read it") {
       // Dump it
       FileDumper dumper("/tmp/tmp.pos.dumper");
-      EntryMetadata metadata = dumper.Dump(container);
+      PackFileOffsets file_offs = dumper.Dump(container);
       
-      REQUIRE(metadata.PackOffSize() == 1); 
-      REQUIRE(metadata.VIntsSize() == 1); 
+      REQUIRE(file_offs.PackOffSize() == 1); 
+      REQUIRE(file_offs.VIntsSize() == 1); 
       dumper.Flush();
       dumper.Close();
 
@@ -131,7 +131,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
       size_t file_length;
       utils::MapFile("/tmp/tmp.pos.dumper", &addr, &fd, &file_length);
 
-      PackedIntsReader reader((uint8_t *)addr + metadata.PackOffs()[0]);
+      PackedIntsReader reader((uint8_t *)addr + file_offs.PackOffs()[0]);
       for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
         REQUIRE(reader.Get(i) == deltas[i]);
       }
@@ -139,6 +139,14 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
       utils::UnmapFile(addr, fd, file_length);
     }
   }
+}
+
+TEST_CASE( "PackFileOffsets", "[qqflash]" ) {
+  PackFileOffsets offs({1, 10, 100}, {1000});
+  REQUIRE(offs.FileOffset(0) == 1);
+  REQUIRE(offs.FileOffset(1) == 10);
+  REQUIRE(offs.FileOffset(2) == 100);
+  REQUIRE(offs.FileOffset(3) == 1000);
 }
 
 

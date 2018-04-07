@@ -219,9 +219,9 @@ class GeneralTermEntry {
 
 
 
-class EntryMetadata {
+class PackFileOffsets {
  public:
-  EntryMetadata(std::vector<off_t> pack_offs, std::vector<off_t> vint_offs)
+  PackFileOffsets(std::vector<off_t> pack_offs, std::vector<off_t> vint_offs)
       : pack_offs_(pack_offs), vint_offs_(vint_offs) {
   }
 
@@ -241,6 +241,19 @@ class EntryMetadata {
     return vint_offs_;
   }
 
+  off_t FileOffset(int pack_index) {
+    const int n_packs = pack_offs_.size();
+    if (pack_index < n_packs) {
+      return pack_offs_[pack_index];
+    } else if (pack_index == n_packs) {
+      if (vint_offs_.size() == 0)
+        LOG(FATAL) << "vint_offs_.size() should not be 0.";
+      return vint_offs_[0];
+    } else {
+      LOG(FATAL) << "pack_index is too large.";
+    }
+  }
+
  private:
   std::vector<off_t> pack_offs_;
   std::vector<off_t> vint_offs_;
@@ -254,11 +267,11 @@ class FileDumper {
       LOG(FATAL) << "Cannot open file: " << path;
   }
 
-  EntryMetadata Dump(const TermEntryContainer &container) {
+  PackFileOffsets Dump(const TermEntryContainer &container) {
     std::vector<off_t> pack_offs = DumpPackedBlocks(container.PackWriters());
     std::vector<off_t> vint_offs = DumpVInts(container.VInts());
 
-    return EntryMetadata(pack_offs, vint_offs);
+    return PackFileOffsets(pack_offs, vint_offs);
   }
 
   off_t CurrentOffset() const {
@@ -351,8 +364,10 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
       posting_it.Advance();
     }
 
-    position_dumper_.Dump(position_term_entry.GetContainer(true));
-    offset_dumper_.Dump(offset_term_entry.GetContainer(true));
+    PackFileOffsets pos_file_offs = position_dumper_.Dump(
+        position_term_entry.GetContainer(true));
+    PackFileOffsets offset_file_offs = offset_dumper_.Dump(
+        offset_term_entry.GetContainer(true));
   }
 
   std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
