@@ -67,7 +67,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     REQUIRE(entry.Values() == std::vector<uint32_t>{7});
     REQUIRE(entry.PostingSizes() == std::vector<int>{1});
 
-    PostingPackIndexes table = entry.GetPostingLocations();
+    PostingPackIndexes table = entry.GetPostingPackIndexes();
 
     REQUIRE(table.NumRows() == 1);
     REQUIRE(table[0].packed_block_idx == 0);
@@ -83,7 +83,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     REQUIRE(entry.Values() == std::vector<uint32_t>{7, 9, 10, 11, 18});
     REQUIRE(entry.PostingSizes() == std::vector<int>{1, 2, 2});
 
-    PostingPackIndexes table = entry.GetPostingLocations();
+    PostingPackIndexes table = entry.GetPostingPackIndexes();
 
     REQUIRE(table.NumRows() == 3);
     REQUIRE(table[0].packed_block_idx == 0);
@@ -150,7 +150,7 @@ TEST_CASE( "PackFileOffsets", "[qqflash]" ) {
   REQUIRE(offs.FileOffset(3) == 1000);
 }
 
-TEST_CASE( "SKipPostingFileOffsets", "[qqflash]" ) {
+TEST_CASE( "SkipPostingFileOffsets", "[qqflash]" ) {
   PostingPackIndexes posting_locations; 
 
   int n_postings = SKIP_INTERVAL * 3 + 10;
@@ -166,7 +166,7 @@ TEST_CASE( "SKipPostingFileOffsets", "[qqflash]" ) {
   std::vector<off_t> vint_offs{1000};
   PackFileOffsets file_offs(pack_offs, vint_offs);
 
-  SKipPostingFileOffsets skip_locations(posting_locations, file_offs);
+  SkipPostingFileOffsets skip_locations(posting_locations, file_offs);
 
   REQUIRE(skip_locations.Size() == 3);
   REQUIRE(skip_locations[0].block_file_offset == 128 / 23);

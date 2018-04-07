@@ -149,7 +149,7 @@ class GeneralTermEntry {
     }
   }
 
-  PostingPackIndexes GetPostingLocations() const {
+  PostingPackIndexes GetPostingPackIndexes() const {
     int val_index = 0;  
     PostingPackIndexes table;
     
@@ -323,8 +323,8 @@ class FileDumper {
 };
 
 
-struct SKipPostingFileOffset {
-  SKipPostingFileOffset(off_t offset, int index)
+struct SkipPostingFileOffset {
+  SkipPostingFileOffset(off_t offset, int index)
     : block_file_offset(offset), in_block_index(index) {}
 
   off_t block_file_offset;
@@ -332,9 +332,9 @@ struct SKipPostingFileOffset {
 };
 
 
-class SKipPostingFileOffsets {
+class SkipPostingFileOffsets {
  public:
-  SKipPostingFileOffsets(const PostingPackIndexes &table, 
+  SkipPostingFileOffsets(const PostingPackIndexes &table, 
       const PackFileOffsets &file_offs) {
     for (int posting_index = SKIP_INTERVAL; 
         posting_index < table.NumRows(); 
@@ -350,12 +350,12 @@ class SKipPostingFileOffsets {
     return locations_.size();
   }
 
-  const SKipPostingFileOffset &operator [](int i) const {
+  const SkipPostingFileOffset &operator [](int i) const {
     return locations_[i];
   }
 
  private:
-  std::vector<SKipPostingFileOffset> locations_;
+  std::vector<SkipPostingFileOffset> locations_;
 };
 
 
