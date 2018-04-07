@@ -67,7 +67,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     REQUIRE(entry.Values() == std::vector<uint32_t>{7});
     REQUIRE(entry.PostingSizes() == std::vector<int>{1});
 
-    PostingLocationTable table = entry.LocationTable();
+    PostingLocations table = entry.LocationTable();
 
     REQUIRE(table.NumRows() == 1);
     REQUIRE(table[0].packed_block_idx == 0);
@@ -83,7 +83,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     REQUIRE(entry.Values() == std::vector<uint32_t>{7, 9, 10, 11, 18});
     REQUIRE(entry.PostingSizes() == std::vector<int>{1, 2, 2});
 
-    PostingLocationTable table = entry.LocationTable();
+    PostingLocations table = entry.LocationTable();
 
     REQUIRE(table.NumRows() == 3);
     REQUIRE(table[0].packed_block_idx == 0);
@@ -151,7 +151,7 @@ TEST_CASE( "PackFileOffsets", "[qqflash]" ) {
 }
 
 TEST_CASE( "SkipPostingLocations", "[qqflash]" ) {
-  PostingLocationTable posting_locations; 
+  PostingLocations posting_locations; 
 
   int n_postings = SKIP_INTERVAL * 3 + 10;
   for (int i = 0; i < n_postings; i++) {

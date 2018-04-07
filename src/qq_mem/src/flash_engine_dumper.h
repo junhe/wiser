@@ -99,7 +99,7 @@ struct PostingLocation {
   int in_block_idx;
 };
 
-class PostingLocationTable {
+class PostingLocations {
  public:
   void AddRow(int block_idx, int offset) {
     locations_.emplace_back(block_idx, offset);
@@ -149,9 +149,9 @@ class GeneralTermEntry {
     }
   }
 
-  PostingLocationTable LocationTable() const {
+  PostingLocations LocationTable() const {
     int val_index = 0;  
-    PostingLocationTable table;
+    PostingLocations table;
     
     for (auto &size : posting_sizes_) {
       table.AddRow(val_index / PackedIntsWriter::PACK_SIZE, 
@@ -334,7 +334,7 @@ struct SkipPostingLocation {
 
 class SkipPostingLocations {
  public:
-  SkipPostingLocations(const PostingLocationTable &table, 
+  SkipPostingLocations(const PostingLocations &table, 
       const PackFileOffsets &file_offs) {
     for (int posting_index = SKIP_INTERVAL; 
         posting_index < table.NumRows(); 
