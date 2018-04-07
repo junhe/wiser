@@ -91,15 +91,15 @@ class PositionTermEntry :public TermEntryBase {
 };
 
 
-struct PostingLocation {
-  PostingLocation(int block_idx, int offset_idx)
+struct PostingPackIndex {
+  PostingPackIndex(int block_idx, int offset_idx)
     : packed_block_idx(block_idx), in_block_idx(offset_idx) {}
 
   int packed_block_idx;
   int in_block_idx;
 };
 
-class PostingLocations {
+class PostingPackIndexes {
  public:
   void AddRow(int block_idx, int offset) {
     locations_.emplace_back(block_idx, offset);
@@ -109,18 +109,18 @@ class PostingLocations {
     return locations_.size();
   }
 
-  const PostingLocation & operator[] (int i) const {
+  const PostingPackIndex & operator[] (int i) const {
     return locations_[i];
   }
 
  private:
-  std::vector<PostingLocation> locations_;
+  std::vector<PostingPackIndex> locations_;
 };
 
 
-class TermEntryContainer {
+class TermEntryPackWriter {
  public:
-  TermEntryContainer(std::vector<PackedIntsWriter> writers, 
+  TermEntryPackWriter(std::vector<PackedIntsWriter> writers, 
                      VarintBuffer vints)
     :pack_writers_(writers), vints_(vints) {}
 
@@ -149,9 +149,9 @@ class GeneralTermEntry {
     }
   }
 
-  PostingLocations GetPostingLocations() const {
+  PostingPackIndexes GetPostingLocations() const {
     int val_index = 0;  
-    PostingLocations table;
+    PostingPackIndexes table;
     
     for (auto &size : posting_sizes_) {
       table.AddRow(val_index / PackedIntsWriter::PACK_SIZE, 
@@ -162,7 +162,7 @@ class GeneralTermEntry {
     return table;
   }
 
-  TermEntryContainer GetContainer(bool do_delta) {
+  TermEntryPackWriter GetPackWriter(bool do_delta) {
     const int pack_size = PackedIntsWriter::PACK_SIZE;
     const int n_packs = values_.size() / pack_size;
     const int n_remains = values_.size() % pack_size;
@@ -188,7 +188,7 @@ class GeneralTermEntry {
       vints.Append(vals[i]);
     }
 
-    return TermEntryContainer(pack_writers, vints);
+    return TermEntryPackWriter(pack_writers, vints);
   }
 
   const std::vector<uint32_t> &Values() const {
@@ -268,9 +268,9 @@ class FileDumper {
       LOG(FATAL) << "Cannot open file: " << path;
   }
 
-  PackFileOffsets Dump(const TermEntryContainer &container) {
-    std::vector<off_t> pack_offs = DumpPackedBlocks(container.PackWriters());
-    std::vector<off_t> vint_offs = DumpVInts(container.VInts());
+  PackFileOffsets Dump(const TermEntryPackWriter &writer) {
+    std::vector<off_t> pack_offs = DumpPackedBlocks(writer.PackWriters());
+    std::vector<off_t> vint_offs = DumpVInts(writer.VInts());
 
     return PackFileOffsets(pack_offs, vint_offs);
   }
@@ -323,8 +323,8 @@ class FileDumper {
 };
 
 
-struct SkipPostingLocation {
-  SkipPostingLocation(off_t offset, int index)
+struct SKipPostingFileOffset {
+  SKipPostingFileOffset(off_t offset, int index)
     : block_file_offset(offset), in_block_index(index) {}
 
   off_t block_file_offset;
@@ -332,9 +332,9 @@ struct SkipPostingLocation {
 };
 
 
-class SkipPostingLocations {
+class SKipPostingFileOffsets {
  public:
-  SkipPostingLocations(const PostingLocations &table, 
+  SKipPostingFileOffsets(const PostingPackIndexes &table, 
       const PackFileOffsets &file_offs) {
     for (int posting_index = SKIP_INTERVAL; 
         posting_index < table.NumRows(); 
@@ -350,12 +350,12 @@ class SkipPostingLocations {
     return locations_.size();
   }
 
-  const SkipPostingLocation &operator [](int i) const {
+  const SKipPostingFileOffset &operator [](int i) const {
     return locations_[i];
   }
 
  private:
-  std::vector<SkipPostingLocation> locations_;
+  std::vector<SKipPostingFileOffset> locations_;
 };
 
 
@@ -402,9 +402,9 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
     }
 
     PackFileOffsets pos_file_offs = position_dumper_.Dump(
-        position_term_entry.GetContainer(true));
+        position_term_entry.GetPackWriter(true));
     PackFileOffsets offset_file_offs = offset_dumper_.Dump(
-        offset_term_entry.GetContainer(true));
+        offset_term_entry.GetPackWriter(true));
   }
 
   std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
