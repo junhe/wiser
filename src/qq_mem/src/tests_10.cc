@@ -26,22 +26,6 @@ TEST_CASE( "Test File Dumper", "[qqflash]" ) {
 }
 
 
-TEST_CASE( "Dumping Engine", "[qqflash]" ) {
-  FlashEngineDumper engine;
-  REQUIRE(engine.TermCount() == 0);
-  engine.LoadLocalDocuments("src/testdata/line_doc_with_positions", 10000, 
-      "WITH_POSITIONS");
-
-  SECTION("Check loading") {
-    REQUIRE(engine.TermCount() > 0);
-  }
-
-  SECTION("Dumping inverted index") {
-    engine.DumpInvertedIndex("/tmp/");
-  }
-}
-
-
 TEST_CASE( "Write and Read works", "[qqflash][utils]" ) {
   int fd = open("/tmp/tmp.writer.test", O_CREAT|O_RDWR|O_TRUNC, 00666);
   const int BUFSIZE = 10000;
@@ -156,6 +140,24 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     }
   }
 }
+
+
+TEST_CASE( "Dumping Engine", "[qqflash]" ) {
+  FlashEngineDumper engine("/tmp");
+  REQUIRE(engine.TermCount() == 0);
+  engine.LoadLocalDocuments("src/testdata/line_doc_with_positions", 10000, 
+      "WITH_POSITIONS");
+
+  SECTION("Check loading") {
+    REQUIRE(engine.TermCount() > 0);
+  }
+
+  SECTION("Dumping inverted index") {
+    engine.DumpInvertedIndex("/tmp/");
+  }
+}
+
+
 
 
 

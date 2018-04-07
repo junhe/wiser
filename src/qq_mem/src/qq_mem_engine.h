@@ -44,7 +44,7 @@ class InvertedIndexImpl: public InvertedIndexService {
 
 
 class InvertedIndexQqMemDelta: public InvertedIndexImpl {
- private:
+ protected:
   typedef PostingListDelta PostingListType;
   typedef std::unordered_map<Term, PostingListType> IndexStore;
   IndexStore index_;

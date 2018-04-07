@@ -311,14 +311,81 @@ class FileDumper {
 
 class InvertedIndexDumper : public InvertedIndexQqMemDelta {
  public:
+  InvertedIndexDumper(const std::string dump_dir_path)
+    :position_dumper_(dump_dir_path + "/my.pos"),
+     offset_dumper_(dump_dir_path + "/my.off")
+  {}
+
   void Dump(const std::string dir_path) {
     std::cout << "Dumping Inverted Index...." << std::endl; 
+
+    for (auto it = index_.cbegin(); it != index_.cend(); it++) {
+      std::cout << "At '" << it->first << "'" << std::endl;
+      DumpPostingList(it->second);
+    }
   }
+
+  void DumpPostingList(const PostingListDelta &posting_list) {
+    PostingListDeltaIterator posting_it = posting_list.Begin2();
+    std::cout << "Dumping One Posting List ...." << std::endl;
+    std::cout << "Number of postings: " << posting_it.Size() << std::endl;
+
+    std::vector<uint32_t> doc_ids, term_freqs;
+    GeneralTermEntry position_term_entry;
+    GeneralTermEntry offset_term_entry;
+
+    while (posting_it.IsEnd() == false) {
+      std::cout << "DocId: " << posting_it.DocId() << std::endl;
+
+      doc_ids.push_back(posting_it.DocId());
+      term_freqs.push_back(posting_it.TermFreq());
+
+      // Position
+      position_term_entry.AddPostingColumn(
+          ExtractPositions(posting_it.PositionBegin().get()));
+      position_dumper_.Dump(position_term_entry.GetContainer(true));
+
+      // Offset
+      offset_term_entry.AddPostingColumn(
+          ExtractOffsets(posting_it.OffsetPairsBegin().get()));
+      offset_dumper_.Dump(offset_term_entry.GetContainer(true));
+
+      posting_it.Advance();
+    }
+  }
+
+  std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
+    std::vector<uint32_t> positions;
+    while (pos_it->IsEnd() == false) {
+      positions.push_back(pos_it->Pop());  
+    }
+    return positions;
+  }
+
+  std::vector<uint32_t> ExtractOffsets(OffsetPairsIteratorService *iterator) {
+    std::vector<uint32_t> offsets;
+    while (iterator->IsEnd() != true) {
+      OffsetPair pair;
+      iterator->Pop(&pair);
+
+      offsets.push_back(std::get<0>(pair));
+      offsets.push_back(std::get<1>(pair));
+    }
+    return offsets;
+  }
+
+ private:
+  FileDumper position_dumper_;
+  FileDumper offset_dumper_;
 };
 
 
 class FlashEngineDumper {
  public:
+  FlashEngineDumper(const std::string dump_dir_path)
+    :inverted_index_(dump_dir_path) 
+  {}
+
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
       int n_rows, const std::string format) {
