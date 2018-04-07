@@ -254,13 +254,6 @@ class FileDumper {
       LOG(FATAL) << "Cannot open file: " << path;
   }
 
-  EntryMetadata Dump(const TermEntryBase &entry) {
-    std::vector<off_t> pack_offs = DumpPackedBlocks(entry.PackWriters());
-    std::vector<off_t> vint_offs = DumpVInts(entry.VInts());
-
-    return EntryMetadata(pack_offs, vint_offs);
-  }
-
   EntryMetadata Dump(const TermEntryContainer &container) {
     std::vector<off_t> pack_offs = DumpPackedBlocks(container.PackWriters());
     std::vector<off_t> vint_offs = DumpVInts(container.VInts());
@@ -314,10 +307,6 @@ class FileDumper {
 
   int fd_;
 };
-
-typedef FileDumper PositionDumper;
-typedef FileDumper OffsetDumper;
-typedef FileDumper TermFreqDumper;
 
 
 class InvertedIndexDumper : public InvertedIndexQqMemDelta {
