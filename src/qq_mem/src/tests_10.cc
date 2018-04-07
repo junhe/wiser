@@ -62,7 +62,7 @@ TEST_CASE( "Offset Term Entry", "[qqflash][termentry]" ) {
 TEST_CASE( "General term entry", "[qqflash]" ) {
   SECTION("Simple") {
     GeneralTermEntry entry;  
-    entry.AddPostingColumn({7});
+    entry.AddGroup({7});
 
     REQUIRE(entry.Values() == std::vector<uint32_t>{7});
     REQUIRE(entry.PostingSizes() == std::vector<int>{1});
@@ -76,9 +76,9 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
 
   SECTION("Multiple postings") {
     GeneralTermEntry entry;  
-    entry.AddPostingColumn({7});
-    entry.AddPostingColumn({9, 10});
-    entry.AddPostingColumn({11, 18});
+    entry.AddGroup({7});
+    entry.AddGroup({9, 10});
+    entry.AddGroup({11, 18});
 
     REQUIRE(entry.Values() == std::vector<uint32_t>{7, 9, 10, 11, 18});
     REQUIRE(entry.PostingSizes() == std::vector<int>{1, 2, 2});
@@ -108,7 +108,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     }
 
     GeneralTermEntry entry;
-    entry.AddPostingColumn(vec);
+    entry.AddGroup(vec);
     REQUIRE(entry.Values() == vec);
 
     TermEntryContainer container = entry.GetContainer(true);

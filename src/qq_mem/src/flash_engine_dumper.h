@@ -140,7 +140,7 @@ class TermEntryContainer {
 class GeneralTermEntry {
  public:
   // Values can be positions, offsets, term frequencies
-  void AddPostingColumn(std::vector<uint32_t> values) {
+  void AddGroup(std::vector<uint32_t> values) {
     posting_sizes_.push_back(values.size()); 
 
     for (auto &v : values) {
@@ -341,17 +341,18 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
       term_freqs.push_back(posting_it.TermFreq());
 
       // Position
-      position_term_entry.AddPostingColumn(
+      position_term_entry.AddGroup(
           ExtractPositions(posting_it.PositionBegin().get()));
-      position_dumper_.Dump(position_term_entry.GetContainer(true));
 
       // Offset
-      offset_term_entry.AddPostingColumn(
+      offset_term_entry.AddGroup(
           ExtractOffsets(posting_it.OffsetPairsBegin().get()));
-      offset_dumper_.Dump(offset_term_entry.GetContainer(true));
 
       posting_it.Advance();
     }
+
+    position_dumper_.Dump(position_term_entry.GetContainer(true));
+    offset_dumper_.Dump(offset_term_entry.GetContainer(true));
   }
 
   std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
