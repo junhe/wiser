@@ -144,6 +144,71 @@ TEST_CASE( "Offset Term Entry", "[qqflash][termentry]" ) {
 }
 
 
+TEST_CASE( "General term entry", "[qqflash]" ) {
+  SECTION("Simple") {
+    GeneralTermEntry entry;  
+    entry.AddPostingColumn({7});
+
+    REQUIRE(entry.Values() == std::vector<uint32_t>{7});
+    REQUIRE(entry.PostingSizes() == std::vector<int>{1});
+
+    PostingLocationTable table = entry.LocationTable();
+
+    REQUIRE(table.NumRows() == 1);
+    REQUIRE(table[0].packed_block_idx == 0);
+    REQUIRE(table[0].in_block_idx == 0);
+  }
+
+  SECTION("Multiple postings") {
+    GeneralTermEntry entry;  
+    entry.AddPostingColumn({7});
+    entry.AddPostingColumn({9, 10});
+    entry.AddPostingColumn({11, 18});
+
+    REQUIRE(entry.Values() == std::vector<uint32_t>{7, 9, 10, 11, 18});
+    REQUIRE(entry.PostingSizes() == std::vector<int>{1, 2, 2});
+
+    PostingLocationTable table = entry.LocationTable();
+
+    REQUIRE(table.NumRows() == 3);
+    REQUIRE(table[0].packed_block_idx == 0);
+    REQUIRE(table[0].in_block_idx == 0);
+    REQUIRE(table[1].packed_block_idx == 0);
+    REQUIRE(table[1].in_block_idx == 1);
+    REQUIRE(table[2].packed_block_idx == 0);
+    REQUIRE(table[2].in_block_idx == 3);
+  }
+
+  SECTION("More than one packed block") {
+    std::vector<uint32_t> vec;
+    std::vector<uint32_t> deltas;
+    int prev = 0;
+    for (int i = 0; i < 200; i++) {
+      int delta = i % 7;
+      deltas.push_back(delta);
+
+      int num = prev + delta;
+      vec.push_back(num); 
+      prev = num;
+    }
+
+    GeneralTermEntry entry;
+    entry.AddPostingColumn(vec);
+    REQUIRE(entry.Values() == vec);
+
+    TermEntryContainer container = entry.GetContainer(true);
+    REQUIRE(container.PackWriters().size() == 1);
+    REQUIRE(container.VInts().Size() == (200 - PackedIntsWriter::PACK_SIZE));
+  }
+}
+
+
+
+
+
+
+
+
 
 
 

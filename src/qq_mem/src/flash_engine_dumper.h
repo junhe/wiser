@@ -8,6 +8,7 @@
 
 #include "qq_mem_engine.h"
 #include "packed_value.h"
+#include "compression.h"
 
 
 // Provide functions to copy values to pack writer and VInts
@@ -50,7 +51,6 @@ class TermEntryBase {
 };
 
 
-
 class OffsetTermEntry :public TermEntryBase {
  public:
   OffsetTermEntry(CompressedPairIterator iterator) {
@@ -88,6 +88,135 @@ class PositionTermEntry :public TermEntryBase {
     Fill();
   }
 };
+
+
+struct PostingLocation {
+  PostingLocation(int block_idx, int offset_idx)
+    : packed_block_idx(block_idx), in_block_idx(offset_idx) {}
+
+  int packed_block_idx;
+  int in_block_idx;
+};
+
+class PostingLocationTable {
+ public:
+  void AddRow(int block_idx, int offset) {
+    locations_.emplace_back(block_idx, offset);
+  }
+
+  int NumRows() const {
+    return locations_.size();
+  }
+
+  PostingLocation & operator[] (int i) {
+    return locations_[i];
+  }
+
+ private:
+  std::vector<PostingLocation> locations_;
+};
+
+
+class TermEntryContainer {
+ public:
+  TermEntryContainer(std::vector<PackedIntsWriter> writers, 
+                     VarintBuffer vints)
+    :pack_writers_(writers), vints_(vints) {}
+
+  const std::vector<PackedIntsWriter> &PackWriters() const {
+    return pack_writers_;
+  }
+
+  const VarintBuffer &VInts() const {
+    return vints_;
+  }
+
+ private:
+  std::vector<PackedIntsWriter> pack_writers_;
+  VarintBuffer vints_;
+};
+
+
+class GeneralTermEntry {
+ public:
+  // Values can be positions, offsets, term frequencies
+  void AddPostingColumn(std::vector<uint32_t> values) {
+    posting_sizes_.push_back(values.size()); 
+
+    for (auto &v : values) {
+      values_.push_back(v);
+    }
+  }
+
+  PostingLocationTable LocationTable() const {
+    int val_index = 0;  
+    PostingLocationTable table;
+    
+    for (auto &size : posting_sizes_) {
+      table.AddRow(val_index / PackedIntsWriter::PACK_SIZE, 
+          val_index % PackedIntsWriter::PACK_SIZE);
+      val_index += size;
+    }
+
+    return table;
+  }
+
+  TermEntryContainer GetContainer(bool do_delta) {
+    const int pack_size = PackedIntsWriter::PACK_SIZE;
+    const int n_packs = values_.size() / pack_size;
+    const int n_remains = values_.size() % pack_size;
+
+    std::vector<PackedIntsWriter> pack_writers(n_packs);
+    VarintBuffer vints;
+
+    std::vector<uint32_t> vals;
+    if (do_delta) {
+      vals = EncodeDelta();
+    } else {
+      vals = values_;
+    }
+
+    for (int pack_i = 0; pack_i < n_packs; pack_i++) {
+      for (int offset = 0; offset < pack_size; offset++) {
+        int value_idx = pack_i * pack_size + offset;
+        pack_writers[pack_i].Add(vals[value_idx]);
+      }
+    }
+    
+    for (int i = n_packs * pack_size; i < vals.size(); i++) {
+      vints.Append(vals[i]);
+    }
+
+    return TermEntryContainer(pack_writers, vints);
+  }
+
+  const std::vector<uint32_t> &Values() const {
+    return values_;
+  }
+
+  const std::vector<int> &PostingSizes() const {
+    return posting_sizes_;
+  }
+
+ protected:
+  std::vector<uint32_t> EncodeDelta() {
+    uint32_t prev = 0;
+    std::vector<uint32_t> vals;
+    for (auto &v : values_) {
+      vals.push_back(v - prev);
+      prev = v;
+    }
+
+    return vals;
+  }
+
+  // number of values in each posting
+  std::vector<int> posting_sizes_;
+  std::vector<uint32_t> values_;
+  uint32_t prev_ = 0;
+};
+
+
 
 
 class EntryMetadata {
