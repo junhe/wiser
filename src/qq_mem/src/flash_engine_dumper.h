@@ -261,6 +261,13 @@ class FileDumper {
     return EntryMetadata(pack_offs, vint_offs);
   }
 
+  EntryMetadata Dump(const TermEntryContainer &container) {
+    std::vector<off_t> pack_offs = DumpPackedBlocks(container.PackWriters());
+    std::vector<off_t> vint_offs = DumpVInts(container.VInts());
+
+    return EntryMetadata(pack_offs, vint_offs);
+  }
+
   off_t CurrentOffset() const {
     off_t off = lseek(fd_, 0, SEEK_CUR);
     if (off == -1)

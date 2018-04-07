@@ -12,85 +12,16 @@ VarintBuffer CreateVarintBuffer(std::vector<int> vec) {
 }
 
 
-TEST_CASE( "Test PositionTermEntry", "[qqflash]" ) {
-  SECTION("Simple case") {
-    VarintBuffer buf = CreateVarintBuffer({1, 3, 8, 9});
-    VarintIteratorEndBound iterator(buf);
-
-    PositionTermEntry entry(&iterator);
-    REQUIRE(entry.Values() == std::vector<uint32_t>{1, 2, 5, 1});
-    REQUIRE(entry.VInts().Size() == 4);
-    REQUIRE(entry.PackWriters().size() == 0);
-
-    SECTION("Dump it") {
-      PositionDumper dumper("/tmp/tmp.pos.dumper");
-      EntryMetadata metadata = dumper.Dump(entry);
-      REQUIRE(dumper.CurrentOffset() == 4); // Only the vints are in it
-      
-      REQUIRE(metadata.PackOffSize() == 0); 
-      REQUIRE(metadata.VIntsSize() == 1); 
-    }
-  }
-
-  SECTION("More than one packed block") {
-    std::vector<int> vec;
-    std::vector<uint32_t> deltas;
-    int prev = 0;
-    for (int i = 0; i < 200; i++) {
-      int delta = i % 7;
-      deltas.push_back(delta);
-
-      int num = prev + delta;
-      vec.push_back(num); 
-      prev = num;
-    }
-    VarintBuffer buf = CreateVarintBuffer(vec);
-    VarintIteratorEndBound iterator(buf);
-
-    PositionTermEntry entry(&iterator);
-    REQUIRE(entry.Values() == deltas);
-    REQUIRE(entry.VInts().Size() == (200 - PackedIntsWriter::PACK_SIZE));
-    REQUIRE(entry.PackWriters().size() == 1);
-
-    SECTION("Dump it and read it") {
-      // Dump it
-      PositionDumper dumper("/tmp/tmp.pos.dumper");
-      EntryMetadata metadata = dumper.Dump(entry);
-      
-      REQUIRE(metadata.PackOffSize() == 1); 
-      REQUIRE(metadata.VIntsSize() == 1); 
-      dumper.Flush();
-      dumper.Close();
-
-      // Read it
-      int fd;
-      char *addr;
-      size_t file_length;
-      utils::MapFile("/tmp/tmp.pos.dumper", &addr, &fd, &file_length);
-
-      PackedIntsReader reader((uint8_t *)addr + metadata.PackOffs()[0]);
-      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
-        REQUIRE(reader.Get(i) == deltas[i]);
-      }
-
-      utils::UnmapFile(addr, fd, file_length);
-    }
-  }
-}
-
-
-TEST_CASE( "Test Position Dumper", "[qqflash]" ) {
+TEST_CASE( "Test File Dumper", "[qqflash]" ) {
   SECTION("initialize and destruct") {
-    PositionDumper dumper("/tmp/tmp.pos.dumper");
+    FileDumper dumper("/tmp/tmp.pos.dumper");
+    dumper.Close();
   }
   
-  SECTION("It returns the right metadata about the dumpped entry") {
-    PositionDumper dumper("/tmp/tmp.pos.dumper");
-  }
-
   SECTION("Get the current position") {
-    PositionDumper dumper("/tmp/tmp.pos.dumper");
+    FileDumper dumper("/tmp/tmp.pos.dumper");
     REQUIRE(dumper.CurrentOffset() == 0);
+    dumper.Close();
   }
 }
 
@@ -111,7 +42,7 @@ TEST_CASE( "Dumping Engine", "[qqflash]" ) {
 }
 
 
-TEST_CASE( "Write and Read works", "[qqflash]" ) {
+TEST_CASE( "Write and Read works", "[qqflash][utils]" ) {
   int fd = open("/tmp/tmp.writer.test", O_CREAT|O_RDWR|O_TRUNC, 00666);
   const int BUFSIZE = 10000;
   REQUIRE(fd != -1);
@@ -199,16 +130,32 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     TermEntryContainer container = entry.GetContainer(true);
     REQUIRE(container.PackWriters().size() == 1);
     REQUIRE(container.VInts().Size() == (200 - PackedIntsWriter::PACK_SIZE));
+
+    SECTION("Dump it and read it") {
+      // Dump it
+      FileDumper dumper("/tmp/tmp.pos.dumper");
+      EntryMetadata metadata = dumper.Dump(container);
+      
+      REQUIRE(metadata.PackOffSize() == 1); 
+      REQUIRE(metadata.VIntsSize() == 1); 
+      dumper.Flush();
+      dumper.Close();
+
+      // Read it
+      int fd;
+      char *addr;
+      size_t file_length;
+      utils::MapFile("/tmp/tmp.pos.dumper", &addr, &fd, &file_length);
+
+      PackedIntsReader reader((uint8_t *)addr + metadata.PackOffs()[0]);
+      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+        REQUIRE(reader.Get(i) == deltas[i]);
+      }
+
+      utils::UnmapFile(addr, fd, file_length);
+    }
   }
 }
-
-
-
-
-
-
-
-
 
 
 
