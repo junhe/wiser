@@ -77,11 +77,11 @@ class VarintIterator: public PopIteratorService {
   VarintIterator() {}
 
   VarintIterator(const std::string *data, const int start_offset, const int count)
-    :data_(data), start_offset_(start_offset), cur_offset_(start_offset), 
+    :data_(data->data()), start_offset_(start_offset), cur_offset_(start_offset), 
      count_(count) {}
 
   VarintIterator(const VarintBuffer &varint_buf, int count)
-    :data_(varint_buf.DataPointer()), start_offset_(0), 
+    :data_(varint_buf.DataPointer()->data()), start_offset_(0), 
      cur_offset_(0), count_(count) {}
 
   VarintIterator(const VarintIterator &rhs)
@@ -106,7 +106,7 @@ class VarintIterator: public PopIteratorService {
     int len;
     uint32_t n;
 
-    len = utils::varint_decode(*data_, cur_offset_, &n);
+    len = utils::varint_decode_chars(data_, cur_offset_, &n);
     cur_offset_ += len;
     index_++;
 
@@ -114,12 +114,13 @@ class VarintIterator: public PopIteratorService {
   }
 
  private:
-  const std::string *data_;
+  const char *data_;
   int cur_offset_; 
   int index_ = 0;
   int start_offset_;
   int count_;
 };
+
 
 class VarintIteratorEndBound: public PopIteratorService {
  public:
