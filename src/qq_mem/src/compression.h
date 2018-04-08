@@ -80,6 +80,10 @@ class VarintIterator: public PopIteratorService {
     :data_(data->data()), start_offset_(start_offset), cur_offset_(start_offset), 
      count_(count) {}
 
+  VarintIterator(const char *data, const int start_offset, const int count)
+    :data_(data), start_offset_(start_offset), cur_offset_(start_offset), 
+     count_(count) {}
+
   VarintIterator(const VarintBuffer &varint_buf, int count)
     :data_(varint_buf.DataPointer()->data()), start_offset_(0), 
      cur_offset_(0), count_(count) {}
