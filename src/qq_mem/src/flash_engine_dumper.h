@@ -363,7 +363,8 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
  public:
   InvertedIndexDumper(const std::string dump_dir_path)
     :position_dumper_(dump_dir_path + "/my.pos"),
-     offset_dumper_(dump_dir_path + "/my.off")
+     offset_dumper_(dump_dir_path + "/my.off"),
+     termfreq_dumper_(dump_dir_path + "/my.tf")
   {}
 
   void Dump(const std::string dir_path) {
@@ -380,15 +381,19 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
     // std::cout << "Dumping One Posting List ...." << std::endl;
     // std::cout << "Number of postings: " << posting_it.Size() << std::endl;
 
-    std::vector<uint32_t> doc_ids, term_freqs;
+    GeneralTermEntry docid_term_entry;
+    GeneralTermEntry termfreq_term_entry;
     GeneralTermEntry position_term_entry;
     GeneralTermEntry offset_term_entry;
 
     while (posting_it.IsEnd() == false) {
-      // std::cout << "DocId: " << posting_it.DocId() << std::endl;
+      //doc id
+      docid_term_entry.AddGroup(
+          std::vector<uint32_t>{(uint32_t)posting_it.DocId()});
 
-      doc_ids.push_back(posting_it.DocId());
-      term_freqs.push_back(posting_it.TermFreq());
+      //Term Freq
+      termfreq_term_entry.AddGroup(
+          std::vector<uint32_t>{(uint32_t)posting_it.TermFreq()});
 
       // Position
       position_term_entry.AddGroup(
@@ -401,10 +406,27 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
       posting_it.Advance();
     }
 
+
     PackFileOffsets pos_file_offs = position_dumper_.Dump(
         position_term_entry.GetPackWriter(true));
+    PostingPackIndexes pos_pack_indexes = 
+      position_term_entry.GetPostingPackIndexes();
+    SkipPostingFileOffsets pos_skip_offs = SkipPostingFileOffsets(
+        pos_pack_indexes, pos_file_offs);
+
     PackFileOffsets offset_file_offs = offset_dumper_.Dump(
         offset_term_entry.GetPackWriter(true));
+    PostingPackIndexes off_pack_indexes =
+      offset_term_entry.GetPostingPackIndexes();
+    SkipPostingFileOffsets offset_skip_offs = SkipPostingFileOffsets(
+        off_pack_indexes, offset_file_offs);
+
+    PackFileOffsets tf_file_offs = termfreq_dumper_.Dump(
+        termfreq_term_entry.GetPackWriter(false));
+    PostingPackIndexes tf_pack_indexes = 
+      termfreq_term_entry.GetPostingPackIndexes();
+    SkipPostingFileOffsets termfreq_skip_offs = SkipPostingFileOffsets(
+        tf_pack_indexes, tf_file_offs);
   }
 
   std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
@@ -430,6 +452,7 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
  private:
   FileDumper position_dumper_;
   FileDumper offset_dumper_;
+  FileDumper termfreq_dumper_;
 };
 
 
