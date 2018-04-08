@@ -15,8 +15,7 @@ class CompressedPositionIterator: public PopIteratorService {
       const int start_offset, const int end_offset)
     :iterator_(data, start_offset, end_offset) {}
 
-  CompressedPositionIterator()
-    :iterator_(nullptr, 0, 0) {}
+  CompressedPositionIterator() {}
 
   bool IsEnd() const {
     return iterator_.IsEnd();
