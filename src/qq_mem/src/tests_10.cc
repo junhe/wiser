@@ -168,10 +168,11 @@ TEST_CASE( "SkipPostingFileOffsets", "[qqflash]" ) {
 
   SkipPostingFileOffsets skip_locations(posting_locations, file_offs);
 
-  REQUIRE(skip_locations.Size() == 3);
-  REQUIRE(skip_locations[0].block_file_offset == 128 / 23);
-  REQUIRE(skip_locations[1].block_file_offset == (128 * 2) / 23);
-  REQUIRE(skip_locations[2].block_file_offset == (128 * 3) / 23);
+  REQUIRE(skip_locations.Size() == 4);
+  REQUIRE(skip_locations[0].block_file_offset == 0);
+  REQUIRE(skip_locations[1].block_file_offset == 128 / 23);
+  REQUIRE(skip_locations[2].block_file_offset == (128 * 2) / 23);
+  REQUIRE(skip_locations[3].block_file_offset == (128 * 3) / 23);
 
 }
 

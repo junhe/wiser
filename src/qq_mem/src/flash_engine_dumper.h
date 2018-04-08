@@ -333,11 +333,13 @@ struct SkipPostingFileOffset {
 };
 
 
+
+// Absolute file offsets for posting 0, 128, 128*2, ..'s data
 class SkipPostingFileOffsets {
  public:
   SkipPostingFileOffsets(const PostingPackIndexes &table, 
       const PackFileOffsets &file_offs) {
-    for (int posting_index = SKIP_INTERVAL; 
+    for (int posting_index = 0; 
         posting_index < table.NumRows(); 
         posting_index += SKIP_INTERVAL) 
     {
@@ -408,9 +410,12 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
     }
 
 
-    DumpTermEntry(position_term_entry, &position_dumper_, true);
-    DumpTermEntry(offset_term_entry, &offset_dumper_, true);
-    DumpTermEntry(termfreq_term_entry, &termfreq_dumper_, false);
+    SkipPostingFileOffsets pos_skip_offs = 
+      DumpTermEntry(position_term_entry, &position_dumper_, true);
+    SkipPostingFileOffsets off_skip_offs = 
+      DumpTermEntry(offset_term_entry, &offset_dumper_, true);
+    SkipPostingFileOffsets tf_skip_offs = 
+      DumpTermEntry(termfreq_term_entry, &termfreq_dumper_, false);
   }
 
   SkipPostingFileOffsets DumpTermEntry(
