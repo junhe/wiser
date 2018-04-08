@@ -162,7 +162,7 @@ class GeneralTermEntry {
     return table;
   }
 
-  TermEntryPackWriter GetPackWriter(bool do_delta) {
+  TermEntryPackWriter GetPackWriter(bool do_delta) const {
     const int pack_size = PackedIntsWriter::PACK_SIZE;
     const int n_packs = values_.size() / pack_size;
     const int n_remains = values_.size() % pack_size;
@@ -200,7 +200,7 @@ class GeneralTermEntry {
   }
 
  protected:
-  std::vector<uint32_t> EncodeDelta() {
+  std::vector<uint32_t> EncodeDelta() const {
     uint32_t prev = 0;
     std::vector<uint32_t> vals;
     for (auto &v : values_) {
@@ -259,6 +259,7 @@ class PackFileOffsets {
   std::vector<off_t> pack_offs_;
   std::vector<off_t> vint_offs_;
 };
+
 
 class FileDumper {
  public:
@@ -407,26 +408,16 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
     }
 
 
-    PackFileOffsets pos_file_offs = position_dumper_.Dump(
-        position_term_entry.GetPackWriter(true));
-    PostingPackIndexes pos_pack_indexes = 
-      position_term_entry.GetPostingPackIndexes();
-    SkipPostingFileOffsets pos_skip_offs = SkipPostingFileOffsets(
-        pos_pack_indexes, pos_file_offs);
+    DumpTermEntry(position_term_entry, &position_dumper_, true);
+    DumpTermEntry(offset_term_entry, &offset_dumper_, true);
+    DumpTermEntry(termfreq_term_entry, &termfreq_dumper_, false);
+  }
 
-    PackFileOffsets offset_file_offs = offset_dumper_.Dump(
-        offset_term_entry.GetPackWriter(true));
-    PostingPackIndexes off_pack_indexes =
-      offset_term_entry.GetPostingPackIndexes();
-    SkipPostingFileOffsets offset_skip_offs = SkipPostingFileOffsets(
-        off_pack_indexes, offset_file_offs);
-
-    PackFileOffsets tf_file_offs = termfreq_dumper_.Dump(
-        termfreq_term_entry.GetPackWriter(false));
-    PostingPackIndexes tf_pack_indexes = 
-      termfreq_term_entry.GetPostingPackIndexes();
-    SkipPostingFileOffsets termfreq_skip_offs = SkipPostingFileOffsets(
-        tf_pack_indexes, tf_file_offs);
+  SkipPostingFileOffsets DumpTermEntry(
+      const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
+    PackFileOffsets file_offs = dumper->Dump(term_entry.GetPackWriter(do_delta));
+    PostingPackIndexes pack_indexes = term_entry.GetPostingPackIndexes();
+    return SkipPostingFileOffsets(pack_indexes, file_offs);
   }
 
   std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
