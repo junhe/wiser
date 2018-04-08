@@ -218,8 +218,6 @@ class GeneralTermEntry {
 };
 
 
-
-
 class PackFileOffsets {
  public:
   PackFileOffsets(std::vector<off_t> pack_offs, std::vector<off_t> vint_offs)
@@ -333,7 +331,6 @@ struct SkipPostingFileOffset {
 };
 
 
-
 // Absolute file offsets for posting 0, 128, 128*2, ..'s data
 class SkipPostingFileOffsets {
  public:
@@ -359,6 +356,133 @@ class SkipPostingFileOffsets {
 
  private:
   std::vector<SkipPostingFileOffset> locations_;
+};
+
+
+class SkipListWriter {
+ public:
+  SkipListWriter(const SkipPostingFileOffsets &docid_file_offs,
+           const SkipPostingFileOffsets &tf_file_offs,
+           const SkipPostingFileOffsets &pos_file_offs,
+           const SkipPostingFileOffsets &off_file_offs,
+           const std::vector<uint32_t> doc_ids) 
+    :docid_offs_(docid_file_offs),
+     tf_offs_(tf_file_offs),
+     pos_offs_(pos_file_offs),
+     off_offs_(off_file_offs),
+     doc_ids_(doc_ids)
+  {}
+
+  std::string Serialize() const {
+    VarintBuffer buf;
+    auto skip_doc_ids = GetSkipDocIds();
+
+    if ( !(docid_offs_.Size() == tf_offs_.Size() && 
+           tf_offs_.Size() == pos_offs_.Size() &&
+           pos_offs_.Size() == off_offs_.Size() &&
+           off_offs_.Size() == skip_doc_ids.size()) ) 
+    {
+      LOG(FATAL) << "Skip data is not uniform";
+    }
+
+    for (int i = 0; i < docid_offs_.Size(); i++) {
+      AddRow(&buf, i, skip_doc_ids);
+    }
+
+    return buf.Data();
+  }
+
+ private:
+  void AddRow(VarintBuffer *buf, int i, 
+      const std::vector<uint32_t> skip_doc_ids) const {
+    buf->Append(skip_doc_ids[i]);
+    buf->Append(docid_offs_[i].block_file_offset);
+    buf->Append(tf_offs_[i].block_file_offset);
+    buf->Append(pos_offs_[i].block_file_offset);
+    buf->Append(pos_offs_[i].in_block_index);
+    buf->Append(off_offs_[i].block_file_offset);
+  }
+
+  std::vector<uint32_t> GetSkipDocIds() const {
+    std::vector<uint32_t> doc_ids;
+    for (int i = 0; i < doc_ids_.size(); i += SKIP_INTERVAL) {
+      doc_ids.push_back(doc_ids_[i]); 
+    }
+    return doc_ids;
+  }
+
+  const SkipPostingFileOffsets &docid_offs_;
+  const SkipPostingFileOffsets &tf_offs_;
+  const SkipPostingFileOffsets &pos_offs_;
+  const SkipPostingFileOffsets &off_offs_;
+  const std::vector<uint32_t> doc_ids_;
+};
+
+
+struct SkipEntry {
+  SkipEntry(const uint32_t doc_skip_in,   
+            const off_t doc_file_offset_in,
+            const off_t tf_file_offset_in,
+            const off_t pos_file_offset_in,
+            const int pos_in_block_index_in,
+            const off_t off_file_offset_in)
+    : doc_skip(doc_skip_in),
+      doc_file_offset(doc_file_offset_in),
+      tf_file_offset(tf_file_offset_in),
+      pos_file_offset(pos_file_offset_in),
+      pos_in_block_index(pos_in_block_index_in),
+      off_file_offset(off_file_offset_in) {}
+ 
+  uint32_t doc_skip;
+  off_t doc_file_offset;
+  off_t tf_file_offset;
+  off_t pos_file_offset;
+  int pos_in_block_index;
+  off_t off_file_offset;
+};
+
+class SkipList {
+ public:
+  void Load(const uint8_t *buf, const int num_entries) {
+    VarintIterator it((const char *)buf, 0, num_entries);
+
+    for (int entry_i = 0; entry_i < num_entries; entry_i++) {
+      uint32_t doc_skip = it.Pop();
+      off_t doc_file_offset = it.Pop();
+      off_t tf_file_offset = it.Pop();
+      off_t pos_file_offset = it.Pop();
+      int pos_in_block_index = it.Pop();
+      off_t off_file_offset = it.Pop();
+      AddEntry(doc_skip, doc_file_offset, tf_file_offset, 
+          pos_file_offset, pos_in_block_index, off_file_offset);
+    }
+  }
+
+  int NumEntries() const {
+    return skip_table_.size();
+  }
+
+  const SkipEntry &operator [](int i) {
+    return skip_table_[i];
+  }
+
+ private:
+  void AddEntry(const uint32_t doc_skip,   
+                const off_t doc_file_offset,
+                const off_t tf_file_offset,
+                const off_t pos_file_offset,
+                const int pos_in_block_index,
+                const off_t off_file_offset) 
+  {
+    skip_table_.emplace_back( doc_skip,   
+                              doc_file_offset,
+                              tf_file_offset,
+                              pos_file_offset,
+                              pos_in_block_index,
+                              off_file_offset);
+  }
+
+  std::vector<SkipEntry> skip_table_;
 };
 
 

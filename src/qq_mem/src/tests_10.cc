@@ -12,6 +12,30 @@ VarintBuffer CreateVarintBuffer(std::vector<int> vec) {
 }
 
 
+PostingPackIndexes CreatePostingPackIndexes(
+    std::vector<int> block_indexes, std::vector<int> in_block_indexes) {
+  PostingPackIndexes indexes;
+  for (int i = 0; i < block_indexes.size(); i++) {
+    indexes.AddRow(block_indexes[i], in_block_indexes[i]);
+  }
+
+  return indexes;
+}
+
+SkipPostingFileOffsets CreateSkipPostingFileOffsets(
+    std::vector<int> block_indexes,
+    std::vector<int> in_block_indexes,
+    std::vector<off_t> pack_offs, 
+    std::vector<off_t> vint_offs
+    ) {
+  PostingPackIndexes pack_indexes = CreatePostingPackIndexes(
+      block_indexes, in_block_indexes);
+  
+  PackFileOffsets file_offs(pack_offs, vint_offs);
+  return SkipPostingFileOffsets(pack_indexes, file_offs);
+}
+
+
 TEST_CASE( "Test File Dumper", "[qqflash]" ) {
   SECTION("initialize and destruct") {
     FileDumper dumper("/tmp/tmp.pos.dumper");
@@ -150,6 +174,7 @@ TEST_CASE( "PackFileOffsets", "[qqflash]" ) {
   REQUIRE(offs.FileOffset(3) == 1000);
 }
 
+
 TEST_CASE( "SkipPostingFileOffsets", "[qqflash]" ) {
   PostingPackIndexes posting_locations; 
 
@@ -193,9 +218,32 @@ TEST_CASE( "Dumping Engine", "[qqflash]" ) {
 }
 
 
+TEST_CASE( "SkipListWriter", "[qqflash]" ) {
+  SECTION("One skip entry") {
+    auto doc_id_offs = CreateSkipPostingFileOffsets({0}, {1}, {10}, {20});     
+    auto tf_offs = CreateSkipPostingFileOffsets({0}, {2}, {11}, {21});     
+    auto pos_offs = CreateSkipPostingFileOffsets({0}, {3}, {12}, {22});     
+    auto off_offs = CreateSkipPostingFileOffsets({0}, {4}, {13}, {23});     
+    auto doc_ids = std::vector<uint32_t>{18};
+
+    SkipListWriter writer(doc_id_offs, tf_offs, pos_offs, off_offs, doc_ids);
+
+    std::string data = writer.Serialize();
+
+    SkipList skip_list;
+    skip_list.Load((uint8_t *)data.data(), 1);
+
+    REQUIRE(skip_list.NumEntries() == 1);
+    REQUIRE(skip_list[0].doc_skip == 18);
+    REQUIRE(skip_list[0].doc_file_offset == 10);
+    REQUIRE(skip_list[0].tf_file_offset == 11);
+    REQUIRE(skip_list[0].pos_file_offset == 12);
+    REQUIRE(skip_list[0].pos_in_block_index == 3);
+    REQUIRE(skip_list[0].off_file_offset == 13);
+  }
 
 
-
+}
 
 
 
