@@ -217,6 +217,17 @@ TEST_CASE( "Dumping Engine", "[qqflash]" ) {
   }
 }
 
+template <typename T=int>
+std::vector<T> RepeatNums(std::vector<T> vec) {
+  std::vector<T> ret;
+  for (auto &x : vec) {
+    for (int i = 0; i < SKIP_INTERVAL; i++) {
+      ret.push_back(x);
+    }
+  }
+  return ret;
+}
+
 
 TEST_CASE( "SkipListWriter", "[qqflash]" ) {
   SECTION("One skip entry") {
@@ -242,7 +253,40 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
     REQUIRE(skip_list[0].off_file_offset == 13);
   }
 
+  SECTION("Two skip entries") {
+    auto doc_id_offs = CreateSkipPostingFileOffsets(
+        RepeatNums({0, 1}), RepeatNums({1, 2}), {10, 11}, {20});     
+    auto tf_offs = CreateSkipPostingFileOffsets(
+        RepeatNums({0, 1}), RepeatNums({3, 4}), {12, 13}, {21});     
+    auto pos_offs = CreateSkipPostingFileOffsets(
+        RepeatNums({0, 1}), RepeatNums({5, 6}), {14, 15}, {22});     
+    auto off_offs = CreateSkipPostingFileOffsets(
+        RepeatNums({0, 1}), RepeatNums({7, 8}), {16, 17}, {23});     
+    auto doc_ids = RepeatNums(std::vector<uint32_t>{18, 2999});
 
+    SkipListWriter writer(doc_id_offs, tf_offs, pos_offs, off_offs, doc_ids);
+
+    std::string data = writer.Serialize();
+
+    SkipList skip_list;
+    skip_list.Load((uint8_t *)data.data(), 2);
+
+    REQUIRE(skip_list.NumEntries() == 2);
+
+    REQUIRE(skip_list[0].doc_skip == 18);
+    REQUIRE(skip_list[0].doc_file_offset == 10);
+    REQUIRE(skip_list[0].tf_file_offset == 12);
+    REQUIRE(skip_list[0].pos_file_offset == 14);
+    REQUIRE(skip_list[0].pos_in_block_index == 5);
+    REQUIRE(skip_list[0].off_file_offset == 16);
+
+    REQUIRE(skip_list[1].doc_skip == 2999);
+    REQUIRE(skip_list[1].doc_file_offset == 11);
+    REQUIRE(skip_list[1].tf_file_offset == 13);
+    REQUIRE(skip_list[1].pos_file_offset == 15);
+    REQUIRE(skip_list[1].pos_in_block_index == 6);
+    REQUIRE(skip_list[1].off_file_offset == 17);
+  }
 }
 
 

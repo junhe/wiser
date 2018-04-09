@@ -382,6 +382,12 @@ class SkipListWriter {
            pos_offs_.Size() == off_offs_.Size() &&
            off_offs_.Size() == skip_doc_ids.size()) ) 
     {
+      std::cout
+        <<    docid_offs_.Size() << ", " 
+        <<    tf_offs_.Size() << ", "
+        <<    pos_offs_.Size() << ", "
+        <<    off_offs_.Size() << ", "
+        <<    skip_doc_ids.size() << std::endl;
       LOG(FATAL) << "Skip data is not uniform";
     }
 
