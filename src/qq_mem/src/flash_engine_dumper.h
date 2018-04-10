@@ -13,26 +13,6 @@
 constexpr int SKIP_INTERVAL = PackedIntsWriter::PACK_SIZE;
 
 
-class FileMap {
- public:
-  FileMap(const std::string &path) {
-    utils::MapFile(path, &addr_, &fd_, &file_length_);
-  }
-
-  void Close() {
-    utils::UnmapFile(addr_, fd_, file_length_);
-  }
-
-  char *Addr() {
-    return addr_;
-  }
-
- private: 
-  int fd_;
-  char *addr_;
-  size_t file_length_;
-};
-
 
 // Provide functions to copy values to pack writer and VInts
 class TermEntryBase {

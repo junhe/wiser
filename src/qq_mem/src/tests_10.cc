@@ -263,7 +263,7 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
 
       file_dumper.Close();
 
-      FileMap map(path);
+      utils::FileMap map(path);
       char *addr = map.Addr();
 
       SECTION("First entry") {

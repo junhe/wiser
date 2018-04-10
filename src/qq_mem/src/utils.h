@@ -290,6 +290,30 @@ inline ssize_t Read(int fd, char *buf, size_t size) {
 void MapFile(std::string path, char **ret_addr, int *ret_fd, size_t *ret_file_length);
 void UnmapFile(char *addr, int fd, size_t file_length);
 
+
+class FileMap {
+ public:
+  FileMap(const std::string &path) {
+    MapFile(path, &addr_, &fd_, &file_length_);
+  }
+
+  void Close() {
+    UnmapFile(addr_, fd_, file_length_);
+  }
+
+  char *Addr() {
+    return addr_;
+  }
+
+ private: 
+  int fd_;
+  char *addr_;
+  size_t file_length_;
+};
+
+
+
+
 void RemoveDir(std::string path);
 
 } // namespace util
