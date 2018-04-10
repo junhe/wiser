@@ -685,19 +685,22 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
   InvertedIndexDumper(const std::string dump_dir_path)
     :position_dumper_(dump_dir_path + "/my.pos"),
      offset_dumper_(dump_dir_path + "/my.off"),
-     termfreq_dumper_(dump_dir_path + "/my.tf")
+     termfreq_dumper_(dump_dir_path + "/my.tf"),
+     docid_dumper_(dump_dir_path + "/my.docid"),
+     term_dict_dumper_(dump_dir_path + "/my.tim"),
+     term_index_dumper_(dump_dir_path + "/my.tip")
   {}
 
-  void Dump(const std::string dir_path) {
+  void Dump() {
     // std::cout << "Dumping Inverted Index...." << std::endl; 
 
     for (auto it = index_.cbegin(); it != index_.cend(); it++) {
       // std::cout << "At '" << it->first << "'" << std::endl;
-      DumpPostingList(it->second);
+      DumpPostingList(it->first, it->second);
     }
   }
 
-  void DumpPostingList(const PostingListDelta &posting_list) {
+  void DumpPostingList(const Term &term, const PostingListDelta &posting_list) {
     PostingListDeltaIterator posting_it = posting_list.Begin2();
     // std::cout << "Dumping One Posting List ...." << std::endl;
     // std::cout << "Number of postings: " << posting_it.Size() << std::endl;
@@ -728,12 +731,21 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
     }
 
 
+    SkipPostingFileOffsets docid_skip_offs = 
+      DumpTermEntry(docid_term_entry, &docid_dumper_, true);
+    SkipPostingFileOffsets tf_skip_offs = 
+      DumpTermEntry(termfreq_term_entry, &termfreq_dumper_, false);
     SkipPostingFileOffsets pos_skip_offs = 
       DumpTermEntry(position_term_entry, &position_dumper_, true);
     SkipPostingFileOffsets off_skip_offs = 
       DumpTermEntry(offset_term_entry, &offset_dumper_, true);
-    SkipPostingFileOffsets tf_skip_offs = 
-      DumpTermEntry(termfreq_term_entry, &termfreq_dumper_, false);
+
+    SkipListWriter skiplist_writer(docid_skip_offs, tf_skip_offs, 
+        pos_skip_offs, off_skip_offs, docid_term_entry.Values());
+
+    off_t term_offset = term_dict_dumper_.DumpSkipList(
+        posting_list.Size(), skiplist_writer.Serialize());
+    term_index_dumper_.DumpEntry(term, term_offset);
   }
 
   SkipPostingFileOffsets DumpTermEntry(
@@ -767,6 +779,10 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
   FileDumper position_dumper_;
   FileDumper offset_dumper_;
   FileDumper termfreq_dumper_;
+  FileDumper docid_dumper_;
+
+  TermDictFileDumper term_dict_dumper_;
+  TermIndexDumper term_index_dumper_;
 };
 
 
@@ -828,8 +844,8 @@ class FlashEngineDumper {
   void Dump(std::string dir_path) {
   }
 
-  void DumpInvertedIndex(const std::string dir_path) {
-    inverted_index_.Dump(dir_path);
+  void DumpInvertedIndex() {
+    inverted_index_.Dump();
   }
 
  private:

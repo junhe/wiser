@@ -202,7 +202,7 @@ TEST_CASE( "SkipPostingFileOffsets", "[qqflash]" ) {
 }
 
 
-TEST_CASE( "Dumping Engine", "[qqflash]" ) {
+TEST_CASE( "Dumping Engine", "[qqflash][engine_dump]" ) {
   FlashEngineDumper engine("/tmp");
   REQUIRE(engine.TermCount() == 0);
   engine.LoadLocalDocuments("src/testdata/line_doc_with_positions", 10000, 
@@ -213,7 +213,7 @@ TEST_CASE( "Dumping Engine", "[qqflash]" ) {
   }
 
   SECTION("Dumping inverted index") {
-    engine.DumpInvertedIndex("/tmp/");
+    engine.DumpInvertedIndex();
   }
 }
 
