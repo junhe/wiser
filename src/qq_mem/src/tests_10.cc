@@ -239,18 +239,68 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
 
     SkipListWriter writer(doc_id_offs, tf_offs, pos_offs, off_offs, doc_ids);
 
-    std::string data = writer.Serialize();
+    SECTION("Loading to skiplist") {
+      std::string data = writer.Serialize();
 
-    SkipList skip_list;
-    skip_list.Load((uint8_t *)data.data(), 1);
+      SkipList skip_list;
+      skip_list.Load((uint8_t *)data.data());
 
-    REQUIRE(skip_list.NumEntries() == 1);
-    REQUIRE(skip_list[0].doc_skip == 18);
-    REQUIRE(skip_list[0].doc_file_offset == 10);
-    REQUIRE(skip_list[0].tf_file_offset == 11);
-    REQUIRE(skip_list[0].pos_file_offset == 12);
-    REQUIRE(skip_list[0].pos_in_block_index == 3);
-    REQUIRE(skip_list[0].off_file_offset == 13);
+      REQUIRE(skip_list.NumEntries() == 1);
+      REQUIRE(skip_list[0].doc_skip == 18);
+      REQUIRE(skip_list[0].doc_file_offset == 10);
+      REQUIRE(skip_list[0].tf_file_offset == 11);
+      REQUIRE(skip_list[0].pos_file_offset == 12);
+      REQUIRE(skip_list[0].pos_in_block_index == 3);
+      REQUIRE(skip_list[0].off_file_offset == 13);
+    }
+
+    SECTION("Term dict file dumping and loading") {
+      std::string path = "/tmp/my.tim";
+      TermDictFileDumper file_dumper(path);
+
+      off_t entry1_off = file_dumper.DumpSkipList(8888, writer.Serialize());
+      off_t entry2_off = file_dumper.DumpSkipList(9999, writer.Serialize());
+
+      file_dumper.Close();
+
+      FileMap map(path);
+      char *addr = map.Addr();
+
+      SECTION("First entry") {
+        TermDictEntry entry;
+        entry.Load(addr + entry1_off);
+
+        REQUIRE(entry.DocFreq() == 8888);
+        
+        const SkipList &skip_list = entry.GetSkipList();
+
+        REQUIRE(skip_list.NumEntries() == 1);
+        REQUIRE(skip_list[0].doc_skip == 18);
+        REQUIRE(skip_list[0].doc_file_offset == 10);
+        REQUIRE(skip_list[0].tf_file_offset == 11);
+        REQUIRE(skip_list[0].pos_file_offset == 12);
+        REQUIRE(skip_list[0].pos_in_block_index == 3);
+        REQUIRE(skip_list[0].off_file_offset == 13);
+      }
+
+      SECTION("Second entry") {
+        TermDictEntry entry;
+        entry.Load(addr + entry2_off);
+
+        REQUIRE(entry.DocFreq() == 9999);
+        
+        const SkipList &skip_list = entry.GetSkipList();
+
+        REQUIRE(skip_list.NumEntries() == 1);
+        REQUIRE(skip_list[0].doc_skip == 18);
+        REQUIRE(skip_list[0].doc_file_offset == 10);
+        REQUIRE(skip_list[0].tf_file_offset == 11);
+        REQUIRE(skip_list[0].pos_file_offset == 12);
+        REQUIRE(skip_list[0].pos_in_block_index == 3);
+        REQUIRE(skip_list[0].off_file_offset == 13);
+      }
+
+    }
   }
 
   SECTION("Two skip entries") {
@@ -269,7 +319,7 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
     std::string data = writer.Serialize();
 
     SkipList skip_list;
-    skip_list.Load((uint8_t *)data.data(), 2);
+    skip_list.Load((uint8_t *)data.data());
 
     REQUIRE(skip_list.NumEntries() == 2);
 
@@ -365,6 +415,5 @@ TEST_CASE( "Term Index works", "[qqflash]" ) {
   }
 
 }
-
 
 

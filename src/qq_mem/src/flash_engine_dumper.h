@@ -558,7 +558,9 @@ class SkipListWriter {
       LOG(FATAL) << "Skip data is not uniform";
     }
 
-    for (int i = 0; i < docid_offs_.Size(); i++) {
+    int n_rows = docid_offs_.Size();
+    buf.Append(n_rows);
+    for (int i = 0; i < n_rows; i++) {
       AddRow(&buf, i, skip_doc_ids);
     }
 
@@ -616,8 +618,10 @@ struct SkipEntry {
 
 class SkipList {
  public:
-  void Load(const uint8_t *buf, const int num_entries) {
-    VarintIterator it((const char *)buf, 0, num_entries);
+  void Load(const uint8_t *buf) {
+    uint32_t num_entries;
+    int len = utils::varint_decode_chars((char *)buf, 0, &num_entries);
+    VarintIterator it((const char *)buf, len, num_entries);
 
     for (int entry_i = 0; entry_i < num_entries; entry_i++) {
       uint32_t doc_skip = it.Pop();
@@ -635,7 +639,7 @@ class SkipList {
     return skip_table_.size();
   }
 
-  const SkipEntry &operator [](int i) {
+  const SkipEntry &operator [](int i) const {
     return skip_table_[i];
   }
 
@@ -656,6 +660,43 @@ class SkipList {
   }
 
   std::vector<SkipEntry> skip_table_;
+};
+
+
+class TermDictEntry {
+ public:
+  void Load(const char *buf) {
+    int len;
+    uint32_t data_size;
+
+    len = utils::varint_decode_chars(buf, 0, &format_);
+    buf += len;
+
+    len = utils::varint_decode_chars(buf, 0, &doc_freq_);
+    buf += len;
+
+    len = utils::varint_decode_chars(buf, 0, &data_size);
+    buf += len;
+
+    if (format_ == 0) {
+      skip_list_.Load((uint8_t *)buf);
+    } else {
+      LOG(FATAL) << "Format not supported.";
+    }
+  }
+
+  const int DocFreq() const {
+    return doc_freq_;
+  }
+
+  const SkipList &GetSkipList() const {
+    return skip_list_;
+  }
+
+ private:
+  uint32_t format_;
+  uint32_t doc_freq_;
+  SkipList skip_list_;
 };
 
 
