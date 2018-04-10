@@ -417,3 +417,35 @@ TEST_CASE( "Term Index works", "[qqflash]" ) {
 }
 
 
+TEST_CASE( "QQFlash Compressed Doc Store", "[qqflash]" ) {
+  SECTION("Index Then Search") {
+    // index
+    FlashDocStoreDumper store;
+    int doc_id = 0;
+    std::string doc = "it is a doc";
+    store.Add(doc_id, doc);
+    REQUIRE(store.Get(doc_id) == doc);
+
+    store.Add(1, "doc1");
+    REQUIRE(store.Size() == 2);
+    REQUIRE(store.Has(doc_id) == true);
+
+    store.Dump("/tmp/");
+    store.Clear();
+
+    // search
+    FlashDocStore search_store("/tmp");
+    REQUIRE(search_store.Size() == 2);
+    REQUIRE(search_store.Has(0));
+    REQUIRE(search_store.Has(1));
+    REQUIRE(search_store.Has(2) == false);
+
+    REQUIRE(search_store.Get(0) == doc);
+    REQUIRE(search_store.Get(1) == "doc1");
+  }
+}
+
+
+
+
+

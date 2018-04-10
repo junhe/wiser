@@ -305,6 +305,10 @@ class FileMap {
     return addr_;
   }
 
+  size_t Length() const {
+    return file_length_;
+  }
+
  private: 
   int fd_;
   char *addr_;

@@ -254,7 +254,7 @@ class CompressedDocStore {
     utils::UnmapFile(addr, fd, file_length);
   }
 
- private:
+ protected:
 	std::map<int,std::string> store_;  
   char *buffer_;
   static const int buffer_size_ = 1024*1024;
@@ -263,6 +263,106 @@ class CompressedDocStore {
     store_[id] = document;
   }
 };
+
+
+class FlashDocStoreDumper : public CompressedDocStore {
+ public:
+  FlashDocStoreDumper() : CompressedDocStore() {}
+
+  // This will dump to two files, .fdx and .fdt
+	void Dump(const std::string dir_path) const {
+    std::ofstream fdtfile(dir_path + "/fdt", std::ios::binary);
+    std::ofstream fdxfile(dir_path + "/fdx", std::ios::binary);
+    
+    //fdx: max_docid: offset0, offset1, ... offset_docid  (if docid doesn't exist, -1)
+    long int max_docid = (long int) store_.rbegin()->first;
+    fdxfile.write(reinterpret_cast<const char *>(&max_docid), sizeof(max_docid));
+
+    for (int docid = 0; docid <= max_docid; docid++) {
+       // write out to fdt
+       if (store_.count(docid) == 0) {
+         LOG(FATAL) << "We do not allow holes in doc id";
+       }
+
+       long int offset = fdtfile.tellp();
+       fdtfile.write(store_.at(docid).c_str(), store_.at(docid).length());
+
+       // write out to fdx
+       fdxfile.write(reinterpret_cast<const char *>(&offset), sizeof(offset));
+    }
+
+    fdxfile.close();
+    fdtfile.close();   
+  }
+};
+
+
+class FlashDocStore {
+ public:
+  FlashDocStore(const std::string dir_path)
+      :fdt_map_(dir_path + "/fdt") {
+    buffer_ = (char *) malloc(buffer_size_); // TODO
+    
+    // open fdx, load index
+    int fd;
+    char *addr;
+    size_t file_length;
+    off_t offset = 0;
+    utils::MapFile(dir_path + "/fdx", &addr, &fd, &file_length);
+
+    max_docid_ = *(long int *)addr;
+    offset += sizeof(max_docid_);
+    
+    for (int i = 0; i <= max_docid_; i++) {
+      offset_store_.push_back(*(long int *)(addr+offset));
+      offset += sizeof(long int);
+    }
+
+    utils::UnmapFile(addr, fd, file_length); 
+
+    // open fdt, ready for query
+    offset_store_.push_back(fdt_map_.Length());  // end of file
+  }
+
+  ~FlashDocStore() {
+    fdt_map_.Close();
+    free(buffer_);
+  }
+
+  bool Has(int id) {
+    return id <= max_docid_;
+  }
+
+  // WARNING: Not Thread-Safe!!!
+  const std::string Get(int id) {  
+    long int start_off = offset_store_[id];
+    long int doc_len = offset_store_[id + 1] - start_off;
+
+    // decompress
+    const int decompressed_size = 
+      LZ4_decompress_safe(fdt_map_.Addr() + start_off, buffer_, doc_len, buffer_size_); 
+    if (decompressed_size < 0) {
+      LOG(FATAL) << "Failed to decompresse."; 
+    }
+
+    return std::string(buffer_, decompressed_size);
+  }
+
+  int Size() const {
+    return offset_store_.size() - 1; // minus the laste item (the guard)
+  }
+
+ private:
+  // TODO: this is insane
+  char *buffer_;
+  static const int buffer_size_ = 1024*1024;
+  
+  std::vector<long int> offset_store_;
+  long int max_docid_;
+  int fd_fdt_;
+  utils::FileMap fdt_map_;
+};
+
 
 
 #endif
