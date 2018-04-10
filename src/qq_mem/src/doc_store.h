@@ -270,9 +270,9 @@ class FlashDocStoreDumper : public CompressedDocStore {
   FlashDocStoreDumper() : CompressedDocStore() {}
 
   // This will dump to two files, .fdx and .fdt
-	void Dump(const std::string dir_path) const {
-    std::ofstream fdtfile(dir_path + "/fdt", std::ios::binary);
-    std::ofstream fdxfile(dir_path + "/fdx", std::ios::binary);
+	void Dump(const std::string fdx_path, const std::string fdt_path) const {
+    std::ofstream fdtfile(fdt_path, std::ios::binary);
+    std::ofstream fdxfile(fdx_path, std::ios::binary);
     
     //fdx: max_docid: offset0, offset1, ... offset_docid  (if docid doesn't exist, -1)
     long int max_docid = (long int) store_.rbegin()->first;
@@ -299,8 +299,8 @@ class FlashDocStoreDumper : public CompressedDocStore {
 
 class FlashDocStore {
  public:
-  FlashDocStore(const std::string dir_path)
-      :fdt_map_(dir_path + "/fdt") {
+  FlashDocStore(const std::string fdx_path, const std::string fdt_path)
+      :fdt_map_(fdt_path) {
     buffer_ = (char *) malloc(buffer_size_); // TODO
     
     // open fdx, load index
@@ -308,7 +308,7 @@ class FlashDocStore {
     char *addr;
     size_t file_length;
     off_t offset = 0;
-    utils::MapFile(dir_path + "/fdx", &addr, &fd, &file_length);
+    utils::MapFile(fdx_path, &addr, &fd, &file_length);
 
     max_docid_ = *(long int *)addr;
     offset += sizeof(max_docid_);
