@@ -290,4 +290,47 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
 }
 
 
+TEST_CASE( "Term Dict File Dumper", "[qqflash]" ) {
+  TermDictFileDumper dumper("/tmp/my.tim"); 
+  off_t entry1 = dumper.DumpSkipList(10, "xyz");
+  REQUIRE(entry1 == 0);
+
+  off_t entry2 = dumper.DumpFullPostingList(7, "abcd");
+  REQUIRE(entry2 == 6);
+
+  dumper.Close();
+
+  // Read it
+  int fd;
+  char *addr;
+  size_t file_length;
+  utils::MapFile("/tmp/my.tim", &addr, &fd, &file_length);
+
+  REQUIRE(file_length == 13);
+
+  {
+  VarintIterator it(addr, 0, 3);
+  REQUIRE(it.Pop() == 0);
+  REQUIRE(it.Pop() == 10);
+  REQUIRE(it.Pop() == 3);
+  }
+
+  REQUIRE(memcmp(addr + 3, "xyz", 3) == 0);
+
+  {
+  VarintIterator it(addr + 6, 0, 3);
+  REQUIRE(it.Pop() == 1);
+  REQUIRE(it.Pop() == 7);
+  REQUIRE(it.Pop() == 4);
+  }
+
+  REQUIRE(memcmp(addr + 6 + 3, "abcd", 4) == 0);
+
+  utils::UnmapFile(addr, fd, file_length);
+}
+
+
+
+
+
 

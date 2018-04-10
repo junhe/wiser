@@ -259,6 +259,41 @@ class PackFileOffsets {
 };
 
 
+class GeneralFileDumper {
+ public:
+  GeneralFileDumper(const std::string path) {
+    fd_ = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666); 
+    if (fd_ == -1) 
+      LOG(FATAL) << "Cannot open file: " << path;
+  }
+
+  off_t CurrentOffset() const {
+    off_t off = lseek(fd_, 0, SEEK_CUR);
+    if (off == -1)
+      LOG(FATAL) << "Failed to get the current offset.";
+
+    return off;
+  }
+
+  off_t Dump(const std::string &data) {
+    off_t start_byte = CurrentOffset();
+    utils::Write(fd_, data.data(), data.size());
+    return start_byte;
+  }
+
+  void Flush() const {
+    fsync(fd_);
+  }
+
+  void Close() const {
+    close(fd_);
+  }
+
+ protected:
+  int fd_;
+};
+
+
 class FileDumper {
  public:
   FileDumper(const std::string path) {
@@ -319,6 +354,37 @@ class FileDumper {
   }
 
   int fd_;
+};
+
+
+class TermDictFileDumper : public GeneralFileDumper {
+ public:
+  TermDictFileDumper(const std::string path) :GeneralFileDumper(path) {}
+
+  off_t DumpSkipList(const uint32_t doc_freq, const std::string &skip_list) {
+    return DumpEntry(0, doc_freq, skip_list);
+  }
+
+  off_t DumpFullPostingList(const uint32_t doc_freq, const std::string &posting_list) {
+    return DumpEntry(1, doc_freq, posting_list);
+  }
+
+ private:
+  off_t DumpEntry(const uint32_t format, const uint32_t doc_freq, 
+      const std::string &data) 
+  {
+    off_t start_off = CurrentOffset();
+
+    VarintBuffer buf;
+    buf.Append(format); // format indicator: 0 with skip list, 1: with posting list data
+    buf.Append(doc_freq);
+    buf.Append(data.size());
+
+    Dump(buf.Data());
+    Dump(data);
+
+    return start_off;
+  }
 };
 
 
