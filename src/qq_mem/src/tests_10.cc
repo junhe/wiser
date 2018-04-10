@@ -330,7 +330,41 @@ TEST_CASE( "Term Dict File Dumper", "[qqflash]" ) {
 }
 
 
+TEST_CASE( "Term Index works", "[qqflash]" ) {
+  std::string path = "/tmp/my.tip";
 
+  // Dump
+  TermIndexDumper dumper(path);
+
+  dumper.DumpEntry("hello", 0);
+  dumper.DumpEntry("wisc", 10032);
+
+  dumper.Close();
+
+  //Read
+  TermIndex index;
+  index.Load(path);
+
+  {
+  auto it = index.Find("hello");
+  REQUIRE(it != index.CEnd());
+  REQUIRE(it->first == "hello");
+  REQUIRE(it->second == 0);
+  }
+
+  {
+  auto it = index.Find("wisc");
+  REQUIRE(it != index.CEnd());
+  REQUIRE(it->first == "wisc");
+  REQUIRE(it->second == 10032);
+  }
+
+  {
+  auto it = index.Find("notexist");
+  REQUIRE(it == index.CEnd());
+  }
+
+}
 
 
 
