@@ -789,7 +789,8 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
 class FlashEngineDumper {
  public:
   FlashEngineDumper(const std::string dump_dir_path)
-    :inverted_index_(dump_dir_path) 
+    :inverted_index_(dump_dir_path),
+     dump_dir_path_(dump_dir_path)
   {}
 
   // colum 2 should be tokens
@@ -850,6 +851,8 @@ class FlashEngineDumper {
 
  private:
   int next_doc_id_ = 0;
+  std::string dump_dir_path_;
+
   CompressedDocStore doc_store_;
   InvertedIndexDumper inverted_index_;
   DocLengthStore doc_lengths_;
