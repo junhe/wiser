@@ -446,6 +446,18 @@ TEST_CASE( "QQFlash Compressed Doc Store", "[qqflash]" ) {
 }
 
 
+TEST_CASE( "General file dumper", "[qqflash]" ) {
+  GeneralFileDumper dumper("/tmp/dumper.test");
+  REQUIRE(dumper.CurrentOffset() == 0);
+  REQUIRE(dumper.End() == 0);
 
+  dumper.Dump("12345");
+
+  REQUIRE(dumper.CurrentOffset() == 5);
+  REQUIRE(dumper.End() == 5);
+
+  dumper.Seek(1);
+  REQUIRE(dumper.CurrentOffset() == 1);
+}
 
 
