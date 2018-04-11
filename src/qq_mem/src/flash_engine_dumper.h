@@ -282,7 +282,7 @@ class GeneralFileDumper {
     if (off == -1)
       LOG(FATAL) << "Failed to get the current offset.";
 
-    return off
+    return off;
   }
 
   off_t End() {
