@@ -277,6 +277,26 @@ class GeneralFileDumper {
     return off;
   }
 
+  off_t Seek(off_t pos) {
+    off_t off = lseek(fd_, pos, SEEK_SET);
+    if (off == -1)
+      LOG(FATAL) << "Failed to get the current offset.";
+
+    return off
+  }
+
+  off_t End() {
+    off_t old = CurrentOffset();
+
+    off_t end_off = lseek(fd_, 0, SEEK_END);
+    if (end_off == -1)
+      LOG(FATAL) << "Failed to get the ending offset.";
+
+    Seek(old);
+
+    return end_off;
+  }
+
   off_t Dump(const std::string &data) {
     off_t start_byte = CurrentOffset();
     utils::Write(fd_, data.data(), data.size());
