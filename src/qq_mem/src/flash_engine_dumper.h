@@ -847,13 +847,14 @@ class FlashEngineDumper {
 
   void DumpInvertedIndex() {
     inverted_index_.Dump();
+    doc_store_.Dump(dump_dir_path_ + "/my.fdx", dump_dir_path_ + "/my.fdt");
   }
 
  private:
   int next_doc_id_ = 0;
   std::string dump_dir_path_;
 
-  CompressedDocStore doc_store_;
+  FlashDocStoreDumper doc_store_;
   InvertedIndexDumper inverted_index_;
   DocLengthStore doc_lengths_;
   SimpleHighlighter highlighter_;
