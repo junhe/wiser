@@ -730,7 +730,25 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
       posting_it.Advance();
     }
 
+    SkipListWriter skiplist_writer = GetSkipListWriter( 
+        docid_term_entry,
+        termfreq_term_entry,
+        position_term_entry,
+        offset_term_entry,
+        docid_term_entry.Values());
 
+    off_t term_offset = term_dict_dumper_.DumpSkipList(
+        posting_list.Size(), skiplist_writer.Serialize());
+    term_index_dumper_.DumpEntry(term, term_offset);
+  }
+
+  SkipListWriter GetSkipListWriter(
+    const GeneralTermEntry &docid_term_entry,
+    const GeneralTermEntry &termfreq_term_entry,
+    const GeneralTermEntry &position_term_entry,
+    const GeneralTermEntry &offset_term_entry,
+    const std::vector<uint32_t> &doc_ids) 
+  {
     SkipPostingFileOffsets docid_skip_offs = 
       DumpTermEntry(docid_term_entry, &docid_dumper_, true);
     SkipPostingFileOffsets tf_skip_offs = 
@@ -740,12 +758,8 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
     SkipPostingFileOffsets off_skip_offs = 
       DumpTermEntry(offset_term_entry, &offset_dumper_, true);
 
-    SkipListWriter skiplist_writer(docid_skip_offs, tf_skip_offs, 
+    return SkipListWriter(docid_skip_offs, tf_skip_offs, 
         pos_skip_offs, off_skip_offs, docid_term_entry.Values());
-
-    off_t term_offset = term_dict_dumper_.DumpSkipList(
-        posting_list.Size(), skiplist_writer.Serialize());
-    term_index_dumper_.DumpEntry(term, term_offset);
   }
 
   SkipPostingFileOffsets DumpTermEntry(
