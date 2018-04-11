@@ -680,7 +680,41 @@ class TermDictEntry {
 };
 
 
-class InvertedIndexDumper : public InvertedIndexQqMemDelta {
+class InvertedIndexDumperBase : public InvertedIndexQqMemDelta {
+ public:
+  void Dump() {
+    for (auto it = index_.cbegin(); it != index_.cend(); it++) {
+      // std::cout << "At '" << it->first << "'" << std::endl;
+      DumpPostingList(it->first, it->second);
+    }
+  }
+  virtual void DumpPostingList(
+      const Term &term, const PostingListDelta &posting_list) = 0;
+
+  std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
+    std::vector<uint32_t> positions;
+    while (pos_it->IsEnd() == false) {
+      positions.push_back(pos_it->Pop());  
+    }
+    return positions;
+  }
+
+  std::vector<uint32_t> ExtractOffsets(OffsetPairsIteratorService *iterator) {
+    std::vector<uint32_t> offsets;
+    while (iterator->IsEnd() != true) {
+      OffsetPair pair;
+      iterator->Pop(&pair);
+
+      offsets.push_back(std::get<0>(pair));
+      offsets.push_back(std::get<1>(pair));
+    }
+    return offsets;
+  }
+};
+
+
+
+class InvertedIndexDumper : public InvertedIndexDumperBase {
  public:
   InvertedIndexDumper(const std::string dump_dir_path)
     :position_dumper_(dump_dir_path + "/my.pos"),
@@ -691,16 +725,8 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
      term_index_dumper_(dump_dir_path + "/my.tip")
   {}
 
-  void Dump() {
-    // std::cout << "Dumping Inverted Index...." << std::endl; 
-
-    for (auto it = index_.cbegin(); it != index_.cend(); it++) {
-      // std::cout << "At '" << it->first << "'" << std::endl;
-      DumpPostingList(it->first, it->second);
-    }
-  }
-
-  void DumpPostingList(const Term &term, const PostingListDelta &posting_list) {
+  void DumpPostingList(const Term &term, 
+      const PostingListDelta &posting_list) override {
     PostingListDeltaIterator posting_it = posting_list.Begin2();
     // std::cout << "Dumping One Posting List ...." << std::endl;
     // std::cout << "Number of postings: " << posting_it.Size() << std::endl;
@@ -767,26 +793,6 @@ class InvertedIndexDumper : public InvertedIndexQqMemDelta {
     PackFileOffsets file_offs = dumper->Dump(term_entry.GetPackWriter(do_delta));
     PostingPackIndexes pack_indexes = term_entry.GetPostingPackIndexes();
     return SkipPostingFileOffsets(pack_indexes, file_offs);
-  }
-
-  std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
-    std::vector<uint32_t> positions;
-    while (pos_it->IsEnd() == false) {
-      positions.push_back(pos_it->Pop());  
-    }
-    return positions;
-  }
-
-  std::vector<uint32_t> ExtractOffsets(OffsetPairsIteratorService *iterator) {
-    std::vector<uint32_t> offsets;
-    while (iterator->IsEnd() != true) {
-      OffsetPair pair;
-      iterator->Pop(&pair);
-
-      offsets.push_back(std::get<0>(pair));
-      offsets.push_back(std::get<1>(pair));
-    }
-    return offsets;
   }
 
  private:
