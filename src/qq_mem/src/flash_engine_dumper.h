@@ -373,37 +373,15 @@ class TermIndex {
 };
 
 
-
-
-class FileDumper {
+class FileDumper : public GeneralFileDumper {
  public:
-  FileDumper(const std::string path) {
-    fd_ = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666); 
-    if (fd_ == -1) 
-      LOG(FATAL) << "Cannot open file: " << path;
-  }
+  FileDumper(const std::string path) : GeneralFileDumper(path) {}
 
   PackFileOffsets Dump(const TermEntryPackWriter &writer) {
     std::vector<off_t> pack_offs = DumpPackedBlocks(writer.PackWriters());
     std::vector<off_t> vint_offs = DumpVInts(writer.VInts());
 
     return PackFileOffsets(pack_offs, vint_offs);
-  }
-
-  off_t CurrentOffset() const {
-    off_t off = lseek(fd_, 0, SEEK_CUR);
-    if (off == -1)
-      LOG(FATAL) << "Failed to get the current offset.";
-
-    return off;
-  }
-
-  void Flush() const {
-    fsync(fd_);
-  }
-
-  void Close() const {
-    close(fd_);
   }
 
  protected:
@@ -433,8 +411,6 @@ class FileDumper {
     std::string data = writer.Serialize();      
     utils::Write(fd_, data.data(), data.size());
   }
-
-  int fd_;
 };
 
 
