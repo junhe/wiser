@@ -782,6 +782,87 @@ class InvertedIndexDumper : public InvertedIndexDumperBase {
 };
 
 
+class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
+ public:
+  VacuumInvertedIndexDumper(const std::string dump_dir_path)
+    :index_dumper_(dump_dir_path + "/my.vaccum") {}
+
+  void DumpPostingList(const Term &term, 
+      const PostingListDelta &posting_list) override {
+    PostingListDeltaIterator posting_it = posting_list.Begin2();
+    // std::cout << "Dumping One Posting List ...." << std::endl;
+    // std::cout << "Number of postings: " << posting_it.Size() << std::endl;
+
+    GeneralTermEntry docid_term_entry;
+    GeneralTermEntry termfreq_term_entry;
+    GeneralTermEntry position_term_entry;
+    GeneralTermEntry offset_term_entry;
+
+    while (posting_it.IsEnd() == false) {
+      //doc id
+      docid_term_entry.AddGroup(
+          std::vector<uint32_t>{(uint32_t)posting_it.DocId()});
+
+      //Term Freq
+      termfreq_term_entry.AddGroup(
+          std::vector<uint32_t>{(uint32_t)posting_it.TermFreq()});
+
+      // Position
+      position_term_entry.AddGroup(
+          ExtractPositions(posting_it.PositionBegin().get()));
+
+      // Offset
+      offset_term_entry.AddGroup(
+          ExtractOffsets(posting_it.OffsetPairsBegin().get()));
+
+      posting_it.Advance();
+    }
+
+    SkipListWriter skiplist_writer = GetSkipListWriter( 
+        &index_dumper_, 
+        index_dumper_.CurrentOffset(),
+        docid_term_entry,
+        termfreq_term_entry,
+        position_term_entry,
+        offset_term_entry,
+        docid_term_entry.Values());
+  }
+
+  SkipListWriter GetSkipListWriter(
+    FileDumper *file_dumper,
+    off_t file_offset,
+    const GeneralTermEntry &docid_term_entry,
+    const GeneralTermEntry &termfreq_term_entry,
+    const GeneralTermEntry &position_term_entry,
+    const GeneralTermEntry &offset_term_entry,
+    const std::vector<uint32_t> &doc_ids) 
+  {
+    SkipPostingFileOffsets docid_skip_offs = 
+      DumpTermEntry(docid_term_entry, file_dumper, true);
+    SkipPostingFileOffsets tf_skip_offs = 
+      DumpTermEntry(termfreq_term_entry, file_dumper, false);
+    SkipPostingFileOffsets pos_skip_offs = 
+      DumpTermEntry(position_term_entry, file_dumper, true);
+    SkipPostingFileOffsets off_skip_offs = 
+      DumpTermEntry(offset_term_entry, file_dumper, true);
+
+    return SkipListWriter(docid_skip_offs, tf_skip_offs, 
+        pos_skip_offs, off_skip_offs, docid_term_entry.Values());
+  }
+
+  SkipPostingFileOffsets DumpTermEntry(
+      const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
+    PackFileOffsets file_offs = dumper->Dump(term_entry.GetPackWriter(do_delta));
+    PostingPackIndexes pack_indexes = term_entry.GetPostingPackIndexes();
+    return SkipPostingFileOffsets(pack_indexes, file_offs);
+  }
+
+ private:
+  FileDumper index_dumper_;
+};
+
+
+
 class FlashEngineDumper {
  public:
   FlashEngineDumper(const std::string dump_dir_path)
