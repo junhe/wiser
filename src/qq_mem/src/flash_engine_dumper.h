@@ -814,6 +814,13 @@ class InvertedIndexDumper : public InvertedIndexDumperBase {
 };
 
 
+struct TermEntrySet {
+    GeneralTermEntry docid;
+    GeneralTermEntry termfreq;
+    GeneralTermEntry position;
+    GeneralTermEntry offset;
+};
+
 class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
  public:
   VacuumInvertedIndexDumper(const std::string dump_dir_path)
@@ -827,26 +834,23 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     // std::cout << "Dumping One Posting List ...." << std::endl;
     // std::cout << "Number of postings: " << posting_it.Size() << std::endl;
 
-    GeneralTermEntry docid_term_entry;
-    GeneralTermEntry termfreq_term_entry;
-    GeneralTermEntry position_term_entry;
-    GeneralTermEntry offset_term_entry;
+    TermEntrySet entry_set;
 
     while (posting_it.IsEnd() == false) {
       //doc id
-      docid_term_entry.AddGroup(
+      entry_set.docid.AddGroup(
           std::vector<uint32_t>{(uint32_t)posting_it.DocId()});
 
       //Term Freq
-      termfreq_term_entry.AddGroup(
+      entry_set.termfreq.AddGroup(
           std::vector<uint32_t>{(uint32_t)posting_it.TermFreq()});
 
       // Position
-      position_term_entry.AddGroup(
+      entry_set.position.AddGroup(
           ExtractPositions(posting_it.PositionBegin().get()));
 
       // Offset
-      offset_term_entry.AddGroup(
+      entry_set.offset.AddGroup(
           ExtractOffsets(posting_it.OffsetPairsBegin().get()));
 
       posting_it.Advance();
@@ -855,11 +859,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     SkipListWriter fake_skiplist_writer = GetSkipListWriter( 
         &fake_index_dumper_, 
         index_dumper_.CurrentOffset() + 1024*1024,
-        docid_term_entry,
-        termfreq_term_entry,
-        position_term_entry,
-        offset_term_entry,
-        docid_term_entry.Values());
+        entry_set,
+        entry_set.docid.Values());
 
     int skip_list_est_size = fake_skiplist_writer.Serialize().size();
     off_t skip_list_start = index_dumper_.CurrentOffset();
@@ -867,11 +868,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     SkipListWriter real_skiplist_writer = GetSkipListWriter( 
         &index_dumper_, 
         skip_list_start + skip_list_est_size,
-        docid_term_entry,
-        termfreq_term_entry,
-        position_term_entry,
-        offset_term_entry,
-        docid_term_entry.Values());
+        entry_set,
+        entry_set.docid.Values());
 
     index_dumper_.Seek(skip_list_start);
     index_dumper_.Dump(real_skiplist_writer.Serialize()); 
@@ -880,25 +878,22 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
   SkipListWriter GetSkipListWriter(
     FileDumper *file_dumper,
     off_t file_offset,
-    const GeneralTermEntry &docid_term_entry,
-    const GeneralTermEntry &termfreq_term_entry,
-    const GeneralTermEntry &position_term_entry,
-    const GeneralTermEntry &offset_term_entry,
+    const TermEntrySet &entry_set,
     const std::vector<uint32_t> &doc_ids) 
   {
     file_dumper->Seek(file_offset);
 
     SkipPostingFileOffsets docid_skip_offs = 
-      DumpTermEntry(docid_term_entry, file_dumper, true);
+      DumpTermEntry(entry_set.docid, file_dumper, true);
     SkipPostingFileOffsets tf_skip_offs = 
-      DumpTermEntry(termfreq_term_entry, file_dumper, false);
+      DumpTermEntry(entry_set.termfreq, file_dumper, false);
     SkipPostingFileOffsets pos_skip_offs = 
-      DumpTermEntry(position_term_entry, file_dumper, true);
+      DumpTermEntry(entry_set.position, file_dumper, true);
     SkipPostingFileOffsets off_skip_offs = 
-      DumpTermEntry(offset_term_entry, file_dumper, true);
+      DumpTermEntry(entry_set.offset, file_dumper, true);
 
     return SkipListWriter(docid_skip_offs, tf_skip_offs, 
-        pos_skip_offs, off_skip_offs, docid_term_entry.Values());
+        pos_skip_offs, off_skip_offs, entry_set.docid.Values());
   }
 
   SkipPostingFileOffsets DumpTermEntry(
