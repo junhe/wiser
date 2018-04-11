@@ -285,6 +285,14 @@ class GeneralFileDumper {
     return off;
   }
 
+  off_t SeekToEnd() {
+    off_t off = lseek(fd_, 0, SEEK_END);
+    if (off == -1)
+      LOG(FATAL) << "Failed to get the current offset.";
+
+    return off;
+  }
+
   off_t End() {
     off_t old = CurrentOffset();
 
@@ -402,6 +410,10 @@ class FileDumper : public GeneralFileDumper {
     std::vector<off_t> vint_offs = DumpVInts(writer.VInts());
 
     return PackFileOffsets(pack_offs, vint_offs);
+  }
+
+  off_t Dump(const std::string &data) {
+    return GeneralFileDumper::Dump(data);
   }
 
  protected:
@@ -805,7 +817,9 @@ class InvertedIndexDumper : public InvertedIndexDumperBase {
 class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
  public:
   VacuumInvertedIndexDumper(const std::string dump_dir_path)
-    :index_dumper_(dump_dir_path + "/my.vaccum") {}
+    :index_dumper_(dump_dir_path + "/my.vaccum"),
+     fake_index_dumper_(dump_dir_path + "/fake.vaccum")
+  {}
 
   void DumpPostingList(const Term &term, 
       const PostingListDelta &posting_list) override {
@@ -838,14 +852,29 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
       posting_it.Advance();
     }
 
-    SkipListWriter skiplist_writer = GetSkipListWriter( 
-        &index_dumper_, 
-        index_dumper_.CurrentOffset(),
+    SkipListWriter fake_skiplist_writer = GetSkipListWriter( 
+        &fake_index_dumper_, 
+        index_dumper_.CurrentOffset() + 1024*1024,
         docid_term_entry,
         termfreq_term_entry,
         position_term_entry,
         offset_term_entry,
         docid_term_entry.Values());
+
+    int skip_list_est_size = fake_skiplist_writer.Serialize().size();
+    off_t skip_list_start = index_dumper_.CurrentOffset();
+
+    SkipListWriter real_skiplist_writer = GetSkipListWriter( 
+        &index_dumper_, 
+        skip_list_start + skip_list_est_size,
+        docid_term_entry,
+        termfreq_term_entry,
+        position_term_entry,
+        offset_term_entry,
+        docid_term_entry.Values());
+
+    index_dumper_.Seek(skip_list_start);
+    index_dumper_.Dump(real_skiplist_writer.Serialize()); 
   }
 
   SkipListWriter GetSkipListWriter(
@@ -857,6 +886,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     const GeneralTermEntry &offset_term_entry,
     const std::vector<uint32_t> &doc_ids) 
   {
+    file_dumper->Seek(file_offset);
+
     SkipPostingFileOffsets docid_skip_offs = 
       DumpTermEntry(docid_term_entry, file_dumper, true);
     SkipPostingFileOffsets tf_skip_offs = 
@@ -879,6 +910,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
  private:
   FileDumper index_dumper_;
+  FileDumper fake_index_dumper_;
 };
 
 
