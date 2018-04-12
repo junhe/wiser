@@ -856,26 +856,37 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
       posting_it.Advance();
     }
 
-    SkipListWriter fake_skiplist_writer = GetSkipListWriter( 
-        &fake_index_dumper_, 
-        index_dumper_.CurrentOffset() + 1024*1024,
-        entry_set,
-        entry_set.docid.Values());
-
-    int skip_list_est_size = fake_skiplist_writer.Serialize().size();
     off_t skip_list_start = index_dumper_.CurrentOffset();
+    int skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
 
-    SkipListWriter real_skiplist_writer = GetSkipListWriter( 
+    SkipListWriter real_skiplist_writer = DumpTermEntrySet( 
         &index_dumper_, 
         skip_list_start + skip_list_est_size,
         entry_set,
         entry_set.docid.Values());
 
     index_dumper_.Seek(skip_list_start);
-    index_dumper_.Dump(real_skiplist_writer.Serialize()); 
+
+    std::string skip_list_data = real_skiplist_writer.Serialize();
+    if (skip_list_data.size() > skip_list_start) { 
+      LOG(FATAL) << "Gap for skip list is too small.";
+    } else {
+      index_dumper_.Dump(skip_list_data); 
+      index_dumper_.SeekToEnd();
+    }
   }
 
-  SkipListWriter GetSkipListWriter(
+  int EstimateSkipListBytes(off_t skip_list_start, const TermEntrySet &entry_set) {
+    SkipListWriter fake_skiplist_writer = DumpTermEntrySet( 
+        &fake_index_dumper_, 
+        skip_list_start + 1024*1024,
+        entry_set,
+        entry_set.docid.Values());
+
+    return fake_skiplist_writer.Serialize().size();
+  }
+
+  SkipListWriter DumpTermEntrySet(
     FileDumper *file_dumper,
     off_t file_offset,
     const TermEntrySet &entry_set,
