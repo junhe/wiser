@@ -35,7 +35,8 @@ class PackedIntsWriter {
     if (max_bits_per_value_ > 64)
       LOG(FATAL) << "Max bits per value should not be larger than 64";
 
-    buf[0] = max_bits_per_value_;
+    // set the highest bit to 0 to distinguish from VInts 
+    buf[0] = max_bits_per_value_ & 0x7F; 
 
     int next_empty_bit = 8;
     for (auto &v : values_) {
