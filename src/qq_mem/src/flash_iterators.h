@@ -11,14 +11,19 @@ class RawIntsIterator {
       : buf_(buf), skip_list_(skip_list) {
   }
 
-  long & operator [] (int int_index) {
+  void SkipTo(int posting_index) {
+    int blob_index = posting_index / PACK_SIZE;
+    int blob_offset = posting_index % PACK_SIZE;
   }
 
  private:
   // points to the start of a series packs and (maybe) a vints blob
   const uint8_t *buf_; 
   const SkipList &skip_list_;
+  int cur_posting_index_ = 0;
+
   PackedIntsReader pack_ints_reader_;
+  VIntsReader vints_reader_;
 };
 
 #endif

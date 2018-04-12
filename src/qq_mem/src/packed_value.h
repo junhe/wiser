@@ -119,6 +119,10 @@ class VIntsWriter {
 class VIntsReader {
  public:
   VIntsReader(const uint8_t *buf) {
+    Reset(buf);
+  }
+
+  void Reset(const uint8_t *buf) {
     int len = utils::varint_decode_chars((char *)buf, 0, &magic_);
     buf += len;
 
