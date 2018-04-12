@@ -14,6 +14,7 @@
 #include "compression.h"
 
 constexpr int SKIP_INTERVAL = PackedIntsWriter::PACK_SIZE;
+constexpr int PACK_SIZE = PackedIntsWriter::PACK_SIZE;
 
 // Provide functions to copy values to pack writer and VInts
 class TermEntryBase {
@@ -628,8 +629,8 @@ class SkipList {
     return skip_table_.size();
   }
 
-  const SkipEntry &operator [](int i) const {
-    return skip_table_[i];
+  const SkipEntry &operator [](int interval_idx) const {
+    return skip_table_[interval_idx];
   }
 
  private:

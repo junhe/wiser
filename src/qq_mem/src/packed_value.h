@@ -56,7 +56,14 @@ class PackedIntsWriter {
 
 class PackedIntsReader {
  public:
-  PackedIntsReader(const uint8_t *buf): buf_(buf) {
+  PackedIntsReader(const uint8_t *buf) {
+    Reset(buf);
+  }
+
+  PackedIntsReader(){}
+
+  void Reset(const uint8_t *buf) {
+    buf_ = buf; 
     n_bits_per_value_ = buf[0];
   }
 
@@ -69,8 +76,8 @@ class PackedIntsReader {
   }
 
  private:
-  const uint8_t *buf_;
-  int n_bits_per_value_;
+  const uint8_t *buf_ = nullptr;
+  int n_bits_per_value_ = 0;
 };
 
 

@@ -7,13 +7,18 @@
 
 class RawIntsIterator {
  public:
-  RawIntsIterator(const uint8_t *buf, const SkipList &skiplist ): buf_(buf) {
+  RawIntsIterator(const uint8_t *buf, const SkipList &skip_list)
+      : buf_(buf), skip_list_(skip_list) {
+  }
 
+  long & operator [] (int int_index) {
   }
 
  private:
   // points to the start of a series packs and (maybe) a vints blob
   const uint8_t *buf_; 
+  const SkipList &skip_list_;
+  PackedIntsReader pack_ints_reader_;
 };
 
 #endif
