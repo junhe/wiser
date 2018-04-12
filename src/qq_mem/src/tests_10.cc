@@ -458,6 +458,10 @@ TEST_CASE( "General file dumper", "[qqflash]" ) {
 
   dumper.Seek(1);
   REQUIRE(dumper.CurrentOffset() == 1);
+
+  dumper.SeekToEnd();
+  REQUIRE(dumper.CurrentOffset() == 5);
+  REQUIRE(dumper.End() == 5);
 }
 
 
