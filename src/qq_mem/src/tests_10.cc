@@ -72,17 +72,6 @@ TEST_CASE( "Write and Read works", "[qqflash][utils]" ) {
 }
 
 
-TEST_CASE( "Offset Term Entry", "[qqflash][termentry]" ) {
-  // There are deltas. The actual offsets are
-  // 1, 4    12, 21
-  VarintBuffer buf = CreateVarintBuffer({1, 3, 8, 9}); 
-  CompressedPairIterator it(buf.DataPointer(), 0, buf.End());
-
-  OffsetTermEntry entry(it);  
-  REQUIRE(entry.Values() == std::vector<uint32_t>{1, 3, 8, 9});
-}
-
-
 TEST_CASE( "General term entry", "[qqflash]" ) {
   SECTION("Simple") {
     GeneralTermEntry entry;  
