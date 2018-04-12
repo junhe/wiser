@@ -46,20 +46,20 @@ class PostingPackIndexes {
 class TermEntryPackWriter {
  public:
   TermEntryPackWriter(std::vector<PackedIntsWriter> writers, 
-                     VarintBuffer vints)
+                     VIntsWriter vints)
     :pack_writers_(writers), vints_(vints) {}
 
   const std::vector<PackedIntsWriter> &PackWriters() const {
     return pack_writers_;
   }
 
-  const VarintBuffer &VInts() const {
+  const VIntsWriter &VInts() const {
     return vints_;
   }
 
  private:
   std::vector<PackedIntsWriter> pack_writers_;
-  VarintBuffer vints_;
+  VIntsWriter vints_;
 };
 
 
@@ -93,7 +93,8 @@ class GeneralTermEntry {
     const int n_remains = values_.size() % pack_size;
 
     std::vector<PackedIntsWriter> pack_writers(n_packs);
-    VarintBuffer vints;
+    // VarintBuffer vints;
+    VIntsWriter vints;
 
     std::vector<uint32_t> vals;
     if (do_delta) {
@@ -340,12 +341,12 @@ class FileDumper : public GeneralFileDumper {
   }
 
  protected:
-  std::vector<off_t> DumpVInts(const VarintBuffer &varint_buf) {
+  std::vector<off_t> DumpVInts(const VIntsWriter &varint_buf) {
     if (varint_buf.Size() == 0) {
       return std::vector<off_t>{};
     } else {
       off_t start_byte = CurrentOffset();
-      utils::Write(fd_, varint_buf.Data().data(), varint_buf.Size());
+      utils::Write(fd_, varint_buf.Serialize().data(), varint_buf.Size());
       return std::vector<off_t>{start_byte};
     }
   }

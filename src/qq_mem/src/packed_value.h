@@ -97,6 +97,10 @@ class VIntsWriter {
     varint_buf_.Append(val);
   }
 
+  int Size() const {
+    return varint_buf_.Size();
+  }
+
   std::string Serialize() const {
     VarintBuffer buf;
     buf.Append(0x80); // to distinguish with PackedInts
