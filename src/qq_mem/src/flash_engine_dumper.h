@@ -1,3 +1,6 @@
+#ifndef FLASH_ENGINE_DUMPER_H
+#define FLASH_ENGINE_DUMPER_H
+
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -11,8 +14,6 @@
 #include "compression.h"
 
 constexpr int SKIP_INTERVAL = PackedIntsWriter::PACK_SIZE;
-
-
 
 // Provide functions to copy values to pack writer and VInts
 class TermEntryBase {
@@ -1000,4 +1001,4 @@ class FlashEngineDumper {
   }
 };
 
-
+#endif

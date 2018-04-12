@@ -1,3 +1,6 @@
+#ifndef PACKED_VALUE_H
+#define PACKED_VALUE_H
+
 #include "utils.h"
 
 int AppendToByte(long val, const int n_bits, uint8_t *buf, const int next_empty_bit);
@@ -60,6 +63,10 @@ class PackedIntsReader {
   long Get(const int index) {
     return ExtractBits(buf_ + 1, index * n_bits_per_value_, n_bits_per_value_);     
   }
+  
+  int NumBits() const {
+    return n_bits_per_value_;
+  }
 
  private:
   const uint8_t *buf_;
@@ -67,3 +74,12 @@ class PackedIntsReader {
 };
 
 
+class PackedIntsIterator {
+ public:
+  PackedIntsIterator(const uint8_t *buf) :reader_(buf) {}
+
+ private:
+  PackedIntsReader reader_;
+};
+
+#endif
