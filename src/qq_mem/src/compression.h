@@ -132,17 +132,24 @@ class VarintIteratorEndBound: public PopIteratorService {
     :data_(nullptr), cur_offset_(0), start_offset_(0), end_offset_(0) {}
 
   VarintIteratorEndBound(const std::string *data, const int start_offset, 
-                 const int end_offset)
-    :data_(data->data()), start_offset_(start_offset), cur_offset_(start_offset), 
-     end_offset_(end_offset) {}
+                 const int end_offset) {
+    Reset(data->data(), start_offset, end_offset);
+  }
 
-  VarintIteratorEndBound(const VarintBuffer &varint_buf, const int end_offset)
-    :data_(varint_buf.DataPointer()->data()), start_offset_(0), 
-     cur_offset_(0), end_offset_(end_offset) {}
+  VarintIteratorEndBound(const VarintBuffer &varint_buf, const int end_offset) {
+    Reset(varint_buf.DataPointer()->data(), 0, end_offset);
+  }
 
-  VarintIteratorEndBound(const VarintBuffer &varint_buf)
-    :data_(varint_buf.DataPointer()->data()), start_offset_(0), 
-     cur_offset_(0), end_offset_(varint_buf.Size()) {}
+  VarintIteratorEndBound(const VarintBuffer &varint_buf) {
+    Reset(varint_buf.DataPointer()->data(), 0, varint_buf.Size());
+  }
+
+  void Reset(const char *data, const int start_offset, const int end_offset) {
+    data_ = data;
+    start_offset_ = start_offset;
+    cur_offset_ = start_offset;
+    end_offset_ = end_offset;
+  }
 
   bool IsEnd() const {
     return cur_offset_ >= end_offset_;
@@ -162,8 +169,8 @@ class VarintIteratorEndBound: public PopIteratorService {
  private:
   const char *data_;
   int cur_offset_; 
-  const int start_offset_;
-  const int end_offset_;
+  int start_offset_;
+  int end_offset_;
 };
 
 

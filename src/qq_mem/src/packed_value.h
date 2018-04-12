@@ -1,6 +1,7 @@
 #ifndef PACKED_VALUE_H
 #define PACKED_VALUE_H
 
+#include "compression.h"
 #include "utils.h"
 
 int AppendToByte(long val, const int n_bits, uint8_t *buf, const int next_empty_bit);
@@ -88,5 +89,58 @@ class PackedIntsIterator {
  private:
   PackedIntsReader reader_;
 };
+
+
+class VIntsWriter {
+ public:
+  void Append(uint32_t val) {
+    varint_buf_.Append(val);
+  }
+
+  std::string Serialize() const {
+    VarintBuffer buf;
+    buf.Append(0x80); // to distinguish with PackedInts
+    buf.Append(varint_buf_.Size());
+    buf.Append(varint_buf_.Data());
+
+    return buf.Data();
+  }
+
+ private:
+  VarintBuffer varint_buf_;
+};
+
+
+class VIntsReader {
+ public:
+  VIntsReader(const uint8_t *buf) {
+    int len = utils::varint_decode_chars((char *)buf, 0, &magic_);
+    buf += len;
+
+    if (magic_ != 0x80) {
+      LOG(FATAL) << "Magic number is not right for this VInts";
+    }
+
+    len = utils::varint_decode_chars((char *)buf, 0, &varint_bytes_);
+    buf += len;
+
+    varint_iter_.Reset((char *)buf, 0, varint_bytes_);
+  }
+
+  bool IsEnd() const {
+    return varint_iter_.IsEnd();
+  }
+
+  uint32_t Pop() {
+    return varint_iter_.Pop();
+  }
+  
+ private:
+  uint32_t magic_; 
+  uint32_t varint_bytes_;
+  VarintIteratorEndBound varint_iter_;
+};
+
+
 
 #endif
