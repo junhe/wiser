@@ -389,6 +389,7 @@ class FileDumper : public GeneralFileDumper {
     off_t start_byte = CurrentOffset();
     std::string data = writer.Serialize();      
     utils::Write(fd_, data.data(), data.size());
+    return start_byte;
   }
 };
 
