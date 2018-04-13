@@ -83,8 +83,8 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     PostingBlobIndexes table = entry.GetPostingPackIndexes();
 
     REQUIRE(table.NumRows() == 1);
-    REQUIRE(table[0].packed_block_idx == 0);
-    REQUIRE(table[0].in_block_idx == 0);
+    REQUIRE(table[0].blob_index == 0);
+    REQUIRE(table[0].in_blob_idx == 0);
   }
 
   SECTION("Multiple postings") {
@@ -99,12 +99,12 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     PostingBlobIndexes table = entry.GetPostingPackIndexes();
 
     REQUIRE(table.NumRows() == 3);
-    REQUIRE(table[0].packed_block_idx == 0);
-    REQUIRE(table[0].in_block_idx == 0);
-    REQUIRE(table[1].packed_block_idx == 0);
-    REQUIRE(table[1].in_block_idx == 1);
-    REQUIRE(table[2].packed_block_idx == 0);
-    REQUIRE(table[2].in_block_idx == 3);
+    REQUIRE(table[0].blob_index == 0);
+    REQUIRE(table[0].in_blob_idx == 0);
+    REQUIRE(table[1].blob_index == 0);
+    REQUIRE(table[1].in_blob_idx == 1);
+    REQUIRE(table[2].blob_index == 0);
+    REQUIRE(table[2].in_blob_idx == 3);
   }
 
   SECTION("More than one packed block") {

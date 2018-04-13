@@ -20,10 +20,10 @@ constexpr int PACK_SIZE = PackedIntsWriter::PACK_SIZE;
 
 struct PostingBlobIndex {
   PostingBlobIndex(int block_idx, int offset_idx)
-    : packed_block_idx(block_idx), in_block_idx(offset_idx) {}
+    : blob_index(block_idx), in_blob_idx(offset_idx) {}
 
-  int packed_block_idx;
-  int in_block_idx;
+  int blob_index;
+  int in_blob_idx;
 };
 
 class PostingBlobIndexes {
@@ -421,9 +421,9 @@ class SkipPostingFileOffsets {
         posting_index < table.NumRows(); 
         posting_index += SKIP_INTERVAL) 
     {
-      const int pack_id = table[posting_index].packed_block_idx;
-      const int in_block_idx = table[posting_index].in_block_idx;
-      locations_.emplace_back(file_offs.FileOffset(pack_id), in_block_idx);
+      const int pack_id = table[posting_index].blob_index;
+      const int in_blob_idx = table[posting_index].in_blob_idx;
+      locations_.emplace_back(file_offs.FileOffset(pack_id), in_blob_idx);
     }
   }
 
