@@ -763,6 +763,13 @@ struct TermEntrySet {
     GeneralTermEntry offset;
 };
 
+inline SkipPostingFileOffsets DumpTermEntry(
+    const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
+  PackFileOffsets file_offs = dumper->Dump(term_entry.GetPackWriter(do_delta));
+  PostingPackIndexes pack_indexes = term_entry.GetPostingPackIndexes();
+  return SkipPostingFileOffsets(pack_indexes, file_offs);
+}
+
 class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
  public:
   VacuumInvertedIndexDumper(const std::string dump_dir_path)
@@ -847,13 +854,6 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
     return SkipListWriter(docid_skip_offs, tf_skip_offs, 
         pos_skip_offs, off_skip_offs, entry_set.docid.Values());
-  }
-
-  SkipPostingFileOffsets DumpTermEntry(
-      const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
-    PackFileOffsets file_offs = dumper->Dump(term_entry.GetPackWriter(do_delta));
-    PostingPackIndexes pack_indexes = term_entry.GetPostingPackIndexes();
-    return SkipPostingFileOffsets(pack_indexes, file_offs);
   }
 
  private:
