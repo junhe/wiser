@@ -455,7 +455,7 @@ class SkipListWriter {
 
   std::string Serialize() const {
     VarintBuffer buf;
-    auto skip_doc_ids = GetSkipDocIds();
+    auto skip_doc_ids = GetSkipPostingDocIds();
 
     if ( !(docid_offs_.Size() == tf_offs_.Size() && 
            tf_offs_.Size() == pos_offs_.Size() &&
@@ -491,7 +491,7 @@ class SkipListWriter {
     buf->Append(off_offs_[i].file_offset_of_blob);
   }
 
-  std::vector<uint32_t> GetSkipDocIds() const {
+  std::vector<uint32_t> GetSkipPostingDocIds() const {
     std::vector<uint32_t> doc_ids;
     for (int i = 0; i < doc_ids_.size(); i += SKIP_INTERVAL) {
       doc_ids.push_back(doc_ids_[i]); 
@@ -507,6 +507,7 @@ class SkipListWriter {
 };
 
 
+// All locations are for posting bags
 struct SkipEntry {
   SkipEntry(const uint32_t doc_skip_in,   
             const off_t doc_file_offset_in,
