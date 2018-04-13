@@ -71,10 +71,6 @@ class TermFreqIterator {
     return cur_posting_index_ / PACK_SIZE;
   }
 
-  int CurBlobOffset() const {
-    return cur_posting_index_ % PACK_SIZE;
-  }
-
   // points to the start of a series packs and (maybe) a vints blob
   const uint8_t *buf_; 
   const SkipList &skip_list_;
