@@ -136,6 +136,8 @@ class VIntsReader {
     buf += len;
 
     varint_iter_.Reset((char *)buf, 0, varint_bytes_);
+
+    next_index_ = 0;
   }
 
   bool IsEnd() const {
@@ -143,10 +145,28 @@ class VIntsReader {
   }
 
   uint32_t Pop() {
+    next_index_++;
     return varint_iter_.Pop();
+  }
+
+  uint32_t Peek() const {
+    return varint_iter_.Peek(); 
+  }
+
+  int Index() const {
+    return next_index_;
+  }
+
+  // SkipTo(0); Peek() returns data with index 0 (the first item)
+  // SkipTo(3); Peek() returns data with index 3 (the fourth item)
+  void SkipTo(int index) {
+    while (Index() < index) {
+      Pop();
+    }
   }
   
  private:
+  int next_index_;
   uint32_t magic_; 
   uint32_t varint_bytes_;
   VarintIteratorEndBound varint_iter_;

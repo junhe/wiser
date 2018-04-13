@@ -31,13 +31,30 @@ TEST_CASE( "VInts writing and reading", "[qqflash]" ) {
     std::string buf = writer.Serialize();
 
     VIntsReader reader((const uint8_t *) buf.data());
-    REQUIRE(reader.IsEnd() == false);
 
-    REQUIRE(reader.Pop() == 1000);
-    REQUIRE(reader.Pop() == 2);
-    REQUIRE(reader.Pop() == 13377200);
-    REQUIRE(reader.IsEnd() == true);
+    SECTION("Pop all") {
+      REQUIRE(reader.IsEnd() == false);
+
+      REQUIRE(reader.Pop() == 1000);
+      REQUIRE(reader.Pop() == 2);
+      REQUIRE(reader.Pop() == 13377200);
+      REQUIRE(reader.IsEnd() == true);
+    }
+    
+    SECTION("SkipTo and Peek") {
+      reader.SkipTo(0);
+      REQUIRE(reader.Peek() == 1000);
+
+      reader.SkipTo(2);
+      REQUIRE(reader.Peek() == 13377200);
+      REQUIRE(reader.IsEnd() == false);
+
+      REQUIRE(reader.Pop() == 13377200);
+      REQUIRE(reader.IsEnd() == true);
+    }
   }
+
+
 }
 
 

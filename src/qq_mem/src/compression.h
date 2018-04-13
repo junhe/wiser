@@ -166,6 +166,12 @@ class VarintIteratorEndBound: public PopIteratorService {
     return n;
   }
 
+  uint32_t Peek() const {
+    uint32_t n;
+    utils::varint_decode_chars(data_, cur_offset_, &n);
+    return n;
+  }
+
  private:
   const char *data_;
   int cur_offset_; 
