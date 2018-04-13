@@ -189,6 +189,19 @@ class FileOffsetsOfBlobs {
     return vint_offs_;
   }
 
+  const std::vector<off_t> BlobOffsets() const {
+    std::vector<off_t> offsets;
+    for (auto &off : pack_offs_) {
+      offsets.push_back(off);
+    }
+
+    for (auto &off : vint_offs_) {
+      offsets.push_back(off);
+    }
+
+    return offsets;
+  }
+
   off_t FileOffset(int blob_index) const {
     const int n_packs = pack_offs_.size();
     if (blob_index < n_packs) {
