@@ -53,6 +53,33 @@ TEST_CASE( "VInts writing and reading", "[qqflash]" ) {
       REQUIRE(iter.IsEnd() == true);
     }
   }
+
+  SECTION("256 - 300") {
+    for (int i = 256; i < 300; i++) {
+      writer.Append(i);
+    }
+
+    std::string buf = writer.Serialize();
+
+    SECTION("by popping") {
+      VIntsIterator iter((const uint8_t *) buf.data());
+
+      for (int i = 256; i < 300; i++) {
+        REQUIRE(iter.Pop() == i);
+      }
+    }
+
+    SECTION("by peeking") {
+      VIntsIterator iter((const uint8_t *) buf.data());
+
+      int index = 0;
+      for (int i = 256; i < 300; i++) {
+        iter.SkipTo(index);
+        REQUIRE(iter.Peek() == i);
+        index++;
+      }
+    }
+  }
 }
 
 
