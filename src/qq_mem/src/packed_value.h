@@ -118,6 +118,8 @@ class VIntsWriter {
 
 class VIntsReader {
  public:
+  VIntsReader() {}
+
   VIntsReader(const uint8_t *buf) {
     Reset(buf);
   }

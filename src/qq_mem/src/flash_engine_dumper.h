@@ -16,6 +16,7 @@
 constexpr int SKIP_INTERVAL = PackedIntsWriter::PACK_SIZE;
 constexpr int PACK_SIZE = PackedIntsWriter::PACK_SIZE;
 
+
 struct PostingPackIndex {
   PostingPackIndex(int block_idx, int offset_idx)
     : packed_block_idx(block_idx), in_block_idx(offset_idx) {}

@@ -41,3 +41,24 @@ TEST_CASE( "VInts writing and reading", "[qqflash]" ) {
 }
 
 
+// Dump a cozy box, return PackFileOffsets
+
+TEST_CASE( "TermFreqIterator", "[qqflash]" ) {
+  // Dump TF without delta to a file
+  // Create skip list using the return of Dump()
+  // Create TermFreqIterator
+
+  GeneralTermEntry entry;
+  for (int i = 0; i < 300; i++) {
+    entry.AddGroup({i});
+  }
+  TermEntryPackWriter writer = entry.GetPackWriter(false);
+
+  FileDumper file_dumper("/tmp/tmp.tf");
+  PackFileOffsets file_offs = file_dumper.Dump(writer);
+}
+
+
+
+
+
