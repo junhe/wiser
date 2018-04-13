@@ -235,12 +235,12 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
       skip_list.Load((uint8_t *)data.data());
 
       REQUIRE(skip_list.NumEntries() == 1);
-      REQUIRE(skip_list[0].doc_skip == 18);
-      REQUIRE(skip_list[0].doc_file_offset == 10);
-      REQUIRE(skip_list[0].tf_file_offset == 11);
-      REQUIRE(skip_list[0].pos_file_offset == 12);
-      REQUIRE(skip_list[0].pos_in_block_index == 3);
-      REQUIRE(skip_list[0].off_file_offset == 13);
+      REQUIRE(skip_list[0].doc_id == 18);
+      REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
+      REQUIRE(skip_list[0].file_offset_of_tf_bag == 11);
+      REQUIRE(skip_list[0].file_offset_of_pos_bag == 12);
+      REQUIRE(skip_list[0].in_blob_index_of_pos_bag == 3);
+      REQUIRE(skip_list[0].file_offset_of_offset_bag == 13);
     }
 
     SECTION("Term dict file dumping and loading") {
@@ -264,12 +264,12 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
         const SkipList &skip_list = entry.GetSkipList();
 
         REQUIRE(skip_list.NumEntries() == 1);
-        REQUIRE(skip_list[0].doc_skip == 18);
-        REQUIRE(skip_list[0].doc_file_offset == 10);
-        REQUIRE(skip_list[0].tf_file_offset == 11);
-        REQUIRE(skip_list[0].pos_file_offset == 12);
-        REQUIRE(skip_list[0].pos_in_block_index == 3);
-        REQUIRE(skip_list[0].off_file_offset == 13);
+        REQUIRE(skip_list[0].doc_id == 18);
+        REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
+        REQUIRE(skip_list[0].file_offset_of_tf_bag == 11);
+        REQUIRE(skip_list[0].file_offset_of_pos_bag == 12);
+        REQUIRE(skip_list[0].in_blob_index_of_pos_bag == 3);
+        REQUIRE(skip_list[0].file_offset_of_offset_bag == 13);
       }
 
       SECTION("Second entry") {
@@ -281,12 +281,12 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
         const SkipList &skip_list = entry.GetSkipList();
 
         REQUIRE(skip_list.NumEntries() == 1);
-        REQUIRE(skip_list[0].doc_skip == 18);
-        REQUIRE(skip_list[0].doc_file_offset == 10);
-        REQUIRE(skip_list[0].tf_file_offset == 11);
-        REQUIRE(skip_list[0].pos_file_offset == 12);
-        REQUIRE(skip_list[0].pos_in_block_index == 3);
-        REQUIRE(skip_list[0].off_file_offset == 13);
+        REQUIRE(skip_list[0].doc_id == 18);
+        REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
+        REQUIRE(skip_list[0].file_offset_of_tf_bag == 11);
+        REQUIRE(skip_list[0].file_offset_of_pos_bag == 12);
+        REQUIRE(skip_list[0].in_blob_index_of_pos_bag == 3);
+        REQUIRE(skip_list[0].file_offset_of_offset_bag == 13);
       }
 
     }
@@ -312,19 +312,19 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
 
     REQUIRE(skip_list.NumEntries() == 2);
 
-    REQUIRE(skip_list[0].doc_skip == 18);
-    REQUIRE(skip_list[0].doc_file_offset == 10);
-    REQUIRE(skip_list[0].tf_file_offset == 12);
-    REQUIRE(skip_list[0].pos_file_offset == 14);
-    REQUIRE(skip_list[0].pos_in_block_index == 5);
-    REQUIRE(skip_list[0].off_file_offset == 16);
+    REQUIRE(skip_list[0].doc_id == 18);
+    REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
+    REQUIRE(skip_list[0].file_offset_of_tf_bag == 12);
+    REQUIRE(skip_list[0].file_offset_of_pos_bag == 14);
+    REQUIRE(skip_list[0].in_blob_index_of_pos_bag == 5);
+    REQUIRE(skip_list[0].file_offset_of_offset_bag == 16);
 
-    REQUIRE(skip_list[1].doc_skip == 2999);
-    REQUIRE(skip_list[1].doc_file_offset == 11);
-    REQUIRE(skip_list[1].tf_file_offset == 13);
-    REQUIRE(skip_list[1].pos_file_offset == 15);
-    REQUIRE(skip_list[1].pos_in_block_index == 6);
-    REQUIRE(skip_list[1].off_file_offset == 17);
+    REQUIRE(skip_list[1].doc_id == 2999);
+    REQUIRE(skip_list[1].file_offset_of_docid_bag == 11);
+    REQUIRE(skip_list[1].file_offset_of_tf_bag == 13);
+    REQUIRE(skip_list[1].file_offset_of_pos_bag == 15);
+    REQUIRE(skip_list[1].in_blob_index_of_pos_bag == 6);
+    REQUIRE(skip_list[1].file_offset_of_offset_bag == 17);
   }
 }
 

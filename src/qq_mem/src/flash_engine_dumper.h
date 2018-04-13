@@ -26,6 +26,28 @@ struct PostingBagBlobIndex {
   int in_blob_idx;
 };
 
+
+inline std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
+  std::vector<uint32_t> positions;
+  while (pos_it->IsEnd() == false) {
+    positions.push_back(pos_it->Pop());  
+  }
+  return positions;
+}
+
+inline std::vector<uint32_t> ExtractOffsets(OffsetPairsIteratorService *iterator) {
+  std::vector<uint32_t> offsets;
+  while (iterator->IsEnd() != true) {
+    OffsetPair pair;
+    iterator->Pop(&pair);
+
+    offsets.push_back(std::get<0>(pair));
+    offsets.push_back(std::get<1>(pair));
+  }
+  return offsets;
+}
+
+
 class PostingBagBlobIndexes {
  public:
   void AddRow(int block_idx, int offset) {
@@ -515,19 +537,19 @@ struct SkipEntry {
             const off_t pos_file_offset_in,
             const int pos_in_block_index_in,
             const off_t off_file_offset_in)
-    : doc_skip(doc_skip_in),
-      doc_file_offset(doc_file_offset_in),
-      tf_file_offset(tf_file_offset_in),
-      pos_file_offset(pos_file_offset_in),
-      pos_in_block_index(pos_in_block_index_in),
-      off_file_offset(off_file_offset_in) {}
+    : doc_id(doc_skip_in),
+      file_offset_of_docid_bag(doc_file_offset_in),
+      file_offset_of_tf_bag(tf_file_offset_in),
+      file_offset_of_pos_bag(pos_file_offset_in),
+      in_blob_index_of_pos_bag(pos_in_block_index_in),
+      file_offset_of_offset_bag(off_file_offset_in) {}
  
-  uint32_t doc_skip;
-  off_t doc_file_offset;
-  off_t tf_file_offset;
-  off_t pos_file_offset;
-  int pos_in_block_index;
-  off_t off_file_offset;
+  uint32_t doc_id;
+  off_t file_offset_of_docid_bag;
+  off_t file_offset_of_tf_bag;
+  off_t file_offset_of_pos_bag;
+  int in_blob_index_of_pos_bag;
+  off_t file_offset_of_offset_bag;
 };
 
 class SkipList {
@@ -538,14 +560,14 @@ class SkipList {
     VarintIterator it((const char *)buf, len, num_entries);
 
     for (int entry_i = 0; entry_i < num_entries; entry_i++) {
-      uint32_t doc_skip = it.Pop();
-      off_t doc_file_offset = it.Pop();
-      off_t tf_file_offset = it.Pop();
-      off_t pos_file_offset = it.Pop();
-      int pos_in_block_index = it.Pop();
-      off_t off_file_offset = it.Pop();
-      AddEntry(doc_skip, doc_file_offset, tf_file_offset, 
-          pos_file_offset, pos_in_block_index, off_file_offset);
+      uint32_t doc_id = it.Pop();
+      off_t file_offset_of_docid_bag = it.Pop();
+      off_t file_offset_of_tf_bag = it.Pop();
+      off_t file_offset_of_pos_bag = it.Pop();
+      int in_blob_index_of_pos_bag = it.Pop();
+      off_t file_offset_of_offset_bag = it.Pop();
+      AddEntry(doc_id, file_offset_of_docid_bag, file_offset_of_tf_bag, 
+          file_offset_of_pos_bag, in_blob_index_of_pos_bag, file_offset_of_offset_bag);
     }
   }
 
@@ -558,19 +580,19 @@ class SkipList {
   }
 
  private:
-  void AddEntry(const uint32_t doc_skip,   
-                const off_t doc_file_offset,
-                const off_t tf_file_offset,
-                const off_t pos_file_offset,
-                const int pos_in_block_index,
-                const off_t off_file_offset) 
+  void AddEntry(const uint32_t doc_id,   
+                const off_t file_offset_of_docid_bag,
+                const off_t file_offset_of_tf_bag,
+                const off_t file_offset_of_pos_bag,
+                const int in_blob_index_of_pos_bag,
+                const off_t file_offset_of_offset_bag) 
   {
-    skip_table_.emplace_back( doc_skip,   
-                              doc_file_offset,
-                              tf_file_offset,
-                              pos_file_offset,
-                              pos_in_block_index,
-                              off_file_offset);
+    skip_table_.emplace_back( doc_id,   
+                              file_offset_of_docid_bag,
+                              file_offset_of_tf_bag,
+                              file_offset_of_pos_bag,
+                              in_blob_index_of_pos_bag,
+                              file_offset_of_offset_bag);
   }
 
   std::vector<SkipEntry> skip_table_;
@@ -643,27 +665,7 @@ class InvertedIndexDumperBase : public InvertedIndexQqMemDelta {
   virtual void DumpPostingList(
       const Term &term, const PostingListDelta &posting_list) = 0;
 
-  std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
-    std::vector<uint32_t> positions;
-    while (pos_it->IsEnd() == false) {
-      positions.push_back(pos_it->Pop());  
-    }
-    return positions;
-  }
-
-  std::vector<uint32_t> ExtractOffsets(OffsetPairsIteratorService *iterator) {
-    std::vector<uint32_t> offsets;
-    while (iterator->IsEnd() != true) {
-      OffsetPair pair;
-      iterator->Pop(&pair);
-
-      offsets.push_back(std::get<0>(pair));
-      offsets.push_back(std::get<1>(pair));
-    }
-    return offsets;
-  }
 };
-
 
 
 class InvertedIndexDumper : public InvertedIndexDumperBase {

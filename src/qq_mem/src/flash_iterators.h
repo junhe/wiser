@@ -46,7 +46,7 @@ class TermFreqIterator {
 
  private:
   void SetupBlob(int blob_index) {
-    off_t blob_off = skip_list_[blob_index].tf_file_offset;
+    off_t blob_off = skip_list_[blob_index].file_offset_of_tf_bag;
     const uint8_t *blob_buf = buf_ + blob_off;
 
     BlobFormat format = GetBlobFormat(blob_buf);
