@@ -75,12 +75,12 @@ TEST_CASE( "Write and Read works", "[qqflash][utils]" ) {
 TEST_CASE( "General term entry", "[qqflash]" ) {
   SECTION("Simple") {
     GeneralTermEntry entry;  
-    entry.AddGroup({7});
+    entry.AddPostingBag({7});
 
     REQUIRE(entry.Values() == std::vector<uint32_t>{7});
     REQUIRE(entry.PostingSizes() == std::vector<int>{1});
 
-    PostingBlobIndexes table = entry.GetPostingPackIndexes();
+    PostingBlobIndexes table = entry.GetPostingBagIndexes();
 
     REQUIRE(table.NumRows() == 1);
     REQUIRE(table[0].blob_index == 0);
@@ -89,14 +89,14 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
 
   SECTION("Multiple postings") {
     GeneralTermEntry entry;  
-    entry.AddGroup({7});
-    entry.AddGroup({9, 10});
-    entry.AddGroup({11, 18});
+    entry.AddPostingBag({7});
+    entry.AddPostingBag({9, 10});
+    entry.AddPostingBag({11, 18});
 
     REQUIRE(entry.Values() == std::vector<uint32_t>{7, 9, 10, 11, 18});
     REQUIRE(entry.PostingSizes() == std::vector<int>{1, 2, 2});
 
-    PostingBlobIndexes table = entry.GetPostingPackIndexes();
+    PostingBlobIndexes table = entry.GetPostingBagIndexes();
 
     REQUIRE(table.NumRows() == 3);
     REQUIRE(table[0].blob_index == 0);
@@ -121,7 +121,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     }
 
     GeneralTermEntry entry;
-    entry.AddGroup(vec);
+    entry.AddPostingBag(vec);
     REQUIRE(entry.Values() == vec);
 
     TermEntryBlobWriter writer = entry.GetPackWriter(true);

@@ -68,19 +68,19 @@ class TermEntryBlobWriter {
 class GeneralTermEntry {
  public:
   // Values can be positions, offsets, term frequencies
-  void AddGroup(std::vector<uint32_t> values) {
-    posting_sizes_.push_back(values.size()); 
+  void AddPostingBag(std::vector<uint32_t> values) {
+    posting_bag_sizes_.push_back(values.size()); 
 
     for (auto &v : values) {
       values_.push_back(v);
     }
   }
 
-  PostingBlobIndexes GetPostingPackIndexes() const {
+  PostingBlobIndexes GetPostingBagIndexes() const {
     int val_index = 0;  
     PostingBlobIndexes table;
     
-    for (auto &size : posting_sizes_) {
+    for (auto &size : posting_bag_sizes_) {
       table.AddRow(val_index / PackedIntsWriter::PACK_SIZE, 
           val_index % PackedIntsWriter::PACK_SIZE);
       val_index += size;
@@ -95,7 +95,6 @@ class GeneralTermEntry {
     const int n_remains = values_.size() % pack_size;
 
     std::vector<PackedIntsWriter> pack_writers(n_packs);
-    // VarintBuffer vints;
     VIntsWriter vints;
 
     std::vector<uint32_t> vals;
@@ -124,7 +123,7 @@ class GeneralTermEntry {
   }
 
   const std::vector<int> &PostingSizes() const {
-    return posting_sizes_;
+    return posting_bag_sizes_;
   }
 
  protected:
@@ -140,7 +139,7 @@ class GeneralTermEntry {
   }
 
   // number of values in each posting
-  std::vector<int> posting_sizes_;
+  std::vector<int> posting_bag_sizes_;
   std::vector<uint32_t> values_;
   uint32_t prev_ = 0;
 };
@@ -690,19 +689,19 @@ class InvertedIndexDumper : public InvertedIndexDumperBase {
 
     while (posting_it.IsEnd() == false) {
       //doc id
-      docid_term_entry.AddGroup(
+      docid_term_entry.AddPostingBag(
           std::vector<uint32_t>{(uint32_t)posting_it.DocId()});
 
       //Term Freq
-      termfreq_term_entry.AddGroup(
+      termfreq_term_entry.AddPostingBag(
           std::vector<uint32_t>{(uint32_t)posting_it.TermFreq()});
 
       // Position
-      position_term_entry.AddGroup(
+      position_term_entry.AddPostingBag(
           ExtractPositions(posting_it.PositionBegin().get()));
 
       // Offset
-      offset_term_entry.AddGroup(
+      offset_term_entry.AddPostingBag(
           ExtractOffsets(posting_it.OffsetPairsBegin().get()));
 
       posting_it.Advance();
@@ -743,7 +742,7 @@ class InvertedIndexDumper : public InvertedIndexDumperBase {
   SkipPostingFileOffsets DumpTermEntry(
       const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
     PackFileOffsets file_offs = dumper->Dump(term_entry.GetPackWriter(do_delta));
-    PostingBlobIndexes pack_indexes = term_entry.GetPostingPackIndexes();
+    PostingBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
     return SkipPostingFileOffsets(pack_indexes, file_offs);
   }
 
@@ -768,7 +767,7 @@ struct TermEntrySet {
 inline SkipPostingFileOffsets DumpTermEntry(
     const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
   PackFileOffsets file_offs = dumper->Dump(term_entry.GetPackWriter(do_delta));
-  PostingBlobIndexes pack_indexes = term_entry.GetPostingPackIndexes();
+  PostingBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
   return SkipPostingFileOffsets(pack_indexes, file_offs);
 }
 
@@ -789,19 +788,19 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
     while (posting_it.IsEnd() == false) {
       //doc id
-      entry_set.docid.AddGroup(
+      entry_set.docid.AddPostingBag(
           std::vector<uint32_t>{(uint32_t)posting_it.DocId()});
 
       //Term Freq
-      entry_set.termfreq.AddGroup(
+      entry_set.termfreq.AddPostingBag(
           std::vector<uint32_t>{(uint32_t)posting_it.TermFreq()});
 
       // Position
-      entry_set.position.AddGroup(
+      entry_set.position.AddPostingBag(
           ExtractPositions(posting_it.PositionBegin().get()));
 
       // Offset
-      entry_set.offset.AddGroup(
+      entry_set.offset.AddPostingBag(
           ExtractOffsets(posting_it.OffsetPairsBegin().get()));
 
       posting_it.Advance();

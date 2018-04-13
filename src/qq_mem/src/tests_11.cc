@@ -50,7 +50,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash]" ) {
 
   GeneralTermEntry entry;
   for (int i = 0; i < 300; i++) {
-    entry.AddGroup({i});
+    entry.AddPostingBag({i});
   }
   TermEntryBlobWriter writer = entry.GetPackWriter(false);
 
