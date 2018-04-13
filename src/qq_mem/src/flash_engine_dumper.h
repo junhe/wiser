@@ -558,14 +558,14 @@ struct SkipEntry {
             const off_t pos_file_offset_in,
             const int pos_in_block_index_in,
             const off_t off_file_offset_in)
-    : doc_id(doc_skip_in),
+    : previous_doc_id(doc_skip_in),
       file_offset_of_docid_bag(doc_file_offset_in),
       file_offset_of_tf_bag(tf_file_offset_in),
       file_offset_of_pos_bag(pos_file_offset_in),
       in_blob_index_of_pos_bag(pos_in_block_index_in),
       file_offset_of_offset_bag(off_file_offset_in) {}
  
-  uint32_t doc_id;
+  uint32_t previous_doc_id;
   off_t file_offset_of_docid_bag;
   off_t file_offset_of_tf_bag;
   off_t file_offset_of_pos_bag;
@@ -581,13 +581,13 @@ class SkipList {
     VarintIterator it((const char *)buf, len, num_entries);
 
     for (int entry_i = 0; entry_i < num_entries; entry_i++) {
-      uint32_t doc_id = it.Pop();
+      uint32_t previous_doc_id = it.Pop();
       off_t file_offset_of_docid_bag = it.Pop();
       off_t file_offset_of_tf_bag = it.Pop();
       off_t file_offset_of_pos_bag = it.Pop();
       int in_blob_index_of_pos_bag = it.Pop();
       off_t file_offset_of_offset_bag = it.Pop();
-      AddEntry(doc_id, file_offset_of_docid_bag, file_offset_of_tf_bag, 
+      AddEntry(previous_doc_id, file_offset_of_docid_bag, file_offset_of_tf_bag, 
           file_offset_of_pos_bag, in_blob_index_of_pos_bag, file_offset_of_offset_bag);
     }
   }
@@ -601,14 +601,14 @@ class SkipList {
   }
 
   // Made public for easier testing
-  void AddEntry(const uint32_t doc_id,   
+  void AddEntry(const uint32_t previous_doc_id,   
                 const off_t file_offset_of_docid_bag,
                 const off_t file_offset_of_tf_bag,
                 const off_t file_offset_of_pos_bag,
                 const int in_blob_index_of_pos_bag,
                 const off_t file_offset_of_offset_bag) 
   {
-    skip_table_.emplace_back( doc_id,   
+    skip_table_.emplace_back( previous_doc_id,   
                               file_offset_of_docid_bag,
                               file_offset_of_tf_bag,
                               file_offset_of_pos_bag,

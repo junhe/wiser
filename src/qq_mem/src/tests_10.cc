@@ -235,7 +235,7 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
       skip_list.Load((uint8_t *)data.data());
 
       REQUIRE(skip_list.NumEntries() == 1);
-      REQUIRE(skip_list[0].doc_id == 0);
+      REQUIRE(skip_list[0].previous_doc_id == 0);
       REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
       REQUIRE(skip_list[0].file_offset_of_tf_bag == 11);
       REQUIRE(skip_list[0].file_offset_of_pos_bag == 12);
@@ -264,7 +264,7 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
         const SkipList &skip_list = entry.GetSkipList();
 
         REQUIRE(skip_list.NumEntries() == 1);
-        REQUIRE(skip_list[0].doc_id == 0);
+        REQUIRE(skip_list[0].previous_doc_id == 0);
         REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
         REQUIRE(skip_list[0].file_offset_of_tf_bag == 11);
         REQUIRE(skip_list[0].file_offset_of_pos_bag == 12);
@@ -281,7 +281,7 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
         const SkipList &skip_list = entry.GetSkipList();
 
         REQUIRE(skip_list.NumEntries() == 1);
-        REQUIRE(skip_list[0].doc_id == 0);
+        REQUIRE(skip_list[0].previous_doc_id == 0);
         REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
         REQUIRE(skip_list[0].file_offset_of_tf_bag == 11);
         REQUIRE(skip_list[0].file_offset_of_pos_bag == 12);
@@ -312,14 +312,14 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
 
     REQUIRE(skip_list.NumEntries() == 2);
 
-    REQUIRE(skip_list[0].doc_id == 0);
+    REQUIRE(skip_list[0].previous_doc_id == 0);
     REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
     REQUIRE(skip_list[0].file_offset_of_tf_bag == 12);
     REQUIRE(skip_list[0].file_offset_of_pos_bag == 14);
     REQUIRE(skip_list[0].in_blob_index_of_pos_bag == 5);
     REQUIRE(skip_list[0].file_offset_of_offset_bag == 16);
 
-    REQUIRE(skip_list[1].doc_id == 18);
+    REQUIRE(skip_list[1].previous_doc_id == 18);
     REQUIRE(skip_list[1].file_offset_of_docid_bag == 11);
     REQUIRE(skip_list[1].file_offset_of_tf_bag == 13);
     REQUIRE(skip_list[1].file_offset_of_pos_bag == 15);
