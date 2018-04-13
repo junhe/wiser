@@ -382,7 +382,9 @@ class FileDumper : public GeneralFileDumper {
       return std::vector<off_t>{};
     } else {
       off_t start_byte = CurrentOffset();
-      utils::Write(fd_, varint_buf.Serialize().data(), varint_buf.Size());
+      std::string data_buf = varint_buf.Serialize();
+
+      utils::Write(fd_, data_buf.data(), data_buf.size());
       return std::vector<off_t>{start_byte};
     }
   }
