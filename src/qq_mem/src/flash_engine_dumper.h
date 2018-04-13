@@ -13,19 +13,20 @@
 #include "packed_value.h"
 #include "compression.h"
 
+
 constexpr int SKIP_INTERVAL = PackedIntsWriter::PACK_SIZE;
 constexpr int PACK_SIZE = PackedIntsWriter::PACK_SIZE;
 
 
-struct PostingPackIndex {
-  PostingPackIndex(int block_idx, int offset_idx)
+struct PostingBlobIndex {
+  PostingBlobIndex(int block_idx, int offset_idx)
     : packed_block_idx(block_idx), in_block_idx(offset_idx) {}
 
   int packed_block_idx;
   int in_block_idx;
 };
 
-class PostingPackIndexes {
+class PostingBlobIndexes {
  public:
   void AddRow(int block_idx, int offset) {
     locations_.emplace_back(block_idx, offset);
@@ -35,12 +36,12 @@ class PostingPackIndexes {
     return locations_.size();
   }
 
-  const PostingPackIndex & operator[] (int i) const {
+  const PostingBlobIndex & operator[] (int i) const {
     return locations_[i];
   }
 
  private:
-  std::vector<PostingPackIndex> locations_;
+  std::vector<PostingBlobIndex> locations_;
 };
 
 
@@ -75,9 +76,9 @@ class GeneralTermEntry {
     }
   }
 
-  PostingPackIndexes GetPostingPackIndexes() const {
+  PostingBlobIndexes GetPostingPackIndexes() const {
     int val_index = 0;  
-    PostingPackIndexes table;
+    PostingBlobIndexes table;
     
     for (auto &size : posting_sizes_) {
       table.AddRow(val_index / PackedIntsWriter::PACK_SIZE, 
@@ -414,7 +415,7 @@ struct SkipPostingFileOffset {
 // Absolute file offsets for posting 0, 128, 128*2, ..'s data
 class SkipPostingFileOffsets {
  public:
-  SkipPostingFileOffsets(const PostingPackIndexes &table, 
+  SkipPostingFileOffsets(const PostingBlobIndexes &table, 
       const PackFileOffsets &file_offs) {
     for (int posting_index = 0; 
         posting_index < table.NumRows(); 
@@ -742,7 +743,7 @@ class InvertedIndexDumper : public InvertedIndexDumperBase {
   SkipPostingFileOffsets DumpTermEntry(
       const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
     PackFileOffsets file_offs = dumper->Dump(term_entry.GetPackWriter(do_delta));
-    PostingPackIndexes pack_indexes = term_entry.GetPostingPackIndexes();
+    PostingBlobIndexes pack_indexes = term_entry.GetPostingPackIndexes();
     return SkipPostingFileOffsets(pack_indexes, file_offs);
   }
 
@@ -767,7 +768,7 @@ struct TermEntrySet {
 inline SkipPostingFileOffsets DumpTermEntry(
     const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
   PackFileOffsets file_offs = dumper->Dump(term_entry.GetPackWriter(do_delta));
-  PostingPackIndexes pack_indexes = term_entry.GetPostingPackIndexes();
+  PostingBlobIndexes pack_indexes = term_entry.GetPostingPackIndexes();
   return SkipPostingFileOffsets(pack_indexes, file_offs);
 }
 
