@@ -41,7 +41,7 @@ TEST_CASE( "VInts writing and reading", "[qqflash]" ) {
 }
 
 
-// Dump a cozy box, return PackFileOffsets
+// Dump a cozy box, return FileOffsetsOfBlobs
 
 TEST_CASE( "TermFreqIterator", "[qqflash]" ) {
   // Dump TF without delta to a file
@@ -55,7 +55,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash]" ) {
   CozyBoxWriter writer = entry.GetCozyBoxWriter(false);
 
   FileDumper file_dumper("/tmp/tmp.tf");
-  PackFileOffsets file_offs = file_dumper.Dump(writer);
+  FileOffsetsOfBlobs file_offs = file_dumper.Dump(writer);
 }
 
 

@@ -31,7 +31,7 @@ SkipPostingFileOffsets CreateSkipPostingFileOffsets(
   PostingBlobIndexes pack_indexes = CreatePostingPackIndexes(
       block_indexes, in_block_indexes);
   
-  PackFileOffsets file_offs(pack_offs, vint_offs);
+  FileOffsetsOfBlobs file_offs(pack_offs, vint_offs);
   return SkipPostingFileOffsets(pack_indexes, file_offs);
 }
 
@@ -131,7 +131,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     SECTION("Dump it and read it") {
       // Dump it
       FileDumper dumper("/tmp/tmp.pos.dumper");
-      PackFileOffsets file_offs = dumper.Dump(writer);
+      FileOffsetsOfBlobs file_offs = dumper.Dump(writer);
       
       REQUIRE(file_offs.PackOffSize() == 1); 
       REQUIRE(file_offs.VIntsSize() == 1); 
@@ -155,8 +155,8 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
 }
 
 
-TEST_CASE( "PackFileOffsets", "[qqflash]" ) {
-  PackFileOffsets offs({1, 10, 100}, {1000});
+TEST_CASE( "FileOffsetsOfBlobs", "[qqflash]" ) {
+  FileOffsetsOfBlobs offs({1, 10, 100}, {1000});
   REQUIRE(offs.FileOffset(0) == 1);
   REQUIRE(offs.FileOffset(1) == 10);
   REQUIRE(offs.FileOffset(2) == 100);
@@ -178,7 +178,7 @@ TEST_CASE( "SkipPostingFileOffsets", "[qqflash]" ) {
     pack_offs.push_back(i);
   }
   std::vector<off_t> vint_offs{1000};
-  PackFileOffsets file_offs(pack_offs, vint_offs);
+  FileOffsetsOfBlobs file_offs(pack_offs, vint_offs);
 
   SkipPostingFileOffsets skip_locations(posting_locations, file_offs);
 

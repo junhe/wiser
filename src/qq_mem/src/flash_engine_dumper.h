@@ -145,9 +145,9 @@ class GeneralTermEntry {
 };
 
 
-class PackFileOffsets {
+class FileOffsetsOfBlobs {
  public:
-  PackFileOffsets(std::vector<off_t> pack_offs, std::vector<off_t> vint_offs)
+  FileOffsetsOfBlobs(std::vector<off_t> pack_offs, std::vector<off_t> vint_offs)
       : pack_offs_(pack_offs), vint_offs_(vint_offs) {
   }
 
@@ -167,16 +167,16 @@ class PackFileOffsets {
     return vint_offs_;
   }
 
-  off_t FileOffset(int pack_index) const {
+  off_t FileOffset(int blob_index) const {
     const int n_packs = pack_offs_.size();
-    if (pack_index < n_packs) {
-      return pack_offs_[pack_index];
-    } else if (pack_index == n_packs) {
+    if (blob_index < n_packs) {
+      return pack_offs_[blob_index];
+    } else if (blob_index == n_packs) {
       if (vint_offs_.size() == 0)
         LOG(FATAL) << "vint_offs_.size() should not be 0.";
       return vint_offs_[0];
     } else {
-      LOG(FATAL) << "pack_index is too large.";
+      LOG(FATAL) << "blob_index is too large.";
     }
   }
 
@@ -330,11 +330,11 @@ class FileDumper : public GeneralFileDumper {
  public:
   FileDumper(const std::string path) : GeneralFileDumper(path) {}
 
-  PackFileOffsets Dump(const CozyBoxWriter &writer) {
+  FileOffsetsOfBlobs Dump(const CozyBoxWriter &writer) {
     std::vector<off_t> pack_offs = DumpPackedBlocks(writer.PackWriters());
     std::vector<off_t> vint_offs = DumpVInts(writer.VInts());
 
-    return PackFileOffsets(pack_offs, vint_offs);
+    return FileOffsetsOfBlobs(pack_offs, vint_offs);
   }
 
   off_t Dump(const std::string &data) {
@@ -415,7 +415,7 @@ struct SkipPostingFileOffset {
 class SkipPostingFileOffsets {
  public:
   SkipPostingFileOffsets(const PostingBlobIndexes &table, 
-      const PackFileOffsets &file_offs) {
+      const FileOffsetsOfBlobs &file_offs) {
     for (int posting_index = 0; 
         posting_index < table.NumRows(); 
         posting_index += SKIP_INTERVAL) 
@@ -741,7 +741,7 @@ class InvertedIndexDumper : public InvertedIndexDumperBase {
 
   SkipPostingFileOffsets DumpTermEntry(
       const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
-    PackFileOffsets file_offs = dumper->Dump(term_entry.GetCozyBoxWriter(do_delta));
+    FileOffsetsOfBlobs file_offs = dumper->Dump(term_entry.GetCozyBoxWriter(do_delta));
     PostingBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
     return SkipPostingFileOffsets(pack_indexes, file_offs);
   }
@@ -766,7 +766,7 @@ struct TermEntrySet {
 
 inline SkipPostingFileOffsets DumpTermEntry(
     const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
-  PackFileOffsets file_offs = dumper->Dump(term_entry.GetCozyBoxWriter(do_delta));
+  FileOffsetsOfBlobs file_offs = dumper->Dump(term_entry.GetCozyBoxWriter(do_delta));
   PostingBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
   return SkipPostingFileOffsets(pack_indexes, file_offs);
 }
