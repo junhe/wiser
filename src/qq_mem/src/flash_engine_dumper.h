@@ -378,7 +378,7 @@ class FileDumper : public GeneralFileDumper {
 
  protected:
   std::vector<off_t> DumpVInts(const VIntsWriter &varint_buf) {
-    if (varint_buf.Size() == 0) {
+    if (varint_buf.IntsSize() == 0) {
       return std::vector<off_t>{};
     } else {
       off_t start_byte = CurrentOffset();

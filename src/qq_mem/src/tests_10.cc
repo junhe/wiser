@@ -126,7 +126,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
 
     CozyBoxWriter writer = entry.GetCozyBoxWriter(true);
     REQUIRE(writer.PackWriters().size() == 1);
-    REQUIRE(writer.VInts().Size() == (200 - PackedIntsWriter::PACK_SIZE));
+    REQUIRE(writer.VInts().IntsSize() == (200 - PackedIntsWriter::PACK_SIZE));
 
     SECTION("Dump it and read it") {
       // Dump it

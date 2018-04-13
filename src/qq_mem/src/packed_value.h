@@ -128,8 +128,12 @@ class VIntsWriter {
     varint_buf_.Append(val);
   }
 
-  int Size() const {
+  int IntsSize() const {
     return varint_buf_.Size();
+  }
+
+  int SerializationSize() const {
+    return varint_buf_.Size() + 2;
   }
 
   std::string Serialize() const {
