@@ -7,7 +7,7 @@
 enum class BlobFormat {PACKED_INTS, VINTS, NONE};
 
 inline BlobFormat GetBlobFormat(const uint8_t *buf) {
-  if (*buf & 0x80 != 0) {
+  if ((*buf & 0x80) == 0x80) {
     return BlobFormat::VINTS;
   } else {
     return BlobFormat::PACKED_INTS;
