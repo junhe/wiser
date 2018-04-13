@@ -85,12 +85,13 @@ TEST_CASE( "VInts writing and reading", "[qqflash][vints]" ) {
 
 
 // Dump a cozy box, return FileOffsetsOfBlobs
-FileOffsetsOfBlobs DumpCozyBox(std::vector<uint32_t> vec, const std::string path) {
+FileOffsetsOfBlobs DumpCozyBox(std::vector<uint32_t> vec, 
+    const std::string path, bool do_delta) {
   GeneralTermEntry entry;
   for (auto x : vec) {
     entry.AddPostingBag({x});
   }
-  CozyBoxWriter writer = entry.GetCozyBoxWriter(false);
+  CozyBoxWriter writer = entry.GetCozyBoxWriter(do_delta);
 
   FileDumper file_dumper(path);
   FileOffsetsOfBlobs file_offs = file_dumper.Dump(writer);
@@ -113,6 +114,20 @@ SkipList CreateSkipList(const std::string type, std::vector<off_t> offsets_of_ba
   return skip_list;
 }
 
+
+SkipList CreateSkipListForDodId(
+    std::vector<uint32_t> skip_doc_ids, std::vector<off_t> offsets_of_bags) {
+  SkipList skip_list; 
+  
+  for (int i = 0; i < offsets_of_bags.size(); i++) {
+    skip_list.AddEntry(skip_doc_ids[i], offsets_of_bags[i], 0, 0, 0, 0); 
+  }
+
+  return skip_list;
+}
+
+
+
 TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
   SECTION("Simple") {
     std::vector<uint32_t> vec;
@@ -121,7 +136,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
     }
 
     std::string path = "/tmp/tmp.tf";
-    FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path);
+    FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
     SkipList skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
 
     REQUIRE(skip_list.NumEntries() == 3);
@@ -154,7 +169,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
     }
 
     std::string path = "/tmp/tmp.tf2";
-    FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path);
+    FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
     SkipList skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
 
     // Open the file
@@ -189,7 +204,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
     }
 
     std::string path = "/tmp/tmp.tf2";
-    FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path);
+    FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
     SkipList skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
 
     // Open the file
@@ -215,7 +230,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
     }
 
     std::string path = "/tmp/tmp.tf2";
-    FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path);
+    FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
     SkipList skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
 
     // Open the file
@@ -233,8 +248,37 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
       file_map.Close();
     }
   }
+}
 
 
+TEST_CASE( "Doc id iterator", "[qqflash]" ) {
+  SECTION("Simple") {
+    std::vector<uint32_t> doc_ids;
+    for (uint32_t i = 0; i < 10; i++) {
+      doc_ids.push_back(i * 13);
+    }
+
+    std::string path = "/tmp/tmp.docid";
+    FileOffsetsOfBlobs file_offsets = DumpCozyBox(doc_ids, path, true);
+
+    SkipList skip_list = CreateSkipListForDodId(
+        GetSkipPostingDocIds(doc_ids), file_offsets.BlobOffsets());
+
+    // Open the file
+    utils::FileMap file_map(path);
+
+    // Read data by TermFreqIterator
+    DocIdIterator iter((const uint8_t *)file_map.Addr(), skip_list);
+
+    SECTION("Skip one by one") {
+      for (uint32_t i = 0; i < 10; i++) {
+        iter.SkipTo(i);
+        // REQUIRE(iter.Value() == i * 13);
+      }
+
+      file_map.Close();
+    }
+  }
 }
 
 

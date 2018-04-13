@@ -47,6 +47,13 @@ inline std::vector<uint32_t> ExtractOffsets(OffsetPairsIteratorService *iterator
   return offsets;
 }
 
+inline std::vector<uint32_t> GetSkipPostingDocIds(const std::vector<uint32_t> &doc_ids) {
+  std::vector<uint32_t> skip_doc_ids;
+  for (int i = 0; i < doc_ids.size(); i += SKIP_INTERVAL) {
+    skip_doc_ids.push_back(doc_ids[i]); 
+  }
+  return skip_doc_ids;
+}
 
 class PostingBagBlobIndexes {
  public:
@@ -494,7 +501,7 @@ class SkipListWriter {
 
   std::string Serialize() const {
     VarintBuffer buf;
-    auto skip_doc_ids = GetSkipPostingDocIds();
+    auto skip_doc_ids = GetSkipPostingDocIds(doc_ids_);
 
     if ( !(docid_offs_.Size() == tf_offs_.Size() && 
            tf_offs_.Size() == pos_offs_.Size() &&
@@ -528,14 +535,6 @@ class SkipListWriter {
     buf->Append(pos_offs_[i].file_offset_of_blob);
     buf->Append(pos_offs_[i].in_blob_index);
     buf->Append(off_offs_[i].file_offset_of_blob);
-  }
-
-  std::vector<uint32_t> GetSkipPostingDocIds() const {
-    std::vector<uint32_t> doc_ids;
-    for (int i = 0; i < doc_ids_.size(); i += SKIP_INTERVAL) {
-      doc_ids.push_back(doc_ids_[i]); 
-    }
-    return doc_ids;
   }
 
   const FileOffsetOfSkipPostingBags &docid_offs_;
