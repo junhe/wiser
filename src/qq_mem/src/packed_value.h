@@ -69,7 +69,7 @@ class PackedIntsReader {
     n_bits_per_value_ = buf[0];
   }
 
-  long Get(const int index) {
+  long Get(const int index) const {
     return ExtractBits(buf_ + 1, index * n_bits_per_value_, n_bits_per_value_);     
   }
   
@@ -85,9 +85,37 @@ class PackedIntsReader {
 
 class PackedIntsIterator {
  public:
-  PackedIntsIterator(const uint8_t *buf) :reader_(buf) {}
+  PackedIntsIterator(const uint8_t *buf) {
+    Reset(buf); 
+  }
+
+  void Reset(const uint8_t *buf) {
+    index_ = 0;
+    reader_.Reset(buf);
+  }
+
+  void SkipTo(int index) {
+    index_ = index;
+  }
+
+  void Advance() {
+    index_++;
+  }
+
+  bool IsEnd() const {
+    return index_ == PackedIntsWriter::PACK_SIZE;
+  }
+
+  long Value() const {
+    return reader_.Get(index_);
+  }
+
+  int Index() const {
+    return index_;
+  }
 
  private:
+  int index_;
   PackedIntsReader reader_;
 };
 

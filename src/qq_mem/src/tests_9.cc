@@ -146,6 +146,8 @@ TEST_CASE( "PackedInts utilities", "[qqflash]" ) {
 
 
 TEST_CASE( "PackedInts", "[qqflash]" ) {
+
+  int pack_size = PackedIntsWriter::PACK_SIZE;
   SECTION("Serialize") {
     PackedIntsWriter writer;
 
@@ -180,7 +182,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
       }
     }
 
-    SECTION("All values are 0, read by Reader") {
+    SECTION("All values are 0") {
       for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
         writer.Add(0);
       }
@@ -188,13 +190,28 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       std::string data = writer.Serialize();
 
-      PackedIntsReader reader((const uint8_t *)data.data());
-      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
-        REQUIRE(reader.Get(i) == 0);
+      SECTION("Read by Reader") {
+        PackedIntsReader reader((const uint8_t *)data.data());
+        for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+          REQUIRE(reader.Get(i) == 0);
+        }
+      }
+
+      SECTION("Read by iterator") {
+        PackedIntsIterator it((const uint8_t *)data.data());
+        
+        int cnt = 0;
+        while (it.IsEnd() == false) {
+          REQUIRE(it.Value() == 0);
+          it.Advance();
+          cnt++;
+        }
+
+        REQUIRE(cnt == pack_size);
       }
     }
 
-    SECTION("All values are 1, read by Reader") {
+    SECTION("All values are 1") {
       for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
         writer.Add(1);
       }
@@ -202,10 +219,25 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       std::string data = writer.Serialize();
 
-      PackedIntsReader reader((const uint8_t *)data.data());
+      SECTION("Read by reader") {
+        PackedIntsReader reader((const uint8_t *)data.data());
 
-      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
-        REQUIRE(reader.Get(i) == 1);
+        for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+          REQUIRE(reader.Get(i) == 1);
+        }
+      }
+
+      SECTION("Read by iterator") {
+        PackedIntsIterator it((const uint8_t *)data.data());
+        
+        int cnt = 0;
+        while (it.IsEnd() == false) {
+          REQUIRE(it.Value() == 1);
+          it.Advance();
+          cnt++;
+        }
+
+        REQUIRE(cnt == pack_size);
       }
     }
 
@@ -217,9 +249,37 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       std::string data = writer.Serialize();
 
-      PackedIntsReader reader((const uint8_t *)data.data());
-      for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
-        REQUIRE(reader.Get(i) == (i * 10 % 7));
+      SECTION("read by reader") {
+        PackedIntsReader reader((const uint8_t *)data.data());
+        for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+          REQUIRE(reader.Get(i) == (i * 10 % 7));
+        }
+      }
+
+      SECTION("read by iterator") {
+        PackedIntsIterator it((const uint8_t *)data.data());
+        for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+          it.SkipTo(i);
+          REQUIRE(it.Value() == (i * 10 % 7));
+        }
+      }
+
+      SECTION("read by iterator, using Advance()") {
+        PackedIntsIterator it((const uint8_t *)data.data());
+        for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
+          REQUIRE(it.Value() == (i * 10 % 7));
+          it.Advance();
+        }
+
+        REQUIRE(it.IsEnd() == true);
+      }
+
+      SECTION("read by iterator, large strides") {
+        PackedIntsIterator it((const uint8_t *)data.data());
+        for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i += 10) {
+          it.SkipTo(i);
+          REQUIRE(it.Value() == (i * 10 % 7));
+        }
       }
     }
 
