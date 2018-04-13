@@ -52,7 +52,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash]" ) {
   for (int i = 0; i < 300; i++) {
     entry.AddPostingBag({i});
   }
-  TermEntryBlobWriter writer = entry.GetPackWriter(false);
+  CozyBoxWriter writer = entry.GetCozyBoxWriter(false);
 
   FileDumper file_dumper("/tmp/tmp.tf");
   PackFileOffsets file_offs = file_dumper.Dump(writer);

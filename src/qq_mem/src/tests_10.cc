@@ -78,7 +78,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     entry.AddPostingBag({7});
 
     REQUIRE(entry.Values() == std::vector<uint32_t>{7});
-    REQUIRE(entry.PostingSizes() == std::vector<int>{1});
+    REQUIRE(entry.PostingBagSizes() == std::vector<int>{1});
 
     PostingBlobIndexes table = entry.GetPostingBagIndexes();
 
@@ -94,7 +94,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     entry.AddPostingBag({11, 18});
 
     REQUIRE(entry.Values() == std::vector<uint32_t>{7, 9, 10, 11, 18});
-    REQUIRE(entry.PostingSizes() == std::vector<int>{1, 2, 2});
+    REQUIRE(entry.PostingBagSizes() == std::vector<int>{1, 2, 2});
 
     PostingBlobIndexes table = entry.GetPostingBagIndexes();
 
@@ -124,7 +124,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     entry.AddPostingBag(vec);
     REQUIRE(entry.Values() == vec);
 
-    TermEntryBlobWriter writer = entry.GetPackWriter(true);
+    CozyBoxWriter writer = entry.GetCozyBoxWriter(true);
     REQUIRE(writer.PackWriters().size() == 1);
     REQUIRE(writer.VInts().Size() == (200 - PackedIntsWriter::PACK_SIZE));
 
