@@ -22,7 +22,7 @@ PostingBagBlobIndexes CreatePostingPackIndexes(
   return indexes;
 }
 
-FileOffsetOfSkipPostings CreateFileOffsetOfSkipPostings(
+FileOffsetOfSkipPostingBags CreateFileOffsetOfSkipPostingBags(
     std::vector<int> block_indexes,
     std::vector<int> in_block_indexes,
     std::vector<off_t> pack_offs, 
@@ -32,7 +32,7 @@ FileOffsetOfSkipPostings CreateFileOffsetOfSkipPostings(
       block_indexes, in_block_indexes);
   
   FileOffsetsOfBlobs file_offs(pack_offs, vint_offs);
-  return FileOffsetOfSkipPostings(pack_indexes, file_offs);
+  return FileOffsetOfSkipPostingBags(pack_indexes, file_offs);
 }
 
 
@@ -164,7 +164,7 @@ TEST_CASE( "FileOffsetsOfBlobs", "[qqflash]" ) {
 }
 
 
-TEST_CASE( "FileOffsetOfSkipPostings", "[qqflash]" ) {
+TEST_CASE( "FileOffsetOfSkipPostingBags", "[qqflash]" ) {
   PostingBagBlobIndexes posting_locations; 
 
   int n_postings = SKIP_INTERVAL * 3 + 10;
@@ -180,7 +180,7 @@ TEST_CASE( "FileOffsetOfSkipPostings", "[qqflash]" ) {
   std::vector<off_t> vint_offs{1000};
   FileOffsetsOfBlobs file_offs(pack_offs, vint_offs);
 
-  FileOffsetOfSkipPostings skip_locations(posting_locations, file_offs);
+  FileOffsetOfSkipPostingBags skip_locations(posting_locations, file_offs);
 
   REQUIRE(skip_locations.Size() == 4);
   REQUIRE(skip_locations[0].file_offset_of_blob == 0);
@@ -220,10 +220,10 @@ std::vector<T> RepeatNums(std::vector<T> vec) {
 
 TEST_CASE( "SkipListWriter", "[qqflash]" ) {
   SECTION("One skip entry") {
-    auto doc_id_offs = CreateFileOffsetOfSkipPostings({0}, {1}, {10}, {20});     
-    auto tf_offs = CreateFileOffsetOfSkipPostings({0}, {2}, {11}, {21});     
-    auto pos_offs = CreateFileOffsetOfSkipPostings({0}, {3}, {12}, {22});     
-    auto off_offs = CreateFileOffsetOfSkipPostings({0}, {4}, {13}, {23});     
+    auto doc_id_offs = CreateFileOffsetOfSkipPostingBags({0}, {1}, {10}, {20});     
+    auto tf_offs = CreateFileOffsetOfSkipPostingBags({0}, {2}, {11}, {21});     
+    auto pos_offs = CreateFileOffsetOfSkipPostingBags({0}, {3}, {12}, {22});     
+    auto off_offs = CreateFileOffsetOfSkipPostingBags({0}, {4}, {13}, {23});     
     auto doc_ids = std::vector<uint32_t>{18};
 
     SkipListWriter writer(doc_id_offs, tf_offs, pos_offs, off_offs, doc_ids);
@@ -293,13 +293,13 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
   }
 
   SECTION("Two skip entries") {
-    auto doc_id_offs = CreateFileOffsetOfSkipPostings(
+    auto doc_id_offs = CreateFileOffsetOfSkipPostingBags(
         RepeatNums({0, 1}), RepeatNums({1, 2}), {10, 11}, {20});     
-    auto tf_offs = CreateFileOffsetOfSkipPostings(
+    auto tf_offs = CreateFileOffsetOfSkipPostingBags(
         RepeatNums({0, 1}), RepeatNums({3, 4}), {12, 13}, {21});     
-    auto pos_offs = CreateFileOffsetOfSkipPostings(
+    auto pos_offs = CreateFileOffsetOfSkipPostingBags(
         RepeatNums({0, 1}), RepeatNums({5, 6}), {14, 15}, {22});     
-    auto off_offs = CreateFileOffsetOfSkipPostings(
+    auto off_offs = CreateFileOffsetOfSkipPostingBags(
         RepeatNums({0, 1}), RepeatNums({7, 8}), {16, 17}, {23});     
     auto doc_ids = RepeatNums(std::vector<uint32_t>{18, 2999});
 

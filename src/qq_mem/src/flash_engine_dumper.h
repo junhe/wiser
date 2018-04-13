@@ -402,8 +402,8 @@ class TermDictFileDumper : public GeneralFileDumper {
 };
 
 
-struct FileOffsetOfSkipPosting {
-  FileOffsetOfSkipPosting(off_t offset, int index)
+struct FileOffsetOfSkipPostingBag {
+  FileOffsetOfSkipPostingBag(off_t offset, int index)
     : file_offset_of_blob(offset), in_blob_index(index) {}
 
   off_t file_offset_of_blob;
@@ -412,9 +412,9 @@ struct FileOffsetOfSkipPosting {
 
 
 // Absolute file offsets for posting 0, 128, 128*2, ..'s data
-class FileOffsetOfSkipPostings {
+class FileOffsetOfSkipPostingBags {
  public:
-  FileOffsetOfSkipPostings(const PostingBagBlobIndexes &table, 
+  FileOffsetOfSkipPostingBags(const PostingBagBlobIndexes &table, 
       const FileOffsetsOfBlobs &file_offs) {
     for (int posting_index = 0; 
         posting_index < table.NumRows(); 
@@ -430,21 +430,21 @@ class FileOffsetOfSkipPostings {
     return locations_.size();
   }
 
-  const FileOffsetOfSkipPosting &operator [](int i) const {
+  const FileOffsetOfSkipPostingBag &operator [](int i) const {
     return locations_[i];
   }
 
  private:
-  std::vector<FileOffsetOfSkipPosting> locations_;
+  std::vector<FileOffsetOfSkipPostingBag> locations_;
 };
 
 
 class SkipListWriter {
  public:
-  SkipListWriter(const FileOffsetOfSkipPostings &docid_file_offs,
-           const FileOffsetOfSkipPostings &tf_file_offs,
-           const FileOffsetOfSkipPostings &pos_file_offs,
-           const FileOffsetOfSkipPostings &off_file_offs,
+  SkipListWriter(const FileOffsetOfSkipPostingBags &docid_file_offs,
+           const FileOffsetOfSkipPostingBags &tf_file_offs,
+           const FileOffsetOfSkipPostingBags &pos_file_offs,
+           const FileOffsetOfSkipPostingBags &off_file_offs,
            const std::vector<uint32_t> doc_ids) 
     :docid_offs_(docid_file_offs),
      tf_offs_(tf_file_offs),
@@ -499,10 +499,10 @@ class SkipListWriter {
     return doc_ids;
   }
 
-  const FileOffsetOfSkipPostings &docid_offs_;
-  const FileOffsetOfSkipPostings &tf_offs_;
-  const FileOffsetOfSkipPostings &pos_offs_;
-  const FileOffsetOfSkipPostings &off_offs_;
+  const FileOffsetOfSkipPostingBags &docid_offs_;
+  const FileOffsetOfSkipPostingBags &tf_offs_;
+  const FileOffsetOfSkipPostingBags &pos_offs_;
+  const FileOffsetOfSkipPostingBags &off_offs_;
   const std::vector<uint32_t> doc_ids_;
 };
 
@@ -726,24 +726,24 @@ class InvertedIndexDumper : public InvertedIndexDumperBase {
     const GeneralTermEntry &offset_term_entry,
     const std::vector<uint32_t> &doc_ids) 
   {
-    FileOffsetOfSkipPostings docid_skip_offs = 
+    FileOffsetOfSkipPostingBags docid_skip_offs = 
       DumpTermEntry(docid_term_entry, &docid_dumper_, true);
-    FileOffsetOfSkipPostings tf_skip_offs = 
+    FileOffsetOfSkipPostingBags tf_skip_offs = 
       DumpTermEntry(termfreq_term_entry, &termfreq_dumper_, false);
-    FileOffsetOfSkipPostings pos_skip_offs = 
+    FileOffsetOfSkipPostingBags pos_skip_offs = 
       DumpTermEntry(position_term_entry, &position_dumper_, true);
-    FileOffsetOfSkipPostings off_skip_offs = 
+    FileOffsetOfSkipPostingBags off_skip_offs = 
       DumpTermEntry(offset_term_entry, &offset_dumper_, true);
 
     return SkipListWriter(docid_skip_offs, tf_skip_offs, 
         pos_skip_offs, off_skip_offs, docid_term_entry.Values());
   }
 
-  FileOffsetOfSkipPostings DumpTermEntry(
+  FileOffsetOfSkipPostingBags DumpTermEntry(
       const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
     FileOffsetsOfBlobs file_offs = dumper->Dump(term_entry.GetCozyBoxWriter(do_delta));
     PostingBagBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
-    return FileOffsetOfSkipPostings(pack_indexes, file_offs);
+    return FileOffsetOfSkipPostingBags(pack_indexes, file_offs);
   }
 
  private:
@@ -764,11 +764,11 @@ struct TermEntrySet {
     GeneralTermEntry offset;
 };
 
-inline FileOffsetOfSkipPostings DumpTermEntry(
+inline FileOffsetOfSkipPostingBags DumpTermEntry(
     const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
   FileOffsetsOfBlobs file_offs = dumper->Dump(term_entry.GetCozyBoxWriter(do_delta));
   PostingBagBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
-  return FileOffsetOfSkipPostings(pack_indexes, file_offs);
+  return FileOffsetOfSkipPostingBags(pack_indexes, file_offs);
 }
 
 class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
@@ -844,13 +844,13 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
   {
     file_dumper->Seek(file_offset);
 
-    FileOffsetOfSkipPostings docid_skip_offs = 
+    FileOffsetOfSkipPostingBags docid_skip_offs = 
       DumpTermEntry(entry_set.docid, file_dumper, true);
-    FileOffsetOfSkipPostings tf_skip_offs = 
+    FileOffsetOfSkipPostingBags tf_skip_offs = 
       DumpTermEntry(entry_set.termfreq, file_dumper, false);
-    FileOffsetOfSkipPostings pos_skip_offs = 
+    FileOffsetOfSkipPostingBags pos_skip_offs = 
       DumpTermEntry(entry_set.position, file_dumper, true);
-    FileOffsetOfSkipPostings off_skip_offs = 
+    FileOffsetOfSkipPostingBags off_skip_offs = 
       DumpTermEntry(entry_set.offset, file_dumper, true);
 
     return SkipListWriter(docid_skip_offs, tf_skip_offs, 
