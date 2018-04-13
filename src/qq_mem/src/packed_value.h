@@ -122,6 +122,51 @@ class PackedIntsIterator {
 };
 
 
+class DeltaEncodedPackedIntsIterator {
+ public:
+  DeltaEncodedPackedIntsIterator() {}
+
+  DeltaEncodedPackedIntsIterator(const uint8_t *buf, const long pre_pack_int) {
+    Reset(buf, pre_pack_int); 
+  }
+
+  void Reset(const uint8_t *buf, const long pre_pack_int) {
+    index_ = 0;
+    prev_value_ = pre_pack_int;
+    reader_.Reset(buf);
+  }
+
+  void Advance() {
+    prev_value_ = Value();
+    index_++;
+  }
+
+  void SkipTo(int index) {
+    while (index_ < index) {
+      Advance(); 
+    }
+  }
+
+  // If IsEnd() is true, Value() is UNreadable
+  bool IsEnd() const {
+    return index_ == PackedIntsWriter::PACK_SIZE;
+  }
+
+  long Value() const {
+    return prev_value_ + reader_.Get(index_);
+  }
+
+  int Index() const {
+    return index_;
+  }
+
+ private:
+  int index_;
+  long prev_value_;
+  PackedIntsReader reader_;
+};
+
+
 class VIntsWriter {
  public:
   void Append(uint32_t val) {

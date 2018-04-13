@@ -58,6 +58,21 @@ inline std::vector<uint32_t> GetSkipPostingPreDocIds(const std::vector<uint32_t>
   return skip_pre_doc_ids;
 }
 
+
+inline std::vector<uint32_t> EncodeDelta(const std::vector<uint32_t> &values) {
+  uint32_t prev = 0;
+  std::vector<uint32_t> vals;
+
+  for (auto &v : values) {
+    vals.push_back(v - prev);
+    prev = v;
+  }
+
+  return vals;
+}
+
+
+
 class PostingBagBlobIndexes {
  public:
   void AddRow(int block_idx, int offset) {
@@ -131,7 +146,7 @@ class GeneralTermEntry {
 
     std::vector<uint32_t> vals;
     if (do_delta) {
-      vals = EncodeDelta();
+      vals = EncodeDelta(values_);
     } else {
       vals = values_;
     }
@@ -159,17 +174,6 @@ class GeneralTermEntry {
   }
 
  protected:
-  std::vector<uint32_t> EncodeDelta() const {
-    uint32_t prev = 0;
-    std::vector<uint32_t> vals;
-    for (auto &v : values_) {
-      vals.push_back(v - prev);
-      prev = v;
-    }
-
-    return vals;
-  }
-
   // number of values in each posting
   std::vector<int> posting_bag_sizes_;
   std::vector<uint32_t> values_;

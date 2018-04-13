@@ -70,7 +70,7 @@ test_fast:
 	mkdir -p ./build
 	cd build
 	cmake ../src/
-	make -j32 testmain
+	make -j16 testmain
 	cd ..
 	./build/testmain '~[grpc]~[slow]'
 

@@ -146,7 +146,6 @@ TEST_CASE( "PackedInts utilities", "[qqflash]" ) {
 
 
 TEST_CASE( "PackedInts", "[qqflash]" ) {
-
   int pack_size = PackedIntsWriter::PACK_SIZE;
   SECTION("Serialize") {
     PackedIntsWriter writer;

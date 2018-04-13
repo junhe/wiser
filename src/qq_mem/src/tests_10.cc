@@ -402,7 +402,6 @@ TEST_CASE( "Term Index works", "[qqflash]" ) {
   auto it = index.Find("notexist");
   REQUIRE(it == index.CEnd());
   }
-
 }
 
 

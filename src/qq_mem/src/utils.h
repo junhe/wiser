@@ -315,9 +315,6 @@ class FileMap {
   size_t file_length_;
 };
 
-
-
-
 void RemoveDir(std::string path);
 
 } // namespace util
