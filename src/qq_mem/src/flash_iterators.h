@@ -37,7 +37,6 @@ class TermFreqIterator {
       vints_iter_.SkipTo(blob_offset);
     } else {
       // Packed Ints
-      int blob_offset = cur_posting_index_ % PACK_SIZE;
       pack_ints_iter_.SkipTo(blob_offset);
     }
 
