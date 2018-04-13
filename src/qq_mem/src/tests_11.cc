@@ -1,9 +1,10 @@
 #include "catch.hpp"
 
 #include "flash_iterators.h"
+#include "utils.h"
 
 
-TEST_CASE( "VInts writing and reading", "[qqflash]" ) {
+TEST_CASE( "VInts writing and reading", "[qqflash][vints]" ) {
   VIntsWriter writer;
 
   SECTION("Empty") {
@@ -84,15 +85,16 @@ TEST_CASE( "VInts writing and reading", "[qqflash]" ) {
 
 
 // Dump a cozy box, return FileOffsetsOfBlobs
-FileOffsetsOfBlobs DumpCozyBox(std::vector<uint32_t> vec) {
+FileOffsetsOfBlobs DumpCozyBox(std::vector<uint32_t> vec, const std::string path) {
   GeneralTermEntry entry;
   for (uint32_t i = 0; i < 300; i++) {
     entry.AddPostingBag({i});
   }
   CozyBoxWriter writer = entry.GetCozyBoxWriter(false);
 
-  FileDumper file_dumper("/tmp/tmp.tf");
+  FileDumper file_dumper(path);
   FileOffsetsOfBlobs file_offs = file_dumper.Dump(writer);
+  file_dumper.Close();
 
   return file_offs;
 }
@@ -102,7 +104,7 @@ SkipList CreateSkipList(const std::string type, std::vector<off_t> offsets_of_ba
   
   for (int i = 0; i < offsets_of_bags.size(); i++) {
     if (type == "TF") {
-      std::cout << "ofset: " << offsets_of_bags[i] << std::endl;
+      std::cout << "offset: " << offsets_of_bags[i] << std::endl;
       skip_list.AddEntry(10000 + i, 0, offsets_of_bags[i], 0, 0, 0); 
     } else {
       LOG(FATAL) << "Type " << type << " not supported yet";
@@ -112,7 +114,7 @@ SkipList CreateSkipList(const std::string type, std::vector<off_t> offsets_of_ba
   return skip_list;
 }
 
-TEST_CASE( "TermFreqIterator", "[qqflash]" ) {
+TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
   // Dump TF without delta to a file
   // Create skip list using the return of Dump()
   // Create TermFreqIterator
@@ -122,7 +124,8 @@ TEST_CASE( "TermFreqIterator", "[qqflash]" ) {
     vec.push_back(i);
   }
 
-  FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec);
+  std::string path = "/tmp/tmp.tf";
+  FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path);
   SkipList skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
 
   REQUIRE(skip_list.NumEntries() == 3);
@@ -134,7 +137,18 @@ TEST_CASE( "TermFreqIterator", "[qqflash]" ) {
   REQUIRE(skip_list[2].file_offset_of_tf_bag > skip_list[1].file_offset_of_tf_bag);
 
 
+  // Open the file
+  utils::FileMap file_map(path);
+
+  // Read data by TermFreqIterator
+  TermFreqIterator iter((const uint8_t *)file_map.Addr(), skip_list);
+  
+  for (uint32_t i = 0; i < 300; i++) {
+    iter.SkipTo(i);
+    REQUIRE(iter.Value() == i);
+  }
 }
+
 
 
 
