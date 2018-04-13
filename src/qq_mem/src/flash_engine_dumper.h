@@ -45,9 +45,9 @@ class PostingBlobIndexes {
 };
 
 
-class TermEntryPackWriter {
+class TermEntryBlobWriter {
  public:
-  TermEntryPackWriter(std::vector<PackedIntsWriter> writers, 
+  TermEntryBlobWriter(std::vector<PackedIntsWriter> writers, 
                      VIntsWriter vints)
     :pack_writers_(writers), vints_(vints) {}
 
@@ -89,7 +89,7 @@ class GeneralTermEntry {
     return table;
   }
 
-  TermEntryPackWriter GetPackWriter(bool do_delta) const {
+  TermEntryBlobWriter GetPackWriter(bool do_delta) const {
     const int pack_size = PackedIntsWriter::PACK_SIZE;
     const int n_packs = values_.size() / pack_size;
     const int n_remains = values_.size() % pack_size;
@@ -116,7 +116,7 @@ class GeneralTermEntry {
       vints.Append(vals[i]);
     }
 
-    return TermEntryPackWriter(pack_writers, vints);
+    return TermEntryBlobWriter(pack_writers, vints);
   }
 
   const std::vector<uint32_t> &Values() const {
@@ -331,7 +331,7 @@ class FileDumper : public GeneralFileDumper {
  public:
   FileDumper(const std::string path) : GeneralFileDumper(path) {}
 
-  PackFileOffsets Dump(const TermEntryPackWriter &writer) {
+  PackFileOffsets Dump(const TermEntryBlobWriter &writer) {
     std::vector<off_t> pack_offs = DumpPackedBlocks(writer.PackWriters());
     std::vector<off_t> vint_offs = DumpVInts(writer.VInts());
 

@@ -124,7 +124,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     entry.AddGroup(vec);
     REQUIRE(entry.Values() == vec);
 
-    TermEntryPackWriter writer = entry.GetPackWriter(true);
+    TermEntryBlobWriter writer = entry.GetPackWriter(true);
     REQUIRE(writer.PackWriters().size() == 1);
     REQUIRE(writer.VInts().Size() == (200 - PackedIntsWriter::PACK_SIZE));
 
