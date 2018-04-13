@@ -12,9 +12,9 @@ VarintBuffer CreateVarintBuffer(std::vector<int> vec) {
 }
 
 
-PostingBlobIndexes CreatePostingPackIndexes(
+PostingBagBlobIndexes CreatePostingPackIndexes(
     std::vector<int> block_indexes, std::vector<int> in_block_indexes) {
-  PostingBlobIndexes indexes;
+  PostingBagBlobIndexes indexes;
   for (int i = 0; i < block_indexes.size(); i++) {
     indexes.AddRow(block_indexes[i], in_block_indexes[i]);
   }
@@ -28,7 +28,7 @@ FileOffsetOfSkipPostings CreateFileOffsetOfSkipPostings(
     std::vector<off_t> pack_offs, 
     std::vector<off_t> vint_offs
     ) {
-  PostingBlobIndexes pack_indexes = CreatePostingPackIndexes(
+  PostingBagBlobIndexes pack_indexes = CreatePostingPackIndexes(
       block_indexes, in_block_indexes);
   
   FileOffsetsOfBlobs file_offs(pack_offs, vint_offs);
@@ -80,7 +80,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     REQUIRE(entry.Values() == std::vector<uint32_t>{7});
     REQUIRE(entry.PostingBagSizes() == std::vector<int>{1});
 
-    PostingBlobIndexes table = entry.GetPostingBagIndexes();
+    PostingBagBlobIndexes table = entry.GetPostingBagIndexes();
 
     REQUIRE(table.NumRows() == 1);
     REQUIRE(table[0].blob_index == 0);
@@ -96,7 +96,7 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     REQUIRE(entry.Values() == std::vector<uint32_t>{7, 9, 10, 11, 18});
     REQUIRE(entry.PostingBagSizes() == std::vector<int>{1, 2, 2});
 
-    PostingBlobIndexes table = entry.GetPostingBagIndexes();
+    PostingBagBlobIndexes table = entry.GetPostingBagIndexes();
 
     REQUIRE(table.NumRows() == 3);
     REQUIRE(table[0].blob_index == 0);
@@ -165,7 +165,7 @@ TEST_CASE( "FileOffsetsOfBlobs", "[qqflash]" ) {
 
 
 TEST_CASE( "FileOffsetOfSkipPostings", "[qqflash]" ) {
-  PostingBlobIndexes posting_locations; 
+  PostingBagBlobIndexes posting_locations; 
 
   int n_postings = SKIP_INTERVAL * 3 + 10;
   for (int i = 0; i < n_postings; i++) {

@@ -18,15 +18,15 @@ constexpr int SKIP_INTERVAL = PackedIntsWriter::PACK_SIZE;
 constexpr int PACK_SIZE = PackedIntsWriter::PACK_SIZE;
 
 
-struct PostingBlobIndex {
-  PostingBlobIndex(int block_idx, int offset_idx)
+struct PostingBagBlobIndex {
+  PostingBagBlobIndex(int block_idx, int offset_idx)
     : blob_index(block_idx), in_blob_idx(offset_idx) {}
 
   int blob_index;
   int in_blob_idx;
 };
 
-class PostingBlobIndexes {
+class PostingBagBlobIndexes {
  public:
   void AddRow(int block_idx, int offset) {
     locations_.emplace_back(block_idx, offset);
@@ -36,12 +36,12 @@ class PostingBlobIndexes {
     return locations_.size();
   }
 
-  const PostingBlobIndex & operator[] (int i) const {
+  const PostingBagBlobIndex & operator[] (int i) const {
     return locations_[i];
   }
 
  private:
-  std::vector<PostingBlobIndex> locations_;
+  std::vector<PostingBagBlobIndex> locations_;
 };
 
 
@@ -76,9 +76,9 @@ class GeneralTermEntry {
     }
   }
 
-  PostingBlobIndexes GetPostingBagIndexes() const {
+  PostingBagBlobIndexes GetPostingBagIndexes() const {
     int val_index = 0;  
-    PostingBlobIndexes table;
+    PostingBagBlobIndexes table;
     
     for (auto &size : posting_bag_sizes_) {
       table.AddRow(val_index / PackedIntsWriter::PACK_SIZE, 
@@ -414,7 +414,7 @@ struct FileOffsetOfSkipPosting {
 // Absolute file offsets for posting 0, 128, 128*2, ..'s data
 class FileOffsetOfSkipPostings {
  public:
-  FileOffsetOfSkipPostings(const PostingBlobIndexes &table, 
+  FileOffsetOfSkipPostings(const PostingBagBlobIndexes &table, 
       const FileOffsetsOfBlobs &file_offs) {
     for (int posting_index = 0; 
         posting_index < table.NumRows(); 
@@ -742,7 +742,7 @@ class InvertedIndexDumper : public InvertedIndexDumperBase {
   FileOffsetOfSkipPostings DumpTermEntry(
       const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
     FileOffsetsOfBlobs file_offs = dumper->Dump(term_entry.GetCozyBoxWriter(do_delta));
-    PostingBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
+    PostingBagBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
     return FileOffsetOfSkipPostings(pack_indexes, file_offs);
   }
 
@@ -767,7 +767,7 @@ struct TermEntrySet {
 inline FileOffsetOfSkipPostings DumpTermEntry(
     const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
   FileOffsetsOfBlobs file_offs = dumper->Dump(term_entry.GetCozyBoxWriter(do_delta));
-  PostingBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
+  PostingBagBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
   return FileOffsetOfSkipPostings(pack_indexes, file_offs);
 }
 
