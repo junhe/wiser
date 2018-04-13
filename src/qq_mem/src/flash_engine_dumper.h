@@ -593,7 +593,7 @@ class SkipList {
     return skip_table_[interval_idx];
   }
 
- private:
+  // Made public for easier testing
   void AddEntry(const uint32_t doc_id,   
                 const off_t file_offset_of_docid_bag,
                 const off_t file_offset_of_tf_bag,
@@ -609,6 +609,7 @@ class SkipList {
                               file_offset_of_offset_bag);
   }
 
+ private:
   std::vector<SkipEntry> skip_table_;
 };
 

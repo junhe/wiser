@@ -17,31 +17,40 @@ inline BlobFormat GetBlobFormat(const uint8_t *buf) {
 class TermFreqIterator {
  public:
   TermFreqIterator(const uint8_t *buf, const SkipList &skip_list)
-      : buf_(buf), skip_list_(skip_list), cur_reader_type_(BlobFormat::NONE) {
+      : buf_(buf), skip_list_(skip_list), cur_iter_type_(BlobFormat::NONE) {
   }
 
   void SkipTo(int posting_index) {
-    int blob_index = posting_index / PACK_SIZE;
-    int blob_offset = posting_index % PACK_SIZE;
-
     if (posting_index < cur_posting_index_) {
       LOG(FATAL) << "Posting index " << posting_index 
         << " is less than current posting index.";
     }
 
-    /*
-    if reader is not for blob_index or reader not exist
-      setup reader: 
+    int blob_index = posting_index / PACK_SIZE;
+    int blob_offset = posting_index % PACK_SIZE;
 
-    if reader is pack reader
-      read by pack reader
-    else
-      read by vint reader
-    */
-    if (cur_reader_type_ == BlobFormat::NONE || CurBlobIndex() != blob_index) {
+    if (cur_iter_type_ == BlobFormat::NONE || CurBlobIndex() != blob_index) {
       SetupBlob(blob_index); 
     }
 
+    if (cur_iter_type_ == BlobFormat::VINTS) {
+      vints_iter_.SkipTo(blob_offset);
+    } else {
+      // Packed Ints
+      int blob_offset = cur_posting_index_ % PACK_SIZE;
+      pack_ints_iter_.SkipTo(blob_offset);
+    }
+
+    cur_posting_index_  = posting_index;
+  }
+
+  // You must call SKipTo() at least once before calling Value()
+  uint32_t Value() const {
+    if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
+      return pack_ints_iter_.Value();
+    } else if (cur_iter_type_ == BlobFormat::VINTS) {
+      return vints_iter_.Peek();
+    }
   }
 
  private:
@@ -50,11 +59,12 @@ class TermFreqIterator {
     const uint8_t *blob_buf = buf_ + blob_off;
 
     BlobFormat format = GetBlobFormat(blob_buf);
+    cur_iter_type_ = format;
 
     if (format == BlobFormat::PACKED_INTS) {
-      pack_ints_reader_.Reset(blob_buf);
+      pack_ints_iter_.Reset(blob_buf);
     } else {
-      vints_reader_.Reset(blob_buf);
+      vints_iter_.Reset(blob_buf);
     }
   }
 
@@ -71,10 +81,10 @@ class TermFreqIterator {
   const SkipList &skip_list_;
 
   int cur_posting_index_ = 0;
-  BlobFormat cur_reader_type_;
+  BlobFormat cur_iter_type_;
   
-  PackedIntsReader pack_ints_reader_;
-  VIntsReader vints_reader_;
+  PackedIntsIterator pack_ints_iter_;
+  VIntsIterator vints_iter_;
 };
 
 #endif

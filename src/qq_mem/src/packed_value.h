@@ -85,6 +85,8 @@ class PackedIntsReader {
 
 class PackedIntsIterator {
  public:
+  PackedIntsIterator() {}
+
   PackedIntsIterator(const uint8_t *buf) {
     Reset(buf); 
   }
@@ -144,11 +146,11 @@ class VIntsWriter {
 };
 
 
-class VIntsReader {
+class VIntsIterator {
  public:
-  VIntsReader() {}
+  VIntsIterator() {}
 
-  VIntsReader(const uint8_t *buf) {
+  VIntsIterator(const uint8_t *buf) {
     Reset(buf);
   }
 
