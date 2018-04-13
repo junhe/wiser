@@ -262,7 +262,7 @@ TEST_CASE( "Doc id iterator", "[qqflash]" ) {
     FileOffsetsOfBlobs file_offsets = DumpCozyBox(doc_ids, path, true);
 
     SkipList skip_list = CreateSkipListForDodId(
-        GetSkipPostingDocIds(doc_ids), file_offsets.BlobOffsets());
+        GetSkipPostingPreDocIds(doc_ids), file_offsets.BlobOffsets());
 
     // Open the file
     utils::FileMap file_map(path);

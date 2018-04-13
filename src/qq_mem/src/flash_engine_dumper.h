@@ -47,12 +47,15 @@ inline std::vector<uint32_t> ExtractOffsets(OffsetPairsIteratorService *iterator
   return offsets;
 }
 
-inline std::vector<uint32_t> GetSkipPostingDocIds(const std::vector<uint32_t> &doc_ids) {
-  std::vector<uint32_t> skip_doc_ids;
-  for (int i = 0; i < doc_ids.size(); i += SKIP_INTERVAL) {
-    skip_doc_ids.push_back(doc_ids[i]); 
+inline std::vector<uint32_t> GetSkipPostingPreDocIds(const std::vector<uint32_t> &doc_ids) {
+  std::vector<uint32_t> skip_pre_doc_ids{0}; // the first is always 0
+  for (int skip_posting_i = SKIP_INTERVAL; 
+      skip_posting_i < doc_ids.size(); 
+      skip_posting_i += SKIP_INTERVAL) 
+  {
+    skip_pre_doc_ids.push_back(doc_ids[skip_posting_i - 1]); 
   }
-  return skip_doc_ids;
+  return skip_pre_doc_ids;
 }
 
 class PostingBagBlobIndexes {
@@ -501,26 +504,28 @@ class SkipListWriter {
 
   std::string Serialize() const {
     VarintBuffer buf;
-    auto skip_doc_ids = GetSkipPostingDocIds(doc_ids_);
+    auto skip_pre_doc_ids = GetSkipPostingPreDocIds(doc_ids_);
 
     if ( !(docid_offs_.Size() == tf_offs_.Size() && 
            tf_offs_.Size() == pos_offs_.Size() &&
            pos_offs_.Size() == off_offs_.Size() &&
-           off_offs_.Size() == skip_doc_ids.size()) ) 
+           ( off_offs_.Size() == skip_pre_doc_ids.size() || 
+             off_offs_.Size() + 1 == skip_pre_doc_ids.size())
+           ) ) 
     {
       std::cout
         <<    docid_offs_.Size() << ", " 
         <<    tf_offs_.Size() << ", "
         <<    pos_offs_.Size() << ", "
         <<    off_offs_.Size() << ", "
-        <<    skip_doc_ids.size() << std::endl;
+        <<    skip_pre_doc_ids.size() << std::endl;
       LOG(FATAL) << "Skip data is not uniform";
     }
 
     int n_rows = docid_offs_.Size();
     buf.Append(n_rows);
     for (int i = 0; i < n_rows; i++) {
-      AddRow(&buf, i, skip_doc_ids);
+      AddRow(&buf, i, skip_pre_doc_ids);
     }
 
     return buf.Data();
@@ -528,8 +533,8 @@ class SkipListWriter {
 
  private:
   void AddRow(VarintBuffer *buf, int i, 
-      const std::vector<uint32_t> skip_doc_ids) const {
-    buf->Append(skip_doc_ids[i]);
+      const std::vector<uint32_t> skip_pre_doc_ids) const {
+    buf->Append(skip_pre_doc_ids[i]);
     buf->Append(docid_offs_[i].file_offset_of_blob);
     buf->Append(tf_offs_[i].file_offset_of_blob);
     buf->Append(pos_offs_[i].file_offset_of_blob);
