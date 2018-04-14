@@ -147,6 +147,12 @@ class DeltaEncodedPackedIntsIterator {
     }
   }
 
+  void SkipForward(uint32_t val) {
+    while (IsEnd() == false && Value() < val) {
+      Advance();
+    }
+  }
+
   // If IsEnd() is true, Value() is UNreadable
   bool IsEnd() const {
     return index_ == PackedIntsWriter::PACK_SIZE;

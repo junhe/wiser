@@ -36,6 +36,68 @@ int PsudoIncreasingRandom(int i) {
 
 
 TEST_CASE( "Delta Encoded PackedIntsIterator", "[qqflash]" ) {
+  SECTION("Simple sequence, read by Reader") {
+    std::vector<uint32_t> values;
+    for (int i = 0; i < PACK_SIZE; i++) {
+      values.push_back(i);
+    }
+
+    std::string buf = EncodeToDeltaEncodedPackedInts(values);
+
+    DeltaEncodedPackedIntsIterator it((const uint8_t *)buf.data(), 0);
+
+    SECTION("Advance()") {
+      for (int i = 0; i < PACK_SIZE; i++) {
+        REQUIRE(it.Index() == i);
+        REQUIRE(it.Value() == values[i]);
+        it.Advance();
+      }
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("SKipTo()") {
+      for (int i = 0; i < PACK_SIZE; i++) {
+        it.SkipTo(i);
+        REQUIRE(it.Index() == i);
+        REQUIRE(it.Value() == values[i]);
+      }
+      it.Advance();
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("SKipTo() with stides") {
+      for (int i = 0; i < PACK_SIZE; i += 3) {
+        it.SkipTo(i);
+        REQUIRE(it.Index() == i);
+        REQUIRE(it.Value() == values[i]);
+      }
+      it.SkipTo(PACK_SIZE);
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("SkipForward() to the start") {
+      it.SkipForward(0);
+      REQUIRE(it.Value() == 0);
+      REQUIRE(it.Index() == 0);
+      REQUIRE(it.IsEnd() == false);
+
+      it.SkipForward(100);
+      REQUIRE(it.Value() == 100);
+      REQUIRE(it.Index() == 100);
+      REQUIRE(it.IsEnd() == false);
+
+      it.SkipForward(1000);
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("SkipForward() to the end") {
+      it.SkipForward(PACK_SIZE - 1);
+      REQUIRE(it.Value() == PACK_SIZE - 1);
+      REQUIRE(it.Index() == PACK_SIZE - 1);
+      REQUIRE(it.IsEnd() == false);
+    }
+  }
+
   SECTION("Psuedo random numbers, read by Reader") {
     std::vector<uint32_t> values;
     for (int i = 0; i < PACK_SIZE; i++) {
