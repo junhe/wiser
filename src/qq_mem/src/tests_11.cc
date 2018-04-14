@@ -251,11 +251,12 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
 }
 
 
-TEST_CASE( "Doc id iterator", "[qqflash]" ) {
+TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
   SECTION("Simple") {
     std::vector<uint32_t> doc_ids;
-    for (uint32_t i = 0; i < 10; i++) {
-      doc_ids.push_back(i * 13);
+    int num_docids = 200;
+    for (uint32_t i = 0; i < num_docids; i++) {
+      doc_ids.push_back(i);
     }
 
     std::string path = "/tmp/tmp.docid";
@@ -268,15 +269,119 @@ TEST_CASE( "Doc id iterator", "[qqflash]" ) {
     utils::FileMap file_map(path);
 
     // Read data by TermFreqIterator
-    DocIdIterator iter((const uint8_t *)file_map.Addr(), skip_list);
+    DocIdIterator iter((const uint8_t *)file_map.Addr(), skip_list, num_docids);
 
     SECTION("Skip one by one") {
-      for (uint32_t i = 0; i < 10; i++) {
+      for (uint32_t i = 0; i < num_docids; i++) {
         iter.SkipTo(i);
-        // REQUIRE(iter.Value() == i * 13);
+        // std::cout << "i: " << iter.Value() << std::endl;
+        REQUIRE(iter.Value() == i);
       }
 
       file_map.Close();
+    }
+
+    SECTION("Advance()") {
+      for (uint32_t i = 0; i < num_docids; i++) {
+        // std::cout << "i: " << iter.Value() << std::endl;
+        REQUIRE(iter.Value() == i);
+        REQUIRE(iter.IsEnd() == false);
+        iter.Advance();
+      }
+      REQUIRE(iter.IsEnd() == true);
+
+      file_map.Close();
+    }
+
+    SECTION("SkipForward() Simple") {
+      REQUIRE(iter.Value() == 0);
+      REQUIRE(iter.PostingIndex() == 0);
+
+      iter.SkipForward(10);
+      REQUIRE(iter.Value() == 10);
+      REQUIRE(iter.PostingIndex() == 10);
+    }
+
+    SECTION("SkipForward() backwards ") {
+      REQUIRE(iter.Value() == 0);
+
+      iter.SkipForward(10);
+      REQUIRE(iter.Value() == 10);
+
+      iter.SkipForward(8);
+      REQUIRE(iter.Value() == 10);
+      REQUIRE(iter.PostingIndex() == 10);
+    }
+
+    SECTION("SkipForward() into vints ") {
+      REQUIRE(iter.Value() == 0);
+
+      iter.SkipForward(127); // end of pack
+      REQUIRE(iter.Value() == 127);
+      REQUIRE(iter.PostingIndex() == 127);
+
+      iter.SkipForward(128); // start of vints
+      REQUIRE(iter.Value() == 128);
+      REQUIRE(iter.PostingIndex() == 128);
+
+      iter.SkipForward(150); // start of vints
+      REQUIRE(iter.Value() == 150);
+      REQUIRE(iter.PostingIndex() == 150);
+    }
+
+    SECTION("SkipForward() beyond the end") {
+      REQUIRE(iter.Value() == 0);
+
+      iter.SkipForward(199); // start of vints
+      REQUIRE(iter.Value() == 199);
+      REQUIRE(iter.IsEnd() == false);
+
+      iter.SkipForward(10000); // start of vints
+      REQUIRE(iter.IsEnd() == true);
+    }
+  }
+
+  SECTION("Large number of sequntial numbers") {
+    std::vector<uint32_t> doc_ids;
+    int num_docids = PACK_SIZE * 10 + 20;
+    for (uint32_t i = 0; i < num_docids; i++) {
+      doc_ids.push_back(i);
+    }
+
+    std::string path = "/tmp/tmp.docid";
+    FileOffsetsOfBlobs file_offsets = DumpCozyBox(doc_ids, path, true);
+
+    SkipList skip_list = CreateSkipListForDodId(
+        GetSkipPostingPreDocIds(doc_ids), file_offsets.BlobOffsets());
+
+    // Open the file
+    utils::FileMap file_map(path);
+
+    // Read data by TermFreqIterator
+    DocIdIterator iter((const uint8_t *)file_map.Addr(), skip_list, num_docids);
+
+    SECTION("Numbers can be retrieved") {
+      for (uint32_t i = 0; i < num_docids; i++) {
+        REQUIRE(iter.Value() == i);
+        REQUIRE(iter.PostingIndex() == i);
+        REQUIRE(iter.IsEnd() == false);
+        iter.Advance();
+      }
+      REQUIRE(iter.IsEnd() == true);
+
+      file_map.Close();
+    }
+
+    SECTION("Go beyond the end") {
+      iter.SkipForward(num_docids + 10);
+      REQUIRE(iter.IsEnd() == true);
+    }
+
+    SECTION("To the last number") {
+      iter.SkipForward(num_docids -1);
+      REQUIRE(iter.Value() == num_docids -1);
+      REQUIRE(iter.PostingIndex() == num_docids -1);
+      REQUIRE(iter.IsEnd() == false);
     }
   }
 }
