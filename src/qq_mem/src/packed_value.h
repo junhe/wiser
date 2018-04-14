@@ -272,6 +272,12 @@ class DeltaEncodedVIntsIterator {
     return raw_iter_.Index();
   }
 
+  void SkipForward(const uint32_t val) {
+    while (IsEnd() == false && Peek() < val) {
+      Pop();
+    }
+  }
+
   uint32_t Pop() {
     prev_value_ = prev_value_ + raw_iter_.Pop();    
     return prev_value_;

@@ -117,6 +117,33 @@ TEST_CASE( "Delta Encoded VInts Iterator", "[qqflash][deltavints]" ) {
       it.SkipTo(CNT);
       REQUIRE(it.IsEnd() == true);
     }
+
+    SECTION("SkipForward() Simple") {
+      it.SkipForward(19);
+      REQUIRE(it.Index() == 19);
+      REQUIRE(it.Peek() == 19);
+
+      it.SkipForward(100);
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("SkipForward() to the first item") {
+      it.SkipForward(0);
+      REQUIRE(it.Index() == 0);
+      REQUIRE(it.Peek() == 0);
+      REQUIRE(it.IsEnd() == false);
+    }
+
+    SECTION("SkipForward() to the last item") {
+      it.SkipForward(CNT - 1);
+      REQUIRE(it.Index() == CNT - 1);
+      REQUIRE(it.Peek() == CNT - 1);
+      REQUIRE(it.IsEnd() == false);
+
+      it.SkipForward(100);
+      REQUIRE(it.IsEnd() == true);
+    }
+    
   }
 
   SECTION("Increasing psuedo random numbers") {
