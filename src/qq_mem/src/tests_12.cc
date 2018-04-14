@@ -96,6 +96,16 @@ TEST_CASE( "Delta Encoded PackedIntsIterator", "[qqflash]" ) {
       REQUIRE(it.Index() == PACK_SIZE - 1);
       REQUIRE(it.IsEnd() == false);
     }
+
+    SECTION("SkipForward() backwards") {
+      it.SkipForward(50);
+      REQUIRE(it.Value() == 50);
+      REQUIRE(it.Index() == 50);
+
+      it.SkipForward(0);
+      REQUIRE(it.Value() == 50);
+      REQUIRE(it.Index() == 50);
+    }
   }
 
   SECTION("Psuedo random numbers, read by Reader") {
@@ -111,7 +121,7 @@ TEST_CASE( "Delta Encoded PackedIntsIterator", "[qqflash]" ) {
     SECTION("Advance()") {
       for (int i = 0; i < PACK_SIZE; i++) {
         REQUIRE(it.Index() == i);
-        REQUIRE(it.Value() == PsudoIncreasingRandom(i));
+        REQUIRE(it.Value() == values[i]);
         it.Advance();
       }
       REQUIRE(it.IsEnd() == true);
@@ -121,7 +131,7 @@ TEST_CASE( "Delta Encoded PackedIntsIterator", "[qqflash]" ) {
       for (int i = 0; i < PACK_SIZE; i++) {
         it.SkipTo(i);
         REQUIRE(it.Index() == i);
-        REQUIRE(it.Value() == PsudoIncreasingRandom(i));
+        REQUIRE(it.Value() == values[i]);
       }
       it.Advance();
       REQUIRE(it.IsEnd() == true);
@@ -131,10 +141,22 @@ TEST_CASE( "Delta Encoded PackedIntsIterator", "[qqflash]" ) {
       for (int i = 0; i < PACK_SIZE; i += 3) {
         it.SkipTo(i);
         REQUIRE(it.Index() == i);
-        REQUIRE(it.Value() == PsudoIncreasingRandom(i));
+        REQUIRE(it.Value() == values[i]);
       }
       it.SkipTo(PACK_SIZE);
       REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("SkipForward() simple") {
+      it.SkipForward(values[10]);
+      REQUIRE(it.Value() == values[10]);
+      REQUIRE(it.Index() == 10);
+      REQUIRE(it.IsEnd() == false);
+
+      it.SkipForward(values[15] - 1);
+      REQUIRE(it.Value() == values[15]);
+      REQUIRE(it.Index() == 15);
+      REQUIRE(it.IsEnd() == false);
     }
   }
 }
@@ -182,6 +204,10 @@ TEST_CASE( "Delta Encoded VInts Iterator", "[qqflash][deltavints]" ) {
 
     SECTION("SkipForward() Simple") {
       it.SkipForward(19);
+      REQUIRE(it.Index() == 19);
+      REQUIRE(it.Peek() == 19);
+
+      it.SkipForward(1);
       REQUIRE(it.Index() == 19);
       REQUIRE(it.Peek() == 19);
 
