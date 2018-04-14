@@ -14,11 +14,26 @@ std::string EncodeToDeltaEncodedPackedInts(const std::vector<uint32_t> &values) 
 }
 
 
+std::string EncodeToDeltaEncodedVInts(const std::vector<uint32_t> &values) {
+  std::vector<uint32_t> deltas = EncodeDelta(values);
+
+  VIntsWriter writer;
+  for (auto &delta : deltas) {
+    writer.Append(delta);
+  }
+
+  std::string buf = writer.Serialize();
+
+  return writer.Serialize();
+}
+
+
 int PsudoIncreasingRandom(int i) {
   int seed = 6263;
   int rand = (i * seed + 12345) % 23;
   return 1 + i * 30 + rand;
 }
+
 
 TEST_CASE( "Delta Encoded PackedIntsIterator", "[qqflash]" ) {
   SECTION("Psuedo random numbers, read by Reader") {
@@ -61,4 +76,91 @@ TEST_CASE( "Delta Encoded PackedIntsIterator", "[qqflash]" ) {
     }
   }
 }
+
+
+TEST_CASE( "Delta Encoded VInts Iterator", "[qqflash][deltavints]" ) {
+  SECTION("Simple numbers") {
+    std::vector<uint32_t> values;
+    const int CNT = 88;
+    for (int i = 0; i < CNT; i++) {
+      values.push_back(i);
+    }
+
+    std::string buf = EncodeToDeltaEncodedVInts(values);
+
+    DeltaEncodedVIntsIterator it((const uint8_t *)buf.data(), 0);
+
+    SECTION("Pop()") {
+      for (int i = 0; i < CNT; i++) {
+        REQUIRE(it.Index() == i);
+        REQUIRE(it.Pop() == i);
+      }
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("SKipTo()") {
+      for (int i = 0; i < CNT; i++) {
+        it.SkipTo(i);
+        REQUIRE(it.Index() == i);
+        REQUIRE(it.Peek() == i);
+      }
+      it.Pop();
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("SKipTo() with strides") {
+      for (int i = 0; i < CNT; i += 3) {
+        it.SkipTo(i);
+        REQUIRE(it.Index() == i);
+        REQUIRE(it.Peek() == i);
+      }
+      it.SkipTo(CNT);
+      REQUIRE(it.IsEnd() == true);
+    }
+  }
+
+  SECTION("Increasing psuedo random numbers") {
+    std::vector<uint32_t> values;
+    const int CNT = 88;
+    for (int i = 0; i < CNT; i++) {
+      values.push_back(PsudoIncreasingRandom(i));
+    }
+
+    std::string buf = EncodeToDeltaEncodedVInts(values);
+
+    DeltaEncodedVIntsIterator it((const uint8_t *)buf.data(), 0);
+
+    SECTION("Pop()") {
+      for (int i = 0; i < CNT; i++) {
+        REQUIRE(it.Index() == i);
+        REQUIRE(it.Pop() == values[i]);
+      }
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("SKipTo()") {
+      for (int i = 0; i < CNT; i++) {
+        it.SkipTo(i);
+        REQUIRE(it.Index() == i);
+        REQUIRE(it.Peek() == values[i]);
+      }
+      it.Pop();
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("SKipTo() with strides") {
+      for (int i = 0; i < CNT; i += 3) {
+        it.SkipTo(i);
+        REQUIRE(it.Index() == i);
+        REQUIRE(it.Peek() == PsudoIncreasingRandom(i));
+      }
+      it.SkipTo(CNT);
+      REQUIRE(it.IsEnd() == true);
+    }
+  }
+}
+
+
+
+
 

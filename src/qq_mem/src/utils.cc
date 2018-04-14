@@ -20,6 +20,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#include "packed_value.h"
 
 namespace utils {
 
@@ -303,6 +304,15 @@ void UnmapFile(char *addr, int fd, size_t file_length) {
 
 void RemoveDir(std::string path) {
   boost::filesystem::remove_all(path); 
+}
+
+
+void PrintVInts(const uint8_t *buf) {
+  VIntsIterator iter(buf);
+  while (iter.IsEnd() == false) {
+    std::cout << iter.Pop() << ",";
+  }
+  std::cout << std::endl;
 }
 
 } // namespace util

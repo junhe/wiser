@@ -316,6 +316,17 @@ class FileMap {
 };
 
 void RemoveDir(std::string path);
+void PrintVInts(const uint8_t *buf);
+
+template <typename T>
+void PrintVec(const std::vector<T> vec) {
+  for (auto &x : vec) {
+    std::cout << x << ",";
+  }
+  std::cout << std::endl;
+}
+
+
 
 } // namespace util
 #endif

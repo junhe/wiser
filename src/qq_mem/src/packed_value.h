@@ -243,7 +243,7 @@ class VIntsIterator {
       Pop();
     }
   }
-  
+
  private:
   int next_index_;
   uint32_t magic_; 
@@ -252,5 +252,44 @@ class VIntsIterator {
 };
 
 
+class DeltaEncodedVIntsIterator {
+ public:
+  DeltaEncodedVIntsIterator() {}
+  DeltaEncodedVIntsIterator(const uint8_t *buf, const long pre_int) {
+    Reset(buf, pre_int);
+  }
+
+  void Reset(const uint8_t *buf, const uint32_t pre_int) {
+    raw_iter_.Reset(buf);
+    prev_value_ = pre_int;
+  }
+
+  bool IsEnd() const {
+    return raw_iter_.IsEnd();
+  }
+
+  int Index() const {
+    return raw_iter_.Index();
+  }
+
+  uint32_t Pop() {
+    prev_value_ = prev_value_ + raw_iter_.Pop();    
+    return prev_value_;
+  }
+
+  uint32_t Peek() const {
+    return prev_value_ + raw_iter_.Peek();    
+  }
+
+  void SkipTo(int index) {
+    while (Index() < index) {
+      Pop();
+    }
+  }
+
+ private:
+  VIntsIterator raw_iter_; 
+  long prev_value_;
+};
 
 #endif
