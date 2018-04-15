@@ -205,6 +205,48 @@ class DocIdIterator {
 };
 
 
+class CozyBoxIterator {
+ public:
+  CozyBoxIterator(const uint8_t *buf) 
+    :buf_(buf), cur_iter_type_(BlobFormat::NONE), cur_blob_off_(-1) {}
+
+  void GoToCozyEntry(off_t blob_off, int in_blob_index) {
+    if (cur_iter_type_ == BlobFormat::NONE || cur_blob_off_ != blob_off) {
+      SetupBlob(blob_off);
+    }
+
+    if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
+      pack_ints_iter_.SkipTo(in_blob_index);
+    } else {
+      vints_iter_.SkipTo(in_blob_index);
+    }
+  }
+
+  void Advance() {
+  }
+
+ private:
+  void SetupBlob(off_t blob_off) {
+    const uint8_t *blob_buf = buf_ + blob_off;
+
+    BlobFormat cur_iter_type_ = GetBlobFormat(blob_buf);
+
+    if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
+      pack_ints_iter_.Reset(blob_buf);
+    } else {
+      vints_iter_.Reset(blob_buf);
+    }
+
+    cur_blob_off_ = blob_off;
+  }
+
+  const uint8_t *buf_; 
+  BlobFormat cur_iter_type_;
+  off_t cur_blob_off_;
+  
+  PackedIntsIterator pack_ints_iter_;
+  VIntsIterator vints_iter_;
+};
 
 
 
