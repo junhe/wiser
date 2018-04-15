@@ -46,8 +46,6 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
 
 
     SECTION("Simple") {
-      utils::PrintVec<off_t>(file_offsets.PackOffs());
-      
       CozyBoxIterator iter((const uint8_t *)file_map.Addr());
 
       iter.GoToCozyEntry(0, 0);
@@ -170,8 +168,6 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     std::string path = "/tmp/tmp.pos";
     FileOffsetsOfBlobs file_offsets = DumpCozyBox(positions, path, false);
     std::vector<off_t> blob_offs = file_offsets.BlobOffsets();
-    std::cout << "blob offsets of all position blobs: ";
-    utils::PrintVec<off_t>(blob_offs);
     int n_intervals = (n_postings + PACK_SIZE - 1) / PACK_SIZE;
     
     std::vector<off_t> blob_offs_of_pos_bags; // for skip postings only
@@ -187,7 +183,6 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     // Open the file
     utils::FileMap file_map(path);
 
-    std::cout << "--------------------------\n";
     // Initialize pos iterator
     PositionPostingBagIterator pos_iter((const uint8_t*)file_map.Addr(), 
         skip_list, &tf_iter);
@@ -284,8 +279,6 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
     std::string path = "/tmp/tmp.off";
     FileOffsetsOfBlobs file_offsets = DumpCozyBox(offsets, path, false);
     std::vector<off_t> blob_offs = file_offsets.BlobOffsets();
-    std::cout << "blob offsets of all offset blobs: ";
-    utils::PrintVec<off_t>(blob_offs);
     int n_intervals = (n_postings + PACK_SIZE - 1) / PACK_SIZE;
     
     std::vector<off_t> blob_offs_of_offset_bags; // for skip postings only
@@ -301,7 +294,6 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
     // Open the file
     utils::FileMap file_map(path);
 
-    std::cout << "--------------------------\n";
     // Initialize pos iterator
     OffsetPostingBagIterator iter((const uint8_t*)file_map.Addr(), 
         skip_list, &tf_iter);
@@ -344,7 +336,6 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
 
       for (int i = 0; i < tf * 2; i++) {
         uint32_t off = iter.Pop();
-        std::cout << "i : " << i << " off: " << off << std::endl;
         REQUIRE(off == good_offsets[i]);
       }
     }
@@ -359,7 +350,6 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
 
       for (int i = 0; i < tf * 2; i++) {
         uint32_t off = iter.Pop();
-        std::cout << "i : " << i << " off: " << off << std::endl;
         REQUIRE(off == good_offsets[i]);
       }
     }

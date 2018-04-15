@@ -319,15 +319,11 @@ class PositionPostingBagIterator {
   {}
 
   void SkipTo(int posting_bag) {
-    std::cout << "Skip to " << posting_bag << std::endl;
     int skip_interval = FindSkipInterval(posting_bag);
-    std::cout << "find interval: " << skip_interval << std::endl;
 
     GoToSkipPostingBag(skip_interval);
     int skip_bag = skip_interval * PACK_SIZE;
     int n_entries_between = NumCozyEntriesBetween(skip_bag, posting_bag);
-    std::cout << "skip bag: " << skip_bag << std::endl;
-    std::cout << "n_entries_between: " << n_entries_between << std::endl;
 
     for (int i = 0; i < n_entries_between; i++) {
       cozy_box_iter_.Advance();
@@ -359,13 +355,11 @@ class PositionPostingBagIterator {
   }
 
   void GoToSkipPostingBag(const int skip_interval) {
-    std::cout << "Go to skip_interval: " << skip_interval << std::endl;
 
     const SkipEntry &ent = skip_list_[skip_interval];
     const off_t &blob_off = ent.file_offset_of_pos_blob;
     const int &in_blob_index = ent.in_blob_index_of_pos_bag;
 
-    std::cout << "blob_off: " << blob_off << " in_blob_index: " << in_blob_index << std::endl;
     cozy_box_iter_.GoToCozyEntry(blob_off, in_blob_index);
     cur_posting_bag_ = skip_interval * PACK_SIZE;
   }
@@ -409,15 +403,11 @@ class OffsetPostingBagIterator {
   {}
 
   void SkipTo(int posting_bag) {
-    std::cout << "Skip to " << posting_bag << std::endl;
     int skip_interval = FindSkipInterval(posting_bag);
-    std::cout << "find interval: " << skip_interval << std::endl;
 
     GoToSkipPostingBag(skip_interval);
     int skip_bag = skip_interval * PACK_SIZE;
     int n_entries_between = NumCozyEntriesBetween(skip_bag, posting_bag);
-    std::cout << "skip bag: " << skip_bag << std::endl;
-    std::cout << "n_entries_between: " << n_entries_between << std::endl;
 
     for (int i = 0; i < n_entries_between; i++) {
       cozy_box_iter_.Advance();
@@ -449,31 +439,21 @@ class OffsetPostingBagIterator {
   }
 
   void GoToSkipPostingBag(const int skip_interval) {
-    std::cout << "Go to skip_interval: " << skip_interval << std::endl;
-
     const SkipEntry &ent = skip_list_[skip_interval];
     const off_t &blob_off = ent.file_offset_of_offset_blob;
     const int &in_blob_index = ent.in_blob_index_of_offset_bag;
 
-    std::cout << "blob_off: " << blob_off << " in_blob_index: " << in_blob_index << std::endl;
     cozy_box_iter_.GoToCozyEntry(blob_off, in_blob_index);
     cur_posting_bag_ = skip_interval * PACK_SIZE;
   }
 
   int FindSkipInterval(const int posting_bag) {
-    std::cout << "FindSkipInterval(): " << posting_bag << std::endl;
     int i = CurSkipInterval();
-    std::cout << "i = CurSkipInterval(): " << i << std::endl;
-    std::cout << "skip_list_.StartPostingIndex(i + 1): " 
-      << skip_list_.StartPostingIndex(i + 1) << std::endl;
-    std::cout << "NumEntries(): " << skip_list_.NumEntries() << std::endl;
     while (i + 1 < skip_list_.NumEntries() && 
         skip_list_.StartPostingIndex(i + 1) <= posting_bag) 
     {
       i++;
-      std::cout << "i++\n";
     }
-    std::cout << "return : " << i << std::endl;
     return i;
   }
 
