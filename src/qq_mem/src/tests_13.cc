@@ -233,61 +233,38 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
         REQUIRE(pos == good_positions[i]);
       }
     }
- 
-
   }
-}
 
-/*
-TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
-  SECTION("Simple unrealistic sequential positions") {
-    std::vector<uint32_t> positions;
-    int num_positions = 300;
-    for (uint32_t i = 0; i < num_positions; i++) {
-      positions.push_back(i);
+  SECTION("Offset iterator") {
+    std::vector<uint32_t> offsets;
+    for (uint32_t i = 0; i < n_postings * 3 * 2; i++) {
+      offsets.push_back(i);
     }
 
-    std::string path = "/tmp/tmp.docid";
-    FileOffsetsOfBlobs file_offsets = DumpCozyBox(positions, path, false);
+    std::string path = "/tmp/tmp.pos";
+    FileOffsetsOfBlobs file_offsets = DumpCozyBox(offsets, path, false);
+    std::vector<off_t> blob_offs = file_offsets.BlobOffsets();
+    std::cout << "blob offsets of all position blobs: ";
+    utils::PrintVec<off_t>(blob_offs);
+    int n_intervals = n_postings / PACK_SIZE;
+    
+    std::vector<off_t> blob_offs_of_pos_bags; // for skip postings only
+    std::vector<int> in_blob_indexes;
+    for (int i = 0; i < n_intervals; i++) {
+      blob_offs_of_pos_bags.push_back(blob_offs[i*3]);
+      in_blob_indexes.push_back(0);
+    }
 
-    SkipList skip_list = CreateSkipListForDodId(
-        GetSkipPostingPreDocIds(doc_ids), file_offsets.BlobOffsets());
+    SkipList skip_list = CreateSkipListForPosition(
+        blob_offs_of_pos_bags, in_blob_indexes);
 
     // Open the file
     utils::FileMap file_map(path);
 
-    // Read data by TermFreqIterator
-    DocIdIterator iter((const uint8_t *)file_map.Addr(), skip_list, num_docids);
-
-    SECTION("Skip one by one") {
-      for (uint32_t i = 0; i < num_docids; i++) {
-        iter.SkipTo(i);
-        // std::cout << "i: " << iter.Value() << std::endl;
-        REQUIRE(iter.Value() == i);
-      }
-
-      file_map.Close();
-    }
-
-    SECTION("Advance()") {
-      for (uint32_t i = 0; i < num_docids; i++) {
-        // std::cout << "i: " << iter.Value() << std::endl;
-        REQUIRE(iter.Value() == i);
-        REQUIRE(iter.IsEnd() == false);
-        iter.Advance();
-      }
-      REQUIRE(iter.IsEnd() == true);
-
-      file_map.Close();
-    }
+    std::cout << "--------------------------\n";
   }
+
 }
-
-*/
-
-
-
-
 
 
 
