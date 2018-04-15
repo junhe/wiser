@@ -544,6 +544,7 @@ class SkipListWriter {
     buf->Append(pos_offs_[i].file_offset_of_blob);
     buf->Append(pos_offs_[i].in_blob_index);
     buf->Append(off_offs_[i].file_offset_of_blob);
+    buf->Append(off_offs_[i].in_blob_index);
   }
 
   const FileOffsetOfSkipPostingBags &docid_offs_;
@@ -561,13 +562,16 @@ struct SkipEntry {
             const off_t tf_file_offset_in,
             const off_t pos_file_offset_in,
             const int pos_in_block_index_in,
-            const off_t off_file_offset_in)
+            const off_t off_file_offset_in,
+            const int offset_in_block_index_in)
     : previous_doc_id(doc_skip_in),
       file_offset_of_docid_bag(doc_file_offset_in),
       file_offset_of_tf_bag(tf_file_offset_in),
       file_offset_of_pos_blob(pos_file_offset_in),
       in_blob_index_of_pos_bag(pos_in_block_index_in),
-      file_offset_of_offset_blob(off_file_offset_in) {}
+      file_offset_of_offset_blob(off_file_offset_in),
+      in_blob_index_of_offset_bag(offset_in_block_index_in)
+  {}
  
   uint32_t previous_doc_id;
   off_t file_offset_of_docid_bag;
@@ -575,6 +579,7 @@ struct SkipEntry {
   off_t file_offset_of_pos_blob;
   int in_blob_index_of_pos_bag;
   off_t file_offset_of_offset_blob;
+  int in_blob_index_of_offset_bag;
 };
 
 class SkipList {
@@ -591,8 +596,14 @@ class SkipList {
       off_t file_offset_of_pos_blob = it.Pop();
       int in_blob_index_of_pos_bag = it.Pop();
       off_t file_offset_of_offset_blob = it.Pop();
-      AddEntry(previous_doc_id, file_offset_of_docid_bag, file_offset_of_tf_bag, 
-          file_offset_of_pos_blob, in_blob_index_of_pos_bag, file_offset_of_offset_blob);
+      int in_blob_index_of_offset_bag = it.Pop();
+      AddEntry(previous_doc_id, 
+               file_offset_of_docid_bag, 
+               file_offset_of_tf_bag, 
+               file_offset_of_pos_blob, 
+               in_blob_index_of_pos_bag, 
+               file_offset_of_offset_blob,
+               in_blob_index_of_offset_bag);
     }
   }
 
@@ -614,14 +625,16 @@ class SkipList {
                 const off_t file_offset_of_tf_bag,
                 const off_t file_offset_of_pos_blob,
                 const int in_blob_index_of_pos_bag,
-                const off_t file_offset_of_offset_blob) 
+                const off_t file_offset_of_offset_blob,
+                const int in_blob_index_of_offset_bag) 
   {
     skip_table_.emplace_back( previous_doc_id,   
                               file_offset_of_docid_bag,
                               file_offset_of_tf_bag,
                               file_offset_of_pos_blob,
                               in_blob_index_of_pos_bag,
-                              file_offset_of_offset_blob);
+                              file_offset_of_offset_blob,
+                              in_blob_index_of_offset_bag);
   }
 
  private:
