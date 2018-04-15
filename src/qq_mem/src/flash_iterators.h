@@ -303,6 +303,20 @@ class CozyBoxIterator {
 };
 
 
+// class PositionPostingBagIterator {
+ // public:
+  // PositionPostingBagIterator(const uint8_t *buf, const SkipList &skip_list,
+      // TermFreqIterator *tf_iter)
+    // : buf_(buf), skip_list_(skip_list), 
+      // cur_iter_type_(BlobFormat::NONE),
+      // tf_iter_(tf_iter)
+  // {}
+
+// };
+
+
+
+
 
 #endif
 
