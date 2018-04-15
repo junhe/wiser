@@ -830,11 +830,11 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
       // Position
       entry_set.position.AddPostingBag(
-          ExtractPositions(posting_it.PositionBegin().get()));
+          EncodeDelta(ExtractPositions(posting_it.PositionBegin().get())));
 
       // Offset
       entry_set.offset.AddPostingBag(
-          ExtractOffsets(posting_it.OffsetPairsBegin().get()));
+          EncodeDelta(ExtractOffsets(posting_it.OffsetPairsBegin().get())));
 
       posting_it.Advance();
     }
