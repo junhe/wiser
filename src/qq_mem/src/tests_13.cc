@@ -121,6 +121,20 @@ std::vector<uint32_t> GoodPositions(int posting_bag) {
   return ret;
 }
 
+std::vector<uint32_t> GoodOffsets(int posting_bag) {
+  std::vector<uint32_t> ret;
+  uint32_t prev = 0;
+  for (uint32_t delta = posting_bag * 3 * 2; delta < (posting_bag + 1) * 3 * 2; delta++) {
+    uint32_t off = prev + delta;
+    ret.push_back(off);
+    prev = off; 
+  }
+
+  return ret;
+}
+
+
+
 
 TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
   // Build term frequency iterator
@@ -158,7 +172,7 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     std::vector<off_t> blob_offs = file_offsets.BlobOffsets();
     std::cout << "blob offsets of all position blobs: ";
     utils::PrintVec<off_t>(blob_offs);
-    int n_intervals = n_postings / PACK_SIZE;
+    int n_intervals = (n_postings + PACK_SIZE - 1) / PACK_SIZE;
     
     std::vector<off_t> blob_offs_of_pos_bags; // for skip postings only
     std::vector<int> in_blob_indexes;
@@ -234,6 +248,32 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
       }
     }
   }
+}
+
+TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
+  // Build term frequency iterator
+  std::vector<uint32_t> vec;
+  int n_postings = 300;
+  for (uint32_t i = 0; i < n_postings; i++) {
+    vec.push_back(3);
+  }
+
+  std::string path = "/tmp/tmp.tf";
+  FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
+  SkipList tf_skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
+
+  // Open the file
+  utils::FileMap file_map(path);
+
+  // Read data by TermFreqIterator
+  TermFreqIterator tf_iter((const uint8_t *)file_map.Addr(), tf_skip_list);
+
+  SECTION("Check if the TF iterator works") {
+    for (uint32_t i = 0; i < n_postings; i++) {
+      tf_iter.SkipTo(i);
+      REQUIRE(tf_iter.Value() == 3);
+    }
+  }
 
   SECTION("Offset iterator") {
     std::vector<uint32_t> offsets;
@@ -241,29 +281,89 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
       offsets.push_back(i);
     }
 
-    std::string path = "/tmp/tmp.pos";
+    std::string path = "/tmp/tmp.off";
     FileOffsetsOfBlobs file_offsets = DumpCozyBox(offsets, path, false);
     std::vector<off_t> blob_offs = file_offsets.BlobOffsets();
-    std::cout << "blob offsets of all position blobs: ";
+    std::cout << "blob offsets of all offset blobs: ";
     utils::PrintVec<off_t>(blob_offs);
-    int n_intervals = n_postings / PACK_SIZE;
+    int n_intervals = (n_postings + PACK_SIZE - 1) / PACK_SIZE;
     
-    std::vector<off_t> blob_offs_of_pos_bags; // for skip postings only
+    std::vector<off_t> blob_offs_of_offset_bags; // for skip postings only
     std::vector<int> in_blob_indexes;
     for (int i = 0; i < n_intervals; i++) {
-      blob_offs_of_pos_bags.push_back(blob_offs[i*3]);
+      blob_offs_of_offset_bags.push_back(blob_offs[i*6]);
       in_blob_indexes.push_back(0);
     }
 
-    SkipList skip_list = CreateSkipListForPosition(
-        blob_offs_of_pos_bags, in_blob_indexes);
+    SkipList skip_list = CreateSkipListForOffset(
+        blob_offs_of_offset_bags, in_blob_indexes);
 
     // Open the file
     utils::FileMap file_map(path);
 
     std::cout << "--------------------------\n";
-  }
+    // Initialize pos iterator
+    OffsetPostingBagIterator iter((const uint8_t*)file_map.Addr(), 
+        skip_list, &tf_iter);
 
+    SECTION("Very simple") {
+      int posting_bag = 0;
+      iter.SkipTo(posting_bag);
+      int tf = iter.TermFreq();
+      REQUIRE(tf == 3);
+
+      auto good_offsets = GoodOffsets(posting_bag);
+
+      for (int i = 0; i < tf * 2; i++) {
+        uint32_t off = iter.Pop();
+        REQUIRE(off == good_offsets[i]);
+      }
+    }
+
+    SECTION("Very simple 2") {
+      int posting_bag = 1;
+      iter.SkipTo(posting_bag);
+      int tf = iter.TermFreq();
+      REQUIRE(tf == 3);
+
+      auto good_offsets = GoodOffsets(posting_bag);
+
+      for (int i = 0; i < tf * 2; i++) {
+        uint32_t off = iter.Pop();
+        REQUIRE(off == good_offsets[i]);
+      }
+    }
+
+    SECTION("To the end") {
+      int posting_bag = n_postings - 1;
+      iter.SkipTo(posting_bag);
+      int tf = iter.TermFreq();
+      REQUIRE(tf == 3);
+
+      auto good_offsets = GoodOffsets(posting_bag);
+
+      for (int i = 0; i < tf * 2; i++) {
+        uint32_t off = iter.Pop();
+        std::cout << "i : " << i << " off: " << off << std::endl;
+        REQUIRE(off == good_offsets[i]);
+      }
+    }
+
+    SECTION("To the middle") {
+      int posting_bag = n_postings / 2;
+      iter.SkipTo(posting_bag);
+      int tf = iter.TermFreq();
+      REQUIRE(tf == 3);
+
+      auto good_offsets = GoodOffsets(posting_bag);
+
+      for (int i = 0; i < tf * 2; i++) {
+        uint32_t off = iter.Pop();
+        std::cout << "i : " << i << " off: " << off << std::endl;
+        REQUIRE(off == good_offsets[i]);
+      }
+    }
+  }
 }
 
 

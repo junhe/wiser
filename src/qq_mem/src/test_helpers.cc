@@ -108,5 +108,19 @@ SkipList CreateSkipListForPosition( std::vector<off_t> blob_offsets,
 }
 
 
+SkipList CreateSkipListForOffset( std::vector<off_t> blob_offsets, 
+                                    std::vector<int> in_blob_indexes) 
+{
+  SkipList skip_list; 
+  
+  for (int i = 0; i < blob_offsets.size(); i++) {
+    skip_list.AddEntry(0, 0, 0, 0, 0, blob_offsets[i], in_blob_indexes[i]);
+  }
+
+  return skip_list;
+}
+
+
+
 
 

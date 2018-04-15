@@ -27,4 +27,6 @@ SkipList CreateSkipListForDodId(
     std::vector<uint32_t> skip_doc_ids, std::vector<off_t> offsets_of_bags);
 SkipList CreateSkipListForPosition( std::vector<off_t> blob_offsets, 
                                     std::vector<int> in_blob_indexes);
+SkipList CreateSkipListForOffset( std::vector<off_t> blob_offsets, 
+                                    std::vector<int> in_blob_indexes);
 #endif
