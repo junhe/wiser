@@ -50,4 +50,21 @@ PostingListDelta create_posting_list_delta(int n_postings) {
   return pl;
 }
 
+FileOffsetsOfBlobs DumpCozyBox(std::vector<uint32_t> vec, 
+    const std::string path, bool do_delta) {
+  GeneralTermEntry entry;
+  for (auto x : vec) {
+    entry.AddPostingBag({x});
+  }
+  CozyBoxWriter writer = entry.GetCozyBoxWriter(do_delta);
+
+  FileDumper file_dumper(path);
+  FileOffsetsOfBlobs file_offs = file_dumper.Dump(writer);
+  file_dumper.Close();
+
+  return file_offs;
+}
+
+
+
 

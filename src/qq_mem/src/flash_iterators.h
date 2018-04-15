@@ -6,6 +6,19 @@
 
 enum class BlobFormat {PACKED_INTS, VINTS, NONE};
 
+inline std::string FormatString(const BlobFormat f) {
+  if (f == BlobFormat::PACKED_INTS) {
+    return "PACKED_INTS";
+  } else if (f == BlobFormat::VINTS) {
+    return "VINTS";
+  } else if (f == BlobFormat::NONE) {
+    return "NONE";
+  } else {
+    return "NOT IN ENUM";
+  }
+
+}
+
 inline BlobFormat GetBlobFormat(const uint8_t *buf) {
   if ((*buf & 0x80) == 0x80) {
     return BlobFormat::VINTS;
@@ -208,7 +221,8 @@ class DocIdIterator {
 class CozyBoxIterator {
  public:
   CozyBoxIterator(const uint8_t *buf) 
-    :buf_(buf), cur_iter_type_(BlobFormat::NONE), cur_blob_off_(-1) {}
+    :buf_(buf), cur_iter_type_(BlobFormat::NONE), 
+     cur_blob_off_(-1), cur_in_blob_index_(0) {}
 
   void GoToCozyEntry(off_t blob_off, int in_blob_index) {
     if (cur_iter_type_ == BlobFormat::NONE || cur_blob_off_ != blob_off) {
@@ -220,16 +234,54 @@ class CozyBoxIterator {
     } else {
       vints_iter_.SkipTo(in_blob_index);
     }
+    cur_in_blob_index_ = in_blob_index;
   }
 
   void Advance() {
+    GoToCozyEntry(cur_blob_off_, cur_in_blob_index_ + 1);
+
+    if (IsAtBlobEnd() == true) {
+      GoToCozyEntry(cur_blob_off_ + CurBlobBytes(), 0);
+    }
+  }
+
+  uint32_t Value() const {
+    if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
+      return pack_ints_iter_.Value();
+    } else if (cur_iter_type_ == BlobFormat::VINTS) {
+      return vints_iter_.Peek();
+    }
+  }
+
+  bool IsAtBlobEnd() const {
+    if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
+      return pack_ints_iter_.IsEnd();
+    } else {
+      return vints_iter_.IsEnd();
+    }
+  }
+
+  off_t CurBlobOffset() const {
+    return cur_blob_off_;
+  }
+
+  std::string Format() const {
+    return FormatString(cur_iter_type_);
   }
 
  private:
-  void SetupBlob(off_t blob_off) {
+  off_t CurBlobBytes() const {
+    if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
+      return pack_ints_iter_.SerializationSize();
+    } else if (cur_iter_type_ == BlobFormat::VINTS) {
+      return vints_iter_.SerializationSize();
+    }
+  }
+
+  void SetupBlob(const off_t blob_off) {
     const uint8_t *blob_buf = buf_ + blob_off;
 
-    BlobFormat cur_iter_type_ = GetBlobFormat(blob_buf);
+    cur_iter_type_ = GetBlobFormat(blob_buf);
 
     if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
       pack_ints_iter_.Reset(blob_buf);
@@ -238,11 +290,13 @@ class CozyBoxIterator {
     }
 
     cur_blob_off_ = blob_off;
+    cur_in_blob_index_ = 0;
   }
 
   const uint8_t *buf_; 
   BlobFormat cur_iter_type_;
   off_t cur_blob_off_;
+  int cur_in_blob_index_;
   
   PackedIntsIterator pack_ints_iter_;
   VIntsIterator vints_iter_;

@@ -234,7 +234,7 @@ class VIntsIterator {
     next_index_ = 0;
   }
 
-  int SerializationSize() {
+  int SerializationSize() const {
     return 2 + varint_bytes_; // 2 is for the header
   }
 
