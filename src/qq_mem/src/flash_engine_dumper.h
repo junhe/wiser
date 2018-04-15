@@ -565,14 +565,14 @@ struct SkipEntry {
     : previous_doc_id(doc_skip_in),
       file_offset_of_docid_bag(doc_file_offset_in),
       file_offset_of_tf_bag(tf_file_offset_in),
-      file_offset_of_pos_bag(pos_file_offset_in),
+      file_offset_of_pos_blob(pos_file_offset_in),
       in_blob_index_of_pos_bag(pos_in_block_index_in),
       file_offset_of_offset_bag(off_file_offset_in) {}
  
   uint32_t previous_doc_id;
   off_t file_offset_of_docid_bag;
   off_t file_offset_of_tf_bag;
-  off_t file_offset_of_pos_bag;
+  off_t file_offset_of_pos_blob;
   int in_blob_index_of_pos_bag;
   off_t file_offset_of_offset_bag;
 };
@@ -588,16 +588,20 @@ class SkipList {
       uint32_t previous_doc_id = it.Pop();
       off_t file_offset_of_docid_bag = it.Pop();
       off_t file_offset_of_tf_bag = it.Pop();
-      off_t file_offset_of_pos_bag = it.Pop();
+      off_t file_offset_of_pos_blob = it.Pop();
       int in_blob_index_of_pos_bag = it.Pop();
       off_t file_offset_of_offset_bag = it.Pop();
       AddEntry(previous_doc_id, file_offset_of_docid_bag, file_offset_of_tf_bag, 
-          file_offset_of_pos_bag, in_blob_index_of_pos_bag, file_offset_of_offset_bag);
+          file_offset_of_pos_blob, in_blob_index_of_pos_bag, file_offset_of_offset_bag);
     }
   }
 
   int NumEntries() const {
     return skip_table_.size();
+  }
+
+  int StartPostingIndex(int skip_interval) const {
+    return skip_interval * PACK_SIZE;
   }
 
   const SkipEntry &operator [](int interval_idx) const {
@@ -608,14 +612,14 @@ class SkipList {
   void AddEntry(const uint32_t previous_doc_id,   
                 const off_t file_offset_of_docid_bag,
                 const off_t file_offset_of_tf_bag,
-                const off_t file_offset_of_pos_bag,
+                const off_t file_offset_of_pos_blob,
                 const int in_blob_index_of_pos_bag,
                 const off_t file_offset_of_offset_bag) 
   {
     skip_table_.emplace_back( previous_doc_id,   
                               file_offset_of_docid_bag,
                               file_offset_of_tf_bag,
-                              file_offset_of_pos_bag,
+                              file_offset_of_pos_blob,
                               in_blob_index_of_pos_bag,
                               file_offset_of_offset_bag);
   }

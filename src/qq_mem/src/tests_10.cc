@@ -238,9 +238,9 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
       REQUIRE(skip_list[0].previous_doc_id == 0);
       REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
       REQUIRE(skip_list[0].file_offset_of_tf_bag == 11);
-      REQUIRE(skip_list[0].file_offset_of_pos_bag == 12);
+      REQUIRE(skip_list[0].file_offset_of_pos_blob == 12);
       REQUIRE(skip_list[0].in_blob_index_of_pos_bag == 3);
-      REQUIRE(skip_list[0].file_offset_of_offset_bag == 13);
+      REQUIRE(skip_list[0].file_offset_of_offset_blob == 13);
     }
 
     SECTION("Term dict file dumping and loading") {
@@ -267,9 +267,9 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
         REQUIRE(skip_list[0].previous_doc_id == 0);
         REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
         REQUIRE(skip_list[0].file_offset_of_tf_bag == 11);
-        REQUIRE(skip_list[0].file_offset_of_pos_bag == 12);
+        REQUIRE(skip_list[0].file_offset_of_pos_blob == 12);
         REQUIRE(skip_list[0].in_blob_index_of_pos_bag == 3);
-        REQUIRE(skip_list[0].file_offset_of_offset_bag == 13);
+        REQUIRE(skip_list[0].file_offset_of_offset_blob == 13);
       }
 
       SECTION("Second entry") {
@@ -284,9 +284,9 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
         REQUIRE(skip_list[0].previous_doc_id == 0);
         REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
         REQUIRE(skip_list[0].file_offset_of_tf_bag == 11);
-        REQUIRE(skip_list[0].file_offset_of_pos_bag == 12);
+        REQUIRE(skip_list[0].file_offset_of_pos_blob == 12);
         REQUIRE(skip_list[0].in_blob_index_of_pos_bag == 3);
-        REQUIRE(skip_list[0].file_offset_of_offset_bag == 13);
+        REQUIRE(skip_list[0].file_offset_of_offset_blob == 13);
       }
 
     }
@@ -315,16 +315,16 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
     REQUIRE(skip_list[0].previous_doc_id == 0);
     REQUIRE(skip_list[0].file_offset_of_docid_bag == 10);
     REQUIRE(skip_list[0].file_offset_of_tf_bag == 12);
-    REQUIRE(skip_list[0].file_offset_of_pos_bag == 14);
+    REQUIRE(skip_list[0].file_offset_of_pos_blob == 14);
     REQUIRE(skip_list[0].in_blob_index_of_pos_bag == 5);
-    REQUIRE(skip_list[0].file_offset_of_offset_bag == 16);
+    REQUIRE(skip_list[0].file_offset_of_offset_blob == 16);
 
     REQUIRE(skip_list[1].previous_doc_id == 18);
     REQUIRE(skip_list[1].file_offset_of_docid_bag == 11);
     REQUIRE(skip_list[1].file_offset_of_tf_bag == 13);
-    REQUIRE(skip_list[1].file_offset_of_pos_bag == 15);
+    REQUIRE(skip_list[1].file_offset_of_pos_blob == 15);
     REQUIRE(skip_list[1].in_blob_index_of_pos_bag == 6);
-    REQUIRE(skip_list[1].file_offset_of_offset_bag == 17);
+    REQUIRE(skip_list[1].file_offset_of_offset_blob == 17);
   }
 }
 
