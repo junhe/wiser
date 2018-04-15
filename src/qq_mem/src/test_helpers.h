@@ -22,5 +22,9 @@ PostingListDelta create_posting_list_delta(int n_postings);
 FileOffsetsOfBlobs DumpCozyBox(std::vector<uint32_t> vec, 
     const std::string path, bool do_delta);
 
-
+SkipList CreateSkipList(const std::string type, std::vector<off_t> offsets_of_bags);
+SkipList CreateSkipListForDodId(
+    std::vector<uint32_t> skip_doc_ids, std::vector<off_t> offsets_of_bags);
+SkipList CreateSkipListForPosition( std::vector<off_t> blob_offsets, 
+                                    std::vector<int> in_blob_indexes);
 #endif

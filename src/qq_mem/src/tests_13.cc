@@ -108,6 +108,57 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
   }
 }
 
+TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
+  // Build term frequency iterator
+  std::vector<uint32_t> vec;
+  int n_postings = 300;
+  for (uint32_t i = 0; i < n_postings; i++) {
+    vec.push_back(3);
+  }
+
+  std::string path = "/tmp/tmp.tf";
+  FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
+  SkipList skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
+
+  // Open the file
+  utils::FileMap file_map(path);
+
+  // Read data by TermFreqIterator
+  TermFreqIterator iter((const uint8_t *)file_map.Addr(), skip_list);
+
+  SECTION("Check if the TF iterator works") {
+    for (uint32_t i = 0; i < n_postings; i++) {
+      iter.SkipTo(i);
+      REQUIRE(iter.Value() == 3);
+    }
+  }
+
+  SECTION("Position iterator") {
+    std::vector<uint32_t> positions;
+    for (uint32_t i = 0; i < n_postings * 3; i++) {
+      positions.push_back(i);
+    }
+
+    std::string path = "/tmp/tmp.pos";
+    FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
+    std::vector<off_t> blob_offs = file_offsets.BlobOffsets();
+    int n_intervals = n_postings / PACK_SIZE;
+    
+    std::vector<off_t> blob_offs_of_pos_bags; // for skip postings only
+    std::vector<int> in_blob_indexes;
+    for (int i = 0; i < n_intervals; i++) {
+      blob_offs_of_pos_bags.push_back(blob_offs[i*3]);
+      in_blob_indexes.push_back(0);
+    }
+
+    SkipList skip_list = CreateSkipListForPosition(
+        blob_offs_of_pos_bags, in_blob_indexes);
+
+    // Open the file
+    utils::FileMap file_map(path);
+  }
+}
+
 /*
 TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
   SECTION("Simple unrealistic sequential positions") {

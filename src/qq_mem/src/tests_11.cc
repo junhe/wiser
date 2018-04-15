@@ -87,33 +87,6 @@ TEST_CASE( "VInts writing and reading", "[qqflash][vints]" ) {
 }
 
 
-SkipList CreateSkipList(const std::string type, std::vector<off_t> offsets_of_bags) {
-  SkipList skip_list; 
-  
-  for (int i = 0; i < offsets_of_bags.size(); i++) {
-    if (type == "TF") {
-      skip_list.AddEntry(10000 + i, 0, offsets_of_bags[i], 0, 0, 0); 
-    } else {
-      LOG(FATAL) << "Type " << type << " not supported yet";
-    }
-  }
-
-  return skip_list;
-}
-
-
-SkipList CreateSkipListForDodId(
-    std::vector<uint32_t> skip_doc_ids, std::vector<off_t> offsets_of_bags) {
-  SkipList skip_list; 
-  
-  for (int i = 0; i < offsets_of_bags.size(); i++) {
-    skip_list.AddEntry(skip_doc_ids[i], offsets_of_bags[i], 0, 0, 0, 0); 
-  }
-
-  return skip_list;
-}
-
-
 
 TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
   SECTION("Simple") {
