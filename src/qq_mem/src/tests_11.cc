@@ -13,6 +13,7 @@ TEST_CASE( "VInts writing and reading", "[qqflash][vints]" ) {
 
     VIntsIterator iter((const uint8_t *)buf.data());
     REQUIRE(iter.IsEnd() == true);
+    REQUIRE(iter.SerializationSize() == 2);
   }
 
   SECTION("One number") {
@@ -20,6 +21,7 @@ TEST_CASE( "VInts writing and reading", "[qqflash][vints]" ) {
     std::string buf = writer.Serialize();
 
     VIntsIterator iter((const uint8_t *) buf.data());
+    REQUIRE(iter.SerializationSize() == 3);
     REQUIRE(iter.IsEnd() == false);
 
     REQUIRE(iter.Pop() == 5);

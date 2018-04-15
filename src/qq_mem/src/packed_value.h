@@ -225,6 +225,10 @@ class VIntsIterator {
     next_index_ = 0;
   }
 
+  int SerializationSize() {
+    return 2 + varint_bytes_; // 2 is for the header
+  }
+
   bool IsEnd() const {
     return varint_iter_.IsEnd();
   }

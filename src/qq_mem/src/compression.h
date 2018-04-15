@@ -155,6 +155,10 @@ class VarintIteratorEndBound: public PopIteratorService {
     return cur_offset_ >= end_offset_;
   }
 
+  int NumBytes() const {
+    return end_offset_ - start_offset_;
+  }
+
   // Must check if it is the end before Pop() is called!
   uint32_t Pop() {
     int len;
