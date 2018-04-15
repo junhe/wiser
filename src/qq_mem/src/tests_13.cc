@@ -108,6 +108,20 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
   }
 }
 
+
+std::vector<uint32_t> GoodPositions(int posting_bag) {
+  std::vector<uint32_t> ret;
+  uint32_t prev = 0;
+  for (uint32_t delta = posting_bag * 3; delta < (posting_bag + 1) * 3; delta++) {
+    uint32_t pos = prev + delta;
+    ret.push_back(pos);
+    prev = pos; 
+  }
+
+  return ret;
+}
+
+
 TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
   // Build term frequency iterator
   std::vector<uint32_t> vec;
@@ -118,18 +132,18 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
 
   std::string path = "/tmp/tmp.tf";
   FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
-  SkipList skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
+  SkipList tf_skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
 
   // Open the file
   utils::FileMap file_map(path);
 
   // Read data by TermFreqIterator
-  TermFreqIterator iter((const uint8_t *)file_map.Addr(), skip_list);
+  TermFreqIterator tf_iter((const uint8_t *)file_map.Addr(), tf_skip_list);
 
   SECTION("Check if the TF iterator works") {
     for (uint32_t i = 0; i < n_postings; i++) {
-      iter.SkipTo(i);
-      REQUIRE(iter.Value() == 3);
+      tf_iter.SkipTo(i);
+      REQUIRE(tf_iter.Value() == 3);
     }
   }
 
@@ -140,8 +154,10 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     }
 
     std::string path = "/tmp/tmp.pos";
-    FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
+    FileOffsetsOfBlobs file_offsets = DumpCozyBox(positions, path, false);
     std::vector<off_t> blob_offs = file_offsets.BlobOffsets();
+    std::cout << "blob offsets of all position blobs: ";
+    utils::PrintVec<off_t>(blob_offs);
     int n_intervals = n_postings / PACK_SIZE;
     
     std::vector<off_t> blob_offs_of_pos_bags; // for skip postings only
@@ -156,6 +172,69 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
 
     // Open the file
     utils::FileMap file_map(path);
+
+    std::cout << "--------------------------\n";
+    // Initialize pos iterator
+    PositionPostingBagIterator pos_iter((const uint8_t*)file_map.Addr(), 
+        skip_list, &tf_iter);
+
+    SECTION("Very simple") {
+      pos_iter.SkipTo(0);
+      int tf = pos_iter.TermFreq();
+      REQUIRE(tf == 3);
+
+      uint32_t prev = 0;
+      for (int i = 0; i < tf; i++) {
+        uint32_t pos = pos_iter.Pop();
+        uint32_t good_pos = prev + i;
+        REQUIRE(pos == good_pos);
+        prev = good_pos;
+      }
+    }
+
+    SECTION("Very simple 2") {
+      int posting_bag = 1;
+      pos_iter.SkipTo(posting_bag);
+      int tf = pos_iter.TermFreq();
+      REQUIRE(tf == 3);
+
+      auto good_positions = GoodPositions(posting_bag);
+
+      for (int i = 0; i < tf; i++) {
+        uint32_t pos = pos_iter.Pop();
+        REQUIRE(pos == good_positions[i]);
+      }
+    }
+
+    SECTION("Go to the last bag") {
+      int posting_bag = n_postings - 1;
+      pos_iter.SkipTo(posting_bag);
+      int tf = pos_iter.TermFreq();
+      REQUIRE(tf == 3);
+
+      auto good_positions = GoodPositions(posting_bag);
+
+      for (int i = 0; i < tf; i++) {
+        uint32_t pos = pos_iter.Pop();
+        REQUIRE(pos == good_positions[i]);
+      }
+    }
+
+    SECTION("Go to bag in the middle") {
+      int posting_bag = n_postings / 2;
+      pos_iter.SkipTo(posting_bag);
+      int tf = pos_iter.TermFreq();
+      REQUIRE(tf == 3);
+
+      auto good_positions = GoodPositions(posting_bag);
+
+      for (int i = 0; i < tf; i++) {
+        uint32_t pos = pos_iter.Pop();
+        REQUIRE(pos == good_positions[i]);
+      }
+    }
+ 
+
   }
 }
 
