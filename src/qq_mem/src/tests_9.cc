@@ -191,6 +191,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       SECTION("Read by Reader") {
         PackedIntsReader reader((const uint8_t *)data.data());
+        REQUIRE(reader.SerializationSize() == (1 + 128 / 8));
         for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
           REQUIRE(reader.Get(i) == 0);
         }
@@ -198,6 +199,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       SECTION("Read by iterator") {
         PackedIntsIterator it((const uint8_t *)data.data());
+        REQUIRE(it.SerializationSize() == (1 + 128 / 8));
         
         int cnt = 0;
         while (it.IsEnd() == false) {
@@ -228,6 +230,8 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       SECTION("Read by iterator") {
         PackedIntsIterator it((const uint8_t *)data.data());
+        REQUIRE(it.SerializationSize() == (1 + 128 / 8));
+        REQUIRE(it.SerializationSize() == data.size());
         
         int cnt = 0;
         while (it.IsEnd() == false) {
@@ -250,6 +254,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       SECTION("read by reader") {
         PackedIntsReader reader((const uint8_t *)data.data());
+        REQUIRE(reader.SerializationSize() == data.size());
         for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
           REQUIRE(reader.Get(i) == (i * 10 % 7));
         }
@@ -257,6 +262,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       SECTION("read by iterator") {
         PackedIntsIterator it((const uint8_t *)data.data());
+        REQUIRE(it.SerializationSize() == data.size());
         for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
           it.SkipTo(i);
           REQUIRE(it.Value() == (i * 10 % 7));

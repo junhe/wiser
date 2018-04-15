@@ -77,6 +77,11 @@ class PackedIntsReader {
     return n_bits_per_value_;
   }
 
+  int SerializationSize() const {
+    // 1 is for the header, +7 is to do ceiling
+    return 1 + ((NumBits() * PackedIntsWriter::PACK_SIZE + 7) / 8); 
+  }
+
  private:
   const uint8_t *buf_ = nullptr;
   int n_bits_per_value_ = 0;
@@ -94,6 +99,10 @@ class PackedIntsIterator {
   void Reset(const uint8_t *buf) {
     index_ = 0;
     reader_.Reset(buf);
+  }
+
+  int SerializationSize() const {
+    return reader_.SerializationSize();
   }
 
   void SkipTo(int index) {
