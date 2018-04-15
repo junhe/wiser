@@ -567,14 +567,14 @@ struct SkipEntry {
       file_offset_of_tf_bag(tf_file_offset_in),
       file_offset_of_pos_blob(pos_file_offset_in),
       in_blob_index_of_pos_bag(pos_in_block_index_in),
-      file_offset_of_offset_bag(off_file_offset_in) {}
+      file_offset_of_offset_blob(off_file_offset_in) {}
  
   uint32_t previous_doc_id;
   off_t file_offset_of_docid_bag;
   off_t file_offset_of_tf_bag;
   off_t file_offset_of_pos_blob;
   int in_blob_index_of_pos_bag;
-  off_t file_offset_of_offset_bag;
+  off_t file_offset_of_offset_blob;
 };
 
 class SkipList {
@@ -590,9 +590,9 @@ class SkipList {
       off_t file_offset_of_tf_bag = it.Pop();
       off_t file_offset_of_pos_blob = it.Pop();
       int in_blob_index_of_pos_bag = it.Pop();
-      off_t file_offset_of_offset_bag = it.Pop();
+      off_t file_offset_of_offset_blob = it.Pop();
       AddEntry(previous_doc_id, file_offset_of_docid_bag, file_offset_of_tf_bag, 
-          file_offset_of_pos_blob, in_blob_index_of_pos_bag, file_offset_of_offset_bag);
+          file_offset_of_pos_blob, in_blob_index_of_pos_bag, file_offset_of_offset_blob);
     }
   }
 
@@ -614,14 +614,14 @@ class SkipList {
                 const off_t file_offset_of_tf_bag,
                 const off_t file_offset_of_pos_blob,
                 const int in_blob_index_of_pos_bag,
-                const off_t file_offset_of_offset_bag) 
+                const off_t file_offset_of_offset_blob) 
   {
     skip_table_.emplace_back( previous_doc_id,   
                               file_offset_of_docid_bag,
                               file_offset_of_tf_bag,
                               file_offset_of_pos_blob,
                               in_blob_index_of_pos_bag,
-                              file_offset_of_offset_bag);
+                              file_offset_of_offset_blob);
   }
 
  private:
