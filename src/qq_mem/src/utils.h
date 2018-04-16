@@ -316,6 +316,8 @@ class FileMap {
 };
 
 void RemoveDir(std::string path);
+void CreateDir(std::string path);
+void PrepareDir(std::string path);
 void PrintVInts(const uint8_t *buf);
 
 template <typename T>

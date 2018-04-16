@@ -306,6 +306,14 @@ void RemoveDir(std::string path) {
   boost::filesystem::remove_all(path); 
 }
 
+void CreateDir(std::string path) {
+  boost::filesystem::create_directory(path);
+}
+
+void PrepareDir(std::string path) {
+  if (boost::filesystem::exists(path) == false)
+    boost::filesystem::create_directory(path);
+}
 
 void PrintVInts(const uint8_t *buf) {
   VIntsIterator iter(buf);

@@ -22,7 +22,9 @@ TEST_CASE( "Dumping 5-word Engine", "[qqflash][dump1]" ) {
 
 
 TEST_CASE( "Dumping 1-word Engine", "[qqflash][dump0]" ) {
-  FlashEngineDumper engine("/tmp");
+  std::string dir_path = "/tmp/1-word-engine";
+  utils::PrepareDir(dir_path);
+  FlashEngineDumper engine(dir_path);
   REQUIRE(engine.TermCount() == 0);
   engine.LoadLocalDocuments("src/testdata/one_word_with_position", 10000, 
       "WITH_POSITIONS");
