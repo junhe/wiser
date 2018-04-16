@@ -343,7 +343,7 @@ class TermIndex {
     utils::UnmapFile(addr, fd, file_length);
 
     for (auto &it : index_) {
-      std::cout << it.first << ": " << it.second << std::endl;
+      LOG(INFO) << it.first << ": " << it.second << std::endl;
     }
   }
 
@@ -517,7 +517,7 @@ class SkipListWriter {
              off_offs_.Size() + 1 == skip_pre_doc_ids.size())
            ) ) 
     {
-      std::cout
+      LOG(INFO)
         <<    docid_offs_.Size() << ", " 
         <<    tf_offs_.Size() << ", "
         <<    pos_offs_.Size() << ", "
@@ -701,7 +701,7 @@ class InvertedIndexDumperBase : public InvertedIndexQqMemDelta {
  public:
   void Dump() {
     for (auto it = index_.cbegin(); it != index_.cend(); it++) {
-      // std::cout << "At '" << it->first << "'" << std::endl;
+      // LOG(INFO) << "At '" << it->first << "'" << std::endl;
       DumpPostingList(it->first, it->second);
     }
   }
@@ -725,8 +725,8 @@ class InvertedIndexDumper : public InvertedIndexDumperBase {
   void DumpPostingList(const Term &term, 
       const PostingListDelta &posting_list) override {
     PostingListDeltaIterator posting_it = posting_list.Begin2();
-    // std::cout << "Dumping One Posting List ...." << std::endl;
-    // std::cout << "Number of postings: " << posting_it.Size() << std::endl;
+    // LOG(INFO) << "Dumping One Posting List ...." << std::endl;
+    // LOG(INFO) << "Number of postings: " << posting_it.Size() << std::endl;
 
     GeneralTermEntry docid_term_entry;
     GeneralTermEntry termfreq_term_entry;
@@ -829,13 +829,13 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
   void DumpPostingList(const Term &term, 
       const PostingListDelta &posting_list) override {
     PostingListDeltaIterator posting_it = posting_list.Begin2();
-    std::cout << "Dumping Posting List of " << term << std::endl;
-    std::cout << "Number of postings: " << posting_it.Size() << std::endl;
+    LOG(INFO) << "Dumping Posting List of " << term << std::endl;
+    LOG(INFO) << "Number of postings: " << posting_it.Size() << std::endl;
 
     TermEntrySet entry_set;
 
     while (posting_it.IsEnd() == false) {
-      std::cout << "DocId: " << posting_it.DocId() << std::endl;
+      LOG(INFO) << "DocId: " << posting_it.DocId() << std::endl;
       //doc id
       entry_set.docid.AddPostingBag(
           std::vector<uint32_t>{(uint32_t)posting_it.DocId()});
@@ -857,9 +857,9 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
     off_t skip_list_start = index_dumper_.CurrentOffset();
     int skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
-    std::cout << "skip_list_est_size: " << skip_list_est_size << std::endl;
+    LOG(INFO) << "skip_list_est_size: " << skip_list_est_size << std::endl;
 
-    std::cout << "Dumping real skiplist...........................\n";
+    LOG(INFO) << "Dumping real skiplist...........................\n";
     SkipListWriter real_skiplist_writer = DumpTermEntrySet( 
         &index_dumper_, 
         skip_list_start + skip_list_est_size,
@@ -869,7 +869,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     index_dumper_.Seek(skip_list_start);
 
     std::string skip_list_data = real_skiplist_writer.Serialize();
-    std::cout << "skip_list_real size: " << skip_list_data.size() << std::endl;
+    LOG(INFO) << "skip_list_real size: " << skip_list_data.size() << std::endl;
     if (skip_list_data.size() > skip_list_est_size) { 
       LOG(FATAL) << "Gap for skip list is too small.";
     } else {
@@ -881,7 +881,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
   }
 
   int EstimateSkipListBytes(off_t skip_list_start, const TermEntrySet &entry_set) {
-    std::cout << "Dumping fake skiplist...........................\n";
+    LOG(INFO) << "Dumping fake skiplist...........................\n";
     SkipListWriter fake_skiplist_writer = DumpTermEntrySet( 
         &fake_index_dumper_, 
         skip_list_start + 1024*1024,
@@ -946,7 +946,7 @@ class FlashEngineDumper {
 
     DocInfo doc_info;
     while (parser->Pop(&doc_info)) {
-      std::cout << "Adding ... " << doc_info.ToStr();
+      LOG(INFO) << "Adding ... " << doc_info.ToStr();
       AddDocument(doc_info); 
       if (parser->Count() % 10000 == 0) {
         std::cout << "Indexed " << parser->Count() << " documents" << std::endl;
