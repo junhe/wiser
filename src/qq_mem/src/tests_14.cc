@@ -19,10 +19,23 @@ TEST_CASE( "Dumping 1-word Engine", "[qqflash][dump0]" ) {
   engine.DumpInvertedIndex();
 
   SECTION("Load inverted index") {
-    VacuumInvertedIndex index("/tmp/1-word-engine/my.tip");
+    VacuumInvertedIndex index(
+        "/tmp/1-word-engine/my.tip", "/tmp/1-word-engine/my.vaccum");
     REQUIRE(index.FindPostingListOffset("a") == 0);
     REQUIRE(index.FindPostingListOffset("b") == -1);
     REQUIRE(index.NumTerms() == 1);
+
+    SECTION("Get the posting list iterator") {
+      std::vector<VacuumPostingListIterator> iters 
+        = index.FindIteratorsSolid({"a"});
+      REQUIRE(iters.size() == 1);
+    }
+
+    SECTION("Get the posting list iterator, 2") {
+      std::vector<VacuumPostingListIterator> iters 
+        = index.FindIteratorsSolid({"b"});
+      REQUIRE(iters.size() == 0);
+    }
   }
 }
 
@@ -39,7 +52,8 @@ TEST_CASE( "Dumping 5-word Engine", "[qqflash][dump1]" ) {
   engine.DumpInvertedIndex();
 
   SECTION("Load inverted index") {
-    VacuumInvertedIndex index("/tmp/5-word-engine/my.tip");
+    VacuumInvertedIndex index(
+        "/tmp/5-word-engine/my.tip", "/tmp/5-word-engine/my.vaccum");
     REQUIRE(index.NumTerms() > 100);
   }
 }

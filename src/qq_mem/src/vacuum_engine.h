@@ -5,6 +5,7 @@
 #include <string>
 
 #include "utils.h"
+#include "flash_iterators.h"
 
 
 class TermIndex {
@@ -66,8 +67,13 @@ class TermIndex {
 
 class VacuumInvertedIndex {
  public:
-  VacuumInvertedIndex(const std::string term_index_path) {
+  VacuumInvertedIndex(
+      const std::string term_index_path, 
+      const std::string inverted_index_path)
+    : file_map_(inverted_index_path)
+  {
     term_index_.Load(term_index_path);
+    buf_ = (uint8_t *)file_map_.Addr();
   }
 
   off_t FindPostingListOffset(const Term term) {
@@ -79,6 +85,18 @@ class VacuumInvertedIndex {
     }
   }
 
+  std::vector<VacuumPostingListIterator> FindIteratorsSolid(const TermList &terms) {
+    std::vector<VacuumPostingListIterator> iterators;
+
+    for (auto &term : terms) {
+      off_t offset = FindPostingListOffset(term); 
+      if (offset != -1) {
+        iterators.emplace_back(buf_ + offset);
+      }
+    }
+    return iterators;
+  }
+
   int NumTerms() const {
     return term_index_.NumTerms();
   }
@@ -86,6 +104,8 @@ class VacuumInvertedIndex {
 
  private:
   TermIndex term_index_;  
+  utils::FileMap file_map_;
+  const uint8_t *buf_; // = file_map_.Addr(), put it here for convenience
 };
 
 #endif

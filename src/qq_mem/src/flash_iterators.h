@@ -478,25 +478,20 @@ class OffsetPostingBagIterator {
 
 
 // It will iterate postings in a posting list
-class VaccumPostingListIterator {
-   
+class VacuumPostingListIterator {
+ public:
+  VacuumPostingListIterator() {}
+  VacuumPostingListIterator(const uint8_t *buf) {
+    Reset(buf);
+  }
 
+  void Reset(const uint8_t *buf) {
+    buf_ = buf;  
+  }
+
+ private:
+  const uint8_t *buf_;
 };
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 #endif
