@@ -477,5 +477,27 @@ class OffsetPostingBagIterator {
 };
 
 
+// It will iterate postings in a posting list
+class VaccumPostingListIterator {
+   
+
+};
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 #endif
 

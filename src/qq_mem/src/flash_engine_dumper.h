@@ -817,6 +817,7 @@ inline FileOffsetOfSkipPostingBags DumpTermEntry(
   return FileOffsetOfSkipPostingBags(pack_indexes, file_offs);
 }
 
+
 class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
  public:
   VacuumInvertedIndexDumper(const std::string dump_dir_path)

@@ -191,21 +191,6 @@ TEST_CASE( "FileOffsetOfSkipPostingBags", "[qqflash]" ) {
 }
 
 
-TEST_CASE( "Dumping Engine", "[qqflash][engine_dump]" ) {
-  FlashEngineDumper engine("/tmp");
-  REQUIRE(engine.TermCount() == 0);
-  engine.LoadLocalDocuments("src/testdata/line_doc_with_positions", 10000, 
-      "WITH_POSITIONS");
-
-  SECTION("Check loading") {
-    REQUIRE(engine.TermCount() > 0);
-  }
-
-  SECTION("Dumping inverted index") {
-    engine.DumpInvertedIndex();
-  }
-}
-
 template <typename T=int>
 std::vector<T> RepeatNums(std::vector<T> vec) {
   std::vector<T> ret;
