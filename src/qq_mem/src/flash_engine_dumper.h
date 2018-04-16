@@ -494,10 +494,10 @@ class FileOffsetOfSkipPostingBags {
 
 class SkipListWriter {
  public:
-  SkipListWriter(const FileOffsetOfSkipPostingBags &docid_file_offs,
-           const FileOffsetOfSkipPostingBags &tf_file_offs,
-           const FileOffsetOfSkipPostingBags &pos_file_offs,
-           const FileOffsetOfSkipPostingBags &off_file_offs,
+  SkipListWriter(const FileOffsetOfSkipPostingBags docid_file_offs,
+           const FileOffsetOfSkipPostingBags tf_file_offs,
+           const FileOffsetOfSkipPostingBags pos_file_offs,
+           const FileOffsetOfSkipPostingBags off_file_offs,
            const std::vector<uint32_t> doc_ids) 
     :docid_offs_(docid_file_offs),
      tf_offs_(tf_file_offs),
@@ -547,10 +547,10 @@ class SkipListWriter {
     buf->Append(off_offs_[i].in_blob_index);
   }
 
-  const FileOffsetOfSkipPostingBags &docid_offs_;
-  const FileOffsetOfSkipPostingBags &tf_offs_;
-  const FileOffsetOfSkipPostingBags &pos_offs_;
-  const FileOffsetOfSkipPostingBags &off_offs_;
+  const FileOffsetOfSkipPostingBags docid_offs_;
+  const FileOffsetOfSkipPostingBags tf_offs_;
+  const FileOffsetOfSkipPostingBags pos_offs_;
+  const FileOffsetOfSkipPostingBags off_offs_;
   const std::vector<uint32_t> doc_ids_;
 };
 
