@@ -1,6 +1,8 @@
 #include "catch.hpp"
 
+#include "vacuum_engine.h"
 #include "flash_engine_dumper.h"
+
 
 VarintBuffer CreateVarintBuffer(std::vector<int> vec) {
   VarintBuffer buf;
@@ -10,7 +12,6 @@ VarintBuffer CreateVarintBuffer(std::vector<int> vec) {
 
   return buf;
 }
-
 
 PostingBagBlobIndexes CreatePostingPackIndexes(
     std::vector<int> block_indexes, std::vector<int> in_block_indexes) {

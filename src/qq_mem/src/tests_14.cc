@@ -2,6 +2,7 @@
 
 #include "test_helpers.h"
 #include "flash_iterators.h"
+#include "vacuum_engine.h"
 #include "utils.h"
 
 
@@ -14,23 +15,32 @@ TEST_CASE( "Dumping 1-word Engine", "[qqflash][dump0]" ) {
       "WITH_POSITIONS");
   REQUIRE(engine.TermCount() == 1);
 
-  SECTION("Dumping inverted index") {
-    engine.DumpInvertedIndex();
+  // Dump the engine
+  engine.DumpInvertedIndex();
+
+  SECTION("Load inverted index") {
+    VacuumInvertedIndex index("/tmp/1-word-engine/my.tip");
+    REQUIRE(index.FindPostingListOffset("a") == 0);
+    REQUIRE(index.FindPostingListOffset("b") == -1);
+    REQUIRE(index.NumTerms() == 1);
   }
 }
 
+
 TEST_CASE( "Dumping 5-word Engine", "[qqflash][dump1]" ) {
-  FlashEngineDumper engine("/tmp");
+  std::string dir_path = "/tmp/5-word-engine";
+  utils::PrepareDir(dir_path);
+  FlashEngineDumper engine(dir_path);
   REQUIRE(engine.TermCount() == 0);
   engine.LoadLocalDocuments("src/testdata/line_doc_with_positions", 10000, 
       "WITH_POSITIONS");
 
-  SECTION("Check loading") {
-    REQUIRE(engine.TermCount() > 0);
-  }
+  REQUIRE(engine.TermCount() > 0);
+  engine.DumpInvertedIndex();
 
-  SECTION("Dumping inverted index") {
-    engine.DumpInvertedIndex();
+  SECTION("Load inverted index") {
+    VacuumInvertedIndex index("/tmp/5-word-engine/my.tip");
+    REQUIRE(index.NumTerms() > 100);
   }
 }
 
