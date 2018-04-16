@@ -822,7 +822,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
  public:
   VacuumInvertedIndexDumper(const std::string dump_dir_path)
     :index_dumper_(dump_dir_path + "/my.vaccum"),
-     fake_index_dumper_(dump_dir_path + "/fake.vaccum")
+     fake_index_dumper_(dump_dir_path + "/fake.vaccum"),
+     term_index_dumper_(dump_dir_path + "/my.tip")
   {}
 
   void DumpPostingList(const Term &term, 
@@ -875,6 +876,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
       index_dumper_.Dump(skip_list_data); 
       index_dumper_.SeekToEnd();
     }
+
+    term_index_dumper_.DumpEntry(term, skip_list_start);
   }
 
   int EstimateSkipListBytes(off_t skip_list_start, const TermEntrySet &entry_set) {
@@ -912,6 +915,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
  private:
   FileDumper index_dumper_;
   FileDumper fake_index_dumper_;
+
+  TermIndexDumper term_index_dumper_;
 };
 
 
