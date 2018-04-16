@@ -1,4 +1,4 @@
-import datetime
+
 import time
 import os
 import signal
@@ -15,12 +15,16 @@ from .Clients import ElasticSearchClient
 from utils.utils import shcmd
 from pyreuse.sysutils.blocktrace import *
 from pyreuse.sysutils.ncq import *
+from pyreuse.apputils.flamegraph import *
 
 BENCH_EXE = "RediSearchBenchmark"
 #WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml_1"
 #WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml"
 #WIKI_ABSTRACT = "/mnt/ssd/downloads/test.xml"
-WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki.linedoc.xml"
+
+#Full Wiki: 
+WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki.linedoc.xml_clean"
+
 #WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-latest-pages-articles.xml"
 #WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-latest-pages-articles1.xml"
 # WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-latest-abstract18.xml"
@@ -36,6 +40,10 @@ def build_index(n_shards, n_hosts, engine, start_port, host):
                 engine=engine, bench_exe=BENCH_EXE, n_shards=n_shards,
                 hosts=hosts_string(host, n_hosts, start_port), filepath=WIKI_ABSTRACT))
 
+    if engine == 'elastic':
+        print 'prepare to merge'
+        cmd = "curl -XPOST \'localhost:9200/wik/_forcemerge?max_num_segments=1&pretty\'"
+        shcmd(cmd)
 
 def hosts_string(host, n, start_port):
     hosts = [host + ":" + str(start_port+i) for i in range(n)]
@@ -62,12 +70,16 @@ def start_elastic(mem_size):
     shcmd('sudo /users/kanwu/results/elastic_run.sh')
     p_elastic = subprocess.Popen('python /users/kanwu/flashsearch/scripts/start_elasticsearch.py ' + str(mem_size), subprocess.PIPE,
                        shell=True, preexec_fn=os.setsid)
-    time.sleep(30)
+    time.sleep(50)
     return p_elastic
 
 def kill_blktrace_on_bg():
     shcmd('pkill blkparse', ignore_error=True)
     shcmd('pkill blktrace', ignore_error=True)
+    shcmd('sync')
+
+def kill_ps_on_bg():
+    shcmd('pkill ps', ignore_error=True)
     shcmd('sync')
 
 def start_blktrace_on_bg(dev, resultpath, trace_filter=None):
@@ -93,6 +105,7 @@ def start_blktrace_on_bg(dev, resultpath, trace_filter=None):
         raise RuntimeError("tracing failed to start")
 
     return p
+
 def analyze_ncq(subdir):
     table = parse_ncq(event_path = os.path.join(subdir, 'blkparse-output.txt.parsed'))
     with open(os.path.join(subdir, 'ncq.txt'), "w") as ncq_output:
@@ -100,6 +113,7 @@ def analyze_ncq(subdir):
             for k,v in each_line.items():
                 ncq_output.write(str(v) + ' ')
             ncq_output.write("\n")
+
 
 class ExperimentRsbenchGo(Experiment):
     """
@@ -110,26 +124,33 @@ class ExperimentRsbenchGo(Experiment):
     make rs_bench_go
     """
     def __init__(self):
-        self._exp_name = "SmallMem"
+        self._exp_name = "elastc_io"
 
         self.paras = helpers.parameter_combinations({
-                    #'worker_count': [1, 16, 32, 64, 128],
+                    #'worker_count': [1],
                     'worker_count': [16],
                     'query': ['wiki-query-log'],
-                    #'query': ['hello', 'barack obama', 'unit state america', 'wiki-query-log'],
-                    #'query': ['unit state america', 'wiki-query-log'],
+                    #'query': ['tugman'],
+                    #'query': ['hello'],
+                    #'query': ['garnieria'], #'ripdo', 'ripdo liftech'],
+                    #'query': ['from', 'hello', 'ripdo', 'from also', 'hello world', 'ripdo liftech'], #'hello', 'from', 'ripdo', 'from also', 'hello world', 'ripdo liftech', 'hello', 'from', 'ripdo', 'from also', 'hello world', 'ripdo liftech'], # 'barack obama', 'unit state america', 'wiki-query-log'],
+                    #'query': ['hello world'],
+                    #'query': ['hello world', 'barack obama', 'from also'],
                     'engine': ['elastic'],
                     #'engine': ['redis'],
                     'n_shards': [1],
                     'n_hosts': [1],
-                    #'mem_limit': [4, 6, 8, 10, 12, 14, 16, 32],
-                    'mem_limit': [4],
+                    #'mem_limit': [3,4,5,6,7, 8, 32,64],
+                    'mem_limit': [128],
                     #'readahead': [4, 8, 16, 32, 64],
-                    'readahead': [0, 4, 8, 16, 32, 64, 128],
+                    #'readahead': [0, 4, 8, 16, 32, 64, 128],
+                    'readahead': [128],
                     #'n_hosts': [1],
-                    #'rebuild_index': [True]
                     'rebuild_index': [False],
-                    'warm_engine': [False]
+                    #'rebuild_index': [False],
+                    #'warm_engine': [True],
+                    'warm_engine': [False],
+                    'single_query': [False]         # whether we are just running one request, then we need to warm up with ripdo liftech
                     })
         self._n_treatments = len(self.paras)
 
@@ -148,13 +169,9 @@ class ExperimentRsbenchGo(Experiment):
                 'benchmark': 'GoBench',
                 'subexp_index': i,
                 'rebuild_index': para['rebuild_index'],
-                'warm_engine': para['warm_engine']
+                'warm_engine': para['warm_engine'],
+                'single_query': para['single_query']
                 }
-        '''
-        if para['engine'] == "elastic":
-            es_client = ElasticSearchClient("wiki")   #TODO?
-            conf['n_shards'] = es_client.get_number_of_shards()
-        '''
         update_address(conf)
         return conf
 
@@ -172,18 +189,62 @@ class ExperimentRsbenchGo(Experiment):
             '''
         #start elasticsearch and blktrace if testing elasticsearch
         if conf["engine"] == "elastic":
+            #empty the log
+            shcmd('echo > /tmp/results/lucene.log')
+
             # set readahead block
             cmd = 'echo ' + str(conf['readahead']) + ' > /sys/block/sdc/queue/read_ahead_kb'
             shcmd(cmd)
-            # clear page cache etc.
+
+            # clear page cache + start elasticsearch + sleep etc.
             self.elastic_process = start_elastic(conf['mem_limit'])
-            # start blk trace
+
+            # warm up, if needed
+            # run some useless queries before
+            if conf['single_query'] is True:
+                #warm with ripdo liftech
+                tmp = conf['query']
+                conf['query'] = 'ripdo liftech'
+                self.treatment(conf)
+                self.treatment(conf)
+                self.treatment(conf)
+                self.treatment(conf)
+                self.treatment(conf)
+                shcmd('sync')
+                shcmd("mv " + os.path.join(self._subexpdir, "out.csv") + " " + os.path.join(self._subexpdir, "warmup.csv"))
+                conf['query'] = tmp
+               
+                #cmd = 'sync; echo 3 > /proc/sys/vm/drop_caches'
+                #shcmd(cmd) 
+            # warm up
             if conf['warm_engine'] is True:
                 self.treatment(conf)
+                #self.treatment(conf)
+                #self.treatment(conf)
+                #self.treatment(conf)
                 shcmd("mv " + os.path.join(self._subexpdir, "out.csv") + " " + os.path.join(self._subexpdir, "warmup.csv"))
-            trace_filter=['issue', 'complete']
+            
+
+
+            # start perf to generate flamegraph
+            #self.fgraph = FlameGraph('/users/kanwu/FlameGraph', '/users/kanwu/FlameGraph')
+            #self.perf_p = self.fgraph.attach(self.elastic_process.pid, 99)
+            
+
+            # start blktrace
+            trace_filter=['issue']#, 'complete']
             self.blk_trace = start_blktrace_on_bg('/dev/sdc', os.path.join(self._subexpdir, "blktrace.output"), trace_filter=trace_filter)
-            shcmd("iostat -x 1 300 > " + os.path.join(self._subexpdir, "iostat.out") + " &")
+            # start iostat
+            shcmd("iostat -x sdc 1 300 > " + os.path.join(self._subexpdir, "iostat.out") + " &")
+            # start ps to see page faults overtime
+
+            # log page faults during starting Elasticsearch
+            elastic_pid = subprocess.check_output(['pidof', 'java']).strip('\n')
+            shcmd('ps -o maj_flt ' + elastic_pid + ' >> ' + os.path.join(self._subexpdir, 'page_faults.out'))
+            
+            # empty the log
+            shcmd('echo > /tmp/results/lucene.log')
+            shcmd('sync')
 
     def treatment(self, conf):
         if conf['query'] == 'wiki-query-log':
@@ -197,7 +258,9 @@ class ExperimentRsbenchGo(Experiment):
                         hosts = hosts_string(conf['host'], conf['n_hosts'], conf['start_port']),
                         n_shards = conf['n_shards'],
                         #querypath = '/mnt/ssd/downloads/wiki_QueryLog',
-                        querypath = '/users/kanwu/test_data/querylog_no_repeated',   # be sure not on /dev/sdc
+                        #querypath = '/users/kanwu/test_data/querylog_no_repeated',   # be sure not on /dev/sdc
+                        querypath = '/users/kanwu/test_data/realistic_with_phrases',   # be sure not on /dev/sdc
+                        #querypath = '/users/kanwu/test_data/querylog_realistic',   # be sure not on /dev/sdc
                         outpath = os.path.join(self._subexpdir, "out.csv")
                         ))
         else:
@@ -216,24 +279,40 @@ class ExperimentRsbenchGo(Experiment):
 
     def afterEach(self, conf):
         helpers.dump_json(conf, os.path.join(self._subexpdir, "config.json"))
-        # print blktrace
-        kill_blktrace_on_bg()
-        # kill elasticsaerch
-        elastic_pid = subprocess.check_output(['pidof', 'java']).strip('\n')
-        shcmd('ps -o min_flt,maj_flt ' + str(elastic_pid) + ' > ' + os.path.join(self._subexpdir, 'page_faults.out'))
-        elastic_pid = os.getpgid(self.elastic_process.pid)
-        os.killpg(elastic_pid, signal.SIGTERM)
+        if conf["engine"] == "elastic":
+            
+            # kill ps
+            elastic_pid = subprocess.check_output(['pidof', 'java']).strip('\n')
+            shcmd('ps -o maj_flt ' + elastic_pid + ' >> ' + os.path.join(self._subexpdir, 'page_faults.out'))
+            
+            # kill blktrace
+            kill_blktrace_on_bg()
+           
+            # generate flamegraph
+            #self.fgraph.detach(self.perf_p)
+            #self.fgraph.produce_graph(to_path='/tmp/flamegraph.svg')
+            
+            # kill elasticsaerch
+            shcmd('sync')
+            time.sleep(10)
+            elastic_pid = os.getpgid(self.elastic_process.pid)
+            os.killpg(elastic_pid, signal.SIGTERM)
         
-        # parse blkparse results
-        blkresult = BlktraceResultInMem(
-                sector_size=512,
-                event_file_column_names=['pid', 'action', 'operation', 'offset', 'size',
-                    'timestamp', 'pre_wait_time', 'sync'],
-                raw_blkparse_file_path=os.path.join(self._subexpdir, "blktrace.output"),
-                parsed_output_path=(os.path.join(self._subexpdir, 'blkparse-output.txt.parsed')))
-        blkresult.create_event_file()
-        # parse ncq depth:
-        analyze_ncq(self._subexpdir)
+            # parse blkparse results
+            blkresult = BlktraceResultInMem(
+                    sector_size=512,
+                    event_file_column_names=['pid', 'action', 'operation', 'offset', 'size',
+                        'timestamp', 'pre_wait_time', 'sync'],
+                    raw_blkparse_file_path=os.path.join(self._subexpdir, "blktrace.output"),
+                    parsed_output_path=(os.path.join(self._subexpdir, 'blkparse-output.txt.parsed')))
+            blkresult.create_event_file()
+            # parse ncq depth:
+            analyze_ncq(self._subexpdir)
+
+            # mv lucene log to specific file
+            shcmd('sync')
+            lucene_log_dir = os.path.join(self._subexpdir, 'lucene.log')
+            shcmd('cp /tmp/results/lucene.log ' + lucene_log_dir)
 
 def main():
     exp = ExperimentRsbenchGo()
