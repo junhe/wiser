@@ -120,6 +120,7 @@ add_executable( testmain
     tests_11.cc
     tests_12.cc
     tests_13.cc
+    tests_14.cc
     test_helpers.cc
     grpc_client_impl.cc
     ${ENGINE_SRCS}

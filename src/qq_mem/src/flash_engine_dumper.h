@@ -828,12 +828,13 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
   void DumpPostingList(const Term &term, 
       const PostingListDelta &posting_list) override {
     PostingListDeltaIterator posting_it = posting_list.Begin2();
-    // std::cout << "Dumping One Posting List ...." << std::endl;
-    // std::cout << "Number of postings: " << posting_it.Size() << std::endl;
+    std::cout << "Dumping Posting List of " << term << std::endl;
+    std::cout << "Number of postings: " << posting_it.Size() << std::endl;
 
     TermEntrySet entry_set;
 
     while (posting_it.IsEnd() == false) {
+      std::cout << "DocId: " << posting_it.DocId() << std::endl;
       //doc id
       entry_set.docid.AddPostingBag(
           std::vector<uint32_t>{(uint32_t)posting_it.DocId()});
@@ -856,6 +857,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     off_t skip_list_start = index_dumper_.CurrentOffset();
     int skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
 
+    std::cout << "Dumping real skiplist...........................\n";
     SkipListWriter real_skiplist_writer = DumpTermEntrySet( 
         &index_dumper_, 
         skip_list_start + skip_list_est_size,
@@ -874,6 +876,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
   }
 
   int EstimateSkipListBytes(off_t skip_list_start, const TermEntrySet &entry_set) {
+    std::cout << "Dumping fake skiplist...........................\n";
     SkipListWriter fake_skiplist_writer = DumpTermEntrySet( 
         &fake_index_dumper_, 
         skip_list_start + 1024*1024,
@@ -936,6 +939,7 @@ class FlashEngineDumper {
 
     DocInfo doc_info;
     while (parser->Pop(&doc_info)) {
+      std::cout << "Adding ... " << doc_info.ToStr();
       AddDocument(doc_info); 
       if (parser->Count() % 10000 == 0) {
         std::cout << "Indexed " << parser->Count() << " documents" << std::endl;
@@ -980,7 +984,7 @@ class FlashEngineDumper {
   std::string dump_dir_path_;
 
   FlashDocStoreDumper doc_store_;
-  InvertedIndexDumper inverted_index_;
+  VacuumInvertedIndexDumper inverted_index_;
   DocLengthStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
