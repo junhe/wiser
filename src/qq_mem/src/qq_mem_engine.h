@@ -2,6 +2,7 @@
 #define QQ_MEM_ENGINE_H
 
 #include <assert.h>
+#include <math.h>
 
 #include <boost/filesystem.hpp>
 
@@ -49,9 +50,14 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
   typedef std::unordered_map<Term, PostingListType> IndexStore;
   IndexStore index_;
 
+  std::vector<int> size_hist_;
+  int total_ = 0;
+
  public:
   typedef IndexStore::const_iterator const_iterator;
   typedef std::vector<const PostingListType*> PlPointers;
+
+  InvertedIndexQqMemDelta() :size_hist_(50) {}
 
   void Serialize(std::string path) const {
     std::ofstream ofile(path, std::ios::binary);
@@ -93,6 +99,11 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
     index_.emplace(term, pl);
 
+    int n_postings = pl.Size();
+    int exp = log2(n_postings);
+    size_hist_[exp]++;
+    total_ += n_postings;
+
     // return the length of this entry
     return offset;
   }
@@ -119,6 +130,12 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     }
 
     utils::UnmapFile(addr, fd, file_length);
+
+    std::cout << "exp,count\n";
+    for (int i = 0; i < size_hist_.size(); i++) {
+      std::cout << i << "," << size_hist_[i] << std::endl;
+    }
+    std::cout << "Total number of postings: " << total_ << std::endl;
   }
 
   IteratorPointers FindIterators(const TermList &terms) const {
