@@ -856,6 +856,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
     off_t skip_list_start = index_dumper_.CurrentOffset();
     int skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
+    std::cout << "skip_list_est_size: " << skip_list_est_size << std::endl;
 
     std::cout << "Dumping real skiplist...........................\n";
     SkipListWriter real_skiplist_writer = DumpTermEntrySet( 
@@ -867,7 +868,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     index_dumper_.Seek(skip_list_start);
 
     std::string skip_list_data = real_skiplist_writer.Serialize();
-    if (skip_list_data.size() > skip_list_start) { 
+    std::cout << "skip_list_real size: " << skip_list_data.size() << std::endl;
+    if (skip_list_data.size() > skip_list_est_size) { 
       LOG(FATAL) << "Gap for skip list is too small.";
     } else {
       index_dumper_.Dump(skip_list_data); 
