@@ -29,8 +29,14 @@ inline BlobFormat GetBlobFormat(const uint8_t *buf) {
 
 class TermFreqIterator {
  public:
-  TermFreqIterator(const uint8_t *buf, const SkipList &skip_list)
-      : buf_(buf), skip_list_(skip_list), cur_iter_type_(BlobFormat::NONE) {
+  TermFreqIterator(const uint8_t *buf, const SkipList *skip_list) {
+    Reset(buf, skip_list); 
+  }
+
+  void Reset(const uint8_t *buf, const SkipList *skip_list) {
+    buf_ = buf;
+    skip_list_ = skip_list;
+    cur_iter_type_ = BlobFormat::NONE;
   }
 
   void SkipTo(int posting_index) {
@@ -67,7 +73,7 @@ class TermFreqIterator {
 
  private:
   void SetupBlob(int blob_index) {
-    off_t blob_off = skip_list_[blob_index].file_offset_of_tf_bag;
+    off_t blob_off = (*skip_list_)[blob_index].file_offset_of_tf_bag;
     const uint8_t *blob_buf = buf_ + blob_off;
 
     BlobFormat format = GetBlobFormat(blob_buf);
@@ -86,7 +92,7 @@ class TermFreqIterator {
 
   // points to the start of a series packs and (maybe) a vints blob
   const uint8_t *buf_; 
-  const SkipList &skip_list_;
+  const SkipList *skip_list_;
 
   int cur_posting_index_ = 0;
   BlobFormat cur_iter_type_;

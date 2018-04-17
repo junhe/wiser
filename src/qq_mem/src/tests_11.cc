@@ -112,7 +112,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
     utils::FileMap file_map(path);
 
     // Read data by TermFreqIterator
-    TermFreqIterator iter((const uint8_t *)file_map.Addr(), skip_list);
+    TermFreqIterator iter((const uint8_t *)file_map.Addr(), &skip_list);
     
     for (uint32_t i = 0; i < 300; i++) {
       iter.SkipTo(i);
@@ -136,7 +136,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
     utils::FileMap file_map(path);
 
     // Read data by TermFreqIterator
-    TermFreqIterator iter((const uint8_t *)file_map.Addr(), skip_list);
+    TermFreqIterator iter((const uint8_t *)file_map.Addr(), &skip_list);
 
     SECTION("Skip one by one") {
       for (uint32_t i = 0; i < 300; i++) {
@@ -171,7 +171,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
     utils::FileMap file_map(path);
 
     // Read data by TermFreqIterator
-    TermFreqIterator iter((const uint8_t *)file_map.Addr(), skip_list);
+    TermFreqIterator iter((const uint8_t *)file_map.Addr(), &skip_list);
 
     SECTION("Skip one by one") {
       for (uint32_t i = 0; i < 1; i++) {
@@ -197,7 +197,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
     utils::FileMap file_map(path);
 
     // Read data by TermFreqIterator
-    TermFreqIterator iter((const uint8_t *)file_map.Addr(), skip_list);
+    TermFreqIterator iter((const uint8_t *)file_map.Addr(), &skip_list);
 
     SECTION("Skip one by one") {
       for (uint32_t i = 0; i < 100000; i++) {

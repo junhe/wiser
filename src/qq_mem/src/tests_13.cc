@@ -150,7 +150,7 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
   utils::FileMap file_map(path);
 
   // Read data by TermFreqIterator
-  TermFreqIterator tf_iter((const uint8_t *)file_map.Addr(), tf_skip_list);
+  TermFreqIterator tf_iter((const uint8_t *)file_map.Addr(), &tf_skip_list);
 
   SECTION("Check if the TF iterator works") {
     for (uint32_t i = 0; i < n_postings; i++) {
@@ -261,7 +261,7 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
   utils::FileMap file_map(path);
 
   // Read data by TermFreqIterator
-  TermFreqIterator tf_iter((const uint8_t *)file_map.Addr(), tf_skip_list);
+  TermFreqIterator tf_iter((const uint8_t *)file_map.Addr(), &tf_skip_list);
 
   SECTION("Check if the TF iterator works") {
     for (uint32_t i = 0; i < n_postings; i++) {
