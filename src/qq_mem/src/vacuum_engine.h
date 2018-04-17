@@ -29,7 +29,7 @@ class TermIndex {
     utils::UnmapFile(addr, fd, file_length);
 
     for (auto &it : index_) {
-      LOG(INFO) << it.first << ": " << it.second << std::endl;
+      LOG(INFO) << ".tip: " << it.first << ": " << it.second << std::endl;
     }
   }
 
@@ -74,6 +74,7 @@ class VacuumInvertedIndex {
   {
     term_index_.Load(term_index_path);
     file_data_ = (uint8_t *)file_map_.Addr();
+    std::cout << "file_map_.Addr(): " << (void *)file_data_ << std::endl;
   }
 
   off_t FindPostingListOffset(const Term term) {

@@ -803,12 +803,15 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     }
 
     off_t posting_list_start = index_dumper_.CurrentOffset();
-
+    LOG(INFO) << "posting_list_start: " << posting_list_start;
+    
     // Dump doc freq
+    LOG(INFO) << "dumping doc freq: " << posting_list.Size();
     DumpVarint(posting_list.Size());
 
     // Dump skip list
     off_t skip_list_start = index_dumper_.CurrentOffset();
+    LOG(INFO) << "skip_list_start: " << skip_list_start;
     int skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
     LOG(INFO) << "skip_list_est_size: " << skip_list_est_size << std::endl;
 

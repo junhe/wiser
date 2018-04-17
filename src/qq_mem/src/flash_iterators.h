@@ -496,6 +496,9 @@ class VacuumPostingListIterator {
   }
 
   void Reset(const uint8_t *file_data, const off_t offset) {
+    std::cout << "----3333333333333333333333333333333333333333333333333333333333333\n";
+    LOG(INFO) << "In PL iterator: file_data=" << (void *)file_data 
+      << " offset: " << offset;
     int len;
 
     file_data_ = file_data;
