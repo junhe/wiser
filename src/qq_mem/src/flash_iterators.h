@@ -527,6 +527,10 @@ class VacuumPostingListIterator {
   void Advance() {
     doc_id_iter_.Advance();
   }
+  
+  int PostingIndex() {
+    return doc_id_iter_.PostingIndex();
+  }
 
   bool IsEnd() {
     return doc_id_iter_.IsEnd();

@@ -59,11 +59,11 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
   // Dump the engine
   engine.DumpInvertedIndex();
 
-  SECTION("To iteratet doc ids") {
-    VacuumInvertedIndex index(
-        "/tmp/3-word-engine/my.tip", "/tmp/3-word-engine/my.vaccum");
-    REQUIRE(index.NumTerms() == 3);
+  VacuumInvertedIndex index(
+      "/tmp/3-word-engine/my.tip", "/tmp/3-word-engine/my.vaccum");
+  REQUIRE(index.NumTerms() == 3);
 
+  SECTION("To iteratet doc ids") {
     SECTION("Iterate doc IDs of 'a'") {
       std::vector<VacuumPostingListIterator> iters 
         = index.FindIteratorsSolid({"a"});
@@ -75,6 +75,7 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
       for (int i = 0; i < it.Size(); i++) {
         REQUIRE(it.IsEnd() == false);
         REQUIRE(it.DocId() == i);
+        REQUIRE(it.PostingIndex() == i);
         it.Advance();
       }
       REQUIRE(it.IsEnd() == true);
@@ -93,6 +94,7 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
       for (int i = 0; i < it.Size(); i++) {
         REQUIRE(it.IsEnd() == false);
         REQUIRE(it.DocId() == doc_ids[i]);
+        REQUIRE(it.PostingIndex() == i);
         it.Advance();
       }
       REQUIRE(it.IsEnd() == true);
@@ -111,6 +113,7 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
       for (int i = 0; i < it.Size(); i++) {
         REQUIRE(it.IsEnd() == false);
         REQUIRE(it.DocId() == doc_ids[i]);
+        REQUIRE(it.PostingIndex() == i);
         it.Advance();
       }
       REQUIRE(it.IsEnd() == true);
