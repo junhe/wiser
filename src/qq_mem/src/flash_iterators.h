@@ -424,6 +424,30 @@ class PositionPostingBagIterator {
   uint32_t prev_pos_ = 0;
 };
 
+
+// Iterate positions inside a posting bag
+class InBagPositionIterator {
+ public: 
+  void Reset(PositionPostingBagIterator *bag_iter) {
+    bag_iter_ = bag_iter;
+    n_pops_left_ = bag_iter_->TermFreq();
+  }
+
+  uint32_t Pop() {
+    n_pops_left_--;
+    return bag_iter_->Pop();
+  }
+
+  bool IsEnd() {
+    return n_pops_left_ == 0;
+  }
+
+ private:
+  PositionPostingBagIterator *bag_iter_;   
+  int n_pops_left_;
+};
+
+
 class OffsetPostingBagIterator {
  public:
   OffsetPostingBagIterator(const uint8_t *buf, const SkipList &skip_list,
