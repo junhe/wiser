@@ -184,8 +184,8 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     utils::FileMap file_map(path);
 
     // Initialize pos iterator
-    PositionPostingBagIterator pos_iter((const uint8_t*)file_map.Addr(), 
-        skip_list, &tf_iter);
+    PositionPostingBagIterator 
+      pos_iter((const uint8_t*)file_map.Addr(), &skip_list, tf_iter);
 
     SECTION("Very simple") {
       pos_iter.SkipTo(0);

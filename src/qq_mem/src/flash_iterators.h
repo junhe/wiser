@@ -336,12 +336,18 @@ class CozyBoxIterator {
 //   }
 class PositionPostingBagIterator {
  public:
-  PositionPostingBagIterator(const uint8_t *buf, const SkipList &skip_list,
-      TermFreqIterator *tf_iter)
-    : cozy_box_iter_(buf),
-      skip_list_(skip_list), 
-      tf_iter_(tf_iter)
-  {}
+  PositionPostingBagIterator() {}
+  PositionPostingBagIterator(
+      const uint8_t *buf, const SkipList *skip_list, TermFreqIterator tf_iter) {
+    Reset(buf, skip_list, tf_iter);
+  }
+
+  void Reset(
+      const uint8_t *buf, const SkipList *skip_list, TermFreqIterator tf_iter) {
+    cozy_box_iter_ = buf;
+    skip_list_ = skip_list;
+    tf_iter_ = tf_iter;
+  }
 
   void SkipTo(int posting_bag) {
     int skip_interval = FindSkipInterval(posting_bag);
@@ -359,8 +365,8 @@ class PositionPostingBagIterator {
   }
 
   int TermFreq() {
-    tf_iter_->SkipTo(CurPostingBag());
-    return tf_iter_->Value();
+    tf_iter_.SkipTo(CurPostingBag());
+    return tf_iter_.Value();
   }
 
   int CurPostingBag() const {
@@ -381,7 +387,7 @@ class PositionPostingBagIterator {
 
   void GoToSkipPostingBag(const int skip_interval) {
 
-    const SkipEntry &ent = skip_list_[skip_interval];
+    const SkipEntry &ent = (*skip_list_)[skip_interval];
     const off_t &blob_off = ent.file_offset_of_pos_blob;
     const int &in_blob_index = ent.in_blob_index_of_pos_bag;
 
@@ -391,8 +397,8 @@ class PositionPostingBagIterator {
 
   int FindSkipInterval(const int posting_bag) {
     int i = CurSkipInterval();
-    while (i + 1 < skip_list_.NumEntries() && 
-        skip_list_.StartPostingIndex(i + 1) <= posting_bag) 
+    while (i + 1 < skip_list_->NumEntries() && 
+        skip_list_->StartPostingIndex(i + 1) <= posting_bag) 
     {
       i++;
     }
@@ -403,16 +409,16 @@ class PositionPostingBagIterator {
     int n = 0;
 
     for (int i = bag_a; i < bag_b; i++) {
-      tf_iter_->SkipTo(i);
-      n += tf_iter_->Value();
+      tf_iter_.SkipTo(i);
+      n += tf_iter_.Value();
     }
 
     return n;
   }
 
   CozyBoxIterator cozy_box_iter_;
-  TermFreqIterator *tf_iter_;
-  const SkipList &skip_list_;
+  TermFreqIterator tf_iter_;
+  const SkipList *skip_list_;
 
   int cur_posting_bag_ = 0;
   uint32_t prev_pos_ = 0;
@@ -528,6 +534,7 @@ class VacuumPostingListIterator {
     skip_list_.Load(buf);
     doc_id_iter_.Reset(file_data_, &skip_list_, n_postings_);
     tf_iter_.Reset(file_data_, &skip_list_);
+    pos_bag_iter_.Reset(file_data_, &skip_list_, tf_iter_);
   }
 
   DocIdType DocId() {
@@ -565,6 +572,8 @@ class VacuumPostingListIterator {
   // iterators
   DocIdIterator doc_id_iter_;
   TermFreqIterator tf_iter_;
+  PositionPostingBagIterator pos_bag_iter_;
+
   SkipList skip_list_;
 };
 
