@@ -229,7 +229,7 @@ TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
     utils::FileMap file_map(path);
 
     // Read data by TermFreqIterator
-    DocIdIterator iter((const uint8_t *)file_map.Addr(), skip_list, num_docids);
+    DocIdIterator iter((const uint8_t *)file_map.Addr(), &skip_list, num_docids);
 
     SECTION("Skip one by one") {
       for (uint32_t i = 0; i < num_docids; i++) {
@@ -318,7 +318,7 @@ TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
     utils::FileMap file_map(path);
 
     // Read data by TermFreqIterator
-    DocIdIterator iter((const uint8_t *)file_map.Addr(), skip_list, num_docids);
+    DocIdIterator iter((const uint8_t *)file_map.Addr(), &skip_list, num_docids);
 
     SECTION("Numbers can be retrieved") {
       for (uint32_t i = 0; i < num_docids; i++) {

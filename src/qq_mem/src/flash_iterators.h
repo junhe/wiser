@@ -98,11 +98,21 @@ class TermFreqIterator {
 
 class DocIdIterator {
  public:
-  DocIdIterator(const uint8_t *buf, const SkipList &skip_list, 
-      const int num_docids)
-    : buf_(buf), skip_list_(skip_list), 
-      cur_iter_type_(BlobFormat::NONE), num_docids_(num_docids) 
+  DocIdIterator() {}
+
+  DocIdIterator(
+      const uint8_t *buf, const SkipList *skip_list, const int num_docids)
   {
+    Reset(buf, skip_list, num_docids);
+  }
+
+  void Reset(const uint8_t *buf, const SkipList *skip_list, const int num_docids)
+  {
+    buf_ = buf;
+    skip_list_ = skip_list;
+    cur_iter_type_ = BlobFormat::NONE;
+    num_docids_ = num_docids;
+
     SkipTo(0);     
   }
 
@@ -175,7 +185,7 @@ class DocIdIterator {
     int i = CurBlobIndex();
     const int last_index = LastBlobIndex();
 
-    while (i + 1 <= last_index && skip_list_[i + 1].previous_doc_id < val) {
+    while (i + 1 <= last_index && (*skip_list_)[i + 1].previous_doc_id < val) {
       i++;
     }
 
@@ -187,8 +197,8 @@ class DocIdIterator {
   }
 
   void SetupBlob(int blob_index) {
-    off_t blob_off = skip_list_[blob_index].file_offset_of_docid_bag;
-    const uint32_t &prev_doc_id = skip_list_[blob_index].previous_doc_id;
+    off_t blob_off = (*skip_list_)[blob_index].file_offset_of_docid_bag;
+    const uint32_t &prev_doc_id = (*skip_list_)[blob_index].previous_doc_id;
     const uint8_t *blob_buf = buf_ + blob_off;
 
     BlobFormat format = GetBlobFormat(blob_buf);
@@ -207,11 +217,11 @@ class DocIdIterator {
 
   // points to the start of a series packs and (maybe) a vints blob
   const uint8_t *buf_; 
-  const SkipList &skip_list_;
+  const SkipList *skip_list_;
 
   int cur_posting_index_ = 0;
   BlobFormat cur_iter_type_;
-  const int num_docids_;
+  int num_docids_;
   
   DeltaEncodedPackedIntsIterator pack_ints_iter_;
   DeltaEncodedVIntsIterator vints_iter_;
@@ -495,7 +505,8 @@ class VacuumPostingListIterator {
     const uint8_t *buf = file_data + offset;
     len = utils::varint_decode_uint8(buf + offset, 0, &n_postings_);
     buf += len;
-    skip_list_buf_ = buf;
+
+    skip_list_.Load(buf);
   }
 
   int Size() const {
@@ -506,9 +517,12 @@ class VacuumPostingListIterator {
   const uint8_t *file_data_;
   // pointing to the start of the posting list
   off_t offset_;
-  const uint8_t *skip_list_buf_;
   
   uint32_t n_postings_;
+
+  // iterators
+  DocIdIterator doc_id_iter_;
+  SkipList skip_list_;
 };
 
 
