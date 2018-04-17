@@ -394,56 +394,104 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
     SECTION("Very simple") {
       int posting_bag = 0;
       iter.SkipTo(posting_bag);
-      int tf = iter.TermFreq();
-      REQUIRE(tf == 3);
+      
+      InBagOffsetPairIterator in_bag_iter = iter.InBagOffsetPairBegin();
 
       auto good_offsets = GoodOffsets(posting_bag);
 
-      for (int i = 0; i < tf * 2; i++) {
-        uint32_t off = iter.Pop();
-        REQUIRE(off == good_offsets[i]);
+      // tf == 3
+      for (int i = 0; i < 3; i++) {
+        OffsetPair pair;
+        in_bag_iter.Pop(&pair);
+        REQUIRE(std::get<0>(pair) == good_offsets[2*i]);
+        REQUIRE(std::get<1>(pair) == good_offsets[2*i + 1]);
       }
     }
 
     SECTION("Very simple 2") {
       int posting_bag = 1;
       iter.SkipTo(posting_bag);
-      int tf = iter.TermFreq();
-      REQUIRE(tf == 3);
+      
+      InBagOffsetPairIterator in_bag_iter = iter.InBagOffsetPairBegin();
 
       auto good_offsets = GoodOffsets(posting_bag);
 
-      for (int i = 0; i < tf * 2; i++) {
-        uint32_t off = iter.Pop();
-        REQUIRE(off == good_offsets[i]);
+      // tf == 3
+      for (int i = 0; i < 3; i++) {
+        OffsetPair pair;
+        in_bag_iter.Pop(&pair);
+        REQUIRE(std::get<0>(pair) == good_offsets[2*i]);
+        REQUIRE(std::get<1>(pair) == good_offsets[2*i + 1]);
       }
     }
 
     SECTION("To the end") {
       int posting_bag = n_postings - 1;
       iter.SkipTo(posting_bag);
-      int tf = iter.TermFreq();
-      REQUIRE(tf == 3);
+
+      InBagOffsetPairIterator in_bag_iter = iter.InBagOffsetPairBegin();
 
       auto good_offsets = GoodOffsets(posting_bag);
 
-      for (int i = 0; i < tf * 2; i++) {
-        uint32_t off = iter.Pop();
-        REQUIRE(off == good_offsets[i]);
+      // tf == 3
+      for (int i = 0; i < 3; i++) {
+        OffsetPair pair;
+        in_bag_iter.Pop(&pair);
+        REQUIRE(std::get<0>(pair) == good_offsets[2*i]);
+        REQUIRE(std::get<1>(pair) == good_offsets[2*i + 1]);
       }
     }
 
     SECTION("To the middle") {
       int posting_bag = n_postings / 2;
       iter.SkipTo(posting_bag);
-      int tf = iter.TermFreq();
-      REQUIRE(tf == 3);
+
+      InBagOffsetPairIterator in_bag_iter = iter.InBagOffsetPairBegin();
 
       auto good_offsets = GoodOffsets(posting_bag);
 
-      for (int i = 0; i < tf * 2; i++) {
-        uint32_t off = iter.Pop();
-        REQUIRE(off == good_offsets[i]);
+      // tf == 3
+      for (int i = 0; i < 3; i++) {
+        OffsetPair pair;
+        in_bag_iter.Pop(&pair);
+        REQUIRE(std::get<0>(pair) == good_offsets[2*i]);
+        REQUIRE(std::get<1>(pair) == good_offsets[2*i + 1]);
+      }
+    }
+
+    SECTION("Iterate all posting bags") {
+      for (int posting_bag = 0; posting_bag < n_postings; posting_bag++) {
+        iter.SkipTo(posting_bag);
+
+        InBagOffsetPairIterator in_bag_iter = iter.InBagOffsetPairBegin();
+
+        auto good_offsets = GoodOffsets(posting_bag);
+
+        // tf == 3
+        for (int i = 0; i < 3; i++) {
+          OffsetPair pair;
+          in_bag_iter.Pop(&pair);
+          REQUIRE(std::get<0>(pair) == good_offsets[2*i]);
+          REQUIRE(std::get<1>(pair) == good_offsets[2*i + 1]);
+        }
+      }
+    }
+
+    SECTION("Iterate all posting bags, with strides") {
+      for (int posting_bag = 0; posting_bag < n_postings; posting_bag += 7) {
+        iter.SkipTo(posting_bag);
+
+        InBagOffsetPairIterator in_bag_iter = iter.InBagOffsetPairBegin();
+
+        auto good_offsets = GoodOffsets(posting_bag);
+
+        // tf == 3
+        for (int i = 0; i < 3; i++) {
+          OffsetPair pair;
+          in_bag_iter.Pop(&pair);
+          REQUIRE(std::get<0>(pair) == good_offsets[2*i]);
+          REQUIRE(std::get<1>(pair) == good_offsets[2*i + 1]);
+        }
       }
     }
   }

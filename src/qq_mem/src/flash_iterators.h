@@ -400,6 +400,45 @@ class InBagPositionIterator {
 };
 
 
+class InBagOffsetPairIterator {
+ public:
+  InBagOffsetPairIterator() {};
+  InBagOffsetPairIterator(const CozyBoxIterator cozy_iter, const int term_freq) {
+    Reset(cozy_iter, term_freq);
+  }
+
+  void Reset(const CozyBoxIterator cozy_iter, const int term_freq) {
+    cozy_box_iter_ = cozy_iter;
+    n_single_pops_left_ = term_freq * 2;
+    prev_pos_ = 0;
+  }
+
+  bool IsEnd() const {
+    return n_single_pops_left_ == 0;
+  }
+
+  void Pop(OffsetPair *pair) {
+    std::get<0>(*pair) = SinglePop();
+    std::get<1>(*pair) = SinglePop();
+  }
+
+ private:
+  uint32_t SinglePop() {
+    uint32_t pos = prev_pos_ + cozy_box_iter_.Value();
+    prev_pos_ = pos;
+
+    cozy_box_iter_.Advance();
+    n_single_pops_left_--; 
+
+    return pos;
+  }
+
+  CozyBoxIterator cozy_box_iter_;
+  uint32_t prev_pos_;
+  int n_single_pops_left_;
+};
+
+
 class PositionPostingBagIteratorBase {
  public:
   PositionPostingBagIteratorBase() {}
@@ -435,12 +474,15 @@ class PositionPostingBagIteratorBase {
 
  protected:
   virtual int NumCozyEntriesBetween(int bag_a, int bag_b) = 0;
+  virtual off_t GetEntryBlobOff(const SkipEntry &ent) = 0;
+  virtual int GetEntryInBlobIndex(const SkipEntry &ent) = 0;
 
   void GoToSkipPostingBag(const int skip_interval) {
-
     const SkipEntry &ent = (*skip_list_)[skip_interval];
-    const off_t &blob_off = ent.file_offset_of_pos_blob;
-    const int &in_blob_index = ent.in_blob_index_of_pos_bag;
+    // const off_t &blob_off = ent.file_offset_of_pos_blob;
+    // const int &in_blob_index = ent.in_blob_index_of_pos_bag;
+    const off_t blob_off = GetEntryBlobOff(ent);
+    const int in_blob_index = GetEntryInBlobIndex(ent);
 
     cozy_box_iter_.GoToCozyEntry(blob_off, in_blob_index);
     cur_posting_bag_ = skip_interval * PACK_SIZE;
@@ -506,6 +548,15 @@ class PositionPostingBagIterator :public PositionPostingBagIteratorBase {
   }
 
  private:
+  off_t GetEntryBlobOff(const SkipEntry &ent) override {
+    return ent.file_offset_of_pos_blob;
+  }
+
+  int GetEntryInBlobIndex(const SkipEntry &ent) override {
+    return ent.in_blob_index_of_pos_bag;
+  }
+
+
   int NumCozyEntriesBetween(int bag_a, int bag_b) {
     int n = 0;
 
@@ -528,8 +579,20 @@ class OffsetPostingBagIterator :public PositionPostingBagIteratorBase {
     Reset(buf, skip_list, tf_iter);
   }
 
+  InBagOffsetPairIterator InBagOffsetPairBegin() {
+    return InBagOffsetPairIterator(cozy_box_iter_, TermFreq());
+  }
+
  private:
-  int NumCozyEntriesBetween(int bag_a, int bag_b) {
+  off_t GetEntryBlobOff(const SkipEntry &ent) override {
+    return ent.file_offset_of_offset_blob;
+  }
+
+  int GetEntryInBlobIndex(const SkipEntry &ent) override {
+    return ent.in_blob_index_of_offset_bag;
+  }
+
+  int NumCozyEntriesBetween(int bag_a, int bag_b) override {
     int n = 0;
 
     for (int i = bag_a; i < bag_b; i++) {
@@ -569,6 +632,7 @@ class VacuumPostingListIterator {
     doc_id_iter_.Reset(file_data_, &skip_list_, n_postings_);
     tf_iter_.Reset(file_data_, &skip_list_);
     pos_bag_iter_.Reset(file_data_, &skip_list_, tf_iter_);
+    off_bag_iter_.Reset(file_data_, &skip_list_, tf_iter_);
   }
 
   DocIdType DocId() {
@@ -584,6 +648,10 @@ class VacuumPostingListIterator {
     std::cout << "skiping to: " << doc_id_iter_.PostingIndex() << std::endl;
     pos_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
     *in_bag_iter = pos_bag_iter_.InBagPositionBegin();
+  }
+
+  InBagOffsetPairIterator OffsetPairsBegin() {
+    return off_bag_iter_.InBagOffsetPairBegin();
   }
 
   void Advance() {
@@ -613,6 +681,7 @@ class VacuumPostingListIterator {
   DocIdIterator doc_id_iter_;
   TermFreqIterator tf_iter_;
   PositionPostingBagIterator pos_bag_iter_;
+  OffsetPostingBagIterator off_bag_iter_;
 
   SkipList skip_list_;
 };
