@@ -295,6 +295,10 @@ class CozyBoxIterator {
     return cur_in_blob_index_;
   }
 
+  BlobFormat CurBlobType() const {
+    return cur_iter_type_;
+  }
+
   std::string Format() const {
     return FormatString(cur_iter_type_);
   }
@@ -394,18 +398,17 @@ class PositionPostingBagIterator {
       LOG(FATAL) << "posting bag " << posting_bag 
         << " is smaller than cur_posting_bag_ " << cur_posting_bag_;
 
-    int skip_interval = FindSkipInterval(posting_bag);
-
-    GoToSkipPostingBag(skip_interval);
-    int skip_bag = skip_interval * PACK_SIZE;
-    int n_entries_between = NumCozyEntriesBetween(skip_bag, posting_bag);
-
-    for (int i = 0; i < n_entries_between; i++) {
-      cozy_box_iter_.Advance();
+    if (cozy_box_iter_.CurBlobType() == BlobFormat::NONE || 
+        posting_bag / SKIP_INTERVAL > CurSkipInterval()) {
+      // brand new position iterator, init the cozy iter
+      JumpToPostingBag(posting_bag);
+    } else {
+      // just advance cozy iterator from last place, not jumpping
+      int n_entries = NumCozyEntriesBetween(cur_posting_bag_, posting_bag);
+      AdvanceByCozyEntries(n_entries);
     }
 
     cur_posting_bag_ = posting_bag;
-    prev_pos_ = 0;
   }
 
   int CurPostingBag() const {
@@ -418,6 +421,20 @@ class PositionPostingBagIterator {
 
 
  private:
+  void JumpToPostingBag(int posting_bag) {
+    int skip_interval = FindSkipInterval(posting_bag);
+    GoToSkipPostingBag(skip_interval);
+    int skip_bag = skip_interval * PACK_SIZE;
+    int n_entries_between = NumCozyEntriesBetween(skip_bag, posting_bag);
+    AdvanceByCozyEntries(n_entries_between);
+  }
+
+  void AdvanceByCozyEntries(int n_entries) {
+    for (int i = 0; i < n_entries; i++) {
+      cozy_box_iter_.Advance();
+    }
+  }
+
   int TermFreq() {
     tf_iter_.SkipTo(CurPostingBag());
     return tf_iter_.Value();
@@ -463,7 +480,6 @@ class PositionPostingBagIterator {
   const SkipList *skip_list_;
 
   int cur_posting_bag_ = 0;
-  uint32_t prev_pos_ = 0;
 };
 
 

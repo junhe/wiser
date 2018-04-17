@@ -250,13 +250,55 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
       REQUIRE(in_bag_iter.IsEnd() == true);
     }
 
-    // SECTION("Skip multiple times") {
-      // for (int i = 0; i < n_postings; i++) {
-        // pos_iter.SkipTo(i);
-        // int tf = pos_iter.TermFreq();
-        // REQUIRE(tf == 3);
-      // }
-    // }
+    SECTION("Skip multiple times") {
+      for (int i = 0; i < n_postings; i++) {
+        pos_iter.SkipTo(i);
+
+        InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
+        auto good_positions = GoodPositions(i);
+
+        for (int i = 0; i < 3; i++) {
+          REQUIRE(in_bag_iter.IsEnd() == false);
+          uint32_t pos = in_bag_iter.Pop();
+          REQUIRE(pos == good_positions[i]);
+        }
+        REQUIRE(in_bag_iter.IsEnd() == true);
+      }
+    }
+
+    SECTION("Skip multiple times with strides") {
+      for (int i = 0; i < n_postings; i+=7) {
+        pos_iter.SkipTo(i);
+
+        InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
+        auto good_positions = GoodPositions(i);
+
+        for (int i = 0; i < 3; i++) {
+          REQUIRE(in_bag_iter.IsEnd() == false);
+          uint32_t pos = in_bag_iter.Pop();
+          REQUIRE(pos == good_positions[i]);
+        }
+        REQUIRE(in_bag_iter.IsEnd() == true);
+      }
+    }
+
+    SECTION("Skip multiple times with large strides") {
+      for (int i = 0; i < n_postings; i+=100) {
+        pos_iter.SkipTo(i);
+
+        InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
+        auto good_positions = GoodPositions(i);
+
+        for (int i = 0; i < 3; i++) {
+          REQUIRE(in_bag_iter.IsEnd() == false);
+          uint32_t pos = in_bag_iter.Pop();
+          REQUIRE(pos == good_positions[i]);
+        }
+        REQUIRE(in_bag_iter.IsEnd() == true);
+      }
+    }
+
+
   }
 }
 
