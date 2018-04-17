@@ -43,7 +43,7 @@ class TermFreqIterator {
   void SkipTo(int posting_index) {
     if (posting_index < cur_posting_index_) {
       LOG(FATAL) << "Posting index " << posting_index 
-        << " is less than current posting index.";
+        << " is less than current posting index " << cur_posting_index_;
     }
 
     int blob_index = posting_index / PACK_SIZE;
@@ -234,7 +234,6 @@ class DocIdIterator {
   DeltaEncodedVIntsIterator vints_iter_;
 };
 
-
 class CozyBoxIterator {
  public:
   CozyBoxIterator() {}
@@ -262,6 +261,8 @@ class CozyBoxIterator {
     cur_in_blob_index_ = in_blob_index;
   }
 
+  // Must call GotoCozyEntry() before calling Advance()
+  // Because Advance() needs cur_blob_off_ to be already set
   void Advance() {
     GoToCozyEntry(cur_blob_off_, cur_in_blob_index_ + 1);
 
@@ -288,6 +289,10 @@ class CozyBoxIterator {
 
   off_t CurBlobOffset() const {
     return cur_blob_off_;
+  }
+
+  int CurInBlobIndex() const {
+    return cur_in_blob_index_;
   }
 
   std::string Format() const {
@@ -350,6 +355,10 @@ class PositionPostingBagIterator {
   }
 
   void SkipTo(int posting_bag) {
+    if (posting_bag < cur_posting_bag_)
+      LOG(FATAL) << "posting bag " << posting_bag 
+        << " is smaller than cur_posting_bag_ " << cur_posting_bag_;
+
     int skip_interval = FindSkipInterval(posting_bag);
 
     GoToSkipPostingBag(skip_interval);
@@ -568,6 +577,13 @@ class VacuumPostingListIterator {
   int TermFreq () {
     tf_iter_.SkipTo(doc_id_iter_.PostingIndex());
     return tf_iter_.Value();
+  }
+
+  void AssignPositionBegin(InBagPositionIterator *in_bag_iter) {
+    std::cout << "skiping to: " << doc_id_iter_.PostingIndex() << std::endl;
+    pos_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
+    std::cout << "reseting...\n";
+    in_bag_iter->Reset(&pos_bag_iter_);
   }
 
   void Advance() {

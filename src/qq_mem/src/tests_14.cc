@@ -63,7 +63,7 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
       "/tmp/3-word-engine/my.tip", "/tmp/3-word-engine/my.vaccum");
   REQUIRE(index.NumTerms() == 3);
 
-  SECTION("To iteratet doc ids, TFs") {
+  SECTION("To iteratet doc ids, TFs, positions") {
     SECTION("Iterate doc IDs of 'a'") {
       std::vector<VacuumPostingListIterator> iters 
         = index.FindIteratorsSolid({"a"});
@@ -71,13 +71,28 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
 
       VacuumPostingListIterator &it = iters[0];
       REQUIRE(it.Size() == 3);
+
+      std::cout << "---------fffffffffffffffffffffffffffffffffffffffffffff\n";
       
       for (int i = 0; i < it.Size(); i++) {
+        std::cout << "iiiiiiiiiiiiiiiii: " << i << std::endl;
         REQUIRE(it.IsEnd() == false);
         REQUIRE(it.DocId() == i);
         REQUIRE(it.TermFreq() == 1);
         REQUIRE(it.PostingIndex() == i);
+
+        std::cout << "before pos iter\n";
+        InBagPositionIterator pos_iter;
+        it.AssignPositionBegin(&pos_iter);
+
+        std::cout << "before poping\n";
+        REQUIRE(pos_iter.Pop() == 0); 
+        std::cout << "After poping\n";
+        REQUIRE(pos_iter.IsEnd() == true); 
+
+        std::cout << "before advance\n";
         it.Advance();
+        std::cout << "after advance\n";
       }
       REQUIRE(it.IsEnd() == true);
     }
@@ -97,6 +112,12 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
         REQUIRE(it.DocId() == doc_ids[i]);
         REQUIRE(it.TermFreq() == 1);
         REQUIRE(it.PostingIndex() == i);
+
+        InBagPositionIterator pos_iter;
+        it.AssignPositionBegin(&pos_iter);
+        REQUIRE(pos_iter.Pop() == 1); 
+        REQUIRE(pos_iter.IsEnd() == true); 
+
         it.Advance();
       }
       REQUIRE(it.IsEnd() == true);
@@ -117,12 +138,19 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
         REQUIRE(it.DocId() == doc_ids[i]);
         REQUIRE(it.TermFreq() == 1);
         REQUIRE(it.PostingIndex() == i);
+
+        InBagPositionIterator pos_iter;
+        it.AssignPositionBegin(&pos_iter);
+        REQUIRE(pos_iter.Pop() == 2); 
+        REQUIRE(pos_iter.IsEnd() == true); 
+
         it.Advance();
       }
       REQUIRE(it.IsEnd() == true);
     }
   }
 }
+
 
 TEST_CASE( "3 word engine with different tfs", "[qqflash][tf]" ) {
   std::string dir_path = "/tmp/3-word-engine-tf";
@@ -159,6 +187,16 @@ TEST_CASE( "3 word engine with different tfs", "[qqflash][tf]" ) {
       REQUIRE(it.DocId() == 1);
       REQUIRE(it.TermFreq() == 2);
       REQUIRE(it.PostingIndex() == 1);
+
+      // iter positions of the second document
+      InBagPositionIterator pos_iter;
+      it.AssignPositionBegin(&pos_iter);
+      REQUIRE(pos_iter.IsEnd() == false); 
+      REQUIRE(pos_iter.Pop() == 0); 
+      REQUIRE(pos_iter.IsEnd() == false); 
+      REQUIRE(pos_iter.Pop() == 1); 
+      REQUIRE(pos_iter.IsEnd() == true); 
+
       it.Advance();
 
       REQUIRE(it.IsEnd() == false);
