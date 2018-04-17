@@ -29,6 +29,7 @@ inline BlobFormat GetBlobFormat(const uint8_t *buf) {
 
 class TermFreqIterator {
  public:
+  TermFreqIterator() {}
   TermFreqIterator(const uint8_t *buf, const SkipList *skip_list) {
     Reset(buf, skip_list); 
   }
@@ -518,10 +519,16 @@ class VacuumPostingListIterator {
 
     skip_list_.Load(buf);
     doc_id_iter_.Reset(file_data_, &skip_list_, n_postings_);
+    tf_iter_.Reset(file_data_, &skip_list_);
   }
 
   DocIdType DocId() {
     return doc_id_iter_.Value();
+  }
+
+  int TermFreq () {
+    tf_iter_.SkipTo(doc_id_iter_.PostingIndex());
+    return tf_iter_.Value();
   }
 
   void Advance() {
@@ -549,6 +556,7 @@ class VacuumPostingListIterator {
 
   // iterators
   DocIdIterator doc_id_iter_;
+  TermFreqIterator tf_iter_;
   SkipList skip_list_;
 };
 
