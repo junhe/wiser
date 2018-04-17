@@ -481,16 +481,34 @@ class OffsetPostingBagIterator {
 class VacuumPostingListIterator {
  public:
   VacuumPostingListIterator() {}
-  VacuumPostingListIterator(const uint8_t *buf) {
-    Reset(buf);
+  VacuumPostingListIterator(const uint8_t *file_data, const off_t offset) {
+    Reset(file_data, offset);
   }
 
-  void Reset(const uint8_t *buf) {
-    buf_ = buf;  
+  void Reset(const uint8_t *file_data, const off_t offset) {
+    int len;
+
+    file_data_ = file_data;
+    offset_ = offset;
+
+    // first item in the posting list is the doc freq (n_postings_)
+    const uint8_t *buf = file_data + offset;
+    len = utils::varint_decode_uint8(buf + offset, 0, &n_postings_);
+    buf += len;
+    skip_list_buf_ = buf;
+  }
+
+  int Size() const {
+    return n_postings_;
   }
 
  private:
-  const uint8_t *buf_;
+  const uint8_t *file_data_;
+  // pointing to the start of the posting list
+  off_t offset_;
+  const uint8_t *skip_list_buf_;
+  
+  uint32_t n_postings_;
 };
 
 

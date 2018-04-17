@@ -73,7 +73,7 @@ class VacuumInvertedIndex {
     : file_map_(inverted_index_path)
   {
     term_index_.Load(term_index_path);
-    buf_ = (uint8_t *)file_map_.Addr();
+    file_data_ = (uint8_t *)file_map_.Addr();
   }
 
   off_t FindPostingListOffset(const Term term) {
@@ -91,7 +91,7 @@ class VacuumInvertedIndex {
     for (auto &term : terms) {
       off_t offset = FindPostingListOffset(term); 
       if (offset != -1) {
-        iterators.emplace_back(buf_ + offset);
+        iterators.emplace_back(file_data_, offset);
       }
     }
     return iterators;
@@ -105,7 +105,7 @@ class VacuumInvertedIndex {
  private:
   TermIndex term_index_;  
   utils::FileMap file_map_;
-  const uint8_t *buf_; // = file_map_.Addr(), put it here for convenience
+  const uint8_t *file_data_; // = file_map_.Addr(), put it here for convenience
 };
 
 #endif

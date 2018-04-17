@@ -25,16 +25,18 @@ TEST_CASE( "Dumping 1-word Engine", "[qqflash][dump0]" ) {
     REQUIRE(index.FindPostingListOffset("b") == -1);
     REQUIRE(index.NumTerms() == 1);
 
+    SECTION("Get the posting list iterator, non-exist") {
+      std::vector<VacuumPostingListIterator> iters 
+        = index.FindIteratorsSolid({"b"});
+      REQUIRE(iters.size() == 0);
+    }
+
     SECTION("Get the posting list iterator") {
       std::vector<VacuumPostingListIterator> iters 
         = index.FindIteratorsSolid({"a"});
       REQUIRE(iters.size() == 1);
-    }
-
-    SECTION("Get the posting list iterator, 2") {
-      std::vector<VacuumPostingListIterator> iters 
-        = index.FindIteratorsSolid({"b"});
-      REQUIRE(iters.size() == 0);
+      VacuumPostingListIterator it = iters[0];
+      REQUIRE(it.Size() == 1);
     }
   }
 }

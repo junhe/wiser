@@ -70,7 +70,7 @@ test_fast:
 	mkdir -p ./build
 	cd build
 	cmake ../src/
-	make -j16 testmain
+	make -j32 testmain
 	cd ..
 	./build/testmain '~[grpc]~[slow]'
 
@@ -79,7 +79,7 @@ test_args:
 	mkdir -p ./build
 	cd build
 	cmake ../src/
-	make -j16 testmain
+	make -j32 testmain
 	cd ..
 	./build/testmain ${args}
 

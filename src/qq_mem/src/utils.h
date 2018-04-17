@@ -204,6 +204,13 @@ inline int varint_decode_chars(
   return i; 
 }
 
+inline int varint_decode_uint8(
+    const uint8_t *buf, const off_t offset, uint32_t *value) noexcept {
+  return varint_decode_chars((const char *)buf, offset, value);
+}
+
+
+
 // from varint code to int
 // return: length of the buffer decoded
 inline int varint_decode(
