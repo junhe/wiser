@@ -192,7 +192,7 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
       int tf = pos_iter.TermFreq();
       REQUIRE(tf == 3);
 
-      InBagPositionIterator2 in_bag_iter = pos_iter.InBagPositionBegin();
+      InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
 
       uint32_t prev = 0;
       for (int i = 0; i < 3; i++) {
@@ -213,7 +213,7 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
 
       auto good_positions = GoodPositions(posting_bag);
 
-      InBagPositionIterator2 in_bag_iter = pos_iter.InBagPositionBegin();
+      InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
 
       for (int i = 0; i < tf; i++) {
         REQUIRE(in_bag_iter.IsEnd() == false);
@@ -231,7 +231,7 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
 
       auto good_positions = GoodPositions(posting_bag);
 
-      InBagPositionIterator2 in_bag_iter = pos_iter.InBagPositionBegin();
+      InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
 
       for (int i = 0; i < tf; i++) {
         REQUIRE(in_bag_iter.IsEnd() == false);
@@ -247,7 +247,7 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
       int tf = pos_iter.TermFreq();
       REQUIRE(tf == 3);
 
-      InBagPositionIterator2 in_bag_iter = pos_iter.InBagPositionBegin();
+      InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
       auto good_positions = GoodPositions(posting_bag);
 
       for (int i = 0; i < tf; i++) {

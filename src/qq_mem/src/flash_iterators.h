@@ -334,10 +334,10 @@ class CozyBoxIterator {
 
 
 
-class InBagPositionIterator2 {
+class InBagPositionIterator {
  public:
-  InBagPositionIterator2() {};
-  InBagPositionIterator2(const CozyBoxIterator cozy_iter, const int term_freq) {
+  InBagPositionIterator() {};
+  InBagPositionIterator(const CozyBoxIterator cozy_iter, const int term_freq) {
     Reset(cozy_iter, term_freq);
   }
 
@@ -417,8 +417,8 @@ class PositionPostingBagIterator {
     return cur_posting_bag_;
   }
 
-  InBagPositionIterator2 InBagPositionBegin() {
-    return InBagPositionIterator2(cozy_box_iter_, TermFreq());
+  InBagPositionIterator InBagPositionBegin() {
+    return InBagPositionIterator(cozy_box_iter_, TermFreq());
   }
 
 
@@ -591,7 +591,7 @@ class VacuumPostingListIterator {
     return tf_iter_.Value();
   }
 
-  void AssignPositionBegin(InBagPositionIterator2 *in_bag_iter) {
+  void AssignPositionBegin(InBagPositionIterator *in_bag_iter) {
     std::cout << "skiping to: " << doc_id_iter_.PostingIndex() << std::endl;
     pos_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
     *in_bag_iter = pos_bag_iter_.InBagPositionBegin();
