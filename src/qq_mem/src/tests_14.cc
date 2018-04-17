@@ -81,18 +81,13 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
         REQUIRE(it.TermFreq() == 1);
         REQUIRE(it.PostingIndex() == i);
 
-        // std::cout << "before pos iter\n";
-        // InBagPositionIterator pos_iter;
-        // it.AssignPositionBegin(&pos_iter);
+        InBagPositionIterator pos_iter;
+        it.AssignPositionBegin(&pos_iter);
 
-        // std::cout << "before poping\n";
-        // REQUIRE(pos_iter.Pop() == 0); 
-        // std::cout << "After poping\n";
-        // REQUIRE(pos_iter.IsEnd() == true); 
+        REQUIRE(pos_iter.Pop() == 0); 
+        REQUIRE(pos_iter.IsEnd() == true); 
 
-        std::cout << "before advance\n";
         it.Advance();
-        std::cout << "after advance\n";
       }
       REQUIRE(it.IsEnd() == true);
     }
