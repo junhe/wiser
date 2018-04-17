@@ -456,9 +456,7 @@ class PositionPostingBagIterator {
   }
 
   void AdvanceByCozyEntries(int n_entries) {
-    for (int i = 0; i < n_entries; i++) {
-      cozy_box_iter_.Advance();
-    }
+    cozy_box_iter_.AdvanceBy(n_entries);
   }
 
   int TermFreq() {
