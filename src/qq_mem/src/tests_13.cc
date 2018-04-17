@@ -389,7 +389,7 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
 
     // Initialize pos iterator
     OffsetPostingBagIterator iter((const uint8_t*)file_map.Addr(), 
-        skip_list, &tf_iter);
+        &skip_list, tf_iter);
 
     SECTION("Very simple") {
       int posting_bag = 0;
