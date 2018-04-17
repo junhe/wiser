@@ -264,13 +264,13 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
       REQUIRE(in_bag_iter.IsEnd() == true);
     }
 
-    SECTION("Skip multiple times") {
-      for (int i = 0; i < n_postings; i++) {
-        pos_iter.SkipTo(i);
-        int tf = pos_iter.TermFreq();
-        REQUIRE(tf == 3);
-      }
-    }
+    // SECTION("Skip multiple times") {
+      // for (int i = 0; i < n_postings; i++) {
+        // pos_iter.SkipTo(i);
+        // int tf = pos_iter.TermFreq();
+        // REQUIRE(tf == 3);
+      // }
+    // }
   }
 }
 
