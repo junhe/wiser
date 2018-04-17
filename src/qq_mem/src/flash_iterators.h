@@ -507,6 +507,19 @@ class VacuumPostingListIterator {
     buf += len;
 
     skip_list_.Load(buf);
+    doc_id_iter_.Reset(file_data_, &skip_list_, n_postings_);
+  }
+
+  DocIdType DocId() {
+    return doc_id_iter_.Value();
+  }
+
+  void Advance() {
+    doc_id_iter_.Advance();
+  }
+
+  bool IsEnd() {
+    return doc_id_iter_.IsEnd();
   }
 
   int Size() const {

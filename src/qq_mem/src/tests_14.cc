@@ -35,8 +35,13 @@ TEST_CASE( "Dumping 1-word Engine", "[qqflash][dump0]" ) {
       std::vector<VacuumPostingListIterator> iters 
         = index.FindIteratorsSolid({"a"});
       REQUIRE(iters.size() == 1);
+
       VacuumPostingListIterator it = iters[0];
       REQUIRE(it.Size() == 1);
+      REQUIRE(it.DocId() == 0);
+      REQUIRE(it.IsEnd() == false);
+      it.Advance();
+      REQUIRE(it.IsEnd() == true);
     }
   }
 }
