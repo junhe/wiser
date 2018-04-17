@@ -506,7 +506,8 @@ class VacuumPostingListIterator {
 
     // first item in the posting list is the doc freq (n_postings_)
     const uint8_t *buf = file_data + offset;
-    len = utils::varint_decode_uint8(buf + offset, 0, &n_postings_);
+    len = utils::varint_decode_uint8(buf, 0, &n_postings_);
+    std::cout << "n_postings_ (just read): "  << n_postings_ << std::endl;
     buf += len;
 
     skip_list_.Load(buf);
