@@ -519,7 +519,7 @@ class PositionPostingBagIterator :public PositionPostingBagIteratorBase {
 };
 
 
-class OffsetPostingBagIterator {
+class OffsetPostingBagIterator :public PositionPostingBagIteratorBase {
  public:
   OffsetPostingBagIterator() {}
   OffsetPostingBagIterator(
@@ -528,67 +528,7 @@ class OffsetPostingBagIterator {
     Reset(buf, skip_list, tf_iter);
   }
 
-  void Reset(const uint8_t *buf, const SkipList *skip_list, TermFreqIterator tf_iter) {
-    cozy_box_iter_.Reset(buf);
-    skip_list_ = skip_list;
-    tf_iter_ = tf_iter;
-  }
-
-  void SkipTo(int posting_bag) {
-    int skip_interval = FindSkipInterval(posting_bag);
-
-    GoToSkipPostingBag(skip_interval);
-    int skip_bag = skip_interval * PACK_SIZE;
-    int n_entries_between = NumCozyEntriesBetween(skip_bag, posting_bag);
-
-    for (int i = 0; i < n_entries_between; i++) {
-      cozy_box_iter_.Advance();
-    }
-
-    cur_posting_bag_ = posting_bag;
-    prev_pos_ = 0;
-  }
-
-  int TermFreq() {
-    tf_iter_.SkipTo(CurPostingBag());
-    return tf_iter_.Value();
-  }
-
-  int CurPostingBag() const {
-    return cur_posting_bag_;
-  }
-
-  uint32_t Pop() {
-    uint32_t ret = prev_pos_ + cozy_box_iter_.Value(); 
-    prev_pos_ = ret;
-    cozy_box_iter_.Advance();
-    return ret;
-  }
-
  private:
-  int CurSkipInterval() const {
-    return cur_posting_bag_ / PACK_SIZE;
-  }
-
-  void GoToSkipPostingBag(const int skip_interval) {
-    const SkipEntry &ent = (*skip_list_)[skip_interval];
-    const off_t &blob_off = ent.file_offset_of_offset_blob;
-    const int &in_blob_index = ent.in_blob_index_of_offset_bag;
-
-    cozy_box_iter_.GoToCozyEntry(blob_off, in_blob_index);
-    cur_posting_bag_ = skip_interval * PACK_SIZE;
-  }
-
-  int FindSkipInterval(const int posting_bag) {
-    int i = CurSkipInterval();
-    while (i + 1 < skip_list_->NumEntries() && 
-        skip_list_->StartPostingIndex(i + 1) <= posting_bag) 
-    {
-      i++;
-    }
-    return i;
-  }
-
   int NumCozyEntriesBetween(int bag_a, int bag_b) {
     int n = 0;
 
@@ -599,13 +539,6 @@ class OffsetPostingBagIterator {
 
     return n;
   }
-
-  CozyBoxIterator cozy_box_iter_;
-  TermFreqIterator tf_iter_;
-  const SkipList *skip_list_;
-
-  int cur_posting_bag_ = 0;
-  uint32_t prev_pos_ = 0;
 };
 
 
