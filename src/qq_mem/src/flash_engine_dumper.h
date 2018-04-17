@@ -862,9 +862,9 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     FileOffsetOfSkipPostingBags tf_skip_offs = 
       DumpTermEntry(entry_set.termfreq, file_dumper, false);
     FileOffsetOfSkipPostingBags pos_skip_offs = 
-      DumpTermEntry(entry_set.position, file_dumper, true);
+      DumpTermEntry(entry_set.position, file_dumper, false);
     FileOffsetOfSkipPostingBags off_skip_offs = 
-      DumpTermEntry(entry_set.offset, file_dumper, true);
+      DumpTermEntry(entry_set.offset, file_dumper, false);
 
     return SkipListWriter(docid_skip_offs, tf_skip_offs, 
         pos_skip_offs, off_skip_offs, entry_set.docid.Values());

@@ -115,8 +115,8 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
 
         InBagPositionIterator pos_iter;
         it.AssignPositionBegin(&pos_iter);
-        // REQUIRE(pos_iter.Pop() == 1);  //TODO
-        // REQUIRE(pos_iter.IsEnd() == true); 
+        REQUIRE(pos_iter.Pop() == 1); 
+        REQUIRE(pos_iter.IsEnd() == true); 
 
         it.Advance();
       }

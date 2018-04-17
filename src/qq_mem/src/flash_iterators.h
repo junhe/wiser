@@ -414,7 +414,7 @@ class PositionPostingBagIterator {
 
   void Reset(
       const uint8_t *buf, const SkipList *skip_list, TermFreqIterator tf_iter) {
-    cozy_box_iter_ = buf;
+    cozy_box_iter_.Reset(buf);
     skip_list_ = skip_list;
     tf_iter_ = tf_iter;
   }
