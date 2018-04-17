@@ -46,6 +46,18 @@ TEST_CASE( "Dumping 1-word Engine", "[qqflash][dump0]" ) {
   }
 }
 
+TEST_CASE( "Dumping 3-word Engine bbb", "[qqflash][dumpdump]" ) {
+  VIntsWriter writer;
+  writer.Append(1);
+  writer.Append(1);
+
+  auto buf = writer.Serialize();
+  // for (int i = 0; i < buf.size(); i++) {
+    // printf("i: %d, %x\n", i, buf.data()[i]);
+  // }
+  REQUIRE(buf.size() == 4);
+}
+
 
 TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
   std::string dir_path = "/tmp/3-word-engine";

@@ -20,10 +20,12 @@ inline std::string FormatString(const BlobFormat f) {
 }
 
 inline BlobFormat GetBlobFormat(const uint8_t *buf) {
-  if ((*buf & 0x80) == 0x80) {
+  if ((*buf & CHECK_MASK) == CHECK_MASK) {
     return BlobFormat::VINTS;
-  } else {
+  } else if ((*buf & CHECK_MASK) == 0x00) {
     return BlobFormat::PACKED_INTS;
+  } else {
+    LOG(FATAL) << "Wrong format";
   }
 }
 

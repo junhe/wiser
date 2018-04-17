@@ -4,6 +4,11 @@
 #include "compression.h"
 #include "utils.h"
 
+#define CHECK_MASK 0x40 
+#define VINTS_FIRST_BYTE 0x40
+// x1xx xxxx -> vint
+// x0xx xxxx -> pack
+
 int AppendToByte(long val, const int n_bits, uint8_t *buf, const int next_empty_bit);
 int AppendValue(long val, int n_bits, uint8_t *buf, int next_empty_bit);
 long ExtractBits(const uint8_t *buf, const int bit_start, const int n_bits);
@@ -35,8 +40,8 @@ class PackedIntsWriter {
     if (max_bits_per_value_ > 64)
       LOG(FATAL) << "Max bits per value should not be larger than 64";
 
-    // set the highest bit to 0 to distinguish from VInts 
-    buf[0] = max_bits_per_value_ & 0x7F; 
+    // set bit 00__ ____ to distinguish from VINTS
+    buf[0] = max_bits_per_value_ & ~CHECK_MASK; 
 
     int next_empty_bit = 8;
     for (auto &v : values_) {
@@ -198,7 +203,7 @@ class VIntsWriter {
 
   std::string Serialize() const {
     VarintBuffer buf;
-    buf.Append(0x80); // to distinguish with PackedInts
+    buf.Append(VINTS_FIRST_BYTE); // to distinguish with PackedInts
     buf.Append(varint_buf_.Size());
     buf.Append(varint_buf_.Data());
 
@@ -222,7 +227,7 @@ class VIntsIterator {
     int len = utils::varint_decode_chars((char *)buf, 0, &magic_);
     buf += len;
 
-    if (magic_ != 0x80) {
+    if (magic_ != VINTS_FIRST_BYTE) {
       LOG(FATAL) << "Magic number is not right for this VInts";
     }
 
