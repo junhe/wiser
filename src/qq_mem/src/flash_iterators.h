@@ -333,11 +333,46 @@ class CozyBoxIterator {
 };
 
 
+
+class InBagPositionIterator2 {
+ public:
+  InBagPositionIterator2() {};
+  InBagPositionIterator2(const CozyBoxIterator cozy_iter, const int term_freq) {
+    Reset(cozy_iter, term_freq);
+  }
+
+  void Reset(const CozyBoxIterator cozy_iter, const int term_freq) {
+    cozy_box_iter_ = cozy_iter;
+    n_pops_left_ = term_freq;
+    prev_pos_ = 0;
+  }
+
+  uint32_t Pop() {
+    uint32_t pos = prev_pos_ + cozy_box_iter_.Value();
+    prev_pos_ = pos;
+
+    cozy_box_iter_.Advance();
+    n_pops_left_--; 
+
+    return pos;
+  }
+
+  bool IsEnd() const {
+    return n_pops_left_ == 0;
+  }
+
+ private:
+  CozyBoxIterator cozy_box_iter_;
+  uint32_t prev_pos_;
+  int n_pops_left_;
+};
+
+
 // Usage:
 //   SkipTo(8);
-//   tf = TermFreq();
-//   for (int i = 0; i < tf; i++) {
-//     Pop()
+//   in_bag_iter = InBagPositionBegin()
+//   while (in_bag_iter.IsEnd()) {
+//     in_bag_iter.Pop()
 //   }
 class PositionPostingBagIterator {
  public:
@@ -382,12 +417,10 @@ class PositionPostingBagIterator {
     return cur_posting_bag_;
   }
 
-  uint32_t Pop() {
-    uint32_t ret = prev_pos_ + cozy_box_iter_.Value(); 
-    prev_pos_ = ret;
-    cozy_box_iter_.Advance();
-    return ret;
+  InBagPositionIterator2 InBagPositionBegin() {
+    return InBagPositionIterator2(cozy_box_iter_, TermFreq());
   }
+
 
  private:
   int CurSkipInterval() const {
@@ -434,27 +467,6 @@ class PositionPostingBagIterator {
 };
 
 
-// Iterate positions inside a posting bag
-class InBagPositionIterator {
- public: 
-  void Reset(PositionPostingBagIterator *bag_iter) {
-    bag_iter_ = bag_iter;
-    n_pops_left_ = bag_iter_->TermFreq();
-  }
-
-  uint32_t Pop() {
-    n_pops_left_--;
-    return bag_iter_->Pop();
-  }
-
-  bool IsEnd() {
-    return n_pops_left_ == 0;
-  }
-
- private:
-  PositionPostingBagIterator *bag_iter_;   
-  int n_pops_left_;
-};
 
 
 class OffsetPostingBagIterator {
@@ -579,11 +591,10 @@ class VacuumPostingListIterator {
     return tf_iter_.Value();
   }
 
-  void AssignPositionBegin(InBagPositionIterator *in_bag_iter) {
+  void AssignPositionBegin(InBagPositionIterator2 *in_bag_iter) {
     std::cout << "skiping to: " << doc_id_iter_.PostingIndex() << std::endl;
     pos_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
-    std::cout << "reseting...\n";
-    in_bag_iter->Reset(&pos_bag_iter_);
+    *in_bag_iter = pos_bag_iter_.InBagPositionBegin();
   }
 
   void Advance() {
