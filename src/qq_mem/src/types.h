@@ -100,9 +100,40 @@ class DocInfo {
     return "body: " + body_ + 
            "\ntokens: " + tokens_ +
            "\noffsets: " + token_offsets_ + 
+           "\noffsets (parsed): " + ToOffsetsStr() + 
            "\npositions: " + token_positions_ + 
+           "\npositions (parsed): " + ToPositionStr() + 
            "\nformat: " + format_ + 
            "\n";
+  }
+
+  std::string ToOffsetsStr() const {
+    auto table = GetOffsetPairsVec();
+    std::string ret;
+
+    for (auto &row : table) {
+      for (auto &pair : row) {
+        ret += "(";
+        ret += std::to_string(std::get<0>(pair));
+        ret += ",";
+        ret += std::to_string(std::get<1>(pair));
+        ret += "),";
+      }
+      ret += "|| ";
+    }
+    return ret;
+  }
+
+  std::string ToPositionStr() const {
+    auto table = GetPositions(); 
+    std::string ret;
+    for (auto &row : table) {
+      for (auto &cell : row) {
+        ret += std::to_string(cell) + ",";
+      }
+      ret += "|| ";
+    }
+    return ret;
   }
 
  private:
