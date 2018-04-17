@@ -28,9 +28,24 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
         iter.Advance();
       }
     }
+
+    SECTION("AdvanceBy()") {
+      CozyBoxIterator iter((const uint8_t *)file_map.Addr());
+      iter.GoToCozyEntry(0, 0);
+
+      REQUIRE(iter.Value() == 0);
+
+      iter.AdvanceBy(1);
+      REQUIRE(iter.Value() == 1);
+
+      iter.AdvanceBy(1);
+      REQUIRE(iter.Value() == 2);
+
+      iter.AdvanceBy(2);
+      REQUIRE(iter.Value() == 4);
+    }
   }
 
- 
   SECTION("2 packs, some vints") {
     std::vector<uint32_t> vec;
     int cnt = 300;
@@ -93,7 +108,6 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
       }
     }
 
-
     SECTION("Start from the vints") {
       CozyBoxIterator iter((const uint8_t *)file_map.Addr());
       iter.GoToCozyEntry(file_offsets.VIntsOffs()[0], 0);
@@ -102,6 +116,28 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
         REQUIRE(iter.Value() == i);
         iter.Advance();
       }
+    }
+
+    SECTION("AdvanceBy()") {
+      CozyBoxIterator iter((const uint8_t *)file_map.Addr());
+      iter.GoToCozyEntry(0, 0);
+      
+      REQUIRE(iter.Value() == 0);
+
+      iter.AdvanceBy(2);
+      REQUIRE(iter.Value() == 2);
+
+      iter.AdvanceBy(124);
+      REQUIRE(iter.Value() == 126);
+
+      iter.AdvanceBy(2);
+      REQUIRE(iter.Value() == 128);
+
+      iter.AdvanceBy(128);
+      REQUIRE(iter.Value() == 256);
+
+      iter.AdvanceBy(1);
+      REQUIRE(iter.Value() == 257);
     }
   }
 }

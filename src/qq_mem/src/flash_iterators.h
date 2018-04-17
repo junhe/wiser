@@ -271,6 +271,28 @@ class CozyBoxIterator {
     }
   }
 
+  // You should never advance beyond the end. 
+  // We do not do boundary checking here
+  void AdvanceBy(int n_entries) {
+    while (n_entries > 0) {
+      if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
+        int n_pack_remain = PACK_SIZE - cur_in_blob_index_;
+        if (n_entries < n_pack_remain) {
+          int to_index = cur_in_blob_index_ + n_entries;
+          pack_ints_iter_.SkipTo(to_index);
+          cur_in_blob_index_ = to_index;
+          n_entries = 0;
+        } else {
+          AdvanceToNextBlob();
+          n_entries -= n_pack_remain;
+        }
+      } else {
+        Advance();
+        --n_entries;
+      }
+    }
+  }
+
   uint32_t Value() const {
     if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
       return pack_ints_iter_.Value();
@@ -285,6 +307,10 @@ class CozyBoxIterator {
     } else {
       return vints_iter_.IsEnd();
     }
+  }
+
+  void AdvanceToNextBlob() {
+    GoToCozyEntry(cur_blob_off_ + CurBlobBytes(), 0);
   }
 
   off_t CurBlobOffset() const {
