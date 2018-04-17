@@ -408,11 +408,6 @@ class PositionPostingBagIterator {
     prev_pos_ = 0;
   }
 
-  int TermFreq() {
-    tf_iter_.SkipTo(CurPostingBag());
-    return tf_iter_.Value();
-  }
-
   int CurPostingBag() const {
     return cur_posting_bag_;
   }
@@ -423,6 +418,11 @@ class PositionPostingBagIterator {
 
 
  private:
+  int TermFreq() {
+    tf_iter_.SkipTo(CurPostingBag());
+    return tf_iter_.Value();
+  }
+
   int CurSkipInterval() const {
     return cur_posting_bag_ / PACK_SIZE;
   }

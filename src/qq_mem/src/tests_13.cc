@@ -189,8 +189,6 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
 
     SECTION("Very simple") {
       pos_iter.SkipTo(0);
-      int tf = pos_iter.TermFreq();
-      REQUIRE(tf == 3);
 
       InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
 
@@ -208,14 +206,12 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     SECTION("Very simple 2") {
       int posting_bag = 1;
       pos_iter.SkipTo(posting_bag);
-      int tf = pos_iter.TermFreq();
-      REQUIRE(tf == 3);
 
       auto good_positions = GoodPositions(posting_bag);
 
       InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
 
-      for (int i = 0; i < tf; i++) {
+      for (int i = 0; i < 3; i++) {
         REQUIRE(in_bag_iter.IsEnd() == false);
         uint32_t pos = in_bag_iter.Pop();
         REQUIRE(pos == good_positions[i]);
@@ -226,14 +222,12 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     SECTION("Go to the last bag") {
       int posting_bag = n_postings - 1;
       pos_iter.SkipTo(posting_bag);
-      int tf = pos_iter.TermFreq();
-      REQUIRE(tf == 3);
 
       auto good_positions = GoodPositions(posting_bag);
 
       InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
 
-      for (int i = 0; i < tf; i++) {
+      for (int i = 0; i < 3; i++) {
         REQUIRE(in_bag_iter.IsEnd() == false);
         uint32_t pos = in_bag_iter.Pop();
         REQUIRE(pos == good_positions[i]);
@@ -244,13 +238,11 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     SECTION("Go to bag in the middle") {
       int posting_bag = n_postings / 2;
       pos_iter.SkipTo(posting_bag);
-      int tf = pos_iter.TermFreq();
-      REQUIRE(tf == 3);
 
       InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
       auto good_positions = GoodPositions(posting_bag);
 
-      for (int i = 0; i < tf; i++) {
+      for (int i = 0; i < 3; i++) {
         REQUIRE(in_bag_iter.IsEnd() == false);
         uint32_t pos = in_bag_iter.Pop();
         REQUIRE(pos == good_positions[i]);
