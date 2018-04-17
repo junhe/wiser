@@ -802,11 +802,18 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
       posting_it.Advance();
     }
 
+    off_t posting_list_start = index_dumper_.CurrentOffset();
+
+    // Dump doc freq
+    DumpVarint(posting_list.Size());
+
+    // Dump skip list
     off_t skip_list_start = index_dumper_.CurrentOffset();
     int skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
     LOG(INFO) << "skip_list_est_size: " << skip_list_est_size << std::endl;
 
     LOG(INFO) << "Dumping real skiplist...........................\n";
+    // Dump doc id, term freq, ...
     SkipListWriter real_skiplist_writer = DumpTermEntrySet( 
         &index_dumper_, 
         skip_list_start + skip_list_est_size,
@@ -824,9 +831,10 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
       index_dumper_.SeekToEnd();
     }
 
-    term_index_dumper_.DumpEntry(term, skip_list_start);
+    term_index_dumper_.DumpEntry(term, posting_list_start);
   }
 
+ private:
   int EstimateSkipListBytes(off_t skip_list_start, const TermEntrySet &entry_set) {
     LOG(INFO) << "Dumping fake skiplist...........................\n";
     SkipListWriter fake_skiplist_writer = DumpTermEntrySet( 
@@ -859,7 +867,13 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
         pos_skip_offs, off_skip_offs, entry_set.docid.Values());
   }
 
- private:
+
+  void DumpVarint(uint32_t val) {
+    VarintBuffer buf;
+    buf.Append(val);
+    index_dumper_.Dump(buf.Data()); 
+  }
+
   FileDumper index_dumper_;
   FileDumper fake_index_dumper_;
 
