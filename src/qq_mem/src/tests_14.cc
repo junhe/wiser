@@ -59,27 +59,61 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
   // Dump the engine
   engine.DumpInvertedIndex();
 
-  SECTION("Load inverted index") {
+  SECTION("To iteratet doc ids") {
     VacuumInvertedIndex index(
         "/tmp/3-word-engine/my.tip", "/tmp/3-word-engine/my.vaccum");
     REQUIRE(index.NumTerms() == 3);
 
-    // SECTION("Get the posting list iterator, non-exist") {
-      // std::vector<VacuumPostingListIterator> iters 
-        // = index.FindIteratorsSolid({"b"});
-      // REQUIRE(iters.size() == 1);
-    // }
-
-    SECTION("Get the posting list iterator") {
-      std::cout << "---------------------------------------\n";
+    SECTION("Iterate doc IDs of 'a'") {
       std::vector<VacuumPostingListIterator> iters 
         = index.FindIteratorsSolid({"a"});
       REQUIRE(iters.size() == 1);
 
       VacuumPostingListIterator &it = iters[0];
       REQUIRE(it.Size() == 3);
-      REQUIRE(it.DocId() == 0);
-      REQUIRE(it.IsEnd() == false);
+      
+      for (int i = 0; i < it.Size(); i++) {
+        REQUIRE(it.IsEnd() == false);
+        REQUIRE(it.DocId() == i);
+        it.Advance();
+      }
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("Iterate doc IDs of 'b'") {
+      std::vector<VacuumPostingListIterator> iters 
+        = index.FindIteratorsSolid({"b"});
+      REQUIRE(iters.size() == 1);
+
+      VacuumPostingListIterator &it = iters[0];
+      REQUIRE(it.Size() == 2);
+      
+      std::vector<int> doc_ids{1, 2};
+
+      for (int i = 0; i < it.Size(); i++) {
+        REQUIRE(it.IsEnd() == false);
+        REQUIRE(it.DocId() == doc_ids[i]);
+        it.Advance();
+      }
+      REQUIRE(it.IsEnd() == true);
+    }
+
+    SECTION("Iterate doc IDs of 'c'") {
+      std::vector<VacuumPostingListIterator> iters 
+        = index.FindIteratorsSolid({"c"});
+      REQUIRE(iters.size() == 1);
+
+      VacuumPostingListIterator &it = iters[0];
+      REQUIRE(it.Size() == 1);
+      
+      std::vector<int> doc_ids{2};
+
+      for (int i = 0; i < it.Size(); i++) {
+        REQUIRE(it.IsEnd() == false);
+        REQUIRE(it.DocId() == doc_ids[i]);
+        it.Advance();
+      }
+      REQUIRE(it.IsEnd() == true);
     }
   }
 }
