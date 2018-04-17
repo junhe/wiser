@@ -237,9 +237,17 @@ class DocIdIterator {
 
 class CozyBoxIterator {
  public:
-  CozyBoxIterator(const uint8_t *buf) 
-    :buf_(buf), cur_iter_type_(BlobFormat::NONE), 
-     cur_blob_off_(-1), cur_in_blob_index_(0) {}
+  CozyBoxIterator() {}
+  CozyBoxIterator(const uint8_t *buf) {
+    Reset(buf);
+  }
+
+  void Reset(const uint8_t *buf) {
+    buf_ = buf;
+    cur_iter_type_ = BlobFormat::NONE;
+    cur_blob_off_ = -1;
+    cur_in_blob_index_ = 0;
+  }
 
   void GoToCozyEntry(off_t blob_off, int in_blob_index) {
     if (cur_iter_type_ == BlobFormat::NONE || cur_blob_off_ != blob_off) {
