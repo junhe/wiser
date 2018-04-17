@@ -400,25 +400,40 @@ class InBagPositionIterator {
 };
 
 
-// Usage:
-//   SkipTo(8);
-//   in_bag_iter = InBagPositionBegin()
-//   while (in_bag_iter.IsEnd()) {
-//     in_bag_iter.Pop()
-//   }
-class PositionPostingBagIterator {
+class PositionPostingBagIteratorBase {
  public:
-  PositionPostingBagIterator() {}
-  PositionPostingBagIterator(
-      const uint8_t *buf, const SkipList *skip_list, TermFreqIterator tf_iter) {
-    Reset(buf, skip_list, tf_iter);
-  }
+  PositionPostingBagIteratorBase() {}
 
   void Reset(
       const uint8_t *buf, const SkipList *skip_list, TermFreqIterator tf_iter) {
     cozy_box_iter_.Reset(buf);
     skip_list_ = skip_list;
     tf_iter_ = tf_iter;
+  }
+
+ protected:
+  CozyBoxIterator cozy_box_iter_;
+  TermFreqIterator tf_iter_;
+  const SkipList *skip_list_;
+
+  int cur_posting_bag_ = 0;
+};
+
+
+
+
+// Usage:
+//   SkipTo(8);
+//   in_bag_iter = InBagPositionBegin()
+//   while (in_bag_iter.IsEnd()) {
+//     in_bag_iter.Pop()
+//   }
+class PositionPostingBagIterator :public PositionPostingBagIteratorBase {
+ public:
+  PositionPostingBagIterator() {}
+  PositionPostingBagIterator(
+      const uint8_t *buf, const SkipList *skip_list, TermFreqIterator tf_iter) {
+    Reset(buf, skip_list, tf_iter);
   }
 
   void SkipTo(int posting_bag) {
@@ -500,12 +515,6 @@ class PositionPostingBagIterator {
 
     return n;
   }
-
-  CozyBoxIterator cozy_box_iter_;
-  TermFreqIterator tf_iter_;
-  const SkipList *skip_list_;
-
-  int cur_posting_bag_ = 0;
 };
 
 
