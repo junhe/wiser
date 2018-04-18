@@ -163,6 +163,10 @@ typedef std::vector<std::shared_ptr<OffsetPairsIteratorService>> OffsetIterators
 
 // T is subclass of PopIteratorService
 // For example, it can be CompressedPositionIterator
+//
+// T is a position iterator, it must have methods:
+//  IsEnd()
+//  Pop()
 template <typename T>
 class PhraseQueryProcessor2 {
  public:
