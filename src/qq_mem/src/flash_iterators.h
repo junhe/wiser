@@ -400,7 +400,7 @@ class InBagPositionIterator {
 };
 
 
-class InBagOffsetPairIterator {
+class InBagOffsetPairIterator: public OffsetPairsIteratorService {
  public:
   InBagOffsetPairIterator() {};
   InBagOffsetPairIterator(const CozyBoxIterator cozy_iter, const int term_freq) {
