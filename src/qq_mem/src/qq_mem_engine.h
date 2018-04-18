@@ -426,8 +426,8 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
   }
 
   void Deserialize(std::string dir_path) {
-    DeserializeMeta(dir_path + "/engine_meta.dump");
-    doc_store_.Deserialize(dir_path + "/doc_store.dump");
+    DeserializeMeta(dir_path + "/engine_meta.dump"); //good
+    doc_store_.Deserialize(dir_path + "/doc_store.dump"); //good
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
     similarity_.Reset(doc_lengths_.GetAvgLength());

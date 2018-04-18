@@ -860,6 +860,29 @@ class FlashEngineDumper {
     inverted_index_.Dump();
   }
 
+
+  void DeserializeMeta(std::string path) {
+    int fd;
+    int len;
+    char *addr;
+    size_t file_length;
+    uint32_t var;
+
+    utils::MapFile(path, &addr, &fd, &file_length);
+
+    next_doc_id_ = *((int *)addr);
+    
+    utils::UnmapFile(addr, fd, file_length);
+  }
+
+  void LoadQqMemDump(std::string dir_path) {
+    DeserializeMeta(dir_path + "/engine_meta.dump"); // good
+    doc_store_.Deserialize(dir_path + "/doc_store.dump"); //good
+    inverted_index_.Deserialize(dir_path + "/inverted_index.dump"); //good
+    doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump"); //good
+    similarity_.Reset(doc_lengths_.GetAvgLength()); //good
+  }
+
  private:
   int next_doc_id_ = 0;
   std::string dump_dir_path_;
