@@ -99,18 +99,66 @@ TEST_CASE( "tests two intersection ngine", "[qqflash][two]" ) {
   }
 
   SECTION("Two-term phrase query") {
-    std::cout << "22222222222222222222222222222222222222222222222\n";
     SearchQuery query({"a", "b"}, true);
     query.is_phrase = true;
 
     SearchResult result = engine.Search(query);
-    std::cout << result.ToStr();
     REQUIRE(result.Size() == 2);
     std::vector<DocIdType> ids{result[0].doc_id, result[1].doc_id};
     std::sort(ids.begin(), ids.end());
     REQUIRE(ids == std::vector<DocIdType>{1, 2});
   }
+
+  SECTION("three-term phrase query") {
+    SearchQuery query({"a", "b", "c"}, true);
+    query.is_phrase = true;
+
+    SearchResult result = engine.Search(query);
+    std::cout << result.ToStr();
+    REQUIRE(result.Size() == 1);
+    std::vector<DocIdType> ids{result[0].doc_id};
+    REQUIRE(ids == std::vector<DocIdType>{2});
+  }
 }
+
+TEST_CASE( "Testing 5 long docs", "[qqflash][dump5]" ) {
+  std::string dir_path = "/tmp/3-doc-engine";
+  utils::PrepareDir(dir_path);
+  FlashEngineDumper engine_dumper(dir_path);
+  REQUIRE(engine_dumper.TermCount() == 0);
+  engine_dumper.LoadLocalDocuments("./src/testdata/line_doc_with_positions", 10000, 
+      "WITH_POSITIONS");
+  REQUIRE(engine_dumper.TermCount() > 100);
+
+  engine_dumper.Dump();
+
+  VacuumEngine engine(dir_path);
+
+  SECTION("one-term query") {
+    SearchResult result = engine.Search(SearchQuery({"1860"}, true));
+    REQUIRE(result.Size() == 1);
+    std::vector<DocIdType> ids{result[0].doc_id};
+    std::sort(ids.begin(), ids.end());
+    REQUIRE(ids == std::vector<DocIdType>{0});
+  }
+
+  SECTION("Two-term phrase query (not exist)") {
+    SearchQuery query({"a", "b"}, true);
+    query.is_phrase = true;
+
+    SearchResult result = engine.Search(query);
+    REQUIRE(result.Size() == 0);
+  }
+
+  SECTION("Two-term phrase query") {
+    SearchQuery query({"anarchist", "movement"}, true);
+    query.is_phrase = true;
+
+    SearchResult result = engine.Search(query);
+    REQUIRE(result.Size() == 1);
+  }
+}
+
 
 
 

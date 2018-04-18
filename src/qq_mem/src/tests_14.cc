@@ -218,22 +218,4 @@ TEST_CASE( "3 word engine with different tfs", "[qqflash][tf]" ) {
 }
 
 
-TEST_CASE( "Dumping 5-doc Engine", "[qqflash][dump1]" ) {
-  std::string dir_path = "/tmp/5-word-engine";
-  utils::PrepareDir(dir_path);
-  FlashEngineDumper engine(dir_path);
-  REQUIRE(engine.TermCount() == 0);
-  engine.LoadLocalDocuments("src/testdata/line_doc_with_positions", 10000, 
-      "WITH_POSITIONS");
-
-  REQUIRE(engine.TermCount() > 0);
-  engine.DumpInvertedIndex();
-
-  SECTION("Load inverted index") {
-    VacuumInvertedIndex index(
-        "/tmp/5-word-engine/my.tip", "/tmp/5-word-engine/my.vacuum");
-    REQUIRE(index.NumTerms() > 100);
-  }
-}
-
 
