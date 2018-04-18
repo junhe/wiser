@@ -126,32 +126,44 @@ class VacuumEngine : public SearchEngineServiceNew {
     doc_lengths_.Deserialize(utils::JoinPath(engine_dir_path, "my.doc_length"));
   }
 
-  void AddDocument(const DocInfo doc_info) override {
-    LOG(FATAL) << "Not implemented in VacuumEngine.";
-  }
-
-  int LoadLocalDocuments(const std::string &line_doc_path, 
-     int n_rows, const std::string loader) override {
-    LOG(FATAL) << "Not implemented in VacuumEngine.";
-  }
-
   int TermCount() const override {
-    LOG(FATAL) << "Not implemented in VacuumEngine.";
+    return inverted_index_.NumTerms(); 
   }
 
   std::map<std::string, int> PostinglistSizes(const TermList &terms) override {
-    LOG(FATAL) << "Not implemented in VacuumEngine.";
+    std::map<std::string, int> ret;
+
+    for (auto &term : terms) {
+      std::vector<VacuumPostingListIterator> iters = 
+        inverted_index_.FindIteratorsSolid({term});
+      if (iters.size() == 1) {
+        ret[term] = iters[0].Size();
+      }
+    }
+    return ret;
   }
 
   SearchResult Search(const SearchQuery &query) override {
     LOG(FATAL) << "Not implemented in VacuumEngine.";
   }
 
+
+
+
   void Serialize(std::string dir_path) const override {
     LOG(FATAL) << "Not implemented in VacuumEngine.";
   }
 
   void Deserialize(std::string dir_path) override {
+    LOG(FATAL) << "Not implemented in VacuumEngine.";
+  }
+
+  void AddDocument(const DocInfo doc_info) override {
+    LOG(FATAL) << "Not implemented in VacuumEngine.";
+  }
+
+  int LoadLocalDocuments(const std::string &line_doc_path, 
+     int n_rows, const std::string loader) override {
     LOG(FATAL) << "Not implemented in VacuumEngine.";
   }
 
