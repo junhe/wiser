@@ -348,7 +348,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
       return result;
     }
 
-    auto top_k = qq_search::ProcessQueryDelta(
+    auto top_k = qq_search::ProcessQueryDelta<PostingListDeltaIterator>(
         similarity_, &iterators, doc_lengths_, doc_lengths_.Size(), 
         query.n_results, query.is_phrase);  
 

@@ -885,13 +885,28 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
 
 namespace qq_search {
 
-std::vector<ResultDocEntry<PostingListDeltaIterator>> ProcessQueryDelta(
-    const Bm25Similarity &similarity,
-    std::vector<PostingListDeltaIterator> *pl_iterators, 
-    const DocLengthStore &doc_lengths,
-    const int n_total_docs_in_index,
-    const int k,
-    const bool is_phrase);
+template <typename PLIter_T>
+std::vector<ResultDocEntry<PLIter_T>> ProcessQueryDelta(
+     const Bm25Similarity &similarity,
+     std::vector<PLIter_T> *pl_iterators, 
+     const DocLengthStore &doc_lengths,
+     const int n_total_docs_in_index,
+     const int k,
+     const bool is_phase) {
+  if (pl_iterators->size() == 1) {
+    SingleTermQueryProcessor<PLIter_T> qp(similarity, pl_iterators, doc_lengths, 
+        n_total_docs_in_index, k);
+    return qp.Process();
+  } else if (pl_iterators->size() == 2 && is_phase == false) {
+    TwoTermNonPhraseQueryProcessor<PLIter_T> qp(similarity, pl_iterators, doc_lengths, 
+        n_total_docs_in_index, k);
+    return qp.Process();
+  } else {
+    QueryProcessor<PLIter_T> qp(similarity, pl_iterators, doc_lengths, 
+        n_total_docs_in_index, k, is_phase);
+    return qp.Process();
+  }
+}
 
 }
 
