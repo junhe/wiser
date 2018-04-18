@@ -219,6 +219,11 @@ struct SearchResultEntry {
 struct SearchResult {
   std::vector<SearchResultEntry> entries;
 
+
+  SearchResultEntry &operator [](int i) {
+    return entries[i];
+  }
+
   std::size_t Size() {return entries.size();}
   std::string ToStr() {
     std::string ret;

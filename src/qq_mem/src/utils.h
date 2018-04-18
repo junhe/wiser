@@ -336,6 +336,18 @@ void PrintVec(const std::vector<T> vec) {
   std::cout << std::endl;
 }
 
+inline std::string OffsetPairToStr(OffsetPair pair) {
+  std::string ret;
+
+  ret += "(";
+  ret += std::to_string(std::get<0>(pair));
+  ret += ",";
+  ret += std::to_string(std::get<1>(pair));
+  ret += ")";
+
+  return ret;
+}
+
 
 
 } // namespace util
