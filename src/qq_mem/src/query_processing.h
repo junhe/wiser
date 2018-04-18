@@ -523,11 +523,12 @@ using MinPointerHeap = std::priority_queue<
           EntryGreater<PLIter_T>>;
 
 
+template <typename PLIter_T>
 class ProcessorBase {
  public:
   ProcessorBase(
     const Bm25Similarity &similarity,
-    std::vector<PostingListDeltaIterator> *pl_iterators, 
+    std::vector<PLIter_T> *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k)
@@ -546,8 +547,8 @@ class ProcessorBase {
   }
 
  protected:
-  std::vector<ResultDocEntry<PostingListDeltaIterator>> SortHeap() {
-    std::vector<ResultDocEntry<PostingListDeltaIterator>> ret;
+  std::vector<ResultDocEntry<PLIter_T>> SortHeap() {
+    std::vector<ResultDocEntry<PLIter_T>> ret;
 
     int kk = k_;
     while(!min_heap_.empty() && kk != 0) {
@@ -560,17 +561,17 @@ class ProcessorBase {
   }
 
   const Bm25Similarity &similarity_;
-  std::vector<PostingListDeltaIterator> &pl_iterators_;
+  std::vector<PLIter_T> &pl_iterators_;
   const int k_;
   const int n_lists_;
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
-  MinPointerHeap<PostingListDeltaIterator> min_heap_;
+  MinPointerHeap<PLIter_T> min_heap_;
   const DocLengthStore &doc_lengths_;
 };
 
 
-class NonPhraseProcessorBase: public ProcessorBase {
+class NonPhraseProcessorBase: public ProcessorBase<PostingListDeltaIterator> {
  public:
   NonPhraseProcessorBase(
     const Bm25Similarity &similarity,
@@ -674,7 +675,7 @@ class TwoTermNonPhraseQueryProcessor: public NonPhraseProcessorBase {
 };
 
 
-class QueryProcessor: public ProcessorBase {
+class QueryProcessor: public ProcessorBase<PostingListDeltaIterator> {
  public:
   QueryProcessor(
     const Bm25Similarity &similarity,
