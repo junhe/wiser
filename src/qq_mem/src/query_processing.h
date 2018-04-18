@@ -616,26 +616,27 @@ class NonPhraseProcessorBase: public ProcessorBase<PLIter_T> {
 };
 
 
-class SingleTermQueryProcessor :public NonPhraseProcessorBase<PostingListDeltaIterator> {
+template <typename PLIter_T>
+class SingleTermQueryProcessor :public NonPhraseProcessorBase<PLIter_T> {
  public:
   SingleTermQueryProcessor(
     const Bm25Similarity &similarity,
-    std::vector<PostingListDeltaIterator> *pl_iterators, 
+    std::vector<PLIter_T> *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5)
-   :NonPhraseProcessorBase(similarity,            pl_iterators, doc_lengths, 
+   :NonPhraseProcessorBase<PLIter_T>(similarity,            pl_iterators, doc_lengths, 
                            n_total_docs_in_index, k) {}
 
-  std::vector<ResultDocEntry<PostingListDeltaIterator>> Process() {
-    auto &it = pl_iterators_[0];
+  std::vector<ResultDocEntry<PLIter_T>> Process() {
+    auto &it = this->pl_iterators_[0];
 
     while (it.IsEnd() == false) {
-      RankDoc(it.DocId());
+      this->RankDoc(it.DocId());
       it.Advance();
     }
 
-    return SortHeap();
+    return this->SortHeap();
   }
 };
 

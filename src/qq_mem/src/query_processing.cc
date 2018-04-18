@@ -10,7 +10,7 @@ std::vector<ResultDocEntry<PostingListDeltaIterator>> ProcessQueryDelta(
      const int k,
      const bool is_phase) {
   if (pl_iterators->size() == 1) {
-    SingleTermQueryProcessor qp(similarity, pl_iterators, doc_lengths, 
+    SingleTermQueryProcessor<PostingListDeltaIterator> qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k);
     return qp.Process();
   } else if (pl_iterators->size() == 2 && is_phase == false) {

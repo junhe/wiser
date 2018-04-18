@@ -192,7 +192,7 @@ TEST_CASE( "SingleTermQueryProcessor works", "[engine]" ) {
     std::vector<PostingListDeltaIterator> iterators;
     iterators.push_back(pl01.Begin2());
 
-    SingleTermQueryProcessor processor(similarity, &iterators, store, 100, 5);
+    SingleTermQueryProcessor<PostingListDeltaIterator> processor(similarity, &iterators, store, 100, 5);
     std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -208,7 +208,7 @@ TEST_CASE( "SingleTermQueryProcessor works", "[engine]" ) {
     std::vector<PostingListDeltaIterator> iterators;
     iterators.push_back(pl01.Begin2());
 
-    SingleTermQueryProcessor processor(similarity, &iterators, store, 100, 2);
+    SingleTermQueryProcessor<PostingListDeltaIterator> processor(similarity, &iterators, store, 100, 2);
     std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 2);
 
