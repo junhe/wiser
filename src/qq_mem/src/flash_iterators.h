@@ -583,6 +583,12 @@ class OffsetPostingBagIterator :public PositionPostingBagIteratorBase {
     return InBagOffsetPairIterator(cozy_box_iter_, TermFreq());
   }
 
+  std::unique_ptr<OffsetPairsIteratorService> InBagOffsetPairPtr() {
+    std::unique_ptr<OffsetPairsIteratorService> p(new
+      InBagOffsetPairIterator(cozy_box_iter_, TermFreq()));
+    return p;
+  }
+
  private:
   off_t GetEntryBlobOff(const SkipEntry &ent) override {
     return ent.file_offset_of_offset_blob;
@@ -650,8 +656,8 @@ class VacuumPostingListIterator {
     *in_bag_iter = pos_bag_iter_.InBagPositionBegin();
   }
 
-  InBagOffsetPairIterator OffsetPairsBegin() {
-    return off_bag_iter_.InBagOffsetPairBegin();
+  std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() {
+    return off_bag_iter_.InBagOffsetPairPtr();
   }
 
   void Advance() {
