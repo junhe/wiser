@@ -506,10 +506,6 @@ struct ResultDocEntry {
 };
 
 
-typedef std::priority_queue<ResultDocEntry<PostingListDeltaIterator>, std::vector<ResultDocEntry<PostingListDeltaIterator>>, 
-    std::greater<ResultDocEntry<PostingListDeltaIterator>> > MinHeap;
-
-
 class EntryGreater {
  public:
   bool operator() (const std::unique_ptr<ResultDocEntry<PostingListDeltaIterator>> &a, 
