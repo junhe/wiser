@@ -99,7 +99,7 @@ class Bm25Similarity {
 
 template<typename IteratorT>
 inline qq_float CalcDocScoreNonLossy(
-    const std::vector<IteratorT> &pl_iterators,
+    std::vector<IteratorT> &pl_iterators,
     const std::vector<qq_float> &idfs_of_terms,
     const int &length_of_this_doc, 
     const Bm25Similarity &similarity) noexcept
@@ -123,7 +123,7 @@ inline qq_float CalcDocScoreNonLossy(
 
 template<typename IteratorT>
 inline qq_float CalcDocScoreLossy(
-    const std::vector<IteratorT> &pl_iterators,
+    std::vector<IteratorT> &pl_iterators,
     const std::vector<qq_float> &idfs_of_terms,
     const int &length_of_this_doc, 
     const Bm25Similarity &similarity) noexcept
@@ -147,7 +147,7 @@ inline qq_float CalcDocScoreLossy(
 
 template<typename IteratorT>
 inline qq_float CalcDocScore(
-    const std::vector<IteratorT> &pl_iterators,
+    std::vector<IteratorT> &pl_iterators,
     const std::vector<qq_float> &idfs_of_terms,
     const int &length_of_this_doc, 
     const Bm25Similarity &similarity) noexcept
@@ -163,7 +163,7 @@ inline qq_float CalcDocScore(
 // IteratorT.TermFreq() must exist
 template<typename IteratorT>
 inline qq_float CalcDocScoreForOneQuery(
-    const std::vector<IteratorT> &pl_iterators,
+    std::vector<IteratorT> &pl_iterators,
     const std::vector<qq_float> &idfs_of_terms,
     const int &n_total_docs_in_index, 
     const qq_float &avg_doc_length_in_index,

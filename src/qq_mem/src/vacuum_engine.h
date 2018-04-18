@@ -144,11 +144,40 @@ class VacuumEngine : public SearchEngineServiceNew {
   }
 
   SearchResult Search(const SearchQuery &query) override {
-    LOG(FATAL) << "Not implemented in VacuumEngine.";
+    SearchResult result;
+
+    if (query.n_results == 0) {
+      return result;
+    }
+
+    std::vector<VacuumPostingListIterator> iterators = 
+        inverted_index_.FindIteratorsSolid(query.terms);
+
+    if (iterators.size() == 0 || iterators.size() < query.terms.size()) {
+      return result;
+    }
+
+    auto top_k = qq_search::ProcessQueryDelta
+      <VacuumPostingListIterator, InBagPositionIterator>(
+        similarity_,      &iterators,     doc_lengths_, doc_lengths_.Size(), 
+        query.n_results,  query.is_phrase);  
+
+    for (auto & top_doc_entry : top_k) {
+      SearchResultEntry result_entry;
+      result_entry.doc_id = top_doc_entry.doc_id;
+      result_entry.doc_score = top_doc_entry.score;
+
+      if (query.return_snippets == true) {
+        auto offset_table = top_doc_entry.OffsetsForHighliting();
+        result_entry.snippet = GenerateSnippet(top_doc_entry.doc_id,
+            offset_table, query.n_snippet_passages);
+      }
+
+      result.entries.push_back(result_entry);
+    }
+
+    return result;
   }
-
-
-
 
   void Serialize(std::string dir_path) const override {
     LOG(FATAL) << "Not implemented in VacuumEngine.";
@@ -168,6 +197,19 @@ class VacuumEngine : public SearchEngineServiceNew {
   }
 
  private:
+  std::string GenerateSnippet(const DocIdType &doc_id, 
+      std::vector<OffsetPairs> &offset_table,
+      const int n_passages) {
+    OffsetsEnums res = {};
+
+    for (int i = 0; i < offset_table.size(); i++) {
+      res.push_back(Offset_Iterator(offset_table[i]));
+    }
+
+    return highlighter_.highlightOffsetsEnums(res, n_passages, doc_store_.Get(doc_id));
+  }
+
+
   VacuumInvertedIndex inverted_index_;
   DocLengthStore doc_lengths_;
   FlashDocStore doc_store_;
