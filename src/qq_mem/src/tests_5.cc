@@ -12,7 +12,7 @@
 typedef std::vector<std::unique_ptr<PopIteratorService>> PositionIterators;
 
 
-TEST_CASE( "QueryProcessor<PostingListDeltaIterator> works", "[engine]" ) {
+TEST_CASE( "QueryProcessor<PostingListDeltaIterator, CompressedPositionIterator> works", "[engine]" ) {
   OffsetPairs offset_pairs;
   for (int i = 0; i < 10; i++) {
     offset_pairs.push_back(std::make_tuple(i, i)); 
@@ -40,7 +40,7 @@ TEST_CASE( "QueryProcessor<PostingListDeltaIterator> works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    QueryProcessor<PostingListDeltaIterator> processor(similarity, &iterators, store, 100, 5, false);
+    QueryProcessor<PostingListDeltaIterator, CompressedPositionIterator> processor(similarity, &iterators, store, 100, 5, false);
     std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -57,7 +57,7 @@ TEST_CASE( "QueryProcessor<PostingListDeltaIterator> works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    QueryProcessor<PostingListDeltaIterator> processor(similarity, &iterators, store, 100, 5, true);
+    QueryProcessor<PostingListDeltaIterator, CompressedPositionIterator> processor(similarity, &iterators, store, 100, 5, true);
     std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -108,7 +108,7 @@ TEST_CASE( "QueryProcessor<PostingListDeltaIterator> works", "[engine]" ) {
     iterators.push_back(pl02.Begin2());
     iterators.push_back(pl03.Begin2());
 
-    QueryProcessor<PostingListDeltaIterator> processor(similarity, &iterators, store, 100, 5, true);
+    QueryProcessor<PostingListDeltaIterator, CompressedPositionIterator> processor(similarity, &iterators, store, 100, 5, true);
     std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 0);
   }
@@ -118,7 +118,7 @@ TEST_CASE( "QueryProcessor<PostingListDeltaIterator> works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    QueryProcessor<PostingListDeltaIterator> processor(similarity, &iterators, store, 100, 2, false);
+    QueryProcessor<PostingListDeltaIterator, CompressedPositionIterator> processor(similarity, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -134,7 +134,7 @@ TEST_CASE( "QueryProcessor<PostingListDeltaIterator> works", "[engine]" ) {
     std::vector<PostingListDeltaIterator> iterators;
     iterators.push_back(pl01.Begin2());
 
-    QueryProcessor<PostingListDeltaIterator> processor(similarity, &iterators, store, 100, 2, false);
+    QueryProcessor<PostingListDeltaIterator, CompressedPositionIterator> processor(similarity, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 2);
 
@@ -152,7 +152,7 @@ TEST_CASE( "QueryProcessor<PostingListDeltaIterator> works", "[engine]" ) {
     iterators.push_back(pl02.Begin2());
     iterators.push_back(pl03.Begin2());
 
-    QueryProcessor<PostingListDeltaIterator> processor(similarity, &iterators, store, 100, 2, false);
+    QueryProcessor<PostingListDeltaIterator, CompressedPositionIterator> processor(similarity, &iterators, store, 100, 2, false);
     std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 2);
 

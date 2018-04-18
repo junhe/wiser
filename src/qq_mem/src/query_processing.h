@@ -161,13 +161,13 @@ typedef std::vector<std::shared_ptr<OffsetPairsIteratorService>> OffsetIterators
 
 
 
-// T is subclass of PopIteratorService
+// PosIter_T is subclass of PopIteratorService
 // For example, it can be CompressedPositionIterator
 //
-// T is a position iterator, it must have methods:
+// PosIter_T is a position iterator, it must have methods:
 //  IsEnd()
 //  Pop()
-template <typename T>
+template <typename PosIter_T>
 class PhraseQueryProcessor2 {
  public:
   PhraseQueryProcessor2(int capacity)
@@ -361,11 +361,11 @@ class PhraseQueryProcessor2 {
     }
   }
 
-  T *Iterator(int i) {
+  PosIter_T *Iterator(int i) {
     return &solid_iterators_[i];
   }
 
-  std::vector<T> *Iterators() {
+  std::vector<PosIter_T> *Iterators() {
     return &solid_iterators_;
   }
 
@@ -376,7 +376,7 @@ class PhraseQueryProcessor2 {
  private:
   PositionInfoTable2 pos_table_;
   int n_terms_;
-  std::vector<T> solid_iterators_;
+  std::vector<PosIter_T> solid_iterators_;
   std::vector<PositionInfo> last_orig_popped_;
   bool list_exhausted_ = false;
 };
@@ -677,7 +677,7 @@ class TwoTermNonPhraseQueryProcessor: public NonPhraseProcessorBase<PLIter_T> {
 };
 
 
-template <typename PLIter_T>
+template <typename PLIter_T, typename PosIter_T>
 class QueryProcessor: public ProcessorBase<PLIter_T> {
  public:
   QueryProcessor(
@@ -806,7 +806,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
 
   int FindPhrase() {
     for (int i = 0; i < this->pl_iterators_.size(); i++) {
-      CompressedPositionIterator *p = phrase_qp_.Iterator(i);
+      PosIter_T *p = phrase_qp_.Iterator(i);
       this->pl_iterators_[i].AssignPositionBegin(p);
     }
     phrase_qp_.SetNumTerms(this->pl_iterators_.size());
@@ -878,14 +878,14 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
   bool is_phrase_;
-  PhraseQueryProcessor2<CompressedPositionIterator> phrase_qp_;
+  PhraseQueryProcessor2<PosIter_T> phrase_qp_;
 };
 
 
 
 namespace qq_search {
 
-template <typename PLIter_T>
+template <typename PLIter_T, typename PosIter_T>
 std::vector<ResultDocEntry<PLIter_T>> ProcessQueryDelta(
      const Bm25Similarity &similarity,
      std::vector<PLIter_T> *pl_iterators, 
@@ -902,7 +902,7 @@ std::vector<ResultDocEntry<PLIter_T>> ProcessQueryDelta(
         n_total_docs_in_index, k);
     return qp.Process();
   } else {
-    QueryProcessor<PLIter_T> qp(similarity, pl_iterators, doc_lengths, 
+    QueryProcessor<PLIter_T, PosIter_T> qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k, is_phase);
     return qp.Process();
   }
