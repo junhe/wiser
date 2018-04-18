@@ -14,7 +14,7 @@ std::vector<ResultDocEntry<PostingListDeltaIterator>> ProcessQueryDelta(
         n_total_docs_in_index, k);
     return qp.Process();
   } else if (pl_iterators->size() == 2 && is_phase == false) {
-    TwoTermNonPhraseQueryProcessor qp(similarity, pl_iterators, doc_lengths, 
+    TwoTermNonPhraseQueryProcessor<PostingListDeltaIterator> qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k);
     return qp.Process();
   } else {

@@ -640,21 +640,21 @@ class SingleTermQueryProcessor :public NonPhraseProcessorBase<PLIter_T> {
   }
 };
 
-
-class TwoTermNonPhraseQueryProcessor: public NonPhraseProcessorBase<PostingListDeltaIterator> {
+template <typename PLIter_T>
+class TwoTermNonPhraseQueryProcessor: public NonPhraseProcessorBase<PLIter_T> {
  public:
   TwoTermNonPhraseQueryProcessor(
     const Bm25Similarity &similarity,
-    std::vector<PostingListDeltaIterator> *pl_iterators, 
+    std::vector<PLIter_T> *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5)
-   :NonPhraseProcessorBase(similarity,            pl_iterators, doc_lengths, 
+   :NonPhraseProcessorBase<PLIter_T>(similarity,            pl_iterators, doc_lengths, 
                            n_total_docs_in_index, k) {}
 
-  std::vector<ResultDocEntry<PostingListDeltaIterator>> Process() {
-    auto &it_0 = pl_iterators_[0];
-    auto &it_1 = pl_iterators_[1];
+  std::vector<ResultDocEntry<PLIter_T>> Process() {
+    auto &it_0 = this->pl_iterators_[0];
+    auto &it_1 = this->pl_iterators_[1];
     DocIdType doc0, doc1;
 
     while (it_0.IsEnd() == false && it_1.IsEnd() == false) {
@@ -665,14 +665,14 @@ class TwoTermNonPhraseQueryProcessor: public NonPhraseProcessorBase<PostingListD
       } else if (doc0 < doc1) {
         it_0.SkipForward(doc1);
       } else {
-        RankDoc(doc0); 
+        this->RankDoc(doc0); 
 
         it_0.Advance();
         it_1.Advance();
       }
     }
 
-    return SortHeap();
+    return this->SortHeap();
   }
 };
 

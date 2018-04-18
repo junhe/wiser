@@ -250,7 +250,7 @@ TEST_CASE( "TwoTermNonPhraseQueryProcessor works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    TwoTermNonPhraseQueryProcessor processor(similarity, &iterators, store, 100, 5);
+    TwoTermNonPhraseQueryProcessor<PostingListDeltaIterator> processor(similarity, &iterators, store, 100, 5);
     std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 5);
 
@@ -267,7 +267,7 @@ TEST_CASE( "TwoTermNonPhraseQueryProcessor works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
     iterators.push_back(pl02.Begin2());
 
-    TwoTermNonPhraseQueryProcessor processor(similarity, &iterators, store, 100, 2);
+    TwoTermNonPhraseQueryProcessor<PostingListDeltaIterator> processor(similarity, &iterators, store, 100, 2);
     std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 2);
 
