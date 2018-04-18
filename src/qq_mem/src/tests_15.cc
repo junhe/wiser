@@ -1,5 +1,7 @@
 #include "catch.hpp"
 
+#include <algorithm>
+
 #include "test_helpers.h"
 #include "flash_iterators.h"
 #include "vacuum_engine.h"
@@ -89,9 +91,24 @@ TEST_CASE( "tests two intersection ngine", "[qqflash][two]" ) {
   VacuumEngine engine(dir_path);
 
   SECTION("Two-term non-phrase query") {
-    std::cout << "22222222222222222222222222222222222222222222222\n";
     SearchResult result = engine.Search(SearchQuery({"a", "b"}, true));
+    REQUIRE(result.Size() == 2);
+    std::vector<DocIdType> ids{result[0].doc_id, result[1].doc_id};
+    std::sort(ids.begin(), ids.end());
+    REQUIRE(ids == std::vector<DocIdType>{1, 2});
+  }
+
+  SECTION("Two-term phrase query") {
+    std::cout << "22222222222222222222222222222222222222222222222\n";
+    SearchQuery query({"a", "b"}, true);
+    query.is_phrase = true;
+
+    SearchResult result = engine.Search(query);
     std::cout << result.ToStr();
+    REQUIRE(result.Size() == 2);
+    std::vector<DocIdType> ids{result[0].doc_id, result[1].doc_id};
+    std::sort(ids.begin(), ids.end());
+    REQUIRE(ids == std::vector<DocIdType>{1, 2});
   }
 }
 
