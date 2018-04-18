@@ -614,8 +614,12 @@ class OffsetPostingBagIterator :public PositionPostingBagIteratorBase {
 // It will iterate postings in a posting list
 class VacuumPostingListIterator {
  public:
-  VacuumPostingListIterator() {}
+  VacuumPostingListIterator() {
+    skip_list_ = std::shared_ptr<SkipList>(new SkipList()); 
+  }
+
   VacuumPostingListIterator(const uint8_t *file_data, const off_t offset) {
+    skip_list_ = std::unique_ptr<SkipList>(new SkipList()); 
     Reset(file_data, offset);
   }
 
@@ -634,11 +638,16 @@ class VacuumPostingListIterator {
     std::cout << "n_postings_ (just read): "  << n_postings_ << std::endl;
     buf += len;
 
-    skip_list_.Load(buf);
-    doc_id_iter_.Reset(file_data_, &skip_list_, n_postings_);
-    tf_iter_.Reset(file_data_, &skip_list_);
-    pos_bag_iter_.Reset(file_data_, &skip_list_, tf_iter_);
-    off_bag_iter_.Reset(file_data_, &skip_list_, tf_iter_);
+    skip_list_->Load(buf);
+
+    std::cout << "skip_list_.NumEntries() after loading, in reset :" 
+      << skip_list_->NumEntries() << std::endl;
+
+
+    doc_id_iter_.Reset(file_data_, skip_list_.get(), n_postings_);
+    tf_iter_.Reset(file_data_, skip_list_.get());
+    pos_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
+    off_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
   }
 
   DocIdType DocId() {
@@ -657,6 +666,7 @@ class VacuumPostingListIterator {
   }
 
   std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() {
+    off_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
     return off_bag_iter_.InBagOffsetPairPtr();
   }
 
@@ -693,7 +703,7 @@ class VacuumPostingListIterator {
   PositionPostingBagIterator pos_bag_iter_;
   OffsetPostingBagIterator off_bag_iter_;
 
-  SkipList skip_list_;
+  std::shared_ptr<SkipList> skip_list_;
 };
 
 
