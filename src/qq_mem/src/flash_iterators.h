@@ -657,6 +657,10 @@ class VacuumPostingListIterator {
   void Advance() {
     doc_id_iter_.Advance();
   }
+
+  void SkipForward(const uint32_t doc_id) {
+    doc_id_iter_.SkipForward(doc_id);
+  }
   
   int PostingIndex() {
     return doc_id_iter_.PostingIndex();

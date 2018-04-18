@@ -218,7 +218,7 @@ TEST_CASE( "3 word engine with different tfs", "[qqflash][tf]" ) {
 }
 
 
-TEST_CASE( "Dumping 5-word Engine", "[qqflash][dump1]" ) {
+TEST_CASE( "Dumping 5-doc Engine", "[qqflash][dump1]" ) {
   std::string dir_path = "/tmp/5-word-engine";
   utils::PrepareDir(dir_path);
   FlashEngineDumper engine(dir_path);
