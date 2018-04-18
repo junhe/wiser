@@ -506,10 +506,11 @@ struct ResultDocEntry {
 };
 
 
+template <typename PLIter_T>
 class EntryGreater {
  public:
-  bool operator() (const std::unique_ptr<ResultDocEntry<PostingListDeltaIterator>> &a, 
-                   const std::unique_ptr<ResultDocEntry<PostingListDeltaIterator>> &b) {
+  bool operator() (const std::unique_ptr<ResultDocEntry<PLIter_T>> &a, 
+                   const std::unique_ptr<ResultDocEntry<PLIter_T>> &b) {
     return a->score > b->score;
   }
 };
@@ -517,7 +518,7 @@ class EntryGreater {
 typedef std::priority_queue<
           std::unique_ptr<ResultDocEntry<PostingListDeltaIterator>>, 
           std::vector<std::unique_ptr<ResultDocEntry<PostingListDeltaIterator>>>, 
-          EntryGreater> MinPointerHeap;
+          EntryGreater<PostingListDeltaIterator>> MinPointerHeap;
 
 
 class ProcessorBase {
