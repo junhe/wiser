@@ -41,7 +41,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     iterators.push_back(pl02.Begin2());
 
     QueryProcessor processor(similarity, &iterators, store, 100, 5, false);
-    std::vector<ResultDocEntry> result = processor.Process();
+    std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 5);
 
     std::vector<DocIdType> doc_ids;
@@ -58,7 +58,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     iterators.push_back(pl02.Begin2());
 
     QueryProcessor processor(similarity, &iterators, store, 100, 5, true);
-    std::vector<ResultDocEntry> result = processor.Process();
+    std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 5);
 
     std::vector<DocIdType> doc_ids;
@@ -109,7 +109,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     iterators.push_back(pl03.Begin2());
 
     QueryProcessor processor(similarity, &iterators, store, 100, 5, true);
-    std::vector<ResultDocEntry> result = processor.Process();
+    std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 0);
   }
 
@@ -119,7 +119,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     iterators.push_back(pl02.Begin2());
 
     QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
-    std::vector<ResultDocEntry> result = processor.Process();
+    std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 2);
 
     std::vector<DocIdType> doc_ids;
@@ -135,7 +135,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
 
     QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
-    std::vector<ResultDocEntry> result = processor.Process();
+    std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 2);
 
     std::vector<DocIdType> doc_ids;
@@ -153,7 +153,7 @@ TEST_CASE( "QueryProcessor works", "[engine]" ) {
     iterators.push_back(pl03.Begin2());
 
     QueryProcessor processor(similarity, &iterators, store, 100, 2, false);
-    std::vector<ResultDocEntry> result = processor.Process();
+    std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 2);
 
     std::vector<DocIdType> doc_ids;
@@ -193,7 +193,7 @@ TEST_CASE( "SingleTermQueryProcessor works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
 
     SingleTermQueryProcessor processor(similarity, &iterators, store, 100, 5);
-    std::vector<ResultDocEntry> result = processor.Process();
+    std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 5);
 
     std::vector<DocIdType> doc_ids;
@@ -209,7 +209,7 @@ TEST_CASE( "SingleTermQueryProcessor works", "[engine]" ) {
     iterators.push_back(pl01.Begin2());
 
     SingleTermQueryProcessor processor(similarity, &iterators, store, 100, 2);
-    std::vector<ResultDocEntry> result = processor.Process();
+    std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 2);
 
     std::vector<DocIdType> doc_ids;
@@ -251,7 +251,7 @@ TEST_CASE( "TwoTermNonPhraseQueryProcessor works", "[engine]" ) {
     iterators.push_back(pl02.Begin2());
 
     TwoTermNonPhraseQueryProcessor processor(similarity, &iterators, store, 100, 5);
-    std::vector<ResultDocEntry> result = processor.Process();
+    std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 5);
 
     std::vector<DocIdType> doc_ids;
@@ -268,7 +268,7 @@ TEST_CASE( "TwoTermNonPhraseQueryProcessor works", "[engine]" ) {
     iterators.push_back(pl02.Begin2());
 
     TwoTermNonPhraseQueryProcessor processor(similarity, &iterators, store, 100, 2);
-    std::vector<ResultDocEntry> result = processor.Process();
+    std::vector<ResultDocEntry<PostingListDeltaIterator>> result = processor.Process();
     REQUIRE(result.size() == 2);
 
     std::vector<DocIdType> doc_ids;

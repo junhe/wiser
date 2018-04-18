@@ -382,11 +382,14 @@ class PhraseQueryProcessor2 {
 };
 
 
+// PLIter_T is PostingListDeltaIterator for MemEngine
+// It must have:
+template <typename PLIter_T>
 struct ResultDocEntry {
   DocIdType doc_id;
   qq_float score;
   
-  std::vector<PostingListDeltaIterator> pl_iterators;
+  std::vector<PLIter_T> pl_iterators;
   // table[0]: row of position info structs for the first term
   // table[1]: row of position info structs for the second term
   PositionInfoTable2 position_table;
@@ -410,8 +413,8 @@ struct ResultDocEntry {
      is_phrase(is_phrase_in) {
 
     for (auto &p : pl_iters) {
-      PostingListDeltaIterator *pp = 
-        dynamic_cast<PostingListDeltaIterator *>(p.get());
+      PLIter_T *pp = 
+        dynamic_cast<PLIter_T *>(p.get());
       LOG_IF(FATAL, p == nullptr) << "Cannot convert";
 
       pl_iterators.push_back(*pp);
@@ -487,12 +490,12 @@ struct ResultDocEntry {
     return offset_table;
   }
 
-  friend bool operator<(const ResultDocEntry &a, const ResultDocEntry &b)
+  friend bool operator<(const ResultDocEntry<PLIter_T> &a, const ResultDocEntry<PLIter_T> &b)
   {
     return a.score < b.score;
   }
 
-  friend bool operator>(const ResultDocEntry &a, const ResultDocEntry &b)
+  friend bool operator>(const ResultDocEntry<PLIter_T> &a, const ResultDocEntry<PLIter_T> &b)
   {
     return a.score > b.score;
   }
@@ -503,21 +506,21 @@ struct ResultDocEntry {
 };
 
 
-typedef std::priority_queue<ResultDocEntry, std::vector<ResultDocEntry>, 
-    std::greater<ResultDocEntry> > MinHeap;
+typedef std::priority_queue<ResultDocEntry<PostingListDeltaIterator>, std::vector<ResultDocEntry<PostingListDeltaIterator>>, 
+    std::greater<ResultDocEntry<PostingListDeltaIterator>> > MinHeap;
 
 
 class EntryGreater {
  public:
-  bool operator() (const std::unique_ptr<ResultDocEntry> &a, 
-                   const std::unique_ptr<ResultDocEntry> &b) {
+  bool operator() (const std::unique_ptr<ResultDocEntry<PostingListDeltaIterator>> &a, 
+                   const std::unique_ptr<ResultDocEntry<PostingListDeltaIterator>> &b) {
     return a->score > b->score;
   }
 };
 
 typedef std::priority_queue<
-          std::unique_ptr<ResultDocEntry>, 
-          std::vector<std::unique_ptr<ResultDocEntry>>, 
+          std::unique_ptr<ResultDocEntry<PostingListDeltaIterator>>, 
+          std::vector<std::unique_ptr<ResultDocEntry<PostingListDeltaIterator>>>, 
           EntryGreater> MinPointerHeap;
 
 
@@ -544,8 +547,8 @@ class ProcessorBase {
   }
 
  protected:
-  std::vector<ResultDocEntry> SortHeap() {
-    std::vector<ResultDocEntry> ret;
+  std::vector<ResultDocEntry<PostingListDeltaIterator>> SortHeap() {
+    std::vector<ResultDocEntry<PostingListDeltaIterator>> ret;
 
     int kk = k_;
     while(!min_heap_.empty() && kk != 0) {
@@ -606,7 +609,7 @@ class NonPhraseProcessorBase: public ProcessorBase {
       offset_iters.push_back(std::move(p));
     }
 
-    min_heap_.emplace(new ResultDocEntry(doc_id, score_of_this_doc, offset_iters, 
+    min_heap_.emplace(new ResultDocEntry<PostingListDeltaIterator>(doc_id, score_of_this_doc, offset_iters, 
         false));
   }
 };
@@ -623,7 +626,7 @@ class SingleTermQueryProcessor :public NonPhraseProcessorBase {
    :NonPhraseProcessorBase(similarity,            pl_iterators, doc_lengths, 
                            n_total_docs_in_index, k) {}
 
-  std::vector<ResultDocEntry> Process() {
+  std::vector<ResultDocEntry<PostingListDeltaIterator>> Process() {
     auto &it = pl_iterators_[0];
 
     while (it.IsEnd() == false) {
@@ -647,7 +650,7 @@ class TwoTermNonPhraseQueryProcessor: public NonPhraseProcessorBase {
    :NonPhraseProcessorBase(similarity,            pl_iterators, doc_lengths, 
                            n_total_docs_in_index, k) {}
 
-  std::vector<ResultDocEntry> Process() {
+  std::vector<ResultDocEntry<PostingListDeltaIterator>> Process() {
     auto &it_0 = pl_iterators_[0];
     auto &it_1 = pl_iterators_[1];
     DocIdType doc0, doc1;
@@ -687,7 +690,7 @@ class QueryProcessor: public ProcessorBase {
     is_phrase_(is_phrase)
   {}
 
-  std::vector<ResultDocEntry> Process() {
+  std::vector<ResultDocEntry<PostingListDeltaIterator>> Process() {
     if (pl_iterators_.size() == 1) {
       return ProcessSingleTerm();
     } else if (pl_iterators_.size() == 2) {
@@ -697,7 +700,7 @@ class QueryProcessor: public ProcessorBase {
     }
   }
 
-  std::vector<ResultDocEntry> ProcessMultipleTerms() {
+  std::vector<ResultDocEntry<PostingListDeltaIterator>> ProcessMultipleTerms() {
     bool finished = false;
     DocIdType max_doc_id;
 
@@ -717,7 +720,7 @@ class QueryProcessor: public ProcessorBase {
     return SortHeap();
   }
 
-  std::vector<ResultDocEntry> ProcessSingleTerm() {
+  std::vector<ResultDocEntry<PostingListDeltaIterator>> ProcessSingleTerm() {
     auto &it = pl_iterators_[0];
 
     while (it.IsEnd() == false) {
@@ -729,7 +732,7 @@ class QueryProcessor: public ProcessorBase {
     return SortHeap();
   }
 
-  std::vector<ResultDocEntry> ProcessTwoTerm() {
+  std::vector<ResultDocEntry<PostingListDeltaIterator>> ProcessTwoTerm() {
     auto &it_0 = pl_iterators_[0];
     auto &it_1 = pl_iterators_[1];
     DocIdType doc0, doc1;
@@ -867,7 +870,7 @@ class QueryProcessor: public ProcessorBase {
       auto p = pl_iterators_[i].OffsetPairsBegin();
       offset_iters.push_back(std::move(p));
     }
-    min_heap_.emplace(new ResultDocEntry(doc_id, score_of_this_doc, 
+    min_heap_.emplace(new ResultDocEntry<PostingListDeltaIterator>(doc_id, score_of_this_doc, 
 			offset_iters, position_table, is_phrase_));
   }
 
@@ -879,7 +882,7 @@ class QueryProcessor: public ProcessorBase {
 
 namespace qq_search {
 
-std::vector<ResultDocEntry> ProcessQueryDelta(
+std::vector<ResultDocEntry<PostingListDeltaIterator>> ProcessQueryDelta(
     const Bm25Similarity &similarity,
     std::vector<PostingListDeltaIterator> *pl_iterators, 
     const DocLengthStore &doc_lengths,

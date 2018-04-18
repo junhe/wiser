@@ -227,7 +227,7 @@ TEST_CASE( "Filter offsets by positions in ResultDocEntry", "[result]" ) {
   auto iter_2 = CreateOffsetIter(&buf_2);
   OffsetIterators offset_iters{iter_1, iter_2};
   
-  ResultDocEntry entry(0, 1.0, offset_iters, position_table, true);
+  ResultDocEntry<PostingListDeltaIterator> entry(0, 1.0, offset_iters, position_table, true);
   std::vector<OffsetPairs> ret = entry.FilterOffsetByPosition();
 
   REQUIRE(ret.size() == 2);
@@ -246,7 +246,7 @@ TEST_CASE( "Filter offsets by positions in ResultDocEntry", "[result]" ) {
   REQUIRE(std::get<1>(ret[1][1]) == 75);
 }
 
-TEST_CASE( "Return offset vector by ResultDocEntry", "[result]" ) {
+TEST_CASE( "Return offset vector by ResultDocEntry<PostingListDeltaIterator>", "[result]" ) {
   //                                        0, 1,   3, 6   
   VarintBuffer buf_1 = CreateOffsetPairBuf({0, 1,   2, 3});
   auto iter_1 = CreateOffsetIter(&buf_1);
@@ -255,7 +255,7 @@ TEST_CASE( "Return offset vector by ResultDocEntry", "[result]" ) {
   auto iter_2 = CreateOffsetIter(&buf_2);
   OffsetIterators offset_iters{iter_1, iter_2};
 
-  ResultDocEntry entry(0, 1.0);
+  ResultDocEntry<PostingListDeltaIterator> entry(0, 1.0);
   entry.offset_iters = offset_iters;
 
   std::vector<OffsetPairs> table = entry.ExpandOffsets();
