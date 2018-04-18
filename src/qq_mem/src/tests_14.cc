@@ -20,7 +20,7 @@ TEST_CASE( "Dumping 1-word Engine", "[qqflash][dump0]" ) {
 
   SECTION("Load inverted index") {
     VacuumInvertedIndex index(
-        "/tmp/1-word-engine/my.tip", "/tmp/1-word-engine/my.vaccum");
+        "/tmp/1-word-engine/my.tip", "/tmp/1-word-engine/my.vacuum");
     REQUIRE(index.FindPostingListOffset("a") == 0);
     REQUIRE(index.FindPostingListOffset("b") == -1);
     REQUIRE(index.NumTerms() == 1);
@@ -72,7 +72,7 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
   engine.DumpInvertedIndex();
 
   VacuumInvertedIndex index(
-      "/tmp/3-word-engine/my.tip", "/tmp/3-word-engine/my.vaccum");
+      "/tmp/3-word-engine/my.tip", "/tmp/3-word-engine/my.vacuum");
   REQUIRE(index.NumTerms() == 3);
 
   SECTION("To iteratet doc ids, TFs, positions") {
@@ -172,7 +172,7 @@ TEST_CASE( "3 word engine with different tfs", "[qqflash][tf]" ) {
   engine.DumpInvertedIndex();
 
   VacuumInvertedIndex index(
-      dir_path + "/my.tip", dir_path + "/my.vaccum");
+      dir_path + "/my.tip", dir_path + "/my.vacuum");
   REQUIRE(index.NumTerms() == 3);
 
   SECTION("To iteratet doc ids, TFs") {
@@ -231,7 +231,7 @@ TEST_CASE( "Dumping 5-doc Engine", "[qqflash][dump1]" ) {
 
   SECTION("Load inverted index") {
     VacuumInvertedIndex index(
-        "/tmp/5-word-engine/my.tip", "/tmp/5-word-engine/my.vaccum");
+        "/tmp/5-word-engine/my.tip", "/tmp/5-word-engine/my.vacuum");
     REQUIRE(index.NumTerms() > 100);
   }
 }

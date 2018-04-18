@@ -676,8 +676,8 @@ inline FileOffsetOfSkipPostingBags DumpTermEntry(
 class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
  public:
   VacuumInvertedIndexDumper(const std::string dump_dir_path)
-    :index_dumper_(dump_dir_path + "/my.vaccum"),
-     fake_index_dumper_(dump_dir_path + "/fake.vaccum"),
+    :index_dumper_(dump_dir_path + "/my.vacuum"),
+     fake_index_dumper_(dump_dir_path + "/fake.vacuum"),
      term_index_dumper_(dump_dir_path + "/my.tip")
   {}
 

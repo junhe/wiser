@@ -72,6 +72,9 @@ class VacuumInvertedIndex {
       const std::string inverted_index_path)
     : file_map_(inverted_index_path)
   {
+    std::cout << "VacuumInvertedIndex Loading.............." << std::endl;
+    std::cout << "term_index_path: " << term_index_path << std::endl;
+    std::cout << "inverted_index_path: " << inverted_index_path << std::endl;
     term_index_.Load(term_index_path);
     file_data_ = (uint8_t *)file_map_.Addr();
     std::cout << "file_map_.Addr(): " << (void *)file_data_ << std::endl;
@@ -108,6 +111,29 @@ class VacuumInvertedIndex {
   utils::FileMap file_map_;
   const uint8_t *file_data_; // = file_map_.Addr(), put it here for convenience
 };
+
+
+class VacuumEngine {
+ public:
+  VacuumEngine(const std::string engine_dir_path)
+    :inverted_index_(utils::JoinPath(engine_dir_path, "my.tip"),
+        utils::JoinPath(engine_dir_path, "my.vacuum"))
+  {
+
+  }
+
+ private:
+  // DONE inverted index
+  // doc length
+  // doc store
+  VacuumInvertedIndex inverted_index_;
+  // SimpleHighlighter highlighter_;
+  // Bm25Similarity similarity_;
+  // FlashDocStore doc_store_;
+};
+
+
+
 
 #endif
 
