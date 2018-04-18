@@ -515,10 +515,12 @@ class EntryGreater {
   }
 };
 
-typedef std::priority_queue<
-          std::unique_ptr<ResultDocEntry<PostingListDeltaIterator>>, 
-          std::vector<std::unique_ptr<ResultDocEntry<PostingListDeltaIterator>>>, 
-          EntryGreater<PostingListDeltaIterator>> MinPointerHeap;
+
+template <typename PLIter_T>
+using MinPointerHeap = std::priority_queue<
+          std::unique_ptr<ResultDocEntry<PLIter_T>>, 
+          std::vector<std::unique_ptr<ResultDocEntry<PLIter_T>>>, 
+          EntryGreater<PLIter_T>>;
 
 
 class ProcessorBase {
@@ -563,7 +565,7 @@ class ProcessorBase {
   const int n_lists_;
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
-  MinPointerHeap min_heap_;
+  MinPointerHeap<PostingListDeltaIterator> min_heap_;
   const DocLengthStore &doc_lengths_;
 };
 
