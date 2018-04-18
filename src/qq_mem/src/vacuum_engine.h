@@ -116,8 +116,12 @@ class VacuumInvertedIndex {
 class VacuumEngine {
  public:
   VacuumEngine(const std::string engine_dir_path)
-    :inverted_index_(utils::JoinPath(engine_dir_path, "my.tip"),
-        utils::JoinPath(engine_dir_path, "my.vacuum"))
+    :inverted_index_(
+        utils::JoinPath(engine_dir_path, "my.tip"),
+        utils::JoinPath(engine_dir_path, "my.vacuum")),
+     doc_store_(
+        utils::JoinPath(engine_dir_path, "my.fdx"),
+        utils::JoinPath(engine_dir_path, "my.fdt"))
   {
 
   }
@@ -125,11 +129,11 @@ class VacuumEngine {
  private:
   // DONE inverted index
   // doc length
-  // doc store
+  // DONE doc store
   VacuumInvertedIndex inverted_index_;
-  // SimpleHighlighter highlighter_;
+  SimpleHighlighter highlighter_;
   // Bm25Similarity similarity_;
-  // FlashDocStore doc_store_;
+  FlashDocStore doc_store_;
 };
 
 
