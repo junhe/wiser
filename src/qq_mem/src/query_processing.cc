@@ -18,7 +18,7 @@ std::vector<ResultDocEntry<PostingListDeltaIterator>> ProcessQueryDelta(
         n_total_docs_in_index, k);
     return qp.Process();
   } else {
-    QueryProcessor qp(similarity, pl_iterators, doc_lengths, 
+    QueryProcessor<PostingListDeltaIterator> qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k, is_phase);
     return qp.Process();
   }
