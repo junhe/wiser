@@ -850,12 +850,14 @@ class FlashEngineDumper {
     return inverted_index_.PostinglistSizes(terms);
   }
 
-  void Dump(std::string dir_path) {
+  void Dump() {
+    DumpInvertedIndex();
+    doc_store_.Dump(dump_dir_path_ + "/my.fdx", dump_dir_path_ + "/my.fdt");
+    doc_lengths_.Serialize(utils::JoinPath(dump_dir_path_, "my.doc_length"));
   }
 
   void DumpInvertedIndex() {
     inverted_index_.Dump();
-    doc_store_.Dump(dump_dir_path_ + "/my.fdx", dump_dir_path_ + "/my.fdt");
   }
 
  private:
