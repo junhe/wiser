@@ -326,6 +326,7 @@ void RemoveDir(std::string path);
 void CreateDir(std::string path);
 void PrepareDir(std::string path);
 void PrintVInts(const uint8_t *buf);
+std::string JoinPath(const std::string a, const std::string b);
 
 template <typename T>
 void PrintVec(const std::vector<T> vec) {

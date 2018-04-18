@@ -315,6 +315,14 @@ void PrepareDir(std::string path) {
     boost::filesystem::create_directory(path);
 }
 
+std::string JoinPath(const std::string a, const std::string b) {
+  boost::filesystem::path p1(a); 
+  boost::filesystem::path p2(b); 
+  auto path =p1 / p2;
+  return path.string();
+}
+
+
 void PrintVInts(const uint8_t *buf) {
   VIntsIterator iter(buf);
   while (iter.IsEnd() == false) {
