@@ -571,30 +571,31 @@ class ProcessorBase {
 };
 
 
-class NonPhraseProcessorBase: public ProcessorBase<PostingListDeltaIterator> {
+template <typename PLIter_T>
+class NonPhraseProcessorBase: public ProcessorBase<PLIter_T> {
  public:
   NonPhraseProcessorBase(
     const Bm25Similarity &similarity,
-    std::vector<PostingListDeltaIterator> *pl_iterators, 
+    std::vector<PLIter_T> *pl_iterators, 
     const DocLengthStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k)
-   :ProcessorBase(similarity,            pl_iterators, doc_lengths, 
+   :ProcessorBase<PLIter_T>(similarity,            pl_iterators, doc_lengths, 
                   n_total_docs_in_index, k) {}
 
  protected:
   void RankDoc(const DocIdType &max_doc_id) {
-    qq_float score_of_this_doc = CalcDocScore<PostingListDeltaIterator>(
-        pl_iterators_,
-        idfs_of_terms_,
-        doc_lengths_.GetLength(max_doc_id),
-        similarity_);
+    qq_float score_of_this_doc = CalcDocScore<PLIter_T>(
+        this->pl_iterators_,
+        this->idfs_of_terms_,
+        this->doc_lengths_.GetLength(max_doc_id),
+        this->similarity_);
 
-    if (min_heap_.size() < k_) {
+    if (this->min_heap_.size() < this->k_) {
       InsertToHeap(max_doc_id, score_of_this_doc);
     } else {
-      if (score_of_this_doc > min_heap_.top()->score) {
-        min_heap_.pop();
+      if (score_of_this_doc > this->min_heap_.top()->score) {
+        this->min_heap_.pop();
         InsertToHeap(max_doc_id, score_of_this_doc);
       }
     }
@@ -604,18 +605,18 @@ class NonPhraseProcessorBase: public ProcessorBase<PostingListDeltaIterator> {
                     const qq_float &score_of_this_doc)
   {
     OffsetIterators offset_iters;
-    for (int i = 0; i < n_lists_; i++) {
-      auto p = pl_iterators_[i].OffsetPairsBegin();
+    for (int i = 0; i < this->n_lists_; i++) {
+      auto p = this->pl_iterators_[i].OffsetPairsBegin();
       offset_iters.push_back(std::move(p));
     }
 
-    min_heap_.emplace(new ResultDocEntry<PostingListDeltaIterator>(doc_id, score_of_this_doc, offset_iters, 
+    this->min_heap_.emplace(new ResultDocEntry<PLIter_T>(doc_id, score_of_this_doc, offset_iters, 
         false));
   }
 };
 
 
-class SingleTermQueryProcessor :public NonPhraseProcessorBase {
+class SingleTermQueryProcessor :public NonPhraseProcessorBase<PostingListDeltaIterator> {
  public:
   SingleTermQueryProcessor(
     const Bm25Similarity &similarity,
@@ -639,7 +640,7 @@ class SingleTermQueryProcessor :public NonPhraseProcessorBase {
 };
 
 
-class TwoTermNonPhraseQueryProcessor: public NonPhraseProcessorBase {
+class TwoTermNonPhraseQueryProcessor: public NonPhraseProcessorBase<PostingListDeltaIterator> {
  public:
   TwoTermNonPhraseQueryProcessor(
     const Bm25Similarity &similarity,
