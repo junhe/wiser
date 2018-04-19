@@ -904,7 +904,7 @@ class FlashEngineDumper {
 
   FlashDocStoreDumper doc_store_;
   VacuumInvertedIndexDumper inverted_index_;
-  DocLengthStore doc_lengths_;
+  DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
 

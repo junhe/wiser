@@ -28,7 +28,7 @@ TEST_CASE( "QueryProcessor<PostingListDeltaIterator, CompressedPositionIterator>
     pl03.AddPosting(StandardPosting(i, 3, offset_pairs, {7, 10}));
   }
 
-  DocLengthStore store;
+  DocLengthCharStore store;
   for (int i = 0; i < 5; i++) {
     store.AddLength(i, (5 - i) * 10);
   }
@@ -181,7 +181,7 @@ TEST_CASE( "SingleTermQueryProcessor works", "[engine]" ) {
   }
 
   // larger doc id -> shorter length -> higher score
-  DocLengthStore store;
+  DocLengthCharStore store;
   for (int i = 0; i < 5; i++) {
     store.AddLength(i, (5 - i) * 10);
   }
@@ -238,7 +238,7 @@ TEST_CASE( "TwoTermNonPhraseQueryProcessor works", "[engine]" ) {
     pl03.AddPosting(StandardPosting(i, 3, offset_pairs, {7, 10}));
   }
 
-  DocLengthStore store;
+  DocLengthCharStore store;
   for (int i = 0; i < 5; i++) {
     store.AddLength(i, (5 - i) * 10);
   }

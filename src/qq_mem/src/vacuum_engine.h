@@ -211,7 +211,7 @@ class VacuumEngine : public SearchEngineServiceNew {
 
 
   VacuumInvertedIndex inverted_index_;
-  DocLengthStore doc_lengths_;
+  DocLengthCharStore doc_lengths_;
   FlashDocStore doc_store_;
 
   SimpleHighlighter highlighter_;

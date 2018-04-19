@@ -529,7 +529,7 @@ class ProcessorBase {
   ProcessorBase(
     const Bm25Similarity &similarity,
     std::vector<PLIter_T> *pl_iterators, 
-    const DocLengthStore &doc_lengths,
+    const DocLengthCharStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k)
    : similarity_(similarity),
@@ -567,7 +567,7 @@ class ProcessorBase {
   const int n_total_docs_in_index_;
   std::vector<qq_float> idfs_of_terms_;
   MinPointerHeap<PLIter_T> min_heap_;
-  const DocLengthStore &doc_lengths_;
+  const DocLengthCharStore &doc_lengths_;
 };
 
 
@@ -577,7 +577,7 @@ class NonPhraseProcessorBase: public ProcessorBase<PLIter_T> {
   NonPhraseProcessorBase(
     const Bm25Similarity &similarity,
     std::vector<PLIter_T> *pl_iterators, 
-    const DocLengthStore &doc_lengths,
+    const DocLengthCharStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k)
    :ProcessorBase<PLIter_T>(similarity,            pl_iterators, doc_lengths, 
@@ -622,7 +622,7 @@ class SingleTermQueryProcessor :public NonPhraseProcessorBase<PLIter_T> {
   SingleTermQueryProcessor(
     const Bm25Similarity &similarity,
     std::vector<PLIter_T> *pl_iterators, 
-    const DocLengthStore &doc_lengths,
+    const DocLengthCharStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5)
    :NonPhraseProcessorBase<PLIter_T>(similarity,            pl_iterators, doc_lengths, 
@@ -646,7 +646,7 @@ class TwoTermNonPhraseQueryProcessor: public NonPhraseProcessorBase<PLIter_T> {
   TwoTermNonPhraseQueryProcessor(
     const Bm25Similarity &similarity,
     std::vector<PLIter_T> *pl_iterators, 
-    const DocLengthStore &doc_lengths,
+    const DocLengthCharStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5)
    :NonPhraseProcessorBase<PLIter_T>(similarity,            pl_iterators, doc_lengths, 
@@ -683,7 +683,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   QueryProcessor(
     const Bm25Similarity &similarity,
     std::vector<PLIter_T> *pl_iterators,
-    const DocLengthStore &doc_lengths,
+    const DocLengthCharStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5,
     const bool is_phrase = false)
@@ -889,7 +889,7 @@ template <typename PLIter_T, typename PosIter_T>
 std::vector<ResultDocEntry<PLIter_T>> ProcessQueryDelta(
      const Bm25Similarity &similarity,
      std::vector<PLIter_T> *pl_iterators, 
-     const DocLengthStore &doc_lengths,
+     const DocLengthCharStore &doc_lengths,
      const int n_total_docs_in_index,
      const int k,
      const bool is_phase) {

@@ -431,13 +431,16 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
     similarity_.Reset(doc_lengths_.GetAvgLength());
+
+    std::cout << "Doc lengths _______________________________________________________\n";
+    doc_lengths_.Show();
   }
 
  private:
   int next_doc_id_ = 0;
   CompressedDocStore doc_store_;
   InvertedIndexQqMemDelta inverted_index_;
-  DocLengthStore doc_lengths_;
+  DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
 
