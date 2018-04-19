@@ -7,6 +7,8 @@
 #include <map>
 #include <tuple>
 #include <sstream>
+#include <sstream>
+#include <math.h>
 
 #include "qq.pb.h"
 
@@ -209,10 +211,34 @@ struct SearchResultEntry {
       + " Doc Score: " + std::to_string(doc_score)
       + " Snippet: \"" + snippet + "\"";
   }
+
   void CopyTo(qq::SearchReplyEntry *grpc_entry) {
     grpc_entry->set_doc_id(doc_id);
     grpc_entry->set_snippet(snippet);
     grpc_entry->set_doc_score(doc_score);
+  }
+
+  friend bool operator == (const SearchResultEntry &a, const SearchResultEntry &b) {
+    if (a.snippet != b.snippet) {
+      std::cout << "snippet: " << a.snippet << " != " << b.snippet << std::endl;
+      return false;
+    }
+
+    if (a.doc_id != b.doc_id) {
+      std::cout << "doc id: " << a.doc_id << " != " << b.doc_id << std::endl;
+      return false;
+    }
+
+    if (abs(a.doc_score - b.doc_score) < 0.001) {
+      std::cout << "doc score: "<< a.doc_score << " != " << b.doc_score << std::endl;
+      return false;
+    }
+
+    return true;
+  }
+
+  friend bool operator != (const SearchResultEntry &a, const SearchResultEntry &b) {
+    return !(a == b);
   }
 };
 
@@ -220,11 +246,32 @@ struct SearchResult {
   std::vector<SearchResultEntry> entries;
 
 
-  SearchResultEntry &operator [](int i) {
+  const SearchResultEntry &operator [](int i) const {
     return entries[i];
   }
 
-  std::size_t Size() {return entries.size();}
+  friend bool operator == (const SearchResult &a, const SearchResult &b) {
+    if (a.Size() != b.Size()) {
+      std::cout << "Num Entries: "<< a.Size() << " != " << b.Size() << std::endl;
+      return false;
+    }
+
+    for (int i = 0; i < a.Size(); i++) {
+      if (a[i] != b[i])  {
+        std::cout << "entry not equal: " << i << std::endl;
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  friend bool operator != (const SearchResult &a, const SearchResult &b) {
+    return !(a == b);
+  }
+
+  std::size_t Size() const {return entries.size();}
+
   std::string ToStr() {
     std::string ret;
     for (auto entry : entries) {
@@ -232,6 +279,7 @@ struct SearchResult {
     }
     return ret;
   }
+
   void CopyTo(qq::SearchReply *grpc_reply) {
     grpc_reply->clear_entries();
     for ( auto & result_entry : entries ) {
