@@ -917,7 +917,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
   }
 
   FileDumper index_dumper_;
-  FileDumper fake_index_dumper_;
+  FakeFileDumper fake_index_dumper_;
 
   TermIndexDumper term_index_dumper_;
 };
