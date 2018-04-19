@@ -119,6 +119,10 @@ class DocLengthCharStore {
     return vec_char_store_[doc_id];
   }
 
+  int GetDecodedLength(const DocIdType &doc_id) const noexcept {
+    return utils::Char4ToUint(vec_char_store_[doc_id]);
+  }
+
   const qq_float &GetAvgLength() const noexcept {
     return avg_length_;
   }
@@ -185,6 +189,13 @@ class DocLengthCharStore {
     file_map.Close();
   }
 
+  void Show() {
+    for (int i = 0; i < vec_char_store_.size() && i < 100; i++) {
+      std::cout << "docid: " << i << " len: " << GetDecodedLength(i) << "; ";
+    }
+    std::cout << std::endl;
+  }
+
  private:
   void AddCharLength(const DocIdType doc_id, const char length) {
     if (doc_id >= vec_char_store_.size()) {
@@ -199,7 +210,6 @@ class DocLengthCharStore {
   qq_float avg_length_ = 0;
   int doc_cnt_ = 0;
 };
-
 
 
 #endif
