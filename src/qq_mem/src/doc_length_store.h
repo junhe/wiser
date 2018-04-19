@@ -153,8 +153,10 @@ class DocLengthCharStore {
 
 
     for (int doc_id = 0; doc_id < count; doc_id++) {
-      write(fd, (char *)&doc_id, sizeof(int));
-      write(fd, (char *)&vec_char_store_[doc_id], sizeof(char));
+      ret = write(fd, (char *)&doc_id, sizeof(int));
+      assert(ret == sizeof(int));
+      ret = write(fd, (char *)&vec_char_store_[doc_id], sizeof(char));
+      assert(ret == sizeof(char));
     }
 
     fsync(fd);
