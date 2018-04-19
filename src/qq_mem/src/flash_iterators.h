@@ -627,11 +627,9 @@ class OffsetPostingBagIterator :public PositionPostingBagIteratorBase {
 class VacuumPostingListIterator {
  public:
   VacuumPostingListIterator() {
-    skip_list_ = std::shared_ptr<SkipList>(new SkipList()); 
   }
 
   VacuumPostingListIterator(const uint8_t *file_data, const off_t offset) {
-    skip_list_ = std::unique_ptr<SkipList>(new SkipList()); 
     Reset(file_data, offset);
   }
 
@@ -650,6 +648,7 @@ class VacuumPostingListIterator {
     std::cout << "n_postings_ (just read): "  << n_postings_ << std::endl;
     buf += len;
 
+    skip_list_ = std::shared_ptr<SkipList>(new SkipList()); 
     skip_list_->Load(buf);
 
     std::cout << "skip_list_.NumEntries() after loading, in reset :" 
