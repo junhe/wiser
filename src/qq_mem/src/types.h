@@ -37,6 +37,10 @@
 #define FLAG_SNIPPETS_CACHE_ON_FLASH false
 #define SNIPPETS_CACHE_ON_FLASH_FILE "/mnt/ssd/snippets_store.cache"
 
+const off_t KB = 1024;
+const off_t GB = 1048576;
+
+
 // Basic types for query
 typedef std::string Term;
 typedef std::vector<Term> TermList;
