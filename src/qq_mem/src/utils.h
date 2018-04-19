@@ -374,12 +374,14 @@ std::vector<int> CollectTermFreq(PLIter_T iter) {
 }
 
 template <typename PLIter_T>
-std::vector<int> PrintIter(PLIter_T iter) {
+void PrintIter(PLIter_T iter) {
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Showing posting list ~~~~~~~\n";
   std::cout << "Doc ID: ";
-  PrintVec<int>(CollectDodId(iter));
-  std::cout << "Term Freq: ";
-  PrintVec<int>(CollectTermFreq(iter));
+  auto v1 = CollectDodId(iter);
+  PrintVec<int>(v1);
+  // std::cout << "Term Freq: ";
+  // auto v2 = CollectTermFreq(iter);
+  // PrintVec<int>(v2);
 }
 
 
