@@ -52,6 +52,9 @@ std::unique_ptr<Client> CreateClient(const GeneralConfig &config,
                           std::move(query_producer) ));
       return client;
   }
+
+  LOG(FATAL) << "Wrong config";
+  return nullptr;
 }
 
 
