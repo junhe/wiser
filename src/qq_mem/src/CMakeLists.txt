@@ -1,10 +1,10 @@
 project(grpc-cmake-example)
 cmake_minimum_required(VERSION 3.2)
 
-#add_compile_options(-std=c++11 -O3)
+#add_compile_options(-std=c++11 -O3 -Wreturn-type)
 #add_compile_options(-std=c++11 -O3 -g -Wall)
-add_compile_options(-std=c++11 -O0 -g)
-#add_compile_options(-std=c++11 -O0 -g)
+add_compile_options(-std=c++11 -O0 -g -Wreturn-type)
+#add_compile_options(-std=c++11 -O0 -g -Wreturn-type)
 set(GPROFILER profiler)
 set(CMAKE_CXX_COMPILER "/usr/lib/ccache/g++-5")
 

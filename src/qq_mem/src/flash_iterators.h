@@ -71,6 +71,9 @@ class TermFreqIterator {
       return pack_ints_iter_.Value();
     } else if (cur_iter_type_ == BlobFormat::VINTS) {
       return vints_iter_.Peek();
+    } else {
+      LOG(FATAL) << "blob has not been setup" << std::endl;
+      return -1;
     }
   }
 
@@ -185,6 +188,9 @@ class DocIdIterator {
       return pack_ints_iter_.Value();
     } else if (cur_iter_type_ == BlobFormat::VINTS) {
       return vints_iter_.Peek();
+    } else {
+      LOG(FATAL) << "blob has not been setup" << std::endl;
+      return -1;
     }
   }
 
@@ -300,6 +306,9 @@ class CozyBoxIterator {
       return pack_ints_iter_.Value();
     } else if (cur_iter_type_ == BlobFormat::VINTS) {
       return vints_iter_.Peek();
+    } else {
+      LOG(FATAL) << "blob has not been setup" << std::endl;
+      return -1;
     }
   }
 
@@ -337,6 +346,9 @@ class CozyBoxIterator {
       return pack_ints_iter_.SerializationSize();
     } else if (cur_iter_type_ == BlobFormat::VINTS) {
       return vints_iter_.SerializationSize();
+    } else {
+      LOG(FATAL) << "blob has not been setup" << std::endl;
+      return -1;
     }
   }
 

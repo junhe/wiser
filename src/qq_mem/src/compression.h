@@ -99,6 +99,8 @@ class VarintIterator: public PopIteratorService {
     index_ = rhs.index_;
     start_offset_ = rhs.start_offset_; 
     count_ = rhs.count_;
+
+    return *this;
   }
 
   bool IsEnd() const {
