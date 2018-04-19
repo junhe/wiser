@@ -169,6 +169,21 @@ target_link_libraries(in_proc_engine_bench_querylog
     ${GLOG_LIB}
 )
 
+add_executable(convert_qq_to_vacuum
+    convert_qq_to_vacuum.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+
+target_link_libraries(convert_qq_to_vacuum
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${QQ_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
+
 add_executable(grpc_benchmark
     grpc_client_impl.cc
     ${ENGINE_SRCS}

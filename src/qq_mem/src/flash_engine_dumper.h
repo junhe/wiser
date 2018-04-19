@@ -647,9 +647,14 @@ class TermDictEntry {
 class InvertedIndexDumperBase : public InvertedIndexQqMemDelta {
  public:
   void Dump() {
+    int cnt = 0; 
     for (auto it = index_.cbegin(); it != index_.cend(); it++) {
       // LOG(INFO) << "At '" << it->first << "'" << std::endl;
       DumpPostingList(it->first, it->second);
+      cnt++;
+      if (cnt % 10000 == 0) {
+        std::cout << "Posting list dumpped: " << cnt << std::endl;
+      }
     }
   }
   virtual void DumpPostingList(
@@ -857,10 +862,15 @@ class FlashEngineDumper {
   }
 
   void Dump() {
-    DumpInvertedIndex();
-    doc_store_.Dump(dump_dir_path_ + "/my.fdx", dump_dir_path_ + "/my.fdt");
+    std::cout << "Dumping doc length...\n";
     doc_lengths_.Serialize(utils::JoinPath(dump_dir_path_, "my.doc_length"));
-  }
+
+    std::cout << "Dumping doc store...\n";
+    doc_store_.Dump(dump_dir_path_ + "/my.fdx", dump_dir_path_ + "/my.fdt");
+ 
+    std::cout << "Dumping inverted index...\n";
+    DumpInvertedIndex();
+ }
 
   void DumpInvertedIndex() {
     inverted_index_.Dump();

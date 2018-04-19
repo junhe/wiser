@@ -39,6 +39,11 @@ in_proc_engine_bench_querylog:
 		make -j32 in_proc_engine_bench_querylog && \
 		CPUPROFILE_FREQUENCY=1000 ./in_proc_engine_bench_querylog -exp_mode=local -use_profiler=true
 
+convert_qq_to_vacuum:
+	cd build && cmake ../src/ && \
+		make -j32 convert_qq_to_vacuum && \
+		./convert_qq_to_vacuum
+
 profile:
 	google-pprof --text ./build/in_proc_engine_bench_querylog ./build/my.profile.new
 
