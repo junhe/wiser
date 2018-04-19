@@ -132,7 +132,11 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
     SECTION("Dump it and read it") {
       // Dump it
       FileDumper dumper("/tmp/tmp.pos.dumper");
+      FakeFileDumper fake_dumper("/tmp/tmp.fake.dumper");
+
       FileOffsetsOfBlobs file_offs = dumper.Dump(writer);
+      FileOffsetsOfBlobs file_offs2 = fake_dumper.Dump(writer);
+      REQUIRE(file_offs == file_offs2);
       
       REQUIRE(file_offs.PackOffSize() == 1); 
       REQUIRE(file_offs.VIntsSize() == 1); 

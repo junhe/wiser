@@ -244,4 +244,31 @@ TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
 }
 
 
+TEST_CASE( "Test fake file dumper", "[fake]" ) {
+  FileDumper real("/tmp/real.dump");
+  FakeFileDumper fake("/tmp/fake.dump");
+
+  REQUIRE(real.CurrentOffset() == fake.CurrentOffset());
+  REQUIRE(real.End() == fake.End());
+
+  std::string data = "hello";
+  REQUIRE(real.Dump(data) == fake.Dump(data));
+  REQUIRE(real.Dump(data) == fake.Dump(data));
+  REQUIRE(real.End() == fake.End());
+
+  data = "helloxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx";
+  REQUIRE(real.Dump(data) == fake.Dump(data));
+  real.Seek(33);
+  fake.Seek(33);
+  REQUIRE(real.CurrentOffset() == fake.CurrentOffset());
+
+  real.SeekToEnd();
+  fake.SeekToEnd();
+  REQUIRE(real.CurrentOffset() == fake.CurrentOffset());
+  REQUIRE(real.End() == fake.End());
+
+}
+
+
+
 

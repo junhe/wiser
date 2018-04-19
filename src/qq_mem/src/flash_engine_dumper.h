@@ -229,6 +229,33 @@ class FileOffsetsOfBlobs {
     }
   }
 
+  friend bool operator == (
+      const FileOffsetsOfBlobs &a, const FileOffsetsOfBlobs &b) {
+    if (a.pack_offs_.size() != b.pack_offs_.size())
+      return false;
+
+    for (int i = 0; i < a.pack_offs_.size(); i++) {
+      if (a.pack_offs_[i] != b.pack_offs_[i]) {
+        return false;
+      }
+    }
+
+    if (a.vint_offs_.size() != b.vint_offs_.size())
+      return false;
+
+    for (int i = 0; i < a.vint_offs_.size(); i++) {
+      if (a.vint_offs_[i] != b.vint_offs_[i]) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  friend bool operator != (
+      const FileOffsetsOfBlobs &a, const FileOffsetsOfBlobs &b) {
+    return !(a == b);
+  }
+
  private:
   std::vector<off_t> pack_offs_;
   std::vector<off_t> vint_offs_;
@@ -369,6 +396,93 @@ class FileDumper : public GeneralFileDumper {
     return start_byte;
   }
 };
+
+class FakeFileDumper : public FileDumper {
+ public:
+  FakeFileDumper(const std::string path) : FileDumper(path) {}
+
+  FileOffsetsOfBlobs Dump(const CozyBoxWriter &writer) {
+    std::vector<off_t> pack_offs = DumpPackedBlocks(writer.PackWriters());
+    std::vector<off_t> vint_offs = DumpVInts(writer.VInts());
+
+    return FileOffsetsOfBlobs(pack_offs, vint_offs);
+  }
+
+  off_t CurrentOffset() const {
+    return cur_off_;
+  }
+
+  off_t Seek(off_t pos) {
+    cur_off_ = pos;
+    return pos;
+  }
+
+  off_t SeekToEnd() {
+    cur_off_ = end_off_;
+    return cur_off_;
+  }
+
+  off_t End() {
+    return end_off_;
+  }
+
+  off_t Dump(const std::string &data) {
+    off_t start_byte = CurrentOffset();
+
+    Write(data.size());
+
+    return start_byte;
+  }
+
+  void Flush() const {
+  }
+
+  void Close() const {
+  }
+
+ protected:
+  void Write(int data_size) {
+    cur_off_ += data_size;
+    if (cur_off_ > end_off_)
+      end_off_ = cur_off_;
+  }
+
+  std::vector<off_t> DumpVInts(const VIntsWriter &varint_buf) {
+    if (varint_buf.IntsSize() == 0) {
+      return std::vector<off_t>{};
+    } else {
+      off_t start_byte = CurrentOffset();
+      std::string data_buf = varint_buf.Serialize();
+
+      Write(data_buf.size());
+      return std::vector<off_t>{start_byte};
+    }
+  }
+
+  std::vector<off_t> DumpPackedBlocks(
+      const std::vector<PackedIntsWriter> &pack_writers) {
+    std::vector<off_t> offs;
+
+    for (auto &writer : pack_writers) {
+      offs.push_back(DumpPackedBlock(writer));
+    }
+
+    return offs;
+  }
+
+  off_t DumpPackedBlock(const PackedIntsWriter &writer) {
+    off_t start_byte = CurrentOffset();
+    std::string data = writer.Serialize();      
+
+    Write(data.size());
+    return start_byte;
+  }
+
+  off_t cur_off_ = 0;
+  off_t end_off_ = 0;
+};
+
+
 
 
 class TermDictFileDumper : public GeneralFileDumper {
