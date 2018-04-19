@@ -238,12 +238,10 @@ TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
   REQUIRE(engine.TermCount() == 3);
 
   // Dump the engine
-  engine.SeekInvertedIndexDumper(4293942856L);
+  engine.SeekInvertedIndexDumper(4L*GB - 10);
   engine.DumpInvertedIndex();
 
 }
-
-
 
 
 
