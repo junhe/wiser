@@ -379,9 +379,9 @@ void PrintIter(PLIter_T iter) {
   std::cout << "Doc ID: ";
   auto v1 = CollectDodId(iter);
   PrintVec<int>(v1);
-  // std::cout << "Term Freq: ";
-  // auto v2 = CollectTermFreq(iter);
-  // PrintVec<int>(v2);
+  std::cout << "Term Freq: ";
+  auto v2 = CollectTermFreq(iter);
+  PrintVec<int>(v2);
 }
 
 

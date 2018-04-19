@@ -189,7 +189,7 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
   auto q_result = qq_engine.Search(query);
   std::cout << "q-------\n";
   std::cout << q_result.ToStr();
-
+  REQUIRE(v_result == q_result);
 }
 
 
