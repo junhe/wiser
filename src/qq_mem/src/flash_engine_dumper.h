@@ -792,7 +792,13 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 };
 
 
-
+// Usage:
+// FlashEngineDumper dumper("dump_to_dir_path")
+// dumpr.LoadLocalDocuments(line doc path, ..) 
+// OR dumper.LoadQqMemDump(qq mem dump path)
+// dumper.Dump() it will dump to "dump_to_dir_path"
+//
+// Better design: decouple setting dump path and construction
 class FlashEngineDumper {
  public:
   FlashEngineDumper(const std::string dump_dir_path)
@@ -876,10 +882,19 @@ class FlashEngineDumper {
   }
 
   void LoadQqMemDump(std::string dir_path) {
+    std::cout << "Deserializing meta...\n";
     DeserializeMeta(dir_path + "/engine_meta.dump"); // good
+
+    std::cout << "Deserializing doc store...\n";
     doc_store_.Deserialize(dir_path + "/doc_store.dump"); //good
+
+    std::cout << "Deserializing inverted index...\n";
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump"); //good
+
+    std::cout << "Deserializing doc length...\n";
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump"); //good
+
+    std::cout << "Reset similarity...\n";
     similarity_.Reset(doc_lengths_.GetAvgLength()); //good
   }
 
