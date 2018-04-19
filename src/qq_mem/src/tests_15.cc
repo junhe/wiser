@@ -159,6 +159,41 @@ TEST_CASE( "Testing 5 long docs", "[qqflash][dump5]" ) {
   }
 }
 
+
+TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuum]" ) {
+  // Create vacuum
+  std::string dir_path = "/tmp/3-doc-engine";
+  utils::PrepareDir(dir_path);
+  FlashEngineDumper engine_dumper(dir_path);
+  REQUIRE(engine_dumper.TermCount() == 0);
+  engine_dumper.LoadLocalDocuments("./src/testdata/line_doc_with_positions", 10000, 
+      "WITH_POSITIONS");
+  REQUIRE(engine_dumper.TermCount() > 100);
+  engine_dumper.Dump();
+
+  VacuumEngine vacuum_engine(dir_path);
+
+
+  QqMemEngineDelta qq_engine;
+  qq_engine.LoadLocalDocuments("./src/testdata/line_doc_with_positions", 10000, 
+      "WITH_POSITIONS");
+  REQUIRE(qq_engine.TermCount() > 100);
+
+  REQUIRE(vacuum_engine.TermCount() == qq_engine.TermCount());
+
+  // "all"
+  SearchQuery query({"all"});
+  auto v_result = vacuum_engine.Search(query);
+  std::cout << "v-------\n";
+  std::cout << v_result.ToStr();
+  auto q_result = qq_engine.Search(query);
+  std::cout << "q-------\n";
+  std::cout << q_result.ToStr();
+
+}
+
+
+
 // TEST_CASE( "Load qq mem dump and dump to vacuum format", "[load]" ) {
   // std::string dir_path = "/tmp/3-doc-engine";
   // utils::PrepareDir(dir_path);
