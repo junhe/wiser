@@ -229,7 +229,7 @@ struct SearchResultEntry {
       return false;
     }
 
-    if (abs(a.doc_score - b.doc_score) < 0.001) {
+    if (abs(a.doc_score - b.doc_score) > 0.001) {
       std::cout << "doc score: "<< a.doc_score << " != " << b.doc_score << std::endl;
       return false;
     }
