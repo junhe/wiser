@@ -114,9 +114,11 @@ class InvertedIndexService {
   }
   virtual bool operator== (const InvertedIndexService &rhs) const {
     LOG(FATAL) << "Not Implemented" << std::endl;
+    return false;
   }
   virtual bool operator!= (const InvertedIndexService &rhs) const {
     LOG(FATAL) << "Not Implemented" << std::endl;
+    return false;
   }
 };
 
