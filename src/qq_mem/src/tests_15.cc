@@ -217,19 +217,31 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
 }
 
 
+// TEST_CASE( "Load qq mem dump and dump to vacuum format", "[vac]" ) {
+  // VacuumEngine engine("/mnt/ssd/vacuum_engine_dump");
+  // REQUIRE(engine.TermCount() == 10000);
 
-// TEST_CASE( "Load qq mem dump and dump to vacuum format", "[load]" ) {
-  // std::string dir_path = "/tmp/3-doc-engine";
-  // utils::PrepareDir(dir_path);
-  // FlashEngineDumper engine_dumper(dir_path);
-  // REQUIRE(engine_dumper.TermCount() == 0);
-  // engine_dumper.LoadQqMemDump("/mnt/ssd/big-engine-dump-compressed-text");
-  // REQUIRE(engine_dumper.TermCount() > 100);
+  // SearchQuery query({"mesolih"}, true);
+  // auto result = engine.Search(query);
 
-  // engine_dumper.Dump();
+  // std::cout << result.ToStr() << std::endl;
 // }
 
 
+TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
+  std::string dir_path = "/tmp/3-word-engine";
+  utils::PrepareDir(dir_path);
+  FlashEngineDumper engine(dir_path);
+  REQUIRE(engine.TermCount() == 0);
+  engine.LoadLocalDocuments("src/testdata/iter_test_3_docs", 10000, 
+      "WITH_POSITIONS");
+  REQUIRE(engine.TermCount() == 3);
+
+  // Dump the engine
+  engine.SeekInvertedIndexDumper(4293942856L);
+  engine.DumpInvertedIndex();
+
+}
 
 
 

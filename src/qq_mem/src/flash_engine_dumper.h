@@ -684,7 +684,13 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     :index_dumper_(dump_dir_path + "/my.vacuum"),
      fake_index_dumper_(dump_dir_path + "/fake.vacuum"),
      term_index_dumper_(dump_dir_path + "/my.tip")
-  {}
+  {
+  }
+
+  // Only for testing at this time
+  void SeekFileDumper(off_t pos) {
+    index_dumper_.Seek(pos);
+  }
 
   void DumpPostingList(const Term &term, 
       const PostingListDelta &posting_list) override {
@@ -741,7 +747,9 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     std::string skip_list_data = real_skiplist_writer.Serialize();
     LOG(INFO) << "skip_list_real size: " << skip_list_data.size() << std::endl;
     if (skip_list_data.size() > skip_list_est_size) { 
-      LOG(FATAL) << "Gap for skip list is too small.";
+      LOG(FATAL) << "Gap for skip list is too small. skip list real size: " 
+        << skip_list_data.size() 
+        << " skip est size: " << skip_list_est_size << std::endl;
     } else {
       index_dumper_.Dump(skip_list_data); 
       index_dumper_.SeekToEnd();
@@ -876,6 +884,10 @@ class FlashEngineDumper {
     inverted_index_.Dump();
   }
 
+  // only for testing
+  void SeekInvertedIndexDumper(off_t pos) {
+    inverted_index_.SeekFileDumper(pos);
+  }
 
   void DeserializeMeta(std::string path) {
     int fd;
