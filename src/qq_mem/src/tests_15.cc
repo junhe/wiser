@@ -182,14 +182,38 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
   REQUIRE(vacuum_engine.TermCount() == qq_engine.TermCount());
 
   // "all"
+  {
   SearchQuery query({"all"});
   auto v_result = vacuum_engine.Search(query);
-  std::cout << "v-------\n";
-  std::cout << v_result.ToStr();
   auto q_result = qq_engine.Search(query);
-  std::cout << "q-------\n";
-  std::cout << q_result.ToStr();
   REQUIRE(v_result == q_result);
+  }
+
+  // four
+  {
+  SearchQuery query({"four"});
+  auto v_result = vacuum_engine.Search(query);
+  auto q_result = qq_engine.Search(query);
+  REQUIRE(v_result == q_result);
+  }
+
+  {
+    std::string line;
+    std::ifstream infile("./src/testdata/all-tokens.txt");
+    std::getline(infile, line);
+    auto terms = utils::explode(line, ' ');
+  
+    for (auto &term : terms) {
+      std::cout << "tttttttttttttt : " << term << std::endl;
+      SearchQuery query({term});
+      auto v_result = vacuum_engine.Search(query);
+      auto q_result = qq_engine.Search(query);
+      REQUIRE(v_result.Size() > 0);
+      std::cout << "rrrrrrrrrrrrrr: " << std::endl;
+      std::cout << v_result.ToStr();
+      REQUIRE(v_result == q_result);
+    }
+  }
 }
 
 
