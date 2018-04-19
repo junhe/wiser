@@ -159,6 +159,17 @@ TEST_CASE( "Testing 5 long docs", "[qqflash][dump5]" ) {
   }
 }
 
+// TEST_CASE( "Load qq mem dump and dump to vacuum format", "[load]" ) {
+  // std::string dir_path = "/tmp/3-doc-engine";
+  // utils::PrepareDir(dir_path);
+  // FlashEngineDumper engine_dumper(dir_path);
+  // REQUIRE(engine_dumper.TermCount() == 0);
+  // engine_dumper.LoadQqMemDump("/mnt/ssd/big-engine-dump-compressed-text");
+  // REQUIRE(engine_dumper.TermCount() > 100);
+
+  // engine_dumper.Dump();
+// }
+
 
 
 
