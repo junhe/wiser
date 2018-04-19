@@ -349,6 +349,40 @@ inline std::string OffsetPairToStr(OffsetPair pair) {
 }
 
 
+template <typename PLIter_T>
+std::vector<int> CollectDodId(PLIter_T iter) {
+  std::vector<int> ret;
+
+  while (iter.IsEnd() != true) {
+    ret.push_back(iter.DocId());
+    iter.Advance();
+  }
+
+  return ret;
+}
+
+template <typename PLIter_T>
+std::vector<int> CollectTermFreq(PLIter_T iter) {
+  std::vector<int> ret;
+
+  while (iter.IsEnd() != true) {
+    ret.push_back(iter.TermFreq());
+    iter.Advance();
+  }
+
+  return ret;
+}
+
+template <typename PLIter_T>
+std::vector<int> PrintIter(PLIter_T iter) {
+  std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Showing posting list ~~~~~~~\n";
+  std::cout << "Doc ID: ";
+  PrintVec<int>(CollectDodId(iter));
+  std::cout << "Term Freq: ";
+  PrintVec<int>(CollectTermFreq(iter));
+}
+
+
 
 } // namespace util
 #endif
