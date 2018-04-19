@@ -5,8 +5,13 @@
 #include <iostream>
 #include <fstream>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include "types.h"
 #include "utils.h"
+
 
 class DocLengthStore {
  public:
@@ -95,5 +100,106 @@ class DocLengthStore {
   qq_float avg_length_ = 0;
   int doc_cnt_ = 0;
 };
+
+// the lengths are compressed and stored in char
+class DocLengthCharStore {
+ public:
+  void AddLength(const DocIdType &doc_id, const int &length) {
+    if (doc_id >= vec_char_store_.size()) {
+      vec_char_store_.resize(doc_id + 1, 0);
+    }
+    avg_length_ = avg_length_ + (length - avg_length_) / (doc_cnt_ + 1);
+
+    vec_char_store_[doc_id] = utils::UintToChar4(length);
+    std::cout << "AddLength(): " << doc_id << "  " << length << " coded: " << vec_char_store_[doc_id]<< std::endl;
+    doc_cnt_++;
+  }
+
+  char GetLength(const DocIdType &doc_id) const noexcept {
+    return vec_char_store_[doc_id];
+  }
+
+  const qq_float &GetAvgLength() const noexcept {
+    return avg_length_;
+  }
+
+  int Size() const {
+    return doc_cnt_;
+  }
+
+  std::string ToStr() const {
+    std::string str;
+    str += "Average doc length: " + std::to_string(avg_length_) + "\n";
+    for (int doc_id = 0; doc_id < doc_cnt_; doc_id++) {
+      str += std::to_string(doc_id) + ": " + std::to_string(vec_char_store_[doc_id]) + "\n";
+    }
+
+    return str;
+  }
+
+  void Serialize(std::string path) const {
+    int fd = open(path.c_str(), O_CREAT|O_TRUNC|O_WRONLY, 0666);
+    int ret;
+    if (fd == -1)
+      LOG(FATAL) << "cannot open file";
+
+    int count = vec_char_store_.size();
+    ret = write(fd, &count, sizeof(int));
+    ret = write(fd, &avg_length_, sizeof(qq_float));
+
+
+    for (int doc_id = 0; doc_id < count; doc_id++) {
+      write(fd, (char *)&doc_id, sizeof(int));
+      write(fd, (char *)&vec_char_store_[doc_id], sizeof(char));
+    }
+
+    fsync(fd);
+    close(fd);
+  }
+
+  void Deserialize(std::string path) {
+    doc_cnt_ = 0;
+
+    utils::FileMap file_map(path);
+
+    const char *p = file_map.Addr();
+    int count = *(int *)p;
+    p += sizeof(int);
+
+    avg_length_ = *(qq_float *)p;
+    p += sizeof(qq_float);
+
+    int doc_id;
+    char length;
+    
+    for (int i = 0; i < count; i++) {
+      doc_id = *((int *) p);
+      p += sizeof(doc_id);
+
+      length = *((char *) p);
+      p += sizeof(length);
+
+      AddCharLength(doc_id, length);
+    }
+
+    file_map.Close();
+  }
+
+ private:
+  void AddCharLength(const DocIdType doc_id, const char length) {
+    if (doc_id >= vec_char_store_.size()) {
+      vec_char_store_.resize(doc_id + 1, 0);
+    }
+
+    vec_char_store_[doc_id] = length;
+    doc_cnt_++;
+  }
+
+  std::vector<char> vec_char_store_;
+  qq_float avg_length_ = 0;
+  int doc_cnt_ = 0;
+};
+
+
 
 #endif

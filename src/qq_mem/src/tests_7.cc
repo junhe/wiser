@@ -153,6 +153,20 @@ TEST_CASE( "Serialization", "[serial]" ) {
     REQUIRE(store2.GetLength(100) == store.GetLength(100));
     REQUIRE(store2.GetAvgLength() == store.GetAvgLength());
   }
+
+  SECTION("Doc Length Char Store") {
+    DocLengthCharStore store;       
+    store.AddLength(8, 88);
+    store.AddLength(100, 1000);
+    store.Serialize("/tmp/doc_char_length.dump2");
+
+    DocLengthCharStore store2;
+    store2.Deserialize("/tmp/doc_char_length.dump2");
+    REQUIRE(store2.GetLength(8) == store.GetLength(8));
+    REQUIRE(store2.GetLength(100) == store.GetLength(100));
+    REQUIRE(store2.GetAvgLength() == store.GetAvgLength());
+  }
+
 }
 
 TEST_CASE( "Whole engine serialization test", "[serial]" ) {
