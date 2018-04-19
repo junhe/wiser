@@ -17,7 +17,7 @@ void Convert() {
 int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = 1; // print to stderr instead of file
-  FLAGS_minloglevel = 4; 
+  FLAGS_minloglevel = 2; 
 
   std::cout << "9999999999y237927947293492u\n";
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
