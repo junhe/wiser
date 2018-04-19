@@ -124,6 +124,7 @@ class VacuumEngine : public SearchEngineServiceNew {
         utils::JoinPath(engine_dir_path, "my.fdt"))
   {
     doc_lengths_.Deserialize(utils::JoinPath(engine_dir_path, "my.doc_length"));
+    similarity_.Reset(doc_lengths_.GetAvgLength());
   }
 
   int TermCount() const override {
