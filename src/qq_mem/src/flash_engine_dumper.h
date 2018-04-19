@@ -136,6 +136,10 @@ class GeneralTermEntry {
     return table;
   }
 
+  int NumBags() const {
+    return posting_bag_sizes_.size();
+  }
+
   CozyBoxWriter GetCozyBoxWriter(bool do_delta) const {
     const int pack_size = PackedIntsWriter::PACK_SIZE;
     const int n_packs = values_.size() / pack_size;
