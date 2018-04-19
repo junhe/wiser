@@ -21,15 +21,15 @@ class CompressedPositionIterator: public PopIteratorService {
     return iterator_.IsEnd();
   }
 
-  uint32_t Pop() {
-    uint32_t pos = last_pos_ + iterator_.Pop();
+  uint64_t Pop() {
+    uint64_t pos = last_pos_ + iterator_.Pop();
     last_pos_ = pos;
     return pos;
   }
 
  private:
   VarintIteratorEndBound iterator_;
-  uint32_t last_pos_ = 0;
+  uint64_t last_pos_ = 0;
 };
 
 

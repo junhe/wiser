@@ -182,10 +182,8 @@ std::string format_with_commas(T value)
 std::string str_qq_search_reply(const qq::SearchReply &reply);
 int varint_expand_and_encode(uint64_t value, std::string *buf, const off_t offset);
 int varint_encode(uint64_t value, std::string *buf, off_t offset);
-// int varint_decode(const std::string &buf, off_t offset, uint32_t *value);
-// int varint_decode_chars(const char *buf, const off_t offset, uint32_t *value);
 
-inline int varint_decode_chars(
+inline int varint_decode_uint32(
     const char *buf, const off_t offset, uint32_t *value) noexcept {
   uint32_t v = buf[offset];
   if (v < 0x80) {
@@ -204,9 +202,31 @@ inline int varint_decode_chars(
   return i; 
 }
 
+inline int varint_decode_64bit(
+    const char *buf, const off_t offset, uint64_t *value) noexcept {
+  uint64_t v = buf[offset];
+  if (v < 0x80) {
+    *value = v;
+    return 1;
+  }
+
+  *value = buf[offset] & 0x7f;
+  int i = 1;
+  // inv: buf[offset, offset + i) has been copied to value 
+  //      (buf[offset + i] is about to be copied)
+  while ((buf[offset + i - 1] & 0x80) > 0) {
+    *value += (0x7f & buf[offset + i]) << (i * 7);
+    i++;
+  }
+  return i; 
+}
+
+
+
+
 inline int varint_decode_uint8(
     const uint8_t *buf, const off_t offset, uint32_t *value) noexcept {
-  return varint_decode_chars((const char *)buf, offset, value);
+  return varint_decode_uint32((const char *)buf, offset, value);
 }
 
 
@@ -215,7 +235,7 @@ inline int varint_decode_uint8(
 // return: length of the buffer decoded
 inline int varint_decode(
     const std::string &buf, const off_t offset, uint32_t *value) noexcept {
-  return varint_decode_chars(buf.data(), offset, value);
+  return varint_decode_uint32(buf.data(), offset, value);
 }
 
 

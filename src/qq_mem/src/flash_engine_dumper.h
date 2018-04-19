@@ -533,7 +533,7 @@ class SkipList {
  public:
   void Load(const uint8_t *buf) {
     uint32_t num_entries;
-    int len = utils::varint_decode_chars((char *)buf, 0, &num_entries);
+    int len = utils::varint_decode_uint32((char *)buf, 0, &num_entries);
     VarintIterator it((const char *)buf, len, num_entries);
 
     for (int entry_i = 0; entry_i < num_entries; entry_i++) {
@@ -613,13 +613,13 @@ class TermDictEntry {
     int len;
     uint32_t data_size;
 
-    len = utils::varint_decode_chars(buf, 0, &format_);
+    len = utils::varint_decode_uint32(buf, 0, &format_);
     buf += len;
 
-    len = utils::varint_decode_chars(buf, 0, &doc_freq_);
+    len = utils::varint_decode_uint32(buf, 0, &doc_freq_);
     buf += len;
 
-    len = utils::varint_decode_chars(buf, 0, &data_size);
+    len = utils::varint_decode_uint32(buf, 0, &data_size);
     buf += len;
 
     if (format_ == 0) {

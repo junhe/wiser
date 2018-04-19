@@ -224,14 +224,14 @@ class VIntsIterator {
   }
 
   void Reset(const uint8_t *buf) {
-    int len = utils::varint_decode_chars((char *)buf, 0, &magic_);
+    int len = utils::varint_decode_uint32((char *)buf, 0, &magic_);
     buf += len;
 
     if (magic_ != VINTS_FIRST_BYTE) {
       LOG(FATAL) << "Magic number is not right for this VInts";
     }
 
-    len = utils::varint_decode_chars((char *)buf, 0, &varint_bytes_);
+    len = utils::varint_decode_uint32((char *)buf, 0, &varint_bytes_);
     buf += len;
 
     varint_iter_.Reset((char *)buf, 0, varint_bytes_);

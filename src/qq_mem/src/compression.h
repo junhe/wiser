@@ -5,12 +5,12 @@
 
 class VarintBuffer {
  public:
-  void Append(uint32_t val) {
+  void Append(uint64_t val) {
     int len = utils::varint_expand_and_encode(val, &data_, end_);
     end_ += len;
   }
 
-  void Prepend(uint32_t val) {
+  void Prepend(uint64_t val) {
     std::string tmp_buf;
     int len = utils::varint_expand_and_encode(val, &tmp_buf, 0);
     data_.insert(0, tmp_buf, 0, len);
@@ -56,9 +56,9 @@ class VarintBuffer {
 
   off_t Deserialize(const std::string &buf, const off_t offset) {
     int len;
-    uint32_t end;
+    uint64_t end;
 
-    len = utils::varint_decode(buf, offset, &end);
+    len = utils::varint_decode_64bit(buf.data(), offset, &end);
     end_ = end;
     
     data_ = std::string(buf, offset + len, offset + len + end_);
@@ -108,11 +108,11 @@ class VarintIterator: public PopIteratorService {
   }
 
   // Must check if it is the end before Pop() is called!
-  uint32_t Pop() {
+  uint64_t Pop() {
     int len;
-    uint32_t n;
+    uint64_t n;
 
-    len = utils::varint_decode_chars(data_, cur_offset_, &n);
+    len = utils::varint_decode_64bit(data_, cur_offset_, &n);
     cur_offset_ += len;
     index_++;
 
@@ -162,19 +162,19 @@ class VarintIteratorEndBound: public PopIteratorService {
   }
 
   // Must check if it is the end before Pop() is called!
-  uint32_t Pop() {
+  uint64_t Pop() {
     int len;
-    uint32_t n;
+    uint64_t n;
 
-    len = utils::varint_decode_chars(data_, cur_offset_, &n);
+    len = utils::varint_decode_64bit(data_, cur_offset_, &n);
     cur_offset_ += len;
 
     return n;
   }
 
-  uint32_t Peek() const {
-    uint32_t n;
-    utils::varint_decode_chars(data_, cur_offset_, &n);
+  uint64_t Peek() const {
+    uint64_t n;
+    utils::varint_decode_64bit(data_, cur_offset_, &n);
     return n;
   }
 

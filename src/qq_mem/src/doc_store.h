@@ -70,11 +70,11 @@ class SimpleDocStore {
     int doc_id, text_size;
     int offset = 0;
 
-    len = utils::varint_decode_chars(data, offset, &var);
+    len = utils::varint_decode_uint32(data, offset, &var);
     offset += len;
     doc_id = var;
 
-    len = utils::varint_decode_chars(data, offset, &var);
+    len = utils::varint_decode_uint32(data, offset, &var);
     offset += len;
     text_size = var;
     
@@ -116,7 +116,7 @@ class SimpleDocStore {
 
     utils::MapFile(path, &addr, &fd, &file_length);
 
-    len = utils::varint_decode_chars(addr, 0, &var);
+    len = utils::varint_decode_uint32(addr, 0, &var);
     offset += len;
     int count = var;
     
@@ -195,11 +195,11 @@ class CompressedDocStore {
     int doc_id, text_size;
     int offset = 0;
 
-    len = utils::varint_decode_chars(data, offset, &var);
+    len = utils::varint_decode_uint32(data, offset, &var);
     offset += len;
     doc_id = var;
 
-    len = utils::varint_decode_chars(data, offset, &var);
+    len = utils::varint_decode_uint32(data, offset, &var);
     offset += len;
     text_size = var;
     
@@ -242,7 +242,7 @@ class CompressedDocStore {
 
     utils::MapFile(path, &addr, &fd, &file_length);
 
-    len = utils::varint_decode_chars(addr, 0, &var);
+    len = utils::varint_decode_uint32(addr, 0, &var);
     offset += len;
     int count = var;
     

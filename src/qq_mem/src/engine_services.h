@@ -76,7 +76,7 @@ class OffsetPairsIteratorService {
 class PopIteratorService {
  public:
   virtual bool IsEnd() const = 0;
-  virtual uint32_t Pop() = 0;
+  virtual uint64_t Pop() = 0;
 };
 
 
