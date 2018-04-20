@@ -279,3 +279,21 @@ TEST_CASE( "URL parsing", "[parse]" ) {
 }
 
 
+TEST_CASE( "64 bits encoding and decoding", "[v64]" ) {
+  uint64_t val = 3748449232L; 
+  std::string buf;
+  int len1 = utils::varint_expand_and_encode(val, &buf, 0);
+
+  uint64_t val2;
+  int len2 = utils::varint_decode_64bit(buf.data(), 0, &val2);
+
+  // uint32_t val2;
+  // int len2 = utils::varint_decode_uint32(buf.data(), 0, &val2);
+
+  REQUIRE(len1 == len2);
+  REQUIRE(val == val2);
+}
+
+
+
+
