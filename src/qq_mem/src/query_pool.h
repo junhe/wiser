@@ -238,8 +238,6 @@ class QueryProducerByLog: public QueryProducerService {
       SearchQuery query(GetTerms(line));
       query.is_phrase = IsPhrase(line);
 
-      std::cout << query.ToStr() << std::endl;
-
       array_.Add(index % array_.Size(), query);
       index++;
     }

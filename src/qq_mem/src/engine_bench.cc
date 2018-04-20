@@ -233,6 +233,50 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
 };
 
 
+class LocalLogTreatmentExecutor: public TreatmentExecutor {
+ public:
+  LocalLogTreatmentExecutor(SearchEngineServiceNew *engine)
+     :engine_(engine) {}
+
+  int NumberOfThreads() {return 1;}
+
+  std::unique_ptr<QueryProducerService> MakeProducer(Treatment treatment) {
+    if (treatment.tag != "querylog")
+      LOG(FATAL) << "Tag must be set right";
+
+    return std::unique_ptr<QueryProducerService>(
+        new QueryProducerByLog(treatment.query_log_path, NumberOfThreads()));
+  }
+
+  utils::ResultRow Execute(Treatment treatment) {
+    const int n_repeats = treatment.n_repeats;
+    utils::ResultRow row;
+    auto query_producer = MakeProducer(treatment);
+
+    auto start = utils::now();
+    for (int i = 0; i < n_repeats; i++) {
+      auto query = query_producer->NextNativeQuery(0);
+      // std::cout << query.ToStr() << std::endl;
+      auto result = engine_->Search(query);
+
+      // std::cout << result.ToStr() << std::endl;
+    }
+    auto end = utils::now();
+    auto dur = utils::duration(start, end);
+
+    row["latency"] = std::to_string(dur / n_repeats); 
+    row["duration"] = std::to_string(dur); 
+    row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
+    return row;
+  }
+
+ private:
+  SearchEngineServiceNew *engine_;
+};
+
+
+
+
 class LocalStatsExecutor: public TreatmentExecutor {
  public:
   LocalStatsExecutor(SearchEngineServiceNew *engine)
@@ -318,6 +362,7 @@ class EngineExperiment: public Experiment {
 
     Treatment t;
     t.tag = "querylog";
+    t.n_repeats = 1000;
     t.query_log_path = "/mnt/ssd/realistic_querylog";
     treatments.push_back(t);
 
@@ -339,6 +384,10 @@ class EngineExperiment: public Experiment {
       std::cout << "Using in-proc engine..." << std::endl;
       engine_ = std::move(CreateEngineFromFile());
       treatment_executor_.reset(new LocalTreatmentExecutor(engine_.get()));
+    } else if (FLAGS_exp_mode == "locallog") {
+      std::cout << "Using in-proc engine with query log..." << std::endl;
+      engine_ = std::move(CreateEngineFromFile());
+      treatment_executor_.reset(new LocalLogTreatmentExecutor(engine_.get()));
     } else if (FLAGS_exp_mode == "localquerylog") {
       std::cout << "Using in-proc engine with query log..." << std::endl;
 

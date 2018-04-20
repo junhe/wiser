@@ -37,7 +37,7 @@ grpc_benchmark:
 engine_bench:
 	cd build && cmake ../src/ && \
 		make -j32 engine_bench && \
-		CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=local -use_profiler=true
+		CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=locallog -use_profiler=true
 
 convert_qq_to_vacuum:
 	cd build && cmake ../src/ && \
