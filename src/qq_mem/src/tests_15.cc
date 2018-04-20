@@ -217,17 +217,58 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
 
 
 TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
-  std::string dir_path = "/tmp/3-word-engine";
+  std::string dir_path = "/tmp/large-file";
   utils::PrepareDir(dir_path);
-  FlashEngineDumper engine(dir_path);
-  REQUIRE(engine.TermCount() == 0);
-  engine.LoadLocalDocuments("src/testdata/iter_test_3_docs", 10000, 
+  FlashEngineDumper engine_dumper(dir_path);
+  REQUIRE(engine_dumper.TermCount() == 0);
+  engine_dumper.LoadLocalDocuments("src/testdata/iter_test_3_docs", 10000, 
       "WITH_POSITIONS");
-  REQUIRE(engine.TermCount() == 3);
+  REQUIRE(engine_dumper.TermCount() == 3);
 
-  // Dump the engine
-  engine.SeekInvertedIndexDumper(4L*GB - 10);
-  engine.DumpInvertedIndex();
+  // Dump the engine_dumper
+  engine_dumper.SeekInvertedIndexDumper(5*GB - 10);
+  engine_dumper.Dump();
+
+  VacuumEngine engine(dir_path);
+
+  // Sanity check
+  REQUIRE(engine.TermCount() == 3);
+  auto pl_sizes = engine.PostinglistSizes({"a", "b", "c"});
+
+  SECTION("Single term query") {
+    SearchResult result = engine.Search(SearchQuery({"a"}, true));
+    REQUIRE(result.Size() == 3);
+
+    for (int i = 0; i < result.Size(); i++) {
+      if (result[i].doc_id == 0) {
+        REQUIRE(result[i].snippet == ""); //TODO: this should be fixed
+      } else if (result[i].doc_id == 1) {
+        REQUIRE(result[i].snippet == "<b>a <\\b>b\n");
+      } else {
+        REQUIRE(result[i].snippet == "<b>a <\\b>b c\n");
+      }
+    }
+
+    result = engine.Search(SearchQuery({"b"}, true));
+    REQUIRE(result.Size() == 2);
+
+    for (int i = 0; i < result.Size(); i++) {
+      if (result[i].doc_id == 1) {
+        // REQUIRE(result[i].snippet == "a <b>b <\\b>\n"); //Failed. TODO
+      } else if (result[i].doc_id == 2) {
+        REQUIRE(result[i].snippet == "a <b>b <\\b>c\n");
+      }
+    }
+
+    result = engine.Search(SearchQuery({"c"}, true));
+    REQUIRE(result.Size() == 1);
+
+    // REQUIRE(result[0].snippet == "a b <b>c <\\b>\n"); // Fail, TODO
+
+    result = engine.Search(SearchQuery({"d"}, true));
+    REQUIRE(result.Size() == 0);
+  }
+
 
 }
 
@@ -293,6 +334,8 @@ TEST_CASE( "64 bits encoding and decoding", "[v64]" ) {
   REQUIRE(len1 == len2);
   REQUIRE(val == val2);
 }
+
+
 
 
 

@@ -351,16 +351,36 @@ TEST_CASE( "PostingListDelta iterator", "[posting_list]" ) {
   }
 }
 
+TEST_CASE( "VarintIterator large number", "[5g]" ) {
+  const uint64_t large_val = 5*GB + 12;
+
+  VarintBuffer buf;
+  buf.Append(large_val);
+
+  SECTION("Regular operations") {
+    VarintIterator it(buf, 1);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == large_val);
+
+    REQUIRE(it.IsEnd() == true);
+  }
+}
+
+
 
 
 TEST_CASE( "VarintIterator", "[compression]" ) {
+  const uint64_t large_val = 5*GB + 12;
+
   VarintBuffer buf;
   buf.Append(1);
   buf.Append(5);
   buf.Append(9);
+  buf.Append(large_val);
 
   SECTION("Regular operations") {
-    VarintIterator it(buf, 3);
+    VarintIterator it(buf, 4);
 
     REQUIRE(it.IsEnd() == false);
     REQUIRE(it.Pop() == 1);
@@ -370,6 +390,9 @@ TEST_CASE( "VarintIterator", "[compression]" ) {
 
     REQUIRE(it.IsEnd() == false);
     REQUIRE(it.Pop() == 9);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == large_val);
 
     REQUIRE(it.IsEnd() == true);
   }
@@ -385,6 +408,9 @@ TEST_CASE( "VarintIterator", "[compression]" ) {
 
     REQUIRE(it.IsEnd() == false);
     REQUIRE(it.Pop() == 9);
+
+    REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.Pop() == large_val);
 
     REQUIRE(it.IsEnd() == true);
   }
