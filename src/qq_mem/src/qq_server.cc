@@ -56,7 +56,7 @@ static void sigint_handler(int x) {
 int main(int argc, char** argv) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = 1; // print to stderr instead of file
-  FLAGS_minloglevel = 0; 
+  FLAGS_minloglevel = 3; 
 
   gflags::SetUsageMessage("Usage: " + std::string(argv[0]));
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
@@ -70,7 +70,8 @@ int main(int argc, char** argv) {
 
   GeneralConfig config;
   config.SetString("target", std::string("localhost:") + FLAGS_port);
-  config.SetString("engine_name", "qq_mem_compressed");
+  // config.SetString("engine_name", "qq_mem_compressed");
+  config.SetString("engine_name", "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump-04-19");
   config.SetString("sync_type", sync_type);
 
   config.SetString("load_source", "dump");

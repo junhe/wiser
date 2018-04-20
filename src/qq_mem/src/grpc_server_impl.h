@@ -168,6 +168,11 @@ class ServerService {
   virtual void Shutdown() = 0;  
   virtual void LoadEngine(SearchEngineServiceNew *engine, 
       const GeneralConfig config) {
+
+    if (IsVacuumUrl(config.GetString("engine_name")) == true) {
+      return;
+    }
+
     if (config.HasKey("load_source") == false) {
       LOG(ERROR) << "load_source is not set. "
         "You probably want to load something to the engine.\n";
