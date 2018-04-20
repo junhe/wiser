@@ -167,6 +167,70 @@ class QueryProducer: public QueryProducerService {
 };
 
 
+class QueryPool {
+ public:
+  QueryPool() {}
+
+  const SearchQuery &Next() {
+    int next = counter_ % pool_.size();
+    counter_++;
+    return pool_[next];
+  }
+
+  void Add(const SearchQuery query) {
+    pool_.push_back(query); 
+  }
+
+  int Size() const {
+    return pool_.size();
+  }
+
+ private:
+  int counter_ = 0;                // for iterating the query buffer
+  std::vector<SearchQuery> pool_;
+};
+
+
+class QueryPoolArray {
+ public:
+  QueryPoolArray(const int n_pools) : array_(n_pools) {}
+
+  const SearchQuery &Next(const int thread_i) {
+    return array_[thread_i].Next();
+  }
+
+  void Add(const int thread_i, const SearchQuery query) {
+    array_[thread_i].Add(query);
+  }
+
+  int Size() const {
+    return array_.size();
+  }
+
+ private:
+  std::vector<QueryPool> array_;
+};
+
+
+
+// class QueryProducerByLog: public QueryProducerService {
+ // public:
+  // QueryProducerByLog(const std::string query_path) {
+
+  // }
+
+  // SearchQuery NextNativeQuery(const int index_index) override {
+  // }
+
+  // qq::SearchRequest NextGrpcQuery(const int pool_index) override {
+  // }
+
+  // int Size() override {
+  // }
+
+ // private:
+// };
+
 
 inline std::unique_ptr<TermPoolArray> CreateTermPoolArray(const TermList &query,
     const int n_pools) {
