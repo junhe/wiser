@@ -116,6 +116,7 @@ class TermPoolArray {
 
 class QueryProducerService {
  public:
+  virtual int Size() = 0;
   virtual SearchQuery NextNativeQuery(const int i) = 0;
   virtual qq::SearchRequest NextGrpcQuery(const int i) = 0;
 };
@@ -142,12 +143,12 @@ class QueryProducer: public QueryProducerService {
     }
   }
 
-  SearchQuery NextNativeQuery(const int i) {
+  SearchQuery NextNativeQuery(const int i) override {
     query_template_[i].terms = term_pool_array_->Next(i);
     return query_template_[i];
   }
 
-  qq::SearchRequest NextGrpcQuery(const int i) {
+  qq::SearchRequest NextGrpcQuery(const int i) override {
     qq::SearchRequest request;
 
     SearchQuery query = NextNativeQuery(i);
@@ -156,7 +157,7 @@ class QueryProducer: public QueryProducerService {
     return request;
   }
 
-  int Size() {
+  int Size() override {
     return term_pool_array_->Size();
   }
 
@@ -170,8 +171,8 @@ std::unique_ptr<TermPoolArray> CreateTermPoolArray(const TermList &terms,
     const int n_pools);
 std::unique_ptr<TermPoolArray> CreateTermPoolArray(
     const std::string &query_log_path, const int n_pools, const int n_queries=0);
-std::unique_ptr<QueryProducer> CreateQueryProducer(const TermList &terms,
+std::unique_ptr<QueryProducerService> CreateQueryProducer(const TermList &terms,
     const int n_pools);
-std::unique_ptr<QueryProducer> CreateQueryProducer(const TermList &terms,
+std::unique_ptr<QueryProducerService> CreateQueryProducer(const TermList &terms,
     const int n_pools, GeneralConfig config);
 #endif 

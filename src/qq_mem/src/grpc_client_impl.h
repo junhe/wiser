@@ -219,7 +219,7 @@ class RPCContext {
 
   bool RunNextState(bool ok, int thread_idx, Histogram *hist, 
       ReplyPool *reply_pool, bool save_reply, 
-      QueryProducer *query_producer) {
+      QueryProducerService *query_producer) {
     TermList terms;
     int i;
 
@@ -348,7 +348,7 @@ class Client {
   //  target
   //  benchmark_duration
   Client(const GeneralConfig config,
-      std::unique_ptr<QueryProducer> query_producer) 
+      std::unique_ptr<QueryProducerService> query_producer) 
     :config_(config), 
      query_producer_(std::move(query_producer))
   {
@@ -487,7 +487,7 @@ class Client {
   std::vector<int> finished_roundtrips_;
   std::vector<std::unique_ptr<PerThreadShutdownState>> shutdown_state_;
   std::vector<Histogram> histograms_;
-  std::unique_ptr<QueryProducer> query_producer_;
+  std::unique_ptr<QueryProducerService> query_producer_;
   ReplyPools reply_pools_;
   bool save_reply_;
 
@@ -524,7 +524,7 @@ class SyncStreamingClient: public Client {
   //  target
   //  benchmark_duration
   SyncStreamingClient(const GeneralConfig config,
-      std::unique_ptr<QueryProducer> query_producer) 
+      std::unique_ptr<QueryProducerService> query_producer) 
     :Client(config, std::move(query_producer))
   {
     StartThreads();
@@ -577,7 +577,7 @@ class AsyncClient: public Client {
 
 
   AsyncClient(const GeneralConfig config,
-    std::unique_ptr<QueryProducer> query_producer)
+    std::unique_ptr<QueryProducerService> query_producer)
       :Client(config, std::move(query_producer))
   {
     LOG(WARNING) << "With async client, you may send too many queries that require long "
@@ -688,7 +688,7 @@ class SyncUnaryClient: public Client {
   //  target
   //  benchmark_duration
   SyncUnaryClient(const GeneralConfig config,
-      std::unique_ptr<QueryProducer> query_producer) 
+      std::unique_ptr<QueryProducerService> query_producer) 
     :Client(config, std::move(query_producer))
   {
     StartThreads();
@@ -728,10 +728,10 @@ class SyncUnaryClient: public Client {
 std::unique_ptr<QqGrpcPlainClient> CreateSyncClient(const std::string &target);
 
 std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
-    std::unique_ptr<QueryProducer> query_producer);
+    std::unique_ptr<QueryProducerService> query_producer);
 
 std::unique_ptr<Client> CreateClient(const GeneralConfig &config,
-    std::unique_ptr<QueryProducer> query_producer);
+    std::unique_ptr<QueryProducerService> query_producer);
 
 #endif
 

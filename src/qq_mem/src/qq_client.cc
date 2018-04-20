@@ -58,7 +58,7 @@ void bench_sync_client(const int n_threads, std::string arity) {
   GeneralConfig query_config;
   query_config.SetBool("return_snippets", true);
   query_config.SetBool("is_phrase", false);
-  std::unique_ptr<QueryProducer> query_producer(
+  std::unique_ptr<QueryProducerService> query_producer(
       new QueryProducer(std::move(array), query_config));
 
   auto async_client = CreateClient(config, std::move(query_producer));

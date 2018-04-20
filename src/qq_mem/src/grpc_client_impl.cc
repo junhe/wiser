@@ -9,7 +9,7 @@ static int write_count = 0;
 
 
 std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
-    std::unique_ptr<QueryProducer> query_producer) 
+    std::unique_ptr<QueryProducerService> query_producer) 
 {
   std::unique_ptr<AsyncClient> client(
       new AsyncClient(config, std::move(query_producer)));
@@ -31,7 +31,7 @@ std::unique_ptr<QQEngine::Stub> CreateStub(const std::string &target) {
 
 
 std::unique_ptr<Client> CreateClient(const GeneralConfig &config,
-    std::unique_ptr<QueryProducer> query_producer) {
+    std::unique_ptr<QueryProducerService> query_producer) {
   auto sync_type = config.GetString("synchronization");
   if (sync_type == "SYNC") {
     auto arity = config.GetString("rpc_arity");

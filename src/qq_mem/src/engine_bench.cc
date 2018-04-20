@@ -85,7 +85,7 @@ class TreatmentExecutor {
  public:
   virtual utils::ResultRow Execute(Treatment treatment) = 0;
   virtual int NumberOfThreads() = 0;
-  virtual std::unique_ptr<QueryProducer> CreateProducer(Treatment treatment) {
+  virtual std::unique_ptr<QueryProducerService> CreateProducer(Treatment treatment) {
     GeneralConfig config;
     config.SetBool("is_phrase", treatment.is_phrase);
     config.SetBool("return_snippets", treatment.return_snippets);
@@ -185,7 +185,7 @@ class LocalStatsExecutor: public TreatmentExecutor {
 
   int NumberOfThreads() {return 1;}
 
-  std::unique_ptr<QueryProducer> CreateProducer(Treatment treatment) override {
+  std::unique_ptr<QueryProducerService> CreateProducer(Treatment treatment) override {
     GeneralConfig config;
     config.SetBool("is_phrase", treatment.is_phrase);
     config.SetBool("return_snippets", treatment.return_snippets);
@@ -194,7 +194,7 @@ class LocalStatsExecutor: public TreatmentExecutor {
     auto array = CreateTermPoolArray(
         "/mnt/ssd/downloads/wiki_QueryLog_tokenized", NumberOfThreads(), 100);
 
-    return std::unique_ptr<QueryProducer>(
+    return std::unique_ptr<QueryProducerService>(
         new QueryProducer(std::move(array), config));
   }
 
@@ -347,7 +347,7 @@ class EngineExperiment: public Experiment {
 
  private:
   GeneralConfig config_;
-  std::vector<std::unique_ptr<QueryProducer>> query_producers_;
+  std::vector<std::unique_ptr<QueryProducerService>> query_producers_;
   std::unique_ptr<SearchEngineServiceNew> engine_;
   std::vector<Treatment> treatments_;
   utils::ResultTable table_;
