@@ -20,6 +20,7 @@ class BufferPool {
   BufferPool(const BufferPool &pool) = delete;
   BufferPool &operator = (const BufferPool &pool) = delete;
 
+  // Let it fail if there is not enough buffer
   std::unique_ptr<char[]> Get() {
     std::lock_guard<std::mutex> lock(mutex_);
     std::unique_ptr<char[]> p = std::move(pool_.back());
