@@ -450,8 +450,5 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
 };
 
 
-std::unique_ptr<SearchEngineServiceNew> CreateSearchEngine(
-    std::string engine_type);
-
 #endif
 

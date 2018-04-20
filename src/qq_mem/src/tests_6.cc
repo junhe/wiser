@@ -9,6 +9,7 @@
 #include "query_processing.h"
 #include "qq_mem_engine.h"
 #include "query_pool.h"
+#include "engine_factory.h"
 
 #include "test_helpers.h"
 

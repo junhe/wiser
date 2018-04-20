@@ -2,6 +2,7 @@
 
 #include "qq.pb.h"
 
+#include "engine_factory.h"
 #include "highlighter.h"
 #include "query_processing.h"
 #include "utils.h"

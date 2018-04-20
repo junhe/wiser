@@ -43,6 +43,7 @@
 #include "engine_loader.h"
 #include "utils.h"
 #include "general_config.h"
+#include "engine_factory.h"
 
 using grpc::Server;
 using grpc::ServerBuilder;

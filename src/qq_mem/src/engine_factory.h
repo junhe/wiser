@@ -18,11 +18,11 @@ struct VacuumConfig {
   std::string path;
 };
 
-bool IsVacuumUrl(std::string url) {
+inline bool IsVacuumUrl(std::string url) {
   return url.compare(0, 7, "vacuum:") == 0;
 }
 
-VacuumConfig ParseUrl(std::string url) {
+inline VacuumConfig ParseUrl(std::string url) {
   std::vector<std::string> parts = utils::explode(url, ':');
   if (parts.size() != 3)
     LOG(FATAL) << "url is in wrong format. " << url;
@@ -30,17 +30,14 @@ VacuumConfig ParseUrl(std::string url) {
   return VacuumConfig(parts[1], parts[2]);
 }
 
-
-
-
-// inline std::unique_ptr<SearchEngineServiceNew> CreateSearchEngine(
-    // std::string engine_type) {
-  // if (engine_type == "qq_mem_compressed") {
-    // return std::unique_ptr<SearchEngineServiceNew>(new QqMemEngineDelta());
-  // } else {
-    // throw std::runtime_error("Wrong engine type: " + engine_type);
-  // }
-// }
+inline std::unique_ptr<SearchEngineServiceNew> CreateSearchEngine(
+    std::string engine_type) {
+  if (engine_type == "qq_mem_compressed") {
+    return std::unique_ptr<SearchEngineServiceNew>(new QqMemEngineDelta());
+  } else {
+    throw std::runtime_error("Wrong engine type: " + engine_type);
+  }
+}
 
 
 #endif
