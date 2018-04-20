@@ -540,6 +540,9 @@ class FileOffsetOfSkipPostingBags {
     {
       const int pack_id = table[posting_index].blob_index;
       const int in_blob_idx = table[posting_index].in_blob_idx;
+      if (file_offs.FileOffset(pack_id) < 0) {
+        LOG(FATAL) << "File offset of pack " << pack_id << " is < 0";
+      }
       locations_.emplace_back(file_offs.FileOffset(pack_id), in_blob_idx);
     }
   }
@@ -707,6 +710,25 @@ class SkipList {
                 const off_t file_offset_of_offset_blob,
                 const int in_blob_index_of_offset_bag) 
   {
+    if (file_offset_of_docid_bag < 0) {
+      LOG(FATAL) << "file_offset_of_docid_bag < 0 in posting list!";
+    }
+    if (file_offset_of_tf_bag < 0) {
+      LOG(FATAL) << "file_offset_of_tf_bag < 0 in posting list!";
+    }
+    if (file_offset_of_pos_blob < 0) {
+      LOG(FATAL) << "file_offset_of_pos_blob < 0 in posting list!";
+    }
+    if (in_blob_index_of_pos_bag < 0) {
+      LOG(FATAL) << "in_blob_index_of_pos_bag < 0 in posting list!";
+    }
+    if (file_offset_of_offset_blob < 0) {
+      LOG(FATAL) << "file_offset_of_offset_blob < 0 in posting list!";
+    }
+    if (in_blob_index_of_offset_bag < 0) {
+      LOG(FATAL) << "in_blob_index_of_offset_bag < 0 in posting list!";
+    }
+
     skip_table_.emplace_back( previous_doc_id,   
                               file_offset_of_docid_bag,
                               file_offset_of_tf_bag,

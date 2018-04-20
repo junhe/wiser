@@ -161,7 +161,7 @@ class DeltaEncodedPackedIntsIterator {
     }
   }
 
-  void SkipForward(uint32_t val) {
+  void SkipForward(uint64_t val) {
     while (IsEnd() == false && Value() < val) {
       Advance();
     }
@@ -189,7 +189,7 @@ class DeltaEncodedPackedIntsIterator {
 
 class VIntsWriter {
  public:
-  void Append(uint32_t val) {
+  void Append(uint64_t val) {
     varint_buf_.Append(val);
   }
 
@@ -248,12 +248,12 @@ class VIntsIterator {
     return varint_iter_.IsEnd();
   }
 
-  uint32_t Pop() {
+  uint64_t Pop() {
     next_index_++;
     return varint_iter_.Pop();
   }
 
-  uint32_t Peek() const {
+  uint64_t Peek() const {
     return varint_iter_.Peek(); 
   }
 
@@ -303,12 +303,12 @@ class DeltaEncodedVIntsIterator {
     }
   }
 
-  uint32_t Pop() {
+  uint64_t Pop() {
     prev_value_ = prev_value_ + raw_iter_.Pop();    
     return prev_value_;
   }
 
-  uint32_t Peek() const {
+  uint64_t Peek() const {
     return prev_value_ + raw_iter_.Peek();    
   }
 

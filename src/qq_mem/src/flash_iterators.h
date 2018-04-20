@@ -698,6 +698,10 @@ class VacuumPostingListIterator {
     return n_postings_;
   }
 
+  off_t StartOffset() const {
+    return offset_;
+  }
+
  private:
   const uint8_t *file_data_;
   // pointing to the start of the posting list
