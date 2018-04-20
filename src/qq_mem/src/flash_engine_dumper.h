@@ -856,6 +856,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
   // Only for testing at this time
   void SeekFileDumper(off_t pos) {
     index_dumper_.Seek(pos);
+    fake_index_dumper_.Seek(pos);
   }
 
   void DumpPostingList(const Term &term, 
