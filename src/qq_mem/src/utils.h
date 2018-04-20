@@ -215,7 +215,7 @@ inline int varint_decode_64bit(
   // inv: buf[offset, offset + i) has been copied to value 
   //      (buf[offset + i] is about to be copied)
   while ((buf[offset + i - 1] & 0x80) > 0) {
-    *value += ((uint32_t)(0x7f & buf[offset + i])) << (i * 7);
+    *value += ((uint64_t)(0x7f & buf[offset + i])) << (i * 7);
     i++;
   }
   return i; 
