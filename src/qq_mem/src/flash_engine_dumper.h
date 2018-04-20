@@ -1036,14 +1036,14 @@ class FlashEngineDumper {
   }
 
   void Dump() {
+    std::cout << "Dumping inverted index...\n";
+    DumpInvertedIndex();
+
     std::cout << "Dumping doc length...\n";
     doc_lengths_.Serialize(utils::JoinPath(dump_dir_path_, "my.doc_length"));
 
     std::cout << "Dumping doc store...\n";
     doc_store_.Dump(dump_dir_path_ + "/my.fdx", dump_dir_path_ + "/my.fdt");
- 
-    std::cout << "Dumping inverted index...\n";
-    DumpInvertedIndex();
  }
 
   void DumpInvertedIndex() {
