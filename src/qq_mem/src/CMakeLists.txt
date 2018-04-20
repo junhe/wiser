@@ -154,14 +154,14 @@ target_link_libraries(hash_benchmark
 
 
 
-add_executable(in_proc_engine_bench_querylog
-    in_proc_engine_bench_querylog.cc
+add_executable(engine_bench
+    engine_bench.cc
     ${ENGINE_SRCS}
     ${PROTO_SRCS}
     ${GRPC_SRCS}
 )
 
-target_link_libraries(in_proc_engine_bench_querylog
+target_link_libraries(engine_bench
     ${GRPC_LIBS}
     protobuf::libprotobuf
     ${QQ_LIBS}

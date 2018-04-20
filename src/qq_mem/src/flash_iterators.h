@@ -634,7 +634,6 @@ class VacuumPostingListIterator {
   }
 
   void Reset(const uint8_t *file_data, const off_t offset) {
-    std::cout << "----3333333333333333333333333333333333333333333333333333333333333\n";
     LOG(INFO) << "In PL iterator: file_data=" << (void *)file_data 
       << " offset: " << offset;
     int len;
@@ -645,15 +644,10 @@ class VacuumPostingListIterator {
     // first item in the posting list is the doc freq (n_postings_)
     const uint8_t *buf = file_data + offset;
     len = utils::varint_decode_uint8(buf, 0, &n_postings_);
-    std::cout << "n_postings_ (just read): "  << n_postings_ << std::endl;
     buf += len;
 
     skip_list_ = std::shared_ptr<SkipList>(new SkipList()); 
     skip_list_->Load(buf);
-
-    std::cout << "skip_list_.NumEntries() after loading, in reset :" 
-      << skip_list_->NumEntries() << std::endl;
-
 
     doc_id_iter_.Reset(file_data_, skip_list_.get(), n_postings_);
     tf_iter_.Reset(file_data_, skip_list_.get());
@@ -671,7 +665,6 @@ class VacuumPostingListIterator {
   }
 
   void AssignPositionBegin(InBagPositionIterator *in_bag_iter) {
-    std::cout << "skiping to: " << doc_id_iter_.PostingIndex() << std::endl;
     pos_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
     *in_bag_iter = pos_bag_iter_.InBagPositionBegin();
   }

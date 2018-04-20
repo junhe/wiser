@@ -29,10 +29,8 @@ TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
   REQUIRE(pl_sizes["c"] == 1);
 
   SECTION("Single term query") {
-    std::cout << ">>>>>>>>>>>>>>>> a" << std::endl;
     SearchResult result = engine.Search(SearchQuery({"a"}, true));
     REQUIRE(result.Size() == 3);
-    std::cout << result.ToStr();
 
     for (int i = 0; i < result.Size(); i++) {
       if (result[i].doc_id == 0) {
@@ -44,10 +42,8 @@ TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
       }
     }
 
-    std::cout << ">>>>>>>>>>>>>>>> b" << std::endl;
     result = engine.Search(SearchQuery({"b"}, true));
     REQUIRE(result.Size() == 2);
-    std::cout << result.ToStr();
 
     for (int i = 0; i < result.Size(); i++) {
       if (result[i].doc_id == 1) {
@@ -57,10 +53,8 @@ TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
       }
     }
 
-    std::cout << ">>>>>>>>>>>>>>>> c" << std::endl;
     result = engine.Search(SearchQuery({"c"}, true));
     REQUIRE(result.Size() == 1);
-    std::cout << result.ToStr();
 
     // REQUIRE(result[0].snippet == "a b <b>c <\\b>\n"); // Fail, TODO
 
@@ -69,9 +63,7 @@ TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
   }
 
   SECTION("Two-term non-phrase query") {
-    std::cout << "22222222222222222222222222222222222222222222222\n";
     SearchResult result = engine.Search(SearchQuery({"a", "b"}, true));
-    std::cout << result.ToStr();
   }
 
 
@@ -115,7 +107,6 @@ TEST_CASE( "tests two intersection ngine", "[qqflash][two]" ) {
     query.is_phrase = true;
 
     SearchResult result = engine.Search(query);
-    std::cout << result.ToStr();
     REQUIRE(result.Size() == 1);
     std::vector<DocIdType> ids{result[0].doc_id};
     REQUIRE(ids == std::vector<DocIdType>{2});
@@ -205,13 +196,10 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
     auto terms = utils::explode(line, ' ');
   
     for (auto &term : terms) {
-      std::cout << "tttttttttttttt : " << term << std::endl;
       SearchQuery query({term});
       auto v_result = vacuum_engine.Search(query);
       auto q_result = qq_engine.Search(query);
       REQUIRE(v_result.Size() > 0);
-      std::cout << "rrrrrrrrrrrrrr: " << std::endl;
-      std::cout << v_result.ToStr();
       REQUIRE(v_result == q_result);
     }
   }
@@ -225,7 +213,6 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
   // SearchQuery query({"mesolih"}, true);
   // auto result = engine.Search(query);
 
-  // std::cout << result.ToStr() << std::endl;
 // }
 
 
@@ -270,17 +257,16 @@ TEST_CASE( "Test fake file dumper", "[fake]" ) {
 
 }
 
-TEST_CASE( "Full wiki", "[qqflash][full]" ) {
-  VacuumEngine engine("/mnt/ssd/vacuum_engine_dump-04-19");
+//// vacuum dump files may not exist on this machine
+// TEST_CASE( "Full wiki", "[qqflash][full]" ) {
+  // VacuumEngine engine("/mnt/ssd/vacuum_engine_dump-04-19");
 
-  auto a = utils::now();
-  auto result = engine.Search(SearchQuery({"from"}, true));
-  auto b = utils::now();
+  // auto a = utils::now();
+  // auto result = engine.Search(SearchQuery({"from"}, true));
+  // auto b = utils::now();
 
-  auto duration = utils::duration(a, b);
-  std::cout << "duration: " << duration << std::endl;
-}
-
+  // auto duration = utils::duration(a, b);
+// }
 
 
 TEST_CASE( "URL parsing", "[parse]" ) {

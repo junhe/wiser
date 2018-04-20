@@ -30,14 +30,14 @@ grpc_benchmark:
 	./build.sh
 	echo ------------------------------------------------------
 	python ./tools/run_client_server2.py \
-		./build/in_proc_engine_bench_querylog '-use_grpc=true -n_threads=16 -use_profiler=false' \
+		./build/engine_bench '-use_grpc=true -n_threads=16 -use_profiler=false' \
 		./build/qq_server '-sync_type=ASYNC -n_threads=1' \
 		30
 
-in_proc_engine_bench_querylog:
+engine_bench:
 	cd build && cmake ../src/ && \
-		make -j32 in_proc_engine_bench_querylog && \
-		CPUPROFILE_FREQUENCY=1000 ./in_proc_engine_bench_querylog -exp_mode=local -use_profiler=true
+		make -j32 engine_bench && \
+		CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=local -use_profiler=true
 
 convert_qq_to_vacuum:
 	cd build && cmake ../src/ && \
@@ -45,10 +45,10 @@ convert_qq_to_vacuum:
 		./convert_qq_to_vacuum
 
 profile:
-	google-pprof --text ./build/in_proc_engine_bench_querylog ./build/my.profile.new
+	google-pprof --text ./build/engine_bench ./build/my.profile.new
 
 profile_gv:
-	google-pprof --pdf ./build/in_proc_engine_bench_querylog ./build/my.profile.new > profile.pdf
+	google-pprof --pdf ./build/engine_bench ./build/my.profile.new > profile.pdf
 
 run_qq_mem:
 	./build.sh
