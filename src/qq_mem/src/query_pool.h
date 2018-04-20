@@ -11,6 +11,7 @@
 #include "types.h"
 #include "utils.h"
 
+
 class QueryLogReader {
  public:
    QueryLogReader(const std::string &path)

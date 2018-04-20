@@ -76,6 +76,8 @@ struct Treatment {
   bool return_snippets;
   int n_passages = 3;
   int n_results = 5;
+
+  std::string tag; //"" / "querylog"
 };
 
 
@@ -454,6 +456,16 @@ GeneralConfig config_by_kan() {
 
   return GeneralConfig();
 }
+
+
+// To run a bench
+// 
+// 1. edit treatment
+// 2. set FLAGS_exp_mode
+// 3. run
+//
+// performance is reported per treatment
+//
 
 
 int main(int argc, char **argv) {
