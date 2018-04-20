@@ -30,7 +30,7 @@ grpc_benchmark:
 	./build.sh
 	echo ------------------------------------------------------
 	python ./tools/run_client_server2.py \
-		./build/engine_bench '-exp_mode=grpc -n_threads=16 -use_profiler=false' \
+		./build/engine_bench '-exp_mode=grpclog -n_threads=16 -use_profiler=false' \
 		./build/qq_server '-sync_type=ASYNC -n_threads=1' \
 		5
 

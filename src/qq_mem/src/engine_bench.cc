@@ -21,7 +21,7 @@
 
 
 DEFINE_int32(n_threads, 1, "Number of client threads");
-DEFINE_string(exp_mode, "local", "local/grpc/localquerylog");
+DEFINE_string(exp_mode, "local", "local/grpc/grpclog/localquerylog");
 DEFINE_bool(use_profiler, true, "Use profiler");
 
 
@@ -64,12 +64,14 @@ class Experiment {
 
 
 struct Treatment {
+  Treatment() {}
   Treatment(TermList terms_in, 
             bool is_phrase_in, 
             int n_repeats_in, 
             bool return_snippets_in)
     :terms(terms_in), is_phrase(is_phrase_in), n_repeats(n_repeats_in),
      return_snippets(return_snippets_in){}
+
   TermList terms;
   bool is_phrase;
   int n_repeats;
@@ -78,6 +80,7 @@ struct Treatment {
   int n_results = 5;
 
   std::string tag; //"" / "querylog"
+  std::string query_log_path; //"" / "querylog"
 };
 
 
@@ -134,6 +137,58 @@ class GrpcTreatmentExecutor: public TreatmentExecutor {
  private:
   GeneralConfig client_config_;
 };
+
+
+class GrpcLogTreatmentExecutor: public TreatmentExecutor {
+ public:
+  GrpcLogTreatmentExecutor(int n_threads){
+    // ASYNC Streaming
+    // client_config_.SetString("synchronization", "SYNC");
+    // client_config_.SetString("rpc_arity", "STREAMING");
+    // client_config_.SetString("target", "localhost:50051");
+    // client_config_.SetInt("n_client_channels", 64);
+    // client_config_.SetInt("n_rpcs_per_channel", 100);
+    // client_config_.SetInt("n_messages_per_call", 100000);
+    // client_config_.SetInt("n_threads", n_threads); 
+    // client_config_.SetInt("n_threads_per_cq", 1);
+    // client_config_.SetInt("benchmark_duration", 5);
+    // client_config_.SetBool("save_reply", false);
+
+    client_config_.SetString("synchronization", "SYNC");
+    client_config_.SetString("rpc_arity", "STREAMING");
+    client_config_.SetString("target", "localhost:50051");
+    client_config_.SetInt("n_client_channels", 64);
+    client_config_.SetInt("n_threads", n_threads); 
+    client_config_.SetInt("benchmark_duration", 10);
+    // client_config_.SetBool("save_reply", true);
+    client_config_.SetBool("save_reply", false);
+  }
+
+  std::unique_ptr<QueryProducerService> MakeProducer(Treatment treatment) {
+    if (treatment.tag != "querylog")
+      LOG(FATAL) << "Tag must be set right";
+
+    return std::unique_ptr<QueryProducerService>(
+        new QueryProducerByLog(treatment.query_log_path, NumberOfThreads()));
+  }
+
+  int NumberOfThreads() {return client_config_.GetInt("n_threads");}
+
+  utils::ResultRow Execute(Treatment treatment) {
+    utils::ResultRow row;
+
+    auto client = CreateClient(client_config_, MakeProducer(treatment));
+    client->Wait();
+    row = client->ShowStats();
+
+    return row;
+  }
+
+ private:
+  GeneralConfig client_config_;
+};
+
+
 
 class LocalTreatmentExecutor: public TreatmentExecutor {
  public:
@@ -248,19 +303,23 @@ class EngineExperiment: public Experiment {
   void MakeTreatments() {
     // single term
     std::vector<Treatment> treatments {
+      // Treatment({"hello"}, false, 1000, true),
+      // Treatment({"from"}, false, 20, true),
+      // Treatment({"ripdo"}, false, 10000, true),
 
-      Treatment({"hello"}, false, 1000, true),
-      Treatment({"from"}, false, 20, true),
-      Treatment({"ripdo"}, false, 10000, true),
+      // Treatment({"hello", "world"}, false, 1000, true),
+      // Treatment({"from", "also"}, false, 10, true),
+      // Treatment({"ripdo", "liftech"}, false, 1000000, true),
 
-      Treatment({"hello", "world"}, false, 1000, true),
-      Treatment({"from", "also"}, false, 10, true),
-      Treatment({"ripdo", "liftech"}, false, 1000000, true),
-
-      Treatment({"hello", "world"}, true, 100, true),
-      Treatment({"barack", "obama"}, true, 1000, true),
-      Treatment({"from", "also"}, true, 10, true)
+      // Treatment({"hello", "world"}, true, 100, true),
+      // Treatment({"barack", "obama"}, true, 1000, true),
+      // Treatment({"from", "also"}, true, 10, true)
     };
+
+    Treatment t;
+    t.tag = "querylog";
+    t.query_log_path = "/mnt/ssd/realistic_querylog";
+    treatments.push_back(t);
 
     // for (auto &t : treatments) {
       // t.return_snippets = false;
@@ -273,6 +332,9 @@ class EngineExperiment: public Experiment {
     if (FLAGS_exp_mode == "grpc") {
       std::cout << "Using GRPC..." << std::endl;
       treatment_executor_.reset(new GrpcTreatmentExecutor(FLAGS_n_threads));
+    } else if (FLAGS_exp_mode == "grpclog") {
+      std::cout << "Using GRPC with query log..." << std::endl;
+      treatment_executor_.reset(new GrpcLogTreatmentExecutor(FLAGS_n_threads));
     } else if (FLAGS_exp_mode == "local") {
       std::cout << "Using in-proc engine..." << std::endl;
       engine_ = std::move(CreateEngineFromFile());
