@@ -17,6 +17,7 @@
 #include "grpc_client_impl.h"
 #include "general_config.h"
 #include "query_pool.h"
+#include "engine_factory.h"
 
 
 DEFINE_int32(n_threads, 1, "Number of client threads");
@@ -232,9 +233,9 @@ class LocalStatsExecutor: public TreatmentExecutor {
 };
 
 
-class InProcExperiment: public Experiment {
+class EngineExperiment: public Experiment {
  public:
-  InProcExperiment(GeneralConfig config): config_(config) {
+  EngineExperiment(GeneralConfig config): config_(config) {
     MakeTreatments();
   }
 
@@ -312,18 +313,21 @@ class InProcExperiment: public Experiment {
     std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
         config_.GetString("engine_type"));
 
-    if (config_.GetString("load_source") == "linedoc") {
-      engine->LoadLocalDocuments(config_.GetString("linedoc_path"), 
-                                 config_.GetInt("n_docs"),
-                                 config_.GetString("loader"));
-    } else if (config_.GetString("load_source") == "dump") {
-      std::cout << "Loading engine from dumpped data...." << std::endl;
-      auto start = utils::now();
-      engine->Deserialize(config_.GetString("dump_path"));
-      auto end = utils::now();
-      std::cout << "Time to load dumpped data: " << utils::duration(start, end) << std::endl;
-    } else {
-      std::cout << "You must speicify load_source" << std::endl;
+    std::cout << "IsVacuumUrl:" << IsVacuumUrl(config_.GetString("engine_type"))  << std::endl;
+    if (IsVacuumUrl(config_.GetString("engine_type")) == false) {
+      if (config_.GetString("load_source") == "linedoc") {
+        engine->LoadLocalDocuments(config_.GetString("linedoc_path"), 
+                                   config_.GetInt("n_docs"),
+                                   config_.GetString("loader"));
+      } else if (config_.GetString("load_source") == "dump") {
+        std::cout << "Loading engine from dumpped data...." << std::endl;
+        auto start = utils::now();
+        engine->Deserialize(config_.GetString("dump_path"));
+        auto end = utils::now();
+        std::cout << "Time to load dumpped data: " << utils::duration(start, end) << std::endl;
+      } else {
+        std::cout << "You must speicify load_source" << std::endl;
+      }
     }
 
     // engine->Serialize("/mnt/ssd/big-engine-char-length-04-19");
@@ -348,6 +352,27 @@ class InProcExperiment: public Experiment {
   std::unique_ptr<TreatmentExecutor> treatment_executor_;
 };
 
+void CheckConfig(GeneralConfig conf) {
+  if (IsVacuumUrl(conf.GetString("engine_type")) && 
+      conf.HasKey("load_source")) {
+    std::cerr << "setting load_source has no effect!" << std::endl;
+  }
+
+  if (IsVacuumUrl(conf.GetString("engine_type")) && 
+      conf.HasKey("loader")) {
+    std::cerr << "setting loader has no effect!" << std::endl;
+  }
+  
+  if (IsVacuumUrl(conf.GetString("engine_type")) && 
+      conf.HasKey("linedoc_path")) {
+    std::cerr << "setting linedoc_path has no effect!" << std::endl;
+  }
+
+  if (IsVacuumUrl(conf.GetString("engine_type")) && 
+      conf.HasKey("dump_path")) {
+    std::cerr << "setting dump_path has no effect!" << std::endl;
+  }
+}
 
 GeneralConfig config_by_jun() {
 /*
@@ -373,9 +398,10 @@ GeneralConfig config_by_jun() {
 */
 
   GeneralConfig config;
-  config.SetString("engine_type", "qq_mem_compressed");
+  // config.SetString("engine_type", "qq_mem_compressed");
+  config.SetString("engine_type", "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump-04-19");
 
-  config.SetString("load_source", "linedoc");
+  // config.SetString("load_source", "linedoc");
   // config.SetString("load_source", "dump");
 
   config.SetInt("n_docs", 100);
@@ -400,8 +426,11 @@ GeneralConfig config_by_jun() {
 
   // config.SetString("query_source", "querylog");
   // config.SetString("querylog_path", "/mnt/ssd/downloads/wiki_QueryLog_tokenized");
+
+  CheckConfig(config);
   return config;
 }
+
 
 GeneralConfig config_by_kan() {
 /*
@@ -423,13 +452,14 @@ GeneralConfig config_by_kan() {
 
 */
 
+  return GeneralConfig();
 }
 
 
 int main(int argc, char **argv) {
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = 1; // print to stderr instead of file
-  FLAGS_minloglevel = 4; 
+  FLAGS_minloglevel = 3; 
 
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 
@@ -439,7 +469,7 @@ int main(int argc, char **argv) {
   
   // qq_uncompressed_bench_wiki(config);
 
-  InProcExperiment experiment(config);
+  EngineExperiment experiment(config);
   experiment.Run();
 }
 
