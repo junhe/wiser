@@ -244,8 +244,8 @@ std::string str_qq_search_reply(const qq::SearchReply &reply) {
 // C++ will expand capacity automatically. We are not actually
 // resizing memory.
 int varint_expand_and_encode(uint64_t value, std::string *buf, const off_t offset) {
-  if ( buf->size() - offset < 5 ) {
-    buf->resize(offset + 5);
+  if ( buf->size() - offset < 9 ) {
+    buf->resize(offset + 9);
   }
   return varint_encode(value, buf, offset);
 }
