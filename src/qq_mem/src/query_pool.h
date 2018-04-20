@@ -228,6 +228,7 @@ class QueryProducerByLog: public QueryProducerService {
   QueryProducerByLog(const std::string query_path, const int n_threads) 
     :array_(n_threads) 
   {
+    std::cout << "Loading query log from " << query_path << std::endl;
     QueryLogReader reader(query_path);
     std::string line;
     
