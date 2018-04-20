@@ -38,7 +38,8 @@
 #define SNIPPETS_CACHE_ON_FLASH_FILE "/mnt/ssd/snippets_store.cache"
 
 const off_t KB = 1024;
-const off_t GB = 1048576;
+const off_t MB = 1048576;
+const off_t GB = 1073741824L;
 
 
 // Basic types for query
