@@ -274,7 +274,7 @@ class GeneralFileDumper {
       LOG(FATAL) << "Cannot open file: " << path;
   }
 
-  off_t CurrentOffset() const {
+  virtual off_t CurrentOffset() const {
     off_t off = lseek(fd_, 0, SEEK_CUR);
     if (off == -1)
       LOG(FATAL) << "Failed to get the current offset.";
@@ -282,7 +282,7 @@ class GeneralFileDumper {
     return off;
   }
 
-  off_t Seek(off_t pos) {
+  virtual off_t Seek(off_t pos) {
     off_t off = lseek(fd_, pos, SEEK_SET);
     if (off == -1)
       LOG(FATAL) << "Failed to get the current offset.";
@@ -290,7 +290,7 @@ class GeneralFileDumper {
     return off;
   }
 
-  off_t SeekToEnd() {
+  virtual off_t SeekToEnd() {
     off_t off = lseek(fd_, 0, SEEK_END);
     if (off == -1)
       LOG(FATAL) << "Failed to get the current offset.";
@@ -298,7 +298,7 @@ class GeneralFileDumper {
     return off;
   }
 
-  off_t End() {
+  virtual off_t End() {
     off_t old = CurrentOffset();
 
     off_t end_off = lseek(fd_, 0, SEEK_END);
@@ -310,17 +310,17 @@ class GeneralFileDumper {
     return end_off;
   }
 
-  off_t Dump(const std::string &data) {
+  virtual off_t Dump(const std::string &data) {
     off_t start_byte = CurrentOffset();
     utils::Write(fd_, data.data(), data.size());
     return start_byte;
   }
 
-  void Flush() const {
+  virtual void Flush() const {
     fsync(fd_);
   }
 
-  void Close() const {
+  virtual void Close() const {
     close(fd_);
   }
 
@@ -357,19 +357,19 @@ class FileDumper : public GeneralFileDumper {
  public:
   FileDumper(const std::string path) : GeneralFileDumper(path) {}
 
-  FileOffsetsOfBlobs Dump(const CozyBoxWriter &writer) {
+  virtual FileOffsetsOfBlobs Dump(const CozyBoxWriter &writer) {
     std::vector<off_t> pack_offs = DumpPackedBlocks(writer.PackWriters());
     std::vector<off_t> vint_offs = DumpVInts(writer.VInts());
 
     return FileOffsetsOfBlobs(pack_offs, vint_offs);
   }
 
-  off_t Dump(const std::string &data) {
+  virtual off_t Dump(const std::string &data) {
     return GeneralFileDumper::Dump(data);
   }
 
  protected:
-  std::vector<off_t> DumpVInts(const VIntsWriter &varint_buf) {
+  virtual std::vector<off_t> DumpVInts(const VIntsWriter &varint_buf) {
     if (varint_buf.IntsSize() == 0) {
       return std::vector<off_t>{};
     } else {
@@ -381,7 +381,7 @@ class FileDumper : public GeneralFileDumper {
     }
   }
 
-  std::vector<off_t> DumpPackedBlocks(
+  virtual std::vector<off_t> DumpPackedBlocks(
       const std::vector<PackedIntsWriter> &pack_writers) {
     std::vector<off_t> offs;
 
@@ -392,7 +392,7 @@ class FileDumper : public GeneralFileDumper {
     return offs;
   }
 
-  off_t DumpPackedBlock(const PackedIntsWriter &writer) {
+  virtual off_t DumpPackedBlock(const PackedIntsWriter &writer) {
     off_t start_byte = CurrentOffset();
     std::string data = writer.Serialize();      
 
