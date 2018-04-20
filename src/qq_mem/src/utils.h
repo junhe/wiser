@@ -396,6 +396,7 @@ std::vector<int> CollectTermFreq(PLIter_T iter) {
 template <typename PLIter_T>
 void PrintIter(PLIter_T iter) {
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Showing posting list ~~~~~~~\n";
+  std::cout << "Posting list size: " << iter.Size() << std::endl;
   std::cout << "Doc ID: ";
   auto v1 = CollectDodId(iter);
   PrintVec<int>(v1);

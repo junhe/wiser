@@ -645,6 +645,20 @@ struct SkipEntry {
   int in_blob_index_of_pos_bag;
   off_t file_offset_of_offset_blob;
   int in_blob_index_of_offset_bag;
+
+  std::string ToStr() const {
+    std::string ret;
+
+    ret += std::to_string(previous_doc_id) + "\t";
+    ret += std::to_string(file_offset_of_docid_bag) + "\t";
+    ret += std::to_string(file_offset_of_tf_bag) + "\t";
+    ret += std::to_string(file_offset_of_pos_blob) + "\t";
+    ret += std::to_string(in_blob_index_of_pos_bag) + "\t";
+    ret += std::to_string(file_offset_of_offset_blob) + "\t";
+    ret += std::to_string(in_blob_index_of_offset_bag) + "\t";
+
+    return ret;
+  }
 };
 
 class SkipList {
@@ -700,6 +714,18 @@ class SkipList {
                               in_blob_index_of_pos_bag,
                               file_offset_of_offset_blob,
                               in_blob_index_of_offset_bag);
+  }
+
+  std::string ToStr() const {
+    std::string ret;
+
+    ret = "~~~~~~~~ skip list ~~~~~~~~\n";
+    ret += "prev_doc_id; off_docid_bag; off_tf_bag; off_pos_blob; index_pos_bag; off_off_blob; index_offset_bag;\n";
+    for (auto &row : skip_table_) {
+      ret += row.ToStr() + "\n";
+    }
+
+    return ret;
   }
 
  private:

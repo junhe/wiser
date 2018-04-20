@@ -227,7 +227,8 @@ class VIntsIterator {
     int len = utils::varint_decode_uint32((char *)buf, 0, &magic_);
     buf += len;
 
-    if (magic_ != VINTS_FIRST_BYTE) {
+    if ((magic_ & 0xFF) != VINTS_FIRST_BYTE) {
+      printf("Vints Magic: %x\n", magic_);
       LOG(FATAL) << "Magic number is not right for this VInts";
     }
 

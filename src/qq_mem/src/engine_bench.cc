@@ -291,7 +291,7 @@ class EngineExperiment: public Experiment {
   }
 
   void RunTreatment(const int run_id) {
-    std::cout << "Running treatment " << run_id << std::endl;
+    std::cout << "Running treatment " << run_id << " ...... " << std::endl;
 
     // auto row = Search(query_producers_[run_id].get(), run_id);
     auto row = treatment_executor_->Execute(treatments_[run_id]);

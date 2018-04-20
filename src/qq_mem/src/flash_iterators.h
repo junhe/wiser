@@ -655,6 +655,10 @@ class VacuumPostingListIterator {
     off_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
   }
 
+  std::string SkipListString() const {
+    return skip_list_->ToStr();
+  }
+
   DocIdType DocId() {
     return doc_id_iter_.Value();
   }
