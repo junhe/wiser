@@ -7,7 +7,7 @@
 
 struct VacuumConfig {
   VacuumConfig(std::string s, std::string p) {
-    if (s != "linedoc" && s != "qq_mem_dump") {
+    if (s != "vacuum_dump") {
       LOG(FATAL) << "type not supported. " << s;
     }
 
@@ -34,9 +34,15 @@ inline std::unique_ptr<SearchEngineServiceNew> CreateSearchEngine(
     std::string engine_type) {
   if (engine_type == "qq_mem_compressed") {
     return std::unique_ptr<SearchEngineServiceNew>(new QqMemEngineDelta());
+  } else if (IsVacuumUrl(engine_type) == true) {
+    VacuumConfig config = ParseUrl(engine_type);
+    if (config.source_type == "vacuum_dump") {
+      return std::unique_ptr<SearchEngineServiceNew>(new VacuumEngine(config.path));
+    }
   } else {
     throw std::runtime_error("Wrong engine type: " + engine_type);
   }
+  return nullptr;
 }
 
 

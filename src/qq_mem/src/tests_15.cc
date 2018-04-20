@@ -287,8 +287,8 @@ TEST_CASE( "URL parsing", "[parse]" ) {
   REQUIRE(IsVacuumUrl("vacuum:linedoc:/my/path"));
   REQUIRE(IsVacuumUrl("/my/path") == false);
   
-  VacuumConfig conf = ParseUrl("vacuum:linedoc:/my/path");
-  REQUIRE(conf.source_type == "linedoc");
+  VacuumConfig conf = ParseUrl("vacuum:vacuum_dump:/my/path");
+  REQUIRE(conf.source_type == "vacuum_dump");
   REQUIRE(conf.path == "/my/path");
 }
 
