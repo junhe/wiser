@@ -33,6 +33,16 @@ class QueryLogReader {
      }
    }
 
+   bool NextLine(std::string &line) {
+     auto &ret = std::getline(in_, line);
+
+     if (ret) {
+       return true;
+     } else {
+       return false;
+     }
+   }
+
  private:
    std::ifstream in_;
 };
@@ -213,23 +223,62 @@ class QueryPoolArray {
 
 
 
-// class QueryProducerByLog: public QueryProducerService {
- // public:
-  // QueryProducerByLog(const std::string query_path) {
+class QueryProducerByLog: public QueryProducerService {
+ public:
+  QueryProducerByLog(const std::string query_path, const int n_threads) 
+    :array_(n_threads) 
+  {
+    QueryLogReader reader(query_path);
+    std::string line;
+    
+    int index = 0;
+    while(reader.NextLine(line)) {
+      utils::trim(line);
 
-  // }
+      SearchQuery query(GetTerms(line));
+      query.is_phrase = IsPhrase(line);
 
-  // SearchQuery NextNativeQuery(const int index_index) override {
-  // }
+      std::cout << query.ToStr() << std::endl;
 
-  // qq::SearchRequest NextGrpcQuery(const int pool_index) override {
-  // }
+      array_.Add(index % array_.Size(), query);
+      index++;
+    }
+  }
 
-  // int Size() override {
-  // }
+  SearchQuery NextNativeQuery(const int pool_index) override {
+    return array_.Next(pool_index);
+  }
 
- // private:
-// };
+  qq::SearchRequest NextGrpcQuery(const int pool_index) override {
+    qq::SearchRequest request;
+
+    SearchQuery query = NextNativeQuery(pool_index);
+    query.CopyTo(&request);
+
+    return request;
+  }
+
+  int Size() override {
+    return array_.Size();
+  }
+
+ private:
+  TermList GetTerms(std::string line) {
+    if (IsPhrase(line) == true) {
+        line.erase(line.size() - 1, 1);
+        line.erase(0, 1);
+    }
+
+    return utils::explode(line, ' ');
+  }
+
+  bool IsPhrase(const std::string line) {
+    int len = line.size();
+    return line.compare(0, 1, "\"") == 0 && line.compare(len - 1 , 1, "\"") == 0;
+  }
+
+  QueryPoolArray array_;
+};
 
 
 inline std::unique_ptr<TermPoolArray> CreateTermPoolArray(const TermList &query,
