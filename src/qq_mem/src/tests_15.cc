@@ -269,6 +269,15 @@ TEST_CASE( "Test fake file dumper", "[fake]" ) {
 
 }
 
+TEST_CASE( "Full wiki", "[qqflash][full]" ) {
+  VacuumEngine engine("/mnt/ssd/vacuum_engine_dump-04-19");
 
+  auto a = utils::now();
+  auto result = engine.Search(SearchQuery({"from"}, true));
+  auto b = utils::now();
+
+  auto duration = utils::duration(a, b);
+  std::cout << "duration: " << duration << std::endl;
+}
 
 

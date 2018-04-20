@@ -18,6 +18,7 @@
 #include "engine_services.h"
 #include "types.h"
 #include "compression.h"
+#include "simple_buffer_pool.h"
 
 
 #define handle_error(msg) \
@@ -300,16 +301,14 @@ class FlashDocStoreDumper : public CompressedDocStore {
 class FlashDocStore {
  public:
   FlashDocStore(const std::string fdx_path, const std::string fdt_path)
-      :fdt_map_(fdt_path) {
-    buffer_ = (char *) malloc(buffer_size_); // TODO
-    
+      :fdt_map_(fdt_path),
+       buffer_pool_(32, buffer_size_)      
+  {
     // open fdx, load index
-    int fd;
-    char *addr;
-    size_t file_length;
-    off_t offset = 0;
-    utils::MapFile(fdx_path, &addr, &fd, &file_length);
+    utils::FileMap file_map(fdx_path);
+    char *addr = file_map.Addr();
 
+    off_t offset = 0;
     max_docid_ = *(long int *)addr;
     offset += sizeof(max_docid_);
     
@@ -318,7 +317,7 @@ class FlashDocStore {
       offset += sizeof(long int);
     }
 
-    utils::UnmapFile(addr, fd, file_length); 
+    file_map.Close();
 
     // open fdt, ready for query
     offset_store_.push_back(fdt_map_.Length());  // end of file
@@ -326,26 +325,29 @@ class FlashDocStore {
 
   ~FlashDocStore() {
     fdt_map_.Close();
-    free(buffer_);
   }
 
   bool Has(int id) {
     return id <= max_docid_;
   }
 
-  // WARNING: Not Thread-Safe!!!
   const std::string Get(int id) {  
     long int start_off = offset_store_[id];
     long int doc_len = offset_store_[id + 1] - start_off;
 
+    std::unique_ptr<char[]> buf = buffer_pool_.Get();
+
     // decompress
     const int decompressed_size = 
-      LZ4_decompress_safe(fdt_map_.Addr() + start_off, buffer_, doc_len, buffer_size_); 
+      LZ4_decompress_safe(fdt_map_.Addr() + start_off, buf.get(), doc_len, buffer_size_); 
     if (decompressed_size < 0) {
       LOG(FATAL) << "Failed to decompresse."; 
     }
 
-    return std::string(buffer_, decompressed_size);
+    std::string ret = std::string(buf.get(), decompressed_size);
+    buffer_pool_.Put(std::move(buf));
+
+    return ret;
   }
 
   int Size() const {
@@ -354,8 +356,8 @@ class FlashDocStore {
 
  private:
   // TODO: this is insane
-  char *buffer_;
-  static const int buffer_size_ = 1024*1024;
+  BufferPool buffer_pool_;
+  static constexpr int buffer_size_ = 512 * 1024;
   
   std::vector<long int> offset_store_;
   long int max_docid_;
