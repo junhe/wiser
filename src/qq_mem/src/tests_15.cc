@@ -6,6 +6,7 @@
 #include "flash_iterators.h"
 #include "vacuum_engine.h"
 #include "utils.h"
+#include "engine_factory.h"
 
 TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
   std::string dir_path = "/tmp/3-word-engine";
@@ -278,6 +279,17 @@ TEST_CASE( "Full wiki", "[qqflash][full]" ) {
 
   auto duration = utils::duration(a, b);
   std::cout << "duration: " << duration << std::endl;
+}
+
+
+
+TEST_CASE( "URL parsing", "[parse]" ) {
+  REQUIRE(IsVacuumUrl("vacuum:linedoc:/my/path"));
+  REQUIRE(IsVacuumUrl("/my/path") == false);
+  
+  VacuumConfig conf = ParseUrl("vacuum:linedoc:/my/path");
+  REQUIRE(conf.source_type == "linedoc");
+  REQUIRE(conf.path == "/my/path");
 }
 
 

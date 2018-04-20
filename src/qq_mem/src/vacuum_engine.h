@@ -195,6 +195,7 @@ class VacuumEngine : public SearchEngineServiceNew {
   int LoadLocalDocuments(const std::string &line_doc_path, 
      int n_rows, const std::string loader) override {
     LOG(FATAL) << "Not implemented in VacuumEngine.";
+    return -1;
   }
 
  private:
