@@ -85,7 +85,7 @@ class TreatmentExecutor {
  public:
   virtual utils::ResultRow Execute(Treatment treatment) = 0;
   virtual int NumberOfThreads() = 0;
-  virtual std::unique_ptr<QueryProducerService> CreateProducer(Treatment treatment) {
+  virtual std::unique_ptr<QueryProducerService> MakeProducer(Treatment treatment) {
     GeneralConfig config;
     config.SetBool("is_phrase", treatment.is_phrase);
     config.SetBool("return_snippets", treatment.return_snippets);
@@ -124,7 +124,7 @@ class GrpcTreatmentExecutor: public TreatmentExecutor {
   utils::ResultRow Execute(Treatment treatment) {
     utils::ResultRow row;
 
-    auto client = CreateClient(client_config_, CreateProducer(treatment));
+    auto client = CreateClient(client_config_, MakeProducer(treatment));
     client->Wait();
     row = client->ShowStats();
 
@@ -145,7 +145,7 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
   utils::ResultRow Execute(Treatment treatment) {
     const int n_repeats = treatment.n_repeats;
     utils::ResultRow row;
-    auto query_producer = CreateProducer(treatment);
+    auto query_producer = MakeProducer(treatment);
 
     auto start = utils::now();
     for (int i = 0; i < n_repeats; i++) {
@@ -185,7 +185,7 @@ class LocalStatsExecutor: public TreatmentExecutor {
 
   int NumberOfThreads() {return 1;}
 
-  std::unique_ptr<QueryProducerService> CreateProducer(Treatment treatment) override {
+  std::unique_ptr<QueryProducerService> MakeProducer(Treatment treatment) override {
     GeneralConfig config;
     config.SetBool("is_phrase", treatment.is_phrase);
     config.SetBool("return_snippets", treatment.return_snippets);
@@ -202,7 +202,7 @@ class LocalStatsExecutor: public TreatmentExecutor {
     const int n_repeats = treatment.n_repeats;
     utils::ResultRow row;
 
-    auto query_producer = CreateProducer(treatment);
+    auto query_producer = MakeProducer(treatment);
 
     auto start = utils::now();
     for (int i = 0; i < n_repeats; i++) {
