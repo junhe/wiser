@@ -157,11 +157,12 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
       REQUIRE(writer.MaxBitsPerValue() == 1);
 
       std::string data = writer.Serialize();
-      // 128 bits in total, + 1 byte for the header
-      REQUIRE(data.size() == (128 / 8 + 1)); 
+      // 128 bits in total, + 2 byte for the header
+      REQUIRE(data.size() == (128 / 8 + 2)); 
 
-      REQUIRE(data[0] == 1); // the header
-      for (int i = 1; i < data.size(); i++) {
+      REQUIRE((data[0] & 0xFF) == PACK_FIRST_BYTE); // the header
+      REQUIRE(data[1] == 1); // num bits
+      for (int i = 2; i < data.size(); i++) {
         REQUIRE(data[i] == 0);
       }
     }
@@ -173,10 +174,11 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
       REQUIRE(writer.MaxBitsPerValue() == 1);
 
       std::string data = writer.Serialize();
-      REQUIRE(data.size() == (128 / 8 + 1)); // 128 bits in total
+      REQUIRE(data.size() == (128 / 8 + 2)); // 128 bits in total
 
-      REQUIRE(data[0] == 1); // the header
-      for (int i = 1; i < data.size(); i++) {
+      REQUIRE((data[0] & 0xFF) == PACK_FIRST_BYTE); // the header
+      REQUIRE(data[1] == 1); // the header
+      for (int i = 2; i < data.size(); i++) {
         REQUIRE(data[i] == (char)0xff);
       }
     }
@@ -191,7 +193,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       SECTION("Read by Reader") {
         PackedIntsReader reader((const uint8_t *)data.data());
-        REQUIRE(reader.SerializationSize() == (1 + 128 / 8));
+        REQUIRE(reader.SerializationSize() == (2 + 128 / 8));
         for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
           REQUIRE(reader.Get(i) == 0);
         }
@@ -199,7 +201,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       SECTION("Read by iterator") {
         PackedIntsIterator it((const uint8_t *)data.data());
-        REQUIRE(it.SerializationSize() == (1 + 128 / 8));
+        REQUIRE(it.SerializationSize() == (2 + 128 / 8));
         
         int cnt = 0;
         while (it.IsEnd() == false) {
@@ -230,7 +232,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       SECTION("Read by iterator") {
         PackedIntsIterator it((const uint8_t *)data.data());
-        REQUIRE(it.SerializationSize() == (1 + 128 / 8));
+        REQUIRE(it.SerializationSize() == (2 + 128 / 8));
         REQUIRE(it.SerializationSize() == data.size());
         
         int cnt = 0;

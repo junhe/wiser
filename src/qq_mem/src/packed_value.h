@@ -4,10 +4,8 @@
 #include "compression.h"
 #include "utils.h"
 
-#define CHECK_MASK 0x40 
-#define VINTS_FIRST_BYTE 0x40
-// x1xx xxxx -> vint
-// x0xx xxxx -> pack
+#define PACK_FIRST_BYTE 0xD5
+#define VINTS_FIRST_BYTE 0x9B
 
 int AppendToByte(long val, const int n_bits, uint8_t *buf, const int next_empty_bit);
 int AppendValue(long val, int n_bits, uint8_t *buf, int next_empty_bit);
@@ -33,7 +31,7 @@ class PackedIntsWriter {
     if (values_.size() != PACK_SIZE)
       LOG(FATAL) << "Number of values is not " << PACK_SIZE;
 
-    constexpr int size = sizeof(long) * PACK_SIZE + 1;
+    constexpr int size = sizeof(long) * PACK_SIZE + 2;
     uint8_t buf[size];
     memset(buf, 0, size);
 
@@ -41,9 +39,10 @@ class PackedIntsWriter {
       LOG(FATAL) << "Max bits per value should not be larger than 64";
 
     // set bit 00__ ____ to distinguish from VINTS
-    buf[0] = max_bits_per_value_ & ~CHECK_MASK; 
+    buf[0] = PACK_FIRST_BYTE;
+    buf[1] = max_bits_per_value_;
 
-    int next_empty_bit = 8;
+    int next_empty_bit = 16;
     for (auto &v : values_) {
       next_empty_bit = AppendValue(v, max_bits_per_value_, buf, next_empty_bit);
     }
@@ -71,11 +70,16 @@ class PackedIntsReader {
 
   void Reset(const uint8_t *buf) {
     buf_ = buf; 
-    n_bits_per_value_ = buf[0];
+    if (buf_[0] != PACK_FIRST_BYTE)
+      LOG(FATAL) << "Magic number for pack is wrong: " << buf_[0];
+
+    n_bits_per_value_ = buf[1];
+    if (buf_[1] > 64) 
+      LOG(FATAL) << "n_bits_per_value_ is larger than 64, which is wrong.";
   }
 
   long Get(const int index) const {
-    return ExtractBits(buf_ + 1, index * n_bits_per_value_, n_bits_per_value_);     
+    return ExtractBits(buf_ + 2, index * n_bits_per_value_, n_bits_per_value_);     
   }
   
   int NumBits() const {
@@ -83,8 +87,8 @@ class PackedIntsReader {
   }
 
   int SerializationSize() const {
-    // 1 is for the header, +7 is to do ceiling
-    return 1 + ((NumBits() * PackedIntsWriter::PACK_SIZE + 7) / 8); 
+    // 2 is for the header, +7 is to do ceiling
+    return 2 + ((NumBits() * PackedIntsWriter::PACK_SIZE + 7) / 8); 
   }
 
  private:
@@ -203,7 +207,7 @@ class VIntsWriter {
 
   std::string Serialize() const {
     VarintBuffer buf;
-    buf.Append(VINTS_FIRST_BYTE); // to distinguish with PackedInts
+    buf.Append(std::string(1, VINTS_FIRST_BYTE)); 
     buf.Append(varint_buf_.Size());
     buf.Append(varint_buf_.Data());
 
@@ -224,15 +228,16 @@ class VIntsIterator {
   }
 
   void Reset(const uint8_t *buf) {
-    int len = utils::varint_decode_uint32((char *)buf, 0, &magic_);
-    buf += len;
-
+    // int len = utils::varint_decode_uint32((char *)buf, 0, &magic_);
+    // buf += len;
+    magic_ = buf[0];
+    buf += 1;
     if ((magic_ & 0xFF) != VINTS_FIRST_BYTE) {
       printf("Vints Magic: %x\n", magic_);
       LOG(FATAL) << "Magic number is not right for this VInts";
     }
 
-    len = utils::varint_decode_uint32((char *)buf, 0, &varint_bytes_);
+    int len = utils::varint_decode_uint32((char *)buf, 0, &varint_bytes_);
     buf += len;
 
     varint_iter_.Reset((char *)buf, 0, varint_bytes_);

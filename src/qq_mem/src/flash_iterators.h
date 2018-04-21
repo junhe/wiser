@@ -20,9 +20,9 @@ inline std::string FormatString(const BlobFormat f) {
 }
 
 inline BlobFormat GetBlobFormat(const uint8_t *buf) {
-  if ((*buf & CHECK_MASK) == CHECK_MASK) {
+  if ((*buf & 0xFF) == VINTS_FIRST_BYTE) {
     return BlobFormat::VINTS;
-  } else if ((*buf & CHECK_MASK) == 0x00) {
+  } else if ((*buf & 0xFF) == PACK_FIRST_BYTE) {
     return BlobFormat::PACKED_INTS;
   } else {
     LOG(FATAL) << "Wrong format";
