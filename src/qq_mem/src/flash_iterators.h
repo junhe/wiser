@@ -662,16 +662,23 @@ class VacuumPostingListIterator {
   void Reset(const uint8_t *file_data, const off_t offset) {
     LOG(INFO) << "In PL iterator: file_data=" << (void *)file_data 
       << " offset: " << offset;
-    int len;
 
+    int len;
     file_data_ = file_data;
     offset_ = offset;
-
-    // first item in the posting list is the doc freq (n_postings_)
     const uint8_t *buf = file_data + offset;
+
+    // first byte is the magic number
+    DLOG_IF(FATAL, (buf[0] & 0xFF) != POSTING_LIST_FIRST_BYTE)
+      << "Magic number for posting list is wrong: " 
+      << std::hex << buf[0];
+    buf += 1;
+
+    // second item in the posting list is the doc freq (n_postings_)
     len = utils::varint_decode_uint8(buf, 0, &n_postings_);
     buf += len;
 
+    // third item is the start of skip list
     skip_list_ = std::shared_ptr<SkipList>(new SkipList()); 
     skip_list_->Load(buf);
 

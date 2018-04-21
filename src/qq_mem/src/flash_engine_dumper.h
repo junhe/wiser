@@ -673,7 +673,7 @@ class SkipList {
  public:
   void Load(const uint8_t *buf) {
     // byte 0 is the magic number
-    DLOG_IF(FATAL, buf[0] != SKIP_LIST_FIRST_BYTE)
+    DLOG_IF(FATAL, (buf[0] & 0xFF) != SKIP_LIST_FIRST_BYTE)
       << "Skip list has the wrong magic number: " << std::hex << buf[0];
 
     // varint at byte 1 is the number of entries
@@ -901,19 +901,17 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     }
 
     off_t posting_list_start = index_dumper_.CurrentOffset();
-    LOG(INFO) << "posting_list_start: " << posting_list_start;
+
+    // Dump magic number
+    index_dumper_.Dump(utils::MakeString(POSTING_LIST_FIRST_BYTE));
     
     // Dump doc freq
-    LOG(INFO) << "dumping doc freq: " << posting_list.Size();
     DumpVarint(posting_list.Size());
 
     // Dump skip list
     off_t skip_list_start = index_dumper_.CurrentOffset();
-    LOG(INFO) << "skip_list_start: " << skip_list_start;
     int skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
-    LOG(INFO) << "skip_list_est_size: " << skip_list_est_size << std::endl;
 
-    LOG(INFO) << "Dumping real skiplist...........................\n";
     // Dump doc id, term freq, ...
     SkipListWriter real_skiplist_writer = DumpTermEntrySet( 
         &index_dumper_, 
@@ -921,19 +919,19 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
         entry_set,
         entry_set.docid.Values());
 
-    index_dumper_.Seek(skip_list_start);
 
     std::string skip_list_data = real_skiplist_writer.Serialize();
-    LOG(INFO) << "skip_list_real size: " << skip_list_data.size() << std::endl;
-    if (skip_list_data.size() > skip_list_est_size) { 
-      LOG(FATAL) << "Gap for skip list is too small. skip list real size: " 
-        << skip_list_data.size() 
-        << " skip est size: " << skip_list_est_size << std::endl;
-    } else {
-      index_dumper_.Dump(skip_list_data); 
-      index_dumper_.SeekToEnd();
-    }
 
+    DLOG_IF(FATAL, skip_list_data.size() > skip_list_est_size)  
+        << "DATA CORRUPTION!!! Gap for skip list is too small. skip list real size: " 
+        << skip_list_data.size() 
+        << " skip est size: " << skip_list_est_size;
+
+    index_dumper_.Seek(skip_list_start);
+    index_dumper_.Dump(skip_list_data); 
+    index_dumper_.SeekToEnd();
+
+    // Dump to .tip
     term_index_dumper_.DumpEntry(term, posting_list_start);
   }
 
