@@ -710,6 +710,9 @@ class SkipList {
   }
 
   const SkipEntry &operator [](int interval_idx) const {
+    DLOG_IF(FATAL, interval_idx >= skip_table_.size())
+      << "Trying to access skip entry out of bound!";
+
     return skip_table_[interval_idx];
   }
 
