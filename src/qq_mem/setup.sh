@@ -56,6 +56,8 @@ sudo apt-get install -y google-perftools libgoogle-perftools-dev
 # configure the shared libraries
 sudo ldconfig
 
+# ccache
+sudo apt-get install ccache
 
 
 echo "Now, run"
