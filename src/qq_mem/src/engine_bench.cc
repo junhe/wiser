@@ -254,12 +254,12 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
     auto start = utils::now();
     for (int i = 0; i < n_queries; i++) {
       auto query = query_producer->NextNativeQuery(0);
-      std::cout << query.ToStr() << std::endl;
+      // std::cout << query.ToStr() << std::endl;
       auto result = engine_->Search(query);
 
       // std::cout << result.ToStr() << std::endl;
       if (i % 1000 == 0) {
-        std::cout << "Finished " << n_queries << std::endl;
+        std::cout << "Finished " << i << std::endl;
       }
     }
     auto end = utils::now();
@@ -267,6 +267,7 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
 
     row["latency"] = std::to_string(dur / n_queries); 
     row["duration"] = std::to_string(dur); 
+    row["n_queries"] = std::to_string(n_queries); 
     row["QPS"] = std::to_string(round(100 * n_queries / dur) / 100.0);
     return row;
   }
@@ -363,9 +364,8 @@ class EngineExperiment: public Experiment {
 
     Treatment t;
     t.tag = "querylog";
-    t.n_queries = 1;
-    // t.query_log_path = "/mnt/ssd/realistic_querylog";
-    t.query_log_path = "/users/jhe/flashsearch/src/qq_mem/test_log";
+    t.n_queries = 10000;
+    t.query_log_path = "/mnt/ssd/realistic_querylog";
     treatments.push_back(t);
 
     // for (auto &t : treatments) {

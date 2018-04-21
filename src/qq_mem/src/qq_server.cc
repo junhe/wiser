@@ -71,7 +71,7 @@ int main(int argc, char** argv) {
   GeneralConfig config;
   config.SetString("target", std::string("localhost:") + FLAGS_port);
   // config.SetString("engine_name", "qq_mem_compressed");
-  config.SetString("engine_name", "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump-04-19");
+  config.SetString("engine_name", "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic");
   config.SetString("sync_type", sync_type);
 
   config.SetString("load_source", "dump");
