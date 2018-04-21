@@ -81,7 +81,7 @@ int main(int argc, char** argv) {
   config.SetString("sync_type", sync_type);
 
   config.SetString("load_source", "dump");
-  config.SetString("dump_path", "/mnt/ssd/big-engine-dump");
+  config.SetString("dump_path", "/mnt/ssd/big-engine-char-length-04-19");
 
   config.SetInt("n_line_doc_rows", n_docs);
   config.SetString("line_doc_format", "WITH_POSITIONS");
