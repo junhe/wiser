@@ -4,8 +4,6 @@
 #include <sstream>
 #include <cstdlib>
 
-#define NDEBUG
-
 #include <glog/logging.h>
 
 #include "query_processing.h"

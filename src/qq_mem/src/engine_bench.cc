@@ -6,8 +6,6 @@
 #include <vector>
 #include <climits>
 
-#define NDEBUG
-
 #include <gperftools/profiler.h>
 #include <glog/logging.h>
 #include <gflags/gflags.h>
