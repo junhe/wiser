@@ -2,9 +2,11 @@ project(grpc-cmake-example)
 cmake_minimum_required(VERSION 3.2)
 
 set(PRODUCTION_OPTS -std=c++11 -O3 -g -Wreturn-type -DNDEBUG)
-set(DEV_OPTS        -std=c++11 -O0 -g -Wreturn-type)
+set(INDEXING_OPTS        -std=c++11 -O3 -g -Wreturn-type)
+set(DEBUG_OPTS        -std=c++11 -O0 -g -Wreturn-type)
 
-add_compile_options(${DEV_OPTS})
+add_compile_options(${INDEXING_OPTS})
+#add_compile_options(${DEV_OPTS})
 #add_compile_options(${PRODUCTION_OPTS})
 
 set(GPROFILER profiler)

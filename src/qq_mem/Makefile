@@ -39,6 +39,11 @@ engine_bench:
 		make -j32 engine_bench && \
 		CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=locallog -use_profiler=true
 
+engine_bench_debug:
+	cd build && cmake ../src/ && \
+		make -j32 engine_bench && \
+		gdb --args ./engine_bench -exp_mode=locallog -use_profiler=false
+
 convert_qq_to_vacuum:
 	cd build && cmake ../src/ && \
 		make -j32 convert_qq_to_vacuum && \
