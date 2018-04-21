@@ -27,6 +27,8 @@ inline BlobFormat GetBlobFormat(const uint8_t *buf) {
   } else {
     LOG(FATAL) << "Wrong format";
   }
+
+  return BlobFormat::NONE; // to suppress warning
 }
 
 class TermFreqIterator {
