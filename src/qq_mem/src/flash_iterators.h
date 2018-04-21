@@ -258,8 +258,8 @@ class DocIdIterator {
 //    v3 = iter.Value()
 //
 // Do not call GoToCozyEntry() and Advance() more than the number of 
-// items you need. CozyBoxIterator has no idea where the end of the 
-// cozy box is.
+// items you need. **CozyBoxIterator has no idea where the end of the 
+// cozy box is.**
 class CozyBoxIterator {
  public:
   CozyBoxIterator() {}
@@ -405,28 +405,32 @@ class InBagPositionIterator {
 
   void Reset(const CozyBoxIterator cozy_iter, const int term_freq) {
     cozy_box_iter_ = cozy_iter;
-    n_pops_left_ = term_freq;
+    n_poss_to_go_ = term_freq;
     prev_pos_ = 0;
   }
 
   uint32_t Pop() {
     uint32_t pos = prev_pos_ + cozy_box_iter_.Value();
     prev_pos_ = pos;
+    n_poss_to_go_--; 
 
-    cozy_box_iter_.Advance();
-    n_pops_left_--; 
+    // Cozy box does not know its end, but we do know how many 
+    // positions we need to pop in this class, so we use this 
+    // info in this higher-level class to make the decision.
+    if (n_poss_to_go_ > 0)
+      cozy_box_iter_.Advance();
 
     return pos;
   }
 
   bool IsEnd() const {
-    return n_pops_left_ == 0;
+    return n_poss_to_go_ == 0;
   }
 
  private:
   CozyBoxIterator cozy_box_iter_;
   uint32_t prev_pos_;
-  int n_pops_left_;
+  int n_poss_to_go_;
 };
 
 
@@ -439,12 +443,12 @@ class InBagOffsetPairIterator: public OffsetPairsIteratorService {
 
   void Reset(const CozyBoxIterator cozy_iter, const int term_freq) {
     cozy_box_iter_ = cozy_iter;
-    n_single_pops_left_ = term_freq * 2;
+    n_single_off_to_go_ = term_freq * 2;
     prev_pos_ = 0;
   }
 
   bool IsEnd() const {
-    return n_single_pops_left_ == 0;
+    return n_single_off_to_go_ == 0;
   }
 
   void Pop(OffsetPair *pair) {
@@ -456,16 +460,20 @@ class InBagOffsetPairIterator: public OffsetPairsIteratorService {
   uint32_t SinglePop() {
     uint32_t pos = prev_pos_ + cozy_box_iter_.Value();
     prev_pos_ = pos;
+    n_single_off_to_go_--; 
 
-    cozy_box_iter_.Advance();
-    n_single_pops_left_--; 
+    // Cozy box does not know its end, but we do know how many 
+    // positions we need to pop in this class, so we use this 
+    // info in this higher-level class to make the decision.
+    if (n_single_off_to_go_ > 0)
+      cozy_box_iter_.Advance();
 
     return pos;
   }
 
   CozyBoxIterator cozy_box_iter_;
   uint32_t prev_pos_;
-  int n_single_pops_left_;
+  int n_single_off_to_go_;
 };
 
 

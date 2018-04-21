@@ -21,11 +21,14 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
 
     SECTION("Advance() to the end") {
       CozyBoxIterator iter((const uint8_t *)file_map.Addr());
+
       iter.GoToCozyEntry(0, 0);
+      REQUIRE(iter.Value() == 0);
       
-      for (uint32_t i = 0; i < cnt; i++) {
-        REQUIRE(iter.Value() == i);
+      for (uint32_t i = 1; i < cnt; i++) {
+        std::cout << "i: " << i << std::endl;
         iter.Advance();
+        REQUIRE(iter.Value() == i);
       }
     }
 
@@ -45,6 +48,8 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
       REQUIRE(iter.Value() == 4);
     }
   }
+
+
 
   SECTION("2 packs, some vints") {
     std::vector<uint32_t> vec;
@@ -71,57 +76,61 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
     SECTION("Advance() to the end") {
       CozyBoxIterator iter((const uint8_t *)file_map.Addr());
       iter.GoToCozyEntry(0, 0);
+      REQUIRE(iter.Value() == 0);
       
-      for (uint32_t i = 0; i < cnt; i++) {
-        REQUIRE(iter.Value() == i);
+      for (uint32_t i = 1; i < cnt; i++) {
         iter.Advance();
+        REQUIRE(iter.Value() == i);
       }
     }
 
     SECTION("Start from the last part of pack") {
       CozyBoxIterator iter((const uint8_t *)file_map.Addr());
       iter.GoToCozyEntry(0, PACK_SIZE - 10);
+      REQUIRE(iter.Value() == PACK_SIZE - 10);
       
-      for (uint32_t i = PACK_SIZE - 10; i < cnt; i++) {
-        REQUIRE(iter.Value() == i);
+      for (uint32_t i = PACK_SIZE - 10 + 1; i < cnt; i++) {
         iter.Advance();
+        REQUIRE(iter.Value() == i);
       }
     }
 
     SECTION("Start from the second packints") {
       CozyBoxIterator iter((const uint8_t *)file_map.Addr());
       iter.GoToCozyEntry(file_offsets.PackOffs()[1], 0);
+      REQUIRE(iter.Value() == 128);
       
-      for (uint32_t i = PACK_SIZE; i < cnt; i++) {
-        REQUIRE(iter.Value() == i);
+      for (uint32_t i = PACK_SIZE + 1; i < cnt; i++) {
         iter.Advance();
+        REQUIRE(iter.Value() == i);
       }
     }
 
     SECTION("Start from the second packints, 2") {
       CozyBoxIterator iter((const uint8_t *)file_map.Addr());
       iter.GoToCozyEntry(file_offsets.PackOffs()[1], 2);
+      REQUIRE(iter.Value() == 130);
       
-      for (uint32_t i = PACK_SIZE + 2; i < cnt; i++) {
-        REQUIRE(iter.Value() == i);
+      for (uint32_t i = PACK_SIZE + 2 + 1; i < cnt; i++) {
         iter.Advance();
+        REQUIRE(iter.Value() == i);
       }
     }
 
     SECTION("Start from the vints") {
       CozyBoxIterator iter((const uint8_t *)file_map.Addr());
       iter.GoToCozyEntry(file_offsets.VIntsOffs()[0], 0);
+      REQUIRE(iter.Value() == 256);
       
-      for (uint32_t i = PACK_SIZE * 2; i < cnt; i++) {
-        REQUIRE(iter.Value() == i);
+      for (uint32_t i = PACK_SIZE * 2 + 1; i < cnt; i++) {
         iter.Advance();
+        REQUIRE(iter.Value() == i);
       }
     }
 
     SECTION("AdvanceBy()") {
       CozyBoxIterator iter((const uint8_t *)file_map.Addr());
       iter.GoToCozyEntry(0, 0);
-      
       REQUIRE(iter.Value() == 0);
 
       iter.AdvanceBy(2);
@@ -166,8 +175,6 @@ std::vector<uint32_t> GoodOffsets(int posting_bag) {
 
   return ret;
 }
-
-
 
 
 TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
