@@ -21,7 +21,7 @@
 DEFINE_int32(n_threads, 1, "Number of client threads");
 DEFINE_string(exp_mode, "local", "local/grpc/grpclog/localquerylog");
 DEFINE_bool(use_profiler, true, "Use profiler");
-DEFINE_string(grpc_server, "localhost:50051", "network address of the GRPC server");
+DEFINE_string(grpc_server, "localhost", "network address of the GRPC server");
 
 
 const int K = 1000;
@@ -40,6 +40,9 @@ std::string Concat(TermList terms) {
   return s;
 }
 
+std::string GetTargetUrl(std::string addr) {
+  return addr + ":50051";
+}
 
 class Experiment {
  public:
@@ -113,7 +116,7 @@ class GrpcTreatmentExecutor: public TreatmentExecutor {
 
     client_config_.SetString("synchronization", "SYNC");
     client_config_.SetString("rpc_arity", "STREAMING");
-    client_config_.SetString("target", FLAGS_grpc_server);
+    client_config_.SetString("target", GetTargetUrl(FLAGS_grpc_server));
     client_config_.SetInt("n_client_channels", 64);
     client_config_.SetInt("n_threads", n_threads); 
     client_config_.SetInt("benchmark_duration", 10);
@@ -155,7 +158,7 @@ class GrpcLogTreatmentExecutor: public TreatmentExecutor {
 
     client_config_.SetString("synchronization", "SYNC");
     client_config_.SetString("rpc_arity", "STREAMING");
-    client_config_.SetString("target", FLAGS_grpc_server);
+    client_config_.SetString("target", GetTargetUrl(FLAGS_grpc_server));
     client_config_.SetInt("n_client_channels", 64);
     client_config_.SetInt("n_threads", n_threads); 
     client_config_.SetInt("benchmark_duration", 10);

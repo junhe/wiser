@@ -30,14 +30,18 @@ grpc_benchmark:
 	./build.sh
 	echo ------------------------------------------------------
 	python ./tools/run_client_server2.py \
-		./build/engine_bench '-exp_mode=grpclog -n_threads=16 -use_profiler=false' \
-		./build/qq_server '-sync_type=ASYNC -n_threads=1' \
-		5
+		./build/engine_bench '-exp_mode=grpclog -n_threads=16 -use_profiler=true -grpc_server=node.conan-wisc.fsperfatscale-pg0:50051' \
+		./build/qq_server '-sync_type=ASYNC -n_threads=4' \
+		15	
+		#./build/engine_bench '-exp_mode=grpclog -n_threads=16 -use_profiler=true -grpc_server=localhost:50051' \
 
 engine_bench:
 	cd build && cmake ../src/ && \
 		make -j32 engine_bench && \
 		CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=locallog -use_profiler=true
+
+engine_bench_build:
+	cd build && cmake ../src/ && make -j32 engine_bench
 
 engine_bench_debug:
 	cd build && cmake ../src/ && \
@@ -48,6 +52,15 @@ convert_qq_to_vacuum:
 	cd build && cmake ../src/ && \
 		make -j32 convert_qq_to_vacuum && \
 		./convert_qq_to_vacuum
+
+
+two_nodes:
+	cd build 
+	cmake ../src/
+	make -j32 qq_server 
+	make -j32 engine_bench
+	cd ..
+	python ./tools/run_cs_two_nodes.py
 
 profile:
 	google-pprof --text ./build/engine_bench ./build/my.profile.new

@@ -35,6 +35,9 @@ using qq::QQEngine;
 using std::chrono::system_clock;
 
 
+DEFINE_string(engine, "missing", 
+    "[qq_mem_compressed / vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic");
+DEFINE_string(addr, "localhost", "GRPC listening address.");
 DEFINE_string(port, "50051", "GRPC listening port.");
 DEFINE_int32(n_secs, 0, "Server running time (seconds).");
 DEFINE_int32(n_threads, 1, "Number of async GRPC threads (it has no effect in SYNC mode.");
@@ -69,9 +72,12 @@ int main(int argc, char** argv) {
   auto sync_type = FLAGS_sync_type;
 
   GeneralConfig config;
-  config.SetString("target", std::string("localhost:") + FLAGS_port);
+  // config.SetString("target", std::string("node.conan-wisc.fsperfatscale-pg0:") + FLAGS_port);
+  config.SetString("target", FLAGS_addr + ":" + FLAGS_port);
   // config.SetString("engine_name", "qq_mem_compressed");
-  config.SetString("engine_name", "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic");
+  if (FLAGS_engine == "missing") 
+    LOG(FATAL) << "Must set engine!";
+  config.SetString("engine_name", FLAGS_engine);
   config.SetString("sync_type", sync_type);
 
   config.SetString("load_source", "dump");

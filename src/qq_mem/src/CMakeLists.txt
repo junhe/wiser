@@ -5,9 +5,9 @@ set(PRODUCTION_OPTS -std=c++11 -O3 -g -Wreturn-type -DNDEBUG)
 set(INDEXING_OPTS        -std=c++11 -O3 -g -Wreturn-type)
 set(DEBUG_OPTS        -std=c++11 -O0 -g -Wreturn-type)
 
-add_compile_options(${INDEXING_OPTS})
+#add_compile_options(${INDEXING_OPTS})
 #add_compile_options(${DEV_OPTS})
-#add_compile_options(${PRODUCTION_OPTS})
+add_compile_options(${PRODUCTION_OPTS})
 
 set(GPROFILER profiler)
 set(CMAKE_CXX_COMPILER "/usr/lib/ccache/g++-5")

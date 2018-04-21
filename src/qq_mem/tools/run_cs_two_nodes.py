@@ -3,14 +3,17 @@ import time
 import shlex
 from pyreuse.helpers import shcmd, cd
 
-server_addr = "node.conan-wisc.fsperfatscale-pg0:50051"
+server_addr = "node.conan-wisc.fsperfatscale-pg0"
 remote_addr = "node.conan-wisc-2.fsperfatscale-pg0"
+n_server_threads = 32
+n_client_threads = 32
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
 
 def remote_cmd_chwd(dir_path, cmd):
     return remote_cmd("cd {}; {}".format(dir_path, cmd))
 
 def remote_cmd(cmd):
-    print "starting command on remote node.... ", cmd
+    print "Starting command on remote node.... ", cmd
     p = subprocess.Popen(["ssh", remote_addr, cmd])
     return p
 
@@ -27,19 +30,29 @@ def start_client():
     print "starting client ..."
     print "-" * 20
     return remote_cmd_chwd("/users/jhe/flashsearch/src/qq_mem/build/",
-            # "pwd; hostname")
-        "./engine_bench -exp_mode=grpclog -n_threads=64 -use_profiler=true "
-        "-grpc_server={server}".format(server=server_addr))
+        "./engine_bench -exp_mode=grpclog -n_threads={n_threads} -use_profiler=true "
+        "-grpc_server={server}"
+        .format(server = server_addr, n_threads = n_client_threads))
+
+def kill_client():
+    p = remote_cmd("pkill engine_bench")
+    p.wait()
 
 def start_server():
     print "-" * 20
     print "starting server ..."
     print "-" * 20
     with cd("/users/jhe/flashsearch/src/qq_mem"):
-        p = subprocess.Popen(shlex.split("./build/qq_server -sync_type=ASYNC -n_threads=64"))
+        p = subprocess.Popen(shlex.split(
+            "./build/qq_server -sync_type=ASYNC -n_threads={n_threads} -addr={server} -port=50051 -engine={engine}"
+            .format(server = server_addr,
+                    n_threads = n_server_threads,
+                    engine = search_engine)))
         return p
 
 def main():
+    kill_client()
+
     compile_engine_bench()
     sync_build_dir()
 
