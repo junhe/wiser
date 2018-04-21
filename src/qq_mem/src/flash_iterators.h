@@ -242,6 +242,22 @@ class DocIdIterator {
   DeltaEncodedVIntsIterator vints_iter_;
 };
 
+
+// Iterface usage:
+//    You must know how many items you need. For example, if you need 3: 
+//
+//    iter.GoTOCozyEntry(xx, xx);
+//    v1 = iter.Value();
+//
+//    iter.Advance()
+//    v2 = iter.Value()
+//
+//    iter.Advance()
+//    v3 = iter.Value()
+//
+// Do not call GoToCozyEntry() and Advance() more than the number of 
+// items you need. CozyBoxIterator has no idea where the end of the 
+// cozy box is.
 class CozyBoxIterator {
  public:
   CozyBoxIterator() {}
