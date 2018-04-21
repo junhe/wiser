@@ -67,12 +67,12 @@ struct Treatment {
             bool is_phrase_in, 
             int n_repeats_in, 
             bool return_snippets_in)
-    :terms(terms_in), is_phrase(is_phrase_in), n_repeats(n_repeats_in),
+    :terms(terms_in), is_phrase(is_phrase_in), n_queries(n_repeats_in),
      return_snippets(return_snippets_in){}
 
   TermList terms;
   bool is_phrase;
-  int n_repeats;
+  int n_queries;
   bool return_snippets;
   int n_passages = 3;
   int n_results = 5;
@@ -196,12 +196,12 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
   int NumberOfThreads() {return 1;}
 
   utils::ResultRow Execute(Treatment treatment) {
-    const int n_repeats = treatment.n_repeats;
+    const int n_queries = treatment.n_queries;
     utils::ResultRow row;
     auto query_producer = MakeProducer(treatment);
 
     auto start = utils::now();
-    for (int i = 0; i < n_repeats; i++) {
+    for (int i = 0; i < n_queries; i++) {
       auto query = query_producer->NextNativeQuery(0);
       query.n_snippet_passages = treatment.n_passages;
       // std::cout << query.ToStr() << std::endl;
@@ -218,11 +218,11 @@ class LocalTreatmentExecutor: public TreatmentExecutor {
       std::cout << pair.first << " : " << pair.second << std::endl;
     }
 
-    row["latency"] = std::to_string(dur / n_repeats); 
+    row["latency"] = std::to_string(dur / n_queries); 
     row["n_passages"] = std::to_string(treatment.n_passages);
     row["return_snippets"] = std::to_string(treatment.return_snippets);
     row["duration"] = std::to_string(dur); 
-    row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
+    row["QPS"] = std::to_string(round(100 * n_queries / dur) / 100.0);
     return row;
   }
 
@@ -247,24 +247,27 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
   }
 
   utils::ResultRow Execute(Treatment treatment) {
-    const int n_repeats = treatment.n_repeats;
+    const int n_queries = treatment.n_queries;
     utils::ResultRow row;
     auto query_producer = MakeProducer(treatment);
 
     auto start = utils::now();
-    for (int i = 0; i < n_repeats; i++) {
+    for (int i = 0; i < n_queries; i++) {
       auto query = query_producer->NextNativeQuery(0);
-      // std::cout << query.ToStr() << std::endl;
+      std::cout << query.ToStr() << std::endl;
       auto result = engine_->Search(query);
 
       // std::cout << result.ToStr() << std::endl;
+      if (i % 1000 == 0) {
+        std::cout << "Finished " << n_queries << std::endl;
+      }
     }
     auto end = utils::now();
     auto dur = utils::duration(start, end);
 
-    row["latency"] = std::to_string(dur / n_repeats); 
+    row["latency"] = std::to_string(dur / n_queries); 
     row["duration"] = std::to_string(dur); 
-    row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
+    row["QPS"] = std::to_string(round(100 * n_queries / dur) / 100.0);
     return row;
   }
 
@@ -296,13 +299,13 @@ class LocalStatsExecutor: public TreatmentExecutor {
   }
 
   utils::ResultRow Execute(Treatment treatment) {
-    const int n_repeats = treatment.n_repeats;
+    const int n_queries = treatment.n_queries;
     utils::ResultRow row;
 
     auto query_producer = MakeProducer(treatment);
 
     auto start = utils::now();
-    for (int i = 0; i < n_repeats; i++) {
+    for (int i = 0; i < n_queries; i++) {
       auto query = query_producer->NextNativeQuery(0);
       query.n_snippet_passages = treatment.n_passages;
       std::cout << query.ToStr() << std::endl;
@@ -319,11 +322,11 @@ class LocalStatsExecutor: public TreatmentExecutor {
     auto dur = utils::duration(start, end);
 
 
-    row["latency"] = std::to_string(dur / n_repeats); 
+    row["latency"] = std::to_string(dur / n_queries); 
     row["n_passages"] = std::to_string(treatment.n_passages);
     row["return_snippets"] = std::to_string(treatment.return_snippets);
     row["duration"] = std::to_string(dur); 
-    row["QPS"] = std::to_string(round(100 * n_repeats / dur) / 100.0);
+    row["QPS"] = std::to_string(round(100 * n_queries / dur) / 100.0);
     return row;
   }
 
@@ -360,8 +363,9 @@ class EngineExperiment: public Experiment {
 
     Treatment t;
     t.tag = "querylog";
-    t.n_repeats = 1000;
-    t.query_log_path = "/mnt/ssd/realistic_querylog";
+    t.n_queries = 1;
+    // t.query_log_path = "/mnt/ssd/realistic_querylog";
+    t.query_log_path = "/users/jhe/flashsearch/src/qq_mem/test_log";
     treatments.push_back(t);
 
     // for (auto &t : treatments) {
@@ -510,7 +514,7 @@ GeneralConfig config_by_jun() {
 
   GeneralConfig config;
   // config.SetString("engine_type", "qq_mem_compressed");
-  config.SetString("engine_type", "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump-04-19");
+  config.SetString("engine_type", "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic");
 
   // config.SetString("load_source", "linedoc");
   // config.SetString("load_source", "dump");
@@ -526,7 +530,7 @@ GeneralConfig config_by_jun() {
   
   config.SetString("dump_path", "/mnt/ssd/big-engine-char-length-04-19");
 
-  config.SetInt("n_repeats", 1000);
+  config.SetInt("n_queries", 1000);
   config.SetInt("n_passages", 3);
   // config.SetBool("enable_snippets", true);
   config.SetBool("enable_snippets", false);
