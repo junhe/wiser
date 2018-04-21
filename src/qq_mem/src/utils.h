@@ -393,16 +393,48 @@ std::vector<int> CollectTermFreq(PLIter_T iter) {
   return ret;
 }
 
-template <typename PLIter_T>
+template <typename PLIter_T, typename PosIter_T>
+std::vector<int> CollectPositions(PLIter_T iter) {
+  std::vector<int> ret;
+
+  int index = 0;
+  while (iter.IsEnd() != true) {
+    PosIter_T pos_iter;
+    iter.AssignPositionBegin(&pos_iter);
+    
+    while( pos_iter.IsEnd() == false ) {
+      auto v = pos_iter.Pop();
+      std::cout << "i:" << index <<  " pos: " << v << std::endl;
+      index++;
+      ret.push_back(v);
+    }
+
+    iter.Advance();
+  }
+
+  return ret;
+}
+
+
+template <typename PLIter_T, typename PosIter_T>
 void PrintIter(PLIter_T iter) {
   std::cout << "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~Showing posting list ~~~~~~~\n";
   std::cout << "Posting list size: " << iter.Size() << std::endl;
-  std::cout << "Doc ID: ";
-  auto v1 = CollectDodId(iter);
-  PrintVec<int>(v1);
-  std::cout << "Term Freq: ";
-  auto v2 = CollectTermFreq(iter);
-  PrintVec<int>(v2);
+
+  std::cout << " sssssssssssssss skip list ssssssssssssssssssss \n";
+  std::cout << iter.SkipListString();
+
+  // std::cout << "Doc ID: ";
+  // auto v1 = CollectDodId(iter);
+  // PrintVec<int>(v1);
+
+  // std::cout << "Term Freq: ";
+  // auto v2 = CollectTermFreq(iter);
+  // PrintVec<int>(v2);
+
+  std::cout << "Positions: ";
+  auto v3 = CollectPositions<PLIter_T, PosIter_T>(iter);
+  PrintVec<int>(v3);
 }
 
 
