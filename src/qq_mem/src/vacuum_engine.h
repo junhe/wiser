@@ -158,6 +158,9 @@ class VacuumEngine : public SearchEngineServiceNew {
       return result;
     }
 
+    // utils::PrintIter<VacuumPostingListIterator, InBagPositionIterator>(
+        // iterators[0]);
+
     auto top_k = qq_search::ProcessQueryDelta
       <VacuumPostingListIterator, InBagPositionIterator>(
         similarity_,      &iterators,     doc_lengths_, doc_lengths_.Size(), 
