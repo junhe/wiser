@@ -283,6 +283,10 @@ void MapFile(std::string path, char **ret_addr, int *ret_fd, size_t *ret_file_le
 
   fd = open(path.c_str(), O_RDONLY);
 
+  if (fd == -1) {
+    LOG(FATAL) << "Fail to open file in MapFile(): " << path;
+  }
+
   if (fstat(fd, &sb) == -1)           /* To obtain file size */
     handle_error("fstat");
   file_length = sb.st_size;
