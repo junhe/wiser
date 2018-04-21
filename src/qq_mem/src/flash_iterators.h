@@ -125,22 +125,26 @@ class DocIdIterator {
     buf_ = buf;
     skip_list_ = skip_list;
     cur_iter_type_ = BlobFormat::NONE;
-    num_docids_ = num_docids;
+    num_postings_ = num_docids;
 
     SkipTo(0);     
   }
 
   void SkipTo(int posting_index) {
-    if (posting_index < cur_posting_index_) {
-      LOG(FATAL) << "Posting index " << posting_index 
+    DLOG_IF(FATAL, posting_index < cur_posting_index_) 
+        << "Posting index " << posting_index 
         << " is less than current posting index.";
-    }
 
     int blob_index = posting_index / PACK_SIZE;
     int blob_offset = posting_index % PACK_SIZE;
 
     if (cur_iter_type_ == BlobFormat::NONE || CurBlobIndex() != blob_index) {
-      SetupBlob(blob_index); 
+      if (posting_index >= num_postings_) {
+        SkipToEnd();
+        return;
+      } else {
+        SetupBlob(blob_index); 
+      }
     }
 
     if (cur_iter_type_ == BlobFormat::VINTS) {
@@ -153,12 +157,17 @@ class DocIdIterator {
     cur_posting_index_  = posting_index;
   }
 
+  // IsEnd() will be true if you call SkipToEnd()
+  void SkipToEnd() {
+    cur_posting_index_ = num_postings_;
+  }
+
   int PostingIndex() const {
     return cur_posting_index_;
   }
 
   bool IsEnd() const {
-    return cur_posting_index_ == num_docids_;
+    return cur_posting_index_ == num_postings_;
   }
 
   void SkipForward(const uint32_t val) {
@@ -210,7 +219,7 @@ class DocIdIterator {
   }
 
   int LastBlobIndex() const {
-    return (num_docids_ - 1) / PACK_SIZE;
+    return (num_postings_ - 1) / PACK_SIZE;
   }
 
   void SetupBlob(int blob_index) {
@@ -238,7 +247,7 @@ class DocIdIterator {
 
   int cur_posting_index_ = 0;
   BlobFormat cur_iter_type_;
-  int num_docids_;
+  int num_postings_;
   
   DeltaEncodedPackedIntsIterator pack_ints_iter_;
   DeltaEncodedVIntsIterator vints_iter_;
