@@ -355,6 +355,7 @@ class Client {
     int num_threads = config.GetInt("n_threads");
     int n_client_channels = config.GetInt("n_client_channels");
 
+    std::cout << "Connecting to " << config.GetString("target") << " .......\n";
     std::cout << "num_threads: " << num_threads << std::endl;
     std::cout << "n_client_channels: " << n_client_channels << std::endl;
 

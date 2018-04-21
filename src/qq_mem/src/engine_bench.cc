@@ -21,6 +21,7 @@
 DEFINE_int32(n_threads, 1, "Number of client threads");
 DEFINE_string(exp_mode, "local", "local/grpc/grpclog/localquerylog");
 DEFINE_bool(use_profiler, true, "Use profiler");
+DEFINE_string(grpc_server, "localhost:50051", "network address of the GRPC server");
 
 
 const int K = 1000;
@@ -112,7 +113,7 @@ class GrpcTreatmentExecutor: public TreatmentExecutor {
 
     client_config_.SetString("synchronization", "SYNC");
     client_config_.SetString("rpc_arity", "STREAMING");
-    client_config_.SetString("target", "localhost:50051");
+    client_config_.SetString("target", FLAGS_grpc_server);
     client_config_.SetInt("n_client_channels", 64);
     client_config_.SetInt("n_threads", n_threads); 
     client_config_.SetInt("benchmark_duration", 10);
@@ -154,7 +155,7 @@ class GrpcLogTreatmentExecutor: public TreatmentExecutor {
 
     client_config_.SetString("synchronization", "SYNC");
     client_config_.SetString("rpc_arity", "STREAMING");
-    client_config_.SetString("target", "localhost:50051");
+    client_config_.SetString("target", FLAGS_grpc_server);
     client_config_.SetInt("n_client_channels", 64);
     client_config_.SetInt("n_threads", n_threads); 
     client_config_.SetInt("benchmark_duration", 10);
@@ -396,7 +397,7 @@ class EngineExperiment: public Experiment {
       engine_ = std::move(CreateEngineFromFile());
       treatment_executor_.reset(new LocalStatsExecutor(engine_.get()));
     } else {
-      LOG(FATAL) << "Mode not supported";
+      LOG(FATAL) << "Mode not supported:mke engine_bench_build";
     }
     
     if (FLAGS_use_profiler == true) {
