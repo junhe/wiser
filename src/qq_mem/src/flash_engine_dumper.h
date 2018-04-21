@@ -14,8 +14,12 @@
 #include "compression.h"
 
 
+#define SKIP_LIST_FIRST_BYTE 0xA3
+#define POSTING_LIST_FIRST_BYTE 0xF4
+
 constexpr int SKIP_INTERVAL = PackedIntsWriter::PACK_SIZE;
 constexpr int PACK_SIZE = PackedIntsWriter::PACK_SIZE;
+
 
 
 struct PostingBagBlobIndex {
@@ -595,6 +599,7 @@ class SkipListWriter {
     }
 
     int n_rows = docid_offs_.Size();
+    buf.Append(utils::MakeString(SKIP_LIST_FIRST_BYTE));
     buf.Append(n_rows);
     for (int i = 0; i < n_rows; i++) {
       AddRow(&buf, i, skip_pre_doc_ids);
@@ -667,9 +672,16 @@ struct SkipEntry {
 class SkipList {
  public:
   void Load(const uint8_t *buf) {
+    // byte 0 is the magic number
+    DLOG_IF(FATAL, buf[0] != SKIP_LIST_FIRST_BYTE)
+      << "Skip list has the wrong magic number: " << std::hex << buf[0];
+
+    // varint at byte 1 is the number of entries
     uint32_t num_entries;
-    int len = utils::varint_decode_uint32((char *)buf, 0, &num_entries);
-    VarintIterator it((const char *)buf, len, num_entries);
+    int len = utils::varint_decode_uint32((char *)buf, 1, &num_entries);
+
+    // byte 1 + len is the start of skip list entries
+    VarintIterator it((const char *)buf, 1 + len, num_entries);
 
     for (int entry_i = 0; entry_i < num_entries; entry_i++) {
       uint32_t previous_doc_id = it.Pop();

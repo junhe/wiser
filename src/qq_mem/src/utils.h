@@ -457,6 +457,10 @@ static inline void trim(std::string &s) {
     rtrim(s);
 }
 
+inline std::string MakeString(char ch) {
+  return std::string(1, ch);
+}
+
 
 } // namespace util
 #endif
