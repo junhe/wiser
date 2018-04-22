@@ -9,9 +9,6 @@
 
 typedef std::vector<int> array_t;
 
-array_t intersect_vec(const array_t &a1, const array_t &a2) {
-}
-
 array_t findIntersection(const array_t &A, const array_t &B) {
   array_t intersection;
   int n1 = A.size();
@@ -48,8 +45,6 @@ utils::ResultRow leetcode_bench(const int &n_postings) {
   }
   auto end = utils::now();
   auto dur = utils::duration(start, end);
-
-  assert(ret2.size() == n_postings);
 
   row["duration"] = std::to_string(dur / n_repeats);
   row["n_postings"] = std::to_string(n_postings);
