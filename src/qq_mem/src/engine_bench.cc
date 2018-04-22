@@ -22,6 +22,7 @@ DEFINE_int32(n_threads, 1, "Number of client threads");
 DEFINE_string(exp_mode, "local", "local/grpc/grpclog/localquerylog");
 DEFINE_bool(use_profiler, true, "Use profiler");
 DEFINE_string(grpc_server, "localhost", "network address of the GRPC server");
+DEFINE_int32(run_duration, 15, "number of seconds to run the client");
 
 
 const int K = 1000;
@@ -119,7 +120,7 @@ class GrpcTreatmentExecutor: public TreatmentExecutor {
     client_config_.SetString("target", GetTargetUrl(FLAGS_grpc_server));
     client_config_.SetInt("n_client_channels", 64);
     client_config_.SetInt("n_threads", n_threads); 
-    client_config_.SetInt("benchmark_duration", 10);
+    client_config_.SetInt("benchmark_duration", FLAGS_run_duration);
     // client_config_.SetBool("save_reply", true);
     client_config_.SetBool("save_reply", false);
   }
@@ -161,7 +162,7 @@ class GrpcLogTreatmentExecutor: public TreatmentExecutor {
     client_config_.SetString("target", GetTargetUrl(FLAGS_grpc_server));
     client_config_.SetInt("n_client_channels", 64);
     client_config_.SetInt("n_threads", n_threads); 
-    client_config_.SetInt("benchmark_duration", 10);
+    client_config_.SetInt("benchmark_duration", FLAGS_run_duration);
     // client_config_.SetBool("save_reply", true);
     client_config_.SetBool("save_reply", false);
   }
@@ -368,7 +369,7 @@ class EngineExperiment: public Experiment {
 
     Treatment t;
     t.tag = "querylog";
-    t.n_queries = 10000;
+    t.n_queries = 100000;
     t.query_log_path = "/mnt/ssd/realistic_querylog";
     treatments.push_back(t);
 

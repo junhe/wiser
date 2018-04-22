@@ -1,4 +1,4 @@
-import subprocess
+import subprocess, os
 import time
 import shlex
 from pyreuse.helpers import shcmd, cd
@@ -8,6 +8,15 @@ remote_addr = "node.conan-wisc-2.fsperfatscale-pg0"
 n_server_threads = 32
 n_client_threads = 32
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
+# search_engine = "qq_mem_compressed"
+profile_qq_server = "true"
+
+
+gprof_env = os.environ.copy()
+gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
+
+
+
 
 def remote_cmd_chwd(dir_path, cmd):
     return remote_cmd("cd {}; {}".format(dir_path, cmd))
@@ -43,11 +52,17 @@ def start_server():
     print "starting server ..."
     print "-" * 20
     with cd("/users/jhe/flashsearch/src/qq_mem"):
-        p = subprocess.Popen(shlex.split(
-            "./build/qq_server -sync_type=ASYNC -n_threads={n_threads} -addr={server} -port=50051 -engine={engine}"
-            .format(server = server_addr,
+        cmd = "./build/qq_server "\
+              "-sync_type=ASYNC -n_threads={n_threads} "\
+              "-addr={server} -port=50051 -engine={engine} -use_profiler={profile}"\
+              .format(server = server_addr,
                     n_threads = n_server_threads,
-                    engine = search_engine)))
+                    engine = search_engine,
+                    profile = profile_qq_server)
+        print "-" * 20
+        print "server cmd:", cmd
+        print "-" * 20
+        p = subprocess.Popen(shlex.split(cmd), env = gprof_env)
         return p
 
 def main():
@@ -71,6 +86,4 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
 

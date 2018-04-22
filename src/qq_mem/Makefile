@@ -65,6 +65,9 @@ two_nodes:
 profile:
 	google-pprof --text ./build/engine_bench ./build/my.profile.new
 
+server_profile:
+	google-pprof --text ./build/qq_server ./qq_server.profile
+
 profile_gv:
 	google-pprof --pdf ./build/engine_bench ./build/my.profile.new > profile.pdf
 
