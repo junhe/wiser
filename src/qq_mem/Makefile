@@ -40,6 +40,13 @@ engine_bench:
 		make -j32 engine_bench && \
 		CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=locallog -use_profiler=true
 
+heap_check:
+	cd build && cmake ../src/ && \
+		make -j32 engine_bench && \
+		HEAPCHECK=normal ./engine_bench -exp_mode=locallog -use_profiler=false
+
+
+
 engine_bench_build:
 	cd build && cmake ../src/ && make -j32 engine_bench
 

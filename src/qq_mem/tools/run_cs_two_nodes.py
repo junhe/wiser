@@ -1,7 +1,9 @@
 import subprocess, os
 import time
 import shlex
-from pyreuse.helpers import shcmd, cd
+from pyreuse.helpers import *
+from pyreuse.sysutils.cgroup import *
+from pyreuse.macros import *
 
 server_addr = "node.conan-wisc.fsperfatscale-pg0"
 remote_addr = "node.conan-wisc-2.fsperfatscale-pg0"
@@ -10,11 +12,63 @@ n_client_threads = 32
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
 # search_engine = "qq_mem_compressed"
 profile_qq_server = "true"
+server_mem_size = 300 * MB
 
 
 gprof_env = os.environ.copy()
 gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
 
+
+class Cgroup(object):
+    def __init__(self, name, subs):
+        self.name = name
+        self.subs = subs
+
+        shcmd('sudo cgcreate -g {subs}:{name}'.format(subs=subs, name=name))
+
+    def set_item(self, sub, item, value):
+        """
+        Example: sub='memory', item='memory.limit_in_bytes'
+        echo 3221225472 > memory/confine/memory.limit_in_bytes
+        """
+        path = self._path(sub, item)
+        shcmd("echo {value} |sudo tee {path}".format(value = value, path = path))
+
+        # self._write(sub, item, value)
+
+        ret_value = self._read(sub, item)
+
+        if ret_value != str(value):
+            print 'Warning:', ret_value, '!=', value
+
+    def get_item(self, sub, item):
+        return self._read(sub, item)
+
+    def execute(self, cmd):
+        cg_cmd = ['sudo', 'cgexec',
+                '-g', '{subs}:{name}'.format(subs=self.subs, name=self.name),
+                '--sticky']
+        cg_cmd += cmd
+        print cg_cmd
+        p = subprocess.Popen(cg_cmd)
+
+        return p
+
+    def _write(self, sub, item, value):
+        path = self._path(sub, item)
+        with open(path, 'w') as f:
+            f.write(str(value))
+
+    def _read(self, sub, item):
+        path = self._path(sub, item)
+        with open(path, 'r') as f:
+            value = f.read()
+
+        return value.strip()
+
+    def _path(self, sub, item):
+        path = os.path.join('/sys/fs/cgroup', sub, self.name, item)
+        return path
 
 
 
@@ -50,7 +104,12 @@ def kill_client():
 def start_server():
     print "-" * 20
     print "starting server ..."
+    print "server mem size:", server_mem_size
     print "-" * 20
+
+    cg = Cgroup(name='charlie', subs='memory')
+    cg.set_item('memory', 'memory.limit_in_bytes', server_mem_size)
+
     with cd("/users/jhe/flashsearch/src/qq_mem"):
         cmd = "./build/qq_server "\
               "-sync_type=ASYNC -n_threads={n_threads} "\
@@ -62,13 +121,17 @@ def start_server():
         print "-" * 20
         print "server cmd:", cmd
         print "-" * 20
-        p = subprocess.Popen(shlex.split(cmd), env = gprof_env)
+        # p = subprocess.Popen(shlex.split(cmd), env = gprof_env)
+        p = cg.execute(shlex.split(cmd))
         return p
+
 
 def main():
     kill_client()
 
-    compile_engine_bench()
+    # we already are doing it in Makefile, just make sure you run this script by `make two_nodes`
+    # compile_engine_bench()
+
     sync_build_dir()
 
     server_p = start_server()

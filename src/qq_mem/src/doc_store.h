@@ -304,6 +304,7 @@ class FlashDocStore {
       :fdt_map_(fdt_path),
        buffer_pool_(32, buffer_size_)      
   {
+    std::cout << "Loading doc index..." << std::endl; 
     // open fdx, load index
     utils::FileMap file_map(fdx_path);
     char *addr = file_map.Addr();

@@ -22,8 +22,13 @@ class TermIndex {
     const char *end = addr + file_length;
     const char *buf = addr;
 
+    int cnt = 0;
     while (buf < end) {
       buf = LoadEntry(buf);
+      cnt++;
+      if (cnt % 100000 == 0) {
+        std::cout << "Term index entries loaded: " << cnt << std::endl;
+      }
     }
 
     utils::UnmapFile(addr, fd, file_length);
@@ -75,6 +80,7 @@ class VacuumInvertedIndex {
     std::cout << "VacuumInvertedIndex Loading.............." << std::endl;
     std::cout << "term_index_path: " << term_index_path << std::endl;
     std::cout << "inverted_index_path: " << inverted_index_path << std::endl;
+    std::cout << "Loading term index ..................." << std::endl;
     term_index_.Load(term_index_path);
     file_data_ = (uint8_t *)file_map_.Addr();
     std::cout << "file_map_.Addr(): " << (void *)file_data_ << std::endl;
