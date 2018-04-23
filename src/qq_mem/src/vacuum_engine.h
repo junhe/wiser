@@ -1,8 +1,6 @@
 #ifndef VACUUM_ENGINE_H
 #define VACUUM_ENGINE_H
 
-#include <sys/mman.h>
-
 #include <iostream>
 #include <string>
 
@@ -72,30 +70,47 @@ class TermIndex {
 };
 
 
+// To use it, you must
+//
+// 1. LoadTermIndex()
+// 2. MapPostingLists()
+//
+// OR
+// 1. Load()
+//
+// Or
+// 1. Construct(path, path)
 class VacuumInvertedIndex {
  public:
+  VacuumInvertedIndex() {}
+
   VacuumInvertedIndex(
       const std::string term_index_path, 
       const std::string inverted_index_path)
   {
+    Load(term_index_path, inverted_index_path);
+  }
 
-    file_map_.Open(inverted_index_path);
-
+  void LoadTermIndex(const std::string term_index_path) {
     std::cout << "VacuumInvertedIndex Loading.............." << std::endl;
-    std::cout << "term_index_path: " << term_index_path << std::endl;
-    std::cout << "inverted_index_path: " << inverted_index_path << std::endl;
+    std::cout << "Open term_index_path: " << term_index_path << std::endl;
     std::cout << "Loading term index ..................." << std::endl;
     term_index_.Load(term_index_path);
+  }
 
-
-    // std::cout << "========================" << std::endl;
-    // std::cout << "Lockall all memory (MCL_CURRENT)" << std::endl;
-    // std::cout << "========================" << std::endl;
-
-    // int ret = mlockall(MCL_CURRENT);
-    // LOG_IF(FATAL, ret == -1) << "Failed to lock memory!";
-
+  void MapPostingLists(const std::string inverted_index_path) {
+    std::cout << "Open inverted_index_path: " << inverted_index_path << std::endl;
+    file_map_.Open(inverted_index_path);
     file_data_ = (uint8_t *)file_map_.Addr();
+  }
+
+
+  void Load(
+      const std::string term_index_path, 
+      const std::string inverted_index_path) {
+
+    LoadTermIndex(term_index_path);
+    MapPostingLists(inverted_index_path);
   }
 
   off_t FindPostingListOffset(const Term term) {
@@ -134,15 +149,16 @@ class VacuumInvertedIndex {
 class VacuumEngine : public SearchEngineServiceNew {
  public:
   VacuumEngine(const std::string engine_dir_path)
-    :inverted_index_(
-        utils::JoinPath(engine_dir_path, "my.tip"),
-        utils::JoinPath(engine_dir_path, "my.vacuum")),
-     doc_store_(
+    :doc_store_(
         utils::JoinPath(engine_dir_path, "my.fdx"),
         utils::JoinPath(engine_dir_path, "my.fdt"))
   {
     doc_lengths_.Deserialize(utils::JoinPath(engine_dir_path, "my.doc_length"));
     similarity_.Reset(doc_lengths_.GetAvgLength());
+
+    inverted_index_.LoadTermIndex(utils::JoinPath(engine_dir_path, "my.tip"));
+    inverted_index_.MapPostingLists(
+        utils::JoinPath(engine_dir_path, "my.vacuum"));
   }
 
   int TermCount() const override {

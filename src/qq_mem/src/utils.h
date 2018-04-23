@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <sys/mman.h>
+
 #include <chrono>
 #include <fstream>
 #include <sstream>
@@ -465,6 +467,16 @@ static inline void trim(std::string &s) {
 inline std::string MakeString(char ch) {
   return std::string(1, ch);
 }
+
+inline void LockAllMemory() {
+    std::cout << "========================" << std::endl;
+    std::cout << "Lockall all memory (MCL_CURRENT)" << std::endl;
+    std::cout << "========================" << std::endl;
+
+    int ret = mlockall(MCL_CURRENT);
+    LOG_IF(FATAL, ret == -1) << "Failed to lock memory!";
+}
+
 
 
 } // namespace util
