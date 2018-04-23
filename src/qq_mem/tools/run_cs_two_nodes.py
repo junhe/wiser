@@ -11,9 +11,10 @@ n_server_threads = 32
 n_client_threads = 32
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
 # search_engine = "qq_mem_compressed"
-profile_qq_server = "true"
-server_mem_size = 300 * MB
-
+profile_qq_server = "false"
+server_mem_size = 500 * MB
+mem_swappiness = 0
+os_swap = True
 
 gprof_env = os.environ.copy()
 gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
@@ -70,6 +71,24 @@ class Cgroup(object):
         path = os.path.join('/sys/fs/cgroup', sub, self.name, item)
         return path
 
+def set_swap(val):
+    if val == True:
+        print "-" * 20
+        print "Enabling swap..."
+        print "-" * 20
+        shcmd("sudo swapon -a")
+    else:
+        print "-" * 20
+        print "Disabling swap..."
+        print "-" * 20
+        shcmd("sudo swapoff -a")
+
+
+def check_port():
+    print "-" * 20
+    print "Port of qq server"
+    shcmd("sudo netstat -ap | grep qq_server")
+    print "-" * 20
 
 
 def remote_cmd_chwd(dir_path, cmd):
@@ -101,14 +120,20 @@ def kill_client():
     p = remote_cmd("pkill engine_bench")
     p.wait()
 
+def kill_server():
+    shcmd("sudo pkill qq_server", ignore_error=True)
+
 def start_server():
     print "-" * 20
     print "starting server ..."
     print "server mem size:", server_mem_size
     print "-" * 20
 
+    set_swap(os_swap)
+
     cg = Cgroup(name='charlie', subs='memory')
     cg.set_item('memory', 'memory.limit_in_bytes', server_mem_size)
+    cg.set_item('memory', 'memory.swappiness', mem_swappiness)
 
     with cd("/users/jhe/flashsearch/src/qq_mem"):
         cmd = "./build/qq_server "\
@@ -123,10 +148,14 @@ def start_server():
         print "-" * 20
         # p = subprocess.Popen(shlex.split(cmd), env = gprof_env)
         p = cg.execute(shlex.split(cmd))
+
+        time.sleep(2)
+
         return p
 
 
 def main():
+    kill_server()
     kill_client()
 
     # we already are doing it in Makefile, just make sure you run this script by `make two_nodes`
@@ -137,7 +166,8 @@ def main():
     server_p = start_server()
 
     print "Wating for some time util the server starts...."
-    time.sleep(30)
+    time.sleep(60)
+    check_port()
 
     client_p = start_client()
 

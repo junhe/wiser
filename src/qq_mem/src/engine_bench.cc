@@ -369,8 +369,9 @@ class EngineExperiment: public Experiment {
 
     Treatment t;
     t.tag = "querylog";
-    t.n_queries = 100000;
+    t.n_queries = 1000000;
     t.query_log_path = "/mnt/ssd/realistic_querylog";
+    // t.query_log_path = "/mnt/ssd/short_log";
     treatments.push_back(t);
 
     // for (auto &t : treatments) {

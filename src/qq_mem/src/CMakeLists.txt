@@ -10,8 +10,8 @@ set(DEV_OPTS        -std=c++11 -O0 -g -Wreturn-type)
 
 #add_compile_options(${INDEXING_OPTS})
 #add_compile_options(${DEV_OPTS})
-#add_compile_options(${PRODUCTION_OPTS} ${TCMALLOC_OPTS})
-add_compile_options(${DEBUG_OPTS})
+add_compile_options(${PRODUCTION_OPTS})
+#add_compile_options(${DEBUG_OPTS})
 
 set(GPROFILER profiler)
 #set(CMAKE_CXX_COMPILER "/usr/lib/ccache/g++-5")
