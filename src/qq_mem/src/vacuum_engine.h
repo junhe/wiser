@@ -91,11 +91,20 @@ class VacuumInvertedIndex {
     Load(term_index_path, inverted_index_path);
   }
 
+  void Load(
+      const std::string term_index_path, 
+      const std::string inverted_index_path) {
+
+    LoadTermIndex(term_index_path);
+    MapPostingLists(inverted_index_path);
+  }
+
   void LoadTermIndex(const std::string term_index_path) {
     std::cout << "VacuumInvertedIndex Loading.............." << std::endl;
     std::cout << "Open term_index_path: " << term_index_path << std::endl;
     std::cout << "Loading term index ..................." << std::endl;
     term_index_.Load(term_index_path);
+    std::cout << "Term index loaded ..................." << std::endl;
   }
 
   void MapPostingLists(const std::string inverted_index_path) {
@@ -104,14 +113,6 @@ class VacuumInvertedIndex {
     file_data_ = (uint8_t *)file_map_.Addr();
   }
 
-
-  void Load(
-      const std::string term_index_path, 
-      const std::string inverted_index_path) {
-
-    LoadTermIndex(term_index_path);
-    MapPostingLists(inverted_index_path);
-  }
 
   off_t FindPostingListOffset(const Term term) {
     TermIndex::ConstIterator it = term_index_.Find(term);
@@ -158,7 +159,7 @@ class VacuumEngine : public SearchEngineServiceNew {
   void Load() override {
     LOG_IF(FATAL, is_loaded_ == true) << "Engine is already loaded.";
 
-    doc_store_.Load(utils::JoinPath(engine_dir_path_, "my.fdx"),
+    doc_store_.LoadFdx(utils::JoinPath(engine_dir_path_, "my.fdx"),
                     utils::JoinPath(engine_dir_path_, "my.fdt"));
 
     doc_lengths_.Deserialize(utils::JoinPath(engine_dir_path_, "my.doc_length"));
@@ -168,9 +169,13 @@ class VacuumEngine : public SearchEngineServiceNew {
     inverted_index_.LoadTermIndex(utils::JoinPath(engine_dir_path_, "my.tip"));
 
     utils::LockAllMemory(); // <<<<<<< Lock memory
+    std::cout << "sleeping......" << std::endl;
+    utils::sleep(4);
 
     inverted_index_.MapPostingLists(
         utils::JoinPath(engine_dir_path_, "my.vacuum"));
+
+    doc_store_.MapFdt(utils::JoinPath(engine_dir_path_, "my.fdt"));
 
     is_loaded_ = true;
   }

@@ -298,11 +298,21 @@ class FlashDocStoreDumper : public CompressedDocStore {
 };
 
 
+// Either call:
+//   Load()
+// Or
+//   LoadFdx()
+//   MapFdt()
 class FlashDocStore {
  public:
   FlashDocStore() :buffer_pool_(32, buffer_size_) {}
 
   void Load(const std::string fdx_path, const std::string fdt_path) {
+    LoadFdx(fdx_path, fdt_path);
+    MapFdt(fdt_path);
+  }
+
+  void LoadFdx(const std::string fdx_path, const std::string fdt_path) {
     std::cout << "Loading doc index..." << std::endl; 
     // open fdx, load index
     utils::FileMap file_map;
@@ -323,6 +333,11 @@ class FlashDocStore {
 
     fdt_map_.Open(fdt_path);
     offset_store_.push_back(fdt_map_.Length());  // end of file
+    fdt_map_.Close();
+  }
+
+  void MapFdt(const std::string fdt_path) {
+    fdt_map_.Open(fdt_path);
   }
 
   ~FlashDocStore() {
