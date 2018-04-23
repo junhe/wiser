@@ -239,6 +239,8 @@ class AsyncServer : public ServerService {
 
     int factor = 5000; // was 5000
     std::cout << "Creating RPC Contexts: " << factor * num_cqs << std::endl;
+    std::cout << "Memory used by RPC contexts: "
+      << (factor * num_cqs)  * sizeof(ServerRpcContext) / 1024 << " KB\n";
     // contexts_ has [cq0, cq1, ... cqn-1, cq0, .....]
     for (int i = 0; i < factor; i++) {
       for (int j = 0; j < num_cqs; j++) {
