@@ -4,6 +4,7 @@ import shlex
 from pyreuse.helpers import *
 from pyreuse.sysutils.cgroup import *
 from pyreuse.macros import *
+from pyreuse.sysutils.iostat_parser import parse_iostat
 
 server_addr = "node.conan-wisc.fsperfatscale-pg0"
 remote_addr = "node.conan-wisc-2.fsperfatscale-pg0"
@@ -73,6 +74,12 @@ class Cgroup(object):
     def _path(self, sub, item):
         path = os.path.join('/sys/fs/cgroup', sub, self.name, item)
         return path
+
+def get_iostat_mb_read():
+    out = subprocess.check_output("iostat -m {}".format(device_name), shell=True)
+    print out
+    return parse_iostat(out)['io']['MB_read']
+
 
 def drop_cache():
     shcmd("sudo dropcache")
@@ -178,6 +185,8 @@ def main():
 
     print "Wating for some time util the server starts...."
     time.sleep(30)
+    mb_read_a = get_iostat_mb_read()
+
     check_port()
 
     client_p = start_client()
@@ -185,8 +194,24 @@ def main():
     print "wating for some other time...."
     time.sleep(5)
 
-    client_p.wait()
-    server_p.wait()
+
+    try:
+	client_p.wait()
+	server_p.wait()
+
+    except KeyboardInterrupt:
+	mb_read_b = get_iostat_mb_read()
+        print '-' * 30
+	print "MB read: ", int(mb_read_b) - int(mb_read_a)
+        print '-' * 30
+
+	os.killpg(os.getpgid(client_p.pid), signal.SIGTERM)
+	os.killpg(os.getpgid(server_p.pid), signal.SIGTERM)
+
+	client_p.wait()
+	server_p.wait()
+
+
 
 if __name__ == "__main__":
     main()
