@@ -156,6 +156,8 @@ class VacuumEngine : public SearchEngineServiceNew {
   {}
 
   void Load() override {
+    LOG_IF(FATAL, is_loaded_ == true) << "Engine is already loaded.";
+
     doc_store_.Load(utils::JoinPath(engine_dir_path_, "my.fdx"),
                     utils::JoinPath(engine_dir_path_, "my.fdt"));
 
@@ -165,7 +167,7 @@ class VacuumEngine : public SearchEngineServiceNew {
 
     inverted_index_.LoadTermIndex(utils::JoinPath(engine_dir_path_, "my.tip"));
 
-    utils::LockAllMemory();
+    utils::LockAllMemory(); // <<<<<<< Lock memory
 
     inverted_index_.MapPostingLists(
         utils::JoinPath(engine_dir_path_, "my.vacuum"));

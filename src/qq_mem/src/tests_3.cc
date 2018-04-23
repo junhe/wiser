@@ -19,6 +19,7 @@ static std::unique_ptr<AsyncServer> CreateTestServer(const std::string &target,
 
   GeneralConfig config;
   config.SetString("target", target);
+  config.SetString("engine_name", "qq_mem_compressed");
   config.SetInt("n_threads_per_cq", n_threads_per_cq);
   config.SetInt("n_server_threads", n_server_threads);
   config.SetInt("server_duration", n_secs);
@@ -27,6 +28,7 @@ static std::unique_ptr<AsyncServer> CreateTestServer(const std::string &target,
 
   std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
       "qq_mem_compressed");
+
 
   std::unique_ptr<AsyncServer> server(new AsyncServer(config, std::move(engine)));
   return server;
