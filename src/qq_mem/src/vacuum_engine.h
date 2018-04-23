@@ -157,6 +157,8 @@ class VacuumEngine : public SearchEngineServiceNew {
     similarity_.Reset(doc_lengths_.GetAvgLength());
 
     inverted_index_.LoadTermIndex(utils::JoinPath(engine_dir_path, "my.tip"));
+    utils::LockAllMemory();
+
     inverted_index_.MapPostingLists(
         utils::JoinPath(engine_dir_path, "my.vacuum"));
   }

@@ -214,14 +214,19 @@ class AsyncServer : public ServerService {
 
     ServerBuilder builder;
 
-    std::cout << "listening on " << config.GetString("target") << std::endl;
+    std::cout << "Adding listening port on " << config.GetString("target") << std::endl;
     builder.AddListeningPort(config.GetString("target"), grpc::InsecureServerCredentials());
+    std::cout << "Now listening on " << config.GetString("target") << std::endl;
     async_service_.Initialize(search_engine_.get());
+
+    std::cout << "Resistering service...." << std::endl;
     builder.RegisterService(&async_service_);
+    std::cout << "Service registered." << std::endl;
     
     int num_threads = config.GetInt("n_server_threads"); 
     int tpc = config.GetInt("n_threads_per_cq");  // 1 if unspecified
     int num_cqs = (num_threads + tpc - 1) / tpc;     // ceiling operator
+    std::cout << "Creating " << num_cqs << " completion queues ... " << std::endl;
     for (int i = 0; i < num_cqs; i++) {
       srv_cqs_.emplace_back(builder.AddCompletionQueue());
     }
@@ -230,8 +235,8 @@ class AsyncServer : public ServerService {
       cq_.emplace_back(i % srv_cqs_.size());
     }
 
-    // builder.AddChannelArgument("grpc.optimization_target", "throughput");
-    // builder.AddChannelArgument("prpc.minimal_stack", 1);
+    builder.AddChannelArgument("grpc.optimization_target", "throughput");
+    builder.AddChannelArgument("prpc.minimal_stack", 1);
 
     std::cout << "Building and starting..." << std::endl;
     server_ = builder.BuildAndStart();
