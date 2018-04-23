@@ -318,6 +318,7 @@ class FlashDocStore {
       offset += sizeof(long int);
     }
 
+    std::cout << "Doc index loaded." << std::endl; 
     file_map.Close();
 
     // open fdt, ready for query

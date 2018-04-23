@@ -225,28 +225,37 @@ class AsyncServer : public ServerService {
     for (int i = 0; i < num_cqs; i++) {
       srv_cqs_.emplace_back(builder.AddCompletionQueue());
     }
+    std::cout << "Number of completion queue created: " << num_cqs << std::endl;
     for (int i = 0; i < num_threads; i++) {
       cq_.emplace_back(i % srv_cqs_.size());
     }
 
-    builder.AddChannelArgument("grpc.optimization_target", "throughput");
-    builder.AddChannelArgument("prpc.minimal_stack", 1);
+    // builder.AddChannelArgument("grpc.optimization_target", "throughput");
+    // builder.AddChannelArgument("prpc.minimal_stack", 1);
 
+    std::cout << "Building and starting..." << std::endl;
     server_ = builder.BuildAndStart();
+    std::cout << "Built and started" << std::endl;
 
+    int factor = 5000; // was 5000
+    std::cout << "Creating RPC Contexts: " << factor * num_cqs << std::endl;
     // contexts_ has [cq0, cq1, ... cqn-1, cq0, .....]
-    for (int i = 0; i < 5000; i++) {
+    for (int i = 0; i < factor; i++) {
       for (int j = 0; j < num_cqs; j++) {
         contexts_.emplace_back(new ServerRpcContext(
               &async_service_, srv_cqs_[j].get(), search_engine_.get()));
       }
     }
     assert(contexts_.size() == 5000 * num_cqs);
+    std::cout << "All RPC contexts are created " << factor * num_cqs << std::endl;
+
 
     for (int i = 0; i < num_threads; i++) {
       shutdown_state_.emplace_back(new PerThreadShutdownState());
       threads_.emplace_back(&AsyncServer::ThreadFunc, this, i);
     }
+
+    std::cout << "Async Server constructed!! " << std::endl;
   }
 
   ~AsyncServer() {
