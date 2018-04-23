@@ -483,6 +483,13 @@ inline void LockAllMemory() {
     std::cout << "========================" << std::endl;
 }
 
+inline void AdviseDoNotNeed(void *addr, size_t len) {
+  int ret = posix_madvise(addr, len, POSIX_MADV_DONTNEED);
+  if (ret != 0) {
+    perror("AdviseDoNotNeed()");
+    exit(1);
+  }
+}
 
 
 } // namespace util
