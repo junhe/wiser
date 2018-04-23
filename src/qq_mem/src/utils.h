@@ -333,6 +333,9 @@ class FileMap {
 
   void Close() {
     UnmapFile(addr_, fd_, file_length_);
+    addr_ = nullptr;
+    fd_ = -1;
+    file_length_ = -1;
   }
 
   char *Addr() {
