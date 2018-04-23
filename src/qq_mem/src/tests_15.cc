@@ -20,6 +20,7 @@ TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
   engine_dumper.Dump();
 
   VacuumEngine engine(dir_path);
+  engine.Load();
 
   // Sanity check
   REQUIRE(engine.TermCount() == 3);
@@ -82,6 +83,7 @@ TEST_CASE( "tests two intersection ngine", "[qqflash][two]" ) {
   engine_dumper.Dump();
 
   VacuumEngine engine(dir_path);
+  engine.Load();
 
   SECTION("Two-term non-phrase query") {
     SearchResult result = engine.Search(SearchQuery({"a", "b"}, true));
@@ -125,6 +127,7 @@ TEST_CASE( "Testing 5 long docs", "[qqflash][dump5]" ) {
   engine_dumper.Dump();
 
   VacuumEngine engine(dir_path);
+  engine.Load();
 
   SECTION("one-term query") {
     SearchResult result = engine.Search(SearchQuery({"1860"}, true));
@@ -164,6 +167,7 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
   engine_dumper.Dump();
 
   VacuumEngine vacuum_engine(dir_path);
+  vacuum_engine.Load();
 
 
   QqMemEngineDelta qq_engine;
@@ -208,6 +212,7 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
 
 // TEST_CASE( "Load qq mem dump and dump to vacuum format", "[vac]" ) {
   // VacuumEngine engine("/mnt/ssd/vacuum_engine_dump");
+  // engine.Load();
   // REQUIRE(engine.TermCount() == 10000);
 
   // SearchQuery query({"mesolih"}, true);
@@ -230,6 +235,7 @@ TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
   engine_dumper.Dump();
 
   VacuumEngine engine(dir_path);
+  engine.Load();
 
   // Sanity check
   REQUIRE(engine.TermCount() == 3);

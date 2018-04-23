@@ -146,28 +146,40 @@ class VacuumInvertedIndex {
 };
 
 
+// To use
+// engine = VacuumEngine(path)
+// engine.Load()
 class VacuumEngine : public SearchEngineServiceNew {
  public:
   VacuumEngine(const std::string engine_dir_path)
-    :doc_store_(
-        utils::JoinPath(engine_dir_path, "my.fdx"),
-        utils::JoinPath(engine_dir_path, "my.fdt"))
-  {
-    doc_lengths_.Deserialize(utils::JoinPath(engine_dir_path, "my.doc_length"));
+    :engine_dir_path_(engine_dir_path)
+  {}
+
+  void Load() override {
+    doc_store_.Load(utils::JoinPath(engine_dir_path_, "my.fdx"),
+                    utils::JoinPath(engine_dir_path_, "my.fdt"));
+
+    doc_lengths_.Deserialize(utils::JoinPath(engine_dir_path_, "my.doc_length"));
+
     similarity_.Reset(doc_lengths_.GetAvgLength());
 
-    inverted_index_.LoadTermIndex(utils::JoinPath(engine_dir_path, "my.tip"));
+    inverted_index_.LoadTermIndex(utils::JoinPath(engine_dir_path_, "my.tip"));
+
     utils::LockAllMemory();
 
     inverted_index_.MapPostingLists(
-        utils::JoinPath(engine_dir_path, "my.vacuum"));
+        utils::JoinPath(engine_dir_path_, "my.vacuum"));
+
+    is_loaded_ = true;
   }
 
   int TermCount() const override {
+    DLOG_IF(FATAL, is_loaded_ == false) << "Engine is not yet loaded";
     return inverted_index_.NumTerms(); 
   }
 
   std::map<std::string, int> PostinglistSizes(const TermList &terms) override {
+    DLOG_IF(FATAL, is_loaded_ == false) << "Engine is not yet loaded";
     std::map<std::string, int> ret;
 
     for (auto &term : terms) {
@@ -181,6 +193,8 @@ class VacuumEngine : public SearchEngineServiceNew {
   }
 
   SearchResult Search(const SearchQuery &query) override {
+    DLOG_IF(FATAL, is_loaded_ == false) << "Engine is not yet loaded";
+
     SearchResult result;
 
     if (query.n_results == 0) {
@@ -257,6 +271,9 @@ class VacuumEngine : public SearchEngineServiceNew {
 
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
+
+  std::string engine_dir_path_;
+  bool is_loaded_ = false;
 };
 
 

@@ -413,7 +413,9 @@ TEST_CASE( "QQFlash Compressed Doc Store", "[qqflash]" ) {
     store.Clear();
 
     // search
-    FlashDocStore search_store("/tmp/my.fdx", "/tmp/my.fdt");
+    FlashDocStore search_store;
+    search_store.Load("/tmp/my.fdx", "/tmp/my.fdt");
+
     REQUIRE(search_store.Size() == 2);
     REQUIRE(search_store.Has(0));
     REQUIRE(search_store.Has(1));

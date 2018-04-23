@@ -16,6 +16,9 @@ class SearchEngineServiceNew {
   virtual void AddDocument(const DocInfo doc_info) = 0;
   virtual int LoadLocalDocuments(const std::string &line_doc_path, 
       int n_rows, const std::string loader) = 0;
+  virtual void Load() {
+    LOG(FATAL) << "Load() is not implemented.";
+  }
   virtual int TermCount() const = 0;
   virtual std::map<std::string, int> PostinglistSizes(const TermList &terms) = 0;
   virtual SearchResult Search(const SearchQuery &query) = 0; 

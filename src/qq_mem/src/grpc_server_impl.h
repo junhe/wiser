@@ -170,6 +170,7 @@ class ServerService {
       const GeneralConfig config) {
 
     if (IsVacuumUrl(config.GetString("engine_name")) == true) {
+      engine->Load();
       return;
     }
 
@@ -210,7 +211,6 @@ class AsyncServer : public ServerService {
   AsyncServer(const GeneralConfig config, std::unique_ptr<SearchEngineServiceNew> engine)
       :config_(config), search_engine_(std::move(engine)) {
 
-    LoadEngine(search_engine_.get(), config);
 
     ServerBuilder builder;
 
@@ -261,6 +261,9 @@ class AsyncServer : public ServerService {
       shutdown_state_.emplace_back(new PerThreadShutdownState());
       threads_.emplace_back(&AsyncServer::ThreadFunc, this, i);
     }
+
+    std::cout << "Loading search engine..." << std::endl;
+    LoadEngine(search_engine_.get(), config);
 
     std::cout << "Async Server constructed!! " << std::endl;
   }
