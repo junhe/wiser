@@ -111,8 +111,9 @@ class VacuumInvertedIndex {
     std::cout << "Open inverted_index_path: " << inverted_index_path << std::endl;
     file_map_.Open(inverted_index_path);
     file_data_ = (uint8_t *)file_map_.Addr();
-  }
 
+    // utils::AdviseDoNotNeed(file_map_.Addr(), file_map_.Length());
+  }
 
   off_t FindPostingListOffset(const Term term) {
     TermIndex::ConstIterator it = term_index_.Find(term);

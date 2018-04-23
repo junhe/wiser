@@ -12,9 +12,12 @@ n_client_threads = 32
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
 # search_engine = "qq_mem_compressed"
 profile_qq_server = "false"
-server_mem_size = 500 * MB
+server_mem_size = 1241522176 + 500*MB # 1241522176 is the basic memory 32 threads(locked)
+# server_mem_size = 1765810176 + 500*MB # 1765810176 is the basic memory for 64 threads (locked)
 mem_swappiness = 0
-os_swap = True
+os_swap = False
+device_name = "sdc"
+read_ahead_kb = 4
 
 gprof_env = os.environ.copy()
 gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
@@ -71,6 +74,9 @@ class Cgroup(object):
         path = os.path.join('/sys/fs/cgroup', sub, self.name, item)
         return path
 
+def drop_cache():
+    shcmd("sudo dropcache")
+
 def set_swap(val):
     if val == True:
         print "-" * 20
@@ -83,6 +89,9 @@ def set_swap(val):
         print "-" * 20
         shcmd("sudo swapoff -a")
 
+def set_read_ahead_kb(val):
+    path = "/sys/block/{}/queue/read_ahead_kb".format(device_name)
+    shcmd("echo {} |sudo tee {}".format(val, path))
 
 def check_port():
     print "-" * 20
@@ -130,6 +139,8 @@ def start_server():
     print "-" * 20
 
     set_swap(os_swap)
+    set_read_ahead_kb(read_ahead_kb)
+    drop_cache()
 
     cg = Cgroup(name='charlie', subs='memory')
     cg.set_item('memory', 'memory.limit_in_bytes', server_mem_size)
@@ -166,7 +177,7 @@ def main():
     server_p = start_server()
 
     print "Wating for some time util the server starts...."
-    time.sleep(60)
+    time.sleep(30)
     check_port()
 
     client_p = start_client()
