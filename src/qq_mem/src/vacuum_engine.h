@@ -77,8 +77,10 @@ class VacuumInvertedIndex {
   VacuumInvertedIndex(
       const std::string term_index_path, 
       const std::string inverted_index_path)
-    : file_map_(inverted_index_path)
   {
+
+    file_map_.Open(inverted_index_path);
+
     std::cout << "VacuumInvertedIndex Loading.............." << std::endl;
     std::cout << "term_index_path: " << term_index_path << std::endl;
     std::cout << "inverted_index_path: " << inverted_index_path << std::endl;

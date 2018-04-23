@@ -166,7 +166,8 @@ class DocLengthCharStore {
   void Deserialize(std::string path) {
     doc_cnt_ = 0;
 
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
     const char *p = file_map.Addr();
     int count = *(int *)p;

@@ -109,7 +109,8 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
 
 
     // Open the file
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
     // Read data by TermFreqIterator
     TermFreqIterator iter((const uint8_t *)file_map.Addr(), &skip_list);
@@ -133,7 +134,8 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
     SkipList skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
 
     // Open the file
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
     // Read data by TermFreqIterator
     TermFreqIterator iter((const uint8_t *)file_map.Addr(), &skip_list);
@@ -168,7 +170,8 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
     SkipList skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
 
     // Open the file
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
     // Read data by TermFreqIterator
     TermFreqIterator iter((const uint8_t *)file_map.Addr(), &skip_list);
@@ -194,7 +197,8 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
     SkipList skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
 
     // Open the file
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
     // Read data by TermFreqIterator
     TermFreqIterator iter((const uint8_t *)file_map.Addr(), &skip_list);
@@ -226,7 +230,8 @@ TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
         GetSkipPostingPreDocIds(doc_ids), file_offsets.BlobOffsets());
 
     // Open the file
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
     // Read data by TermFreqIterator
     DocIdIterator iter((const uint8_t *)file_map.Addr(), &skip_list, num_docids);
@@ -315,7 +320,8 @@ TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
         GetSkipPostingPreDocIds(doc_ids), file_offsets.BlobOffsets());
 
     // Open the file
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
     // Read data by TermFreqIterator
     DocIdIterator iter((const uint8_t *)file_map.Addr(), &skip_list, num_docids);
@@ -385,7 +391,8 @@ TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
         GetSkipPostingPreDocIds(doc_ids), file_offsets.BlobOffsets());
 
     // Open the file
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
     // Read data by TermFreqIterator
     DocIdIterator iter((const uint8_t *)file_map.Addr(), &skip_list, num_docids);

@@ -301,12 +301,14 @@ class FlashDocStoreDumper : public CompressedDocStore {
 class FlashDocStore {
  public:
   FlashDocStore(const std::string fdx_path, const std::string fdt_path)
-      :fdt_map_(fdt_path),
-       buffer_pool_(32, buffer_size_)      
+      : buffer_pool_(32, buffer_size_)      
   {
+    fdt_map_.Open(fdt_path);
+
     std::cout << "Loading doc index..." << std::endl; 
     // open fdx, load index
-    utils::FileMap file_map(fdx_path);
+    utils::FileMap file_map;
+    file_map.Open(fdx_path);
     char *addr = file_map.Addr();
 
     off_t offset = 0;
@@ -321,7 +323,6 @@ class FlashDocStore {
     std::cout << "Doc index loaded." << std::endl; 
     file_map.Close();
 
-    // open fdt, ready for query
     offset_store_.push_back(fdt_map_.Length());  // end of file
   }
 

@@ -320,7 +320,12 @@ void UnmapFile(char *addr, int fd, size_t file_length);
 
 class FileMap {
  public:
-  FileMap(const std::string &path) {
+  FileMap() {}
+
+  void Open(const std::string path) {
+    if (fd_ != -1)
+      LOG(FATAL) << "File is likely to be open already!";
+
     MapFile(path, &addr_, &fd_, &file_length_);
   }
 
@@ -337,9 +342,9 @@ class FileMap {
   }
 
  private: 
-  int fd_;
-  char *addr_;
-  size_t file_length_;
+  int fd_ = -1;
+  char *addr_ = nullptr;
+  size_t file_length_ = -1;
 };
 
 void RemoveDir(std::string path);

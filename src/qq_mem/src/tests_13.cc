@@ -17,7 +17,8 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
     FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
 
     // Open the file
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
     SECTION("Advance() to the end") {
       CozyBoxIterator iter((const uint8_t *)file_map.Addr());
@@ -62,7 +63,8 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
     FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
 
     // Open the file
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
 
     SECTION("Simple") {
@@ -190,7 +192,8 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
   SkipList tf_skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
 
   // Open the file
-  utils::FileMap file_map(path);
+  utils::FileMap file_map;
+  file_map.Open(path);
 
   // Read data by TermFreqIterator
   TermFreqIterator tf_iter((const uint8_t *)file_map.Addr(), &tf_skip_list);
@@ -224,7 +227,8 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
         blob_offs_of_pos_bags, in_blob_indexes);
 
     // Open the file
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
     // Initialize pos iterator
     PositionPostingBagIterator 
@@ -358,7 +362,8 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
   SkipList tf_skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
 
   // Open the file
-  utils::FileMap file_map(path);
+  utils::FileMap file_map;
+  file_map.Open(path);
 
   // Read data by TermFreqIterator
   TermFreqIterator tf_iter((const uint8_t *)file_map.Addr(), &tf_skip_list);
@@ -392,7 +397,8 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
         blob_offs_of_offset_bags, in_blob_indexes);
 
     // Open the file
-    utils::FileMap file_map(path);
+    utils::FileMap file_map;
+    file_map.Open(path);
 
     // Initialize pos iterator
     OffsetPostingBagIterator iter((const uint8_t*)file_map.Addr(), 

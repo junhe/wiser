@@ -234,6 +234,7 @@ class FileOffsetsOfBlobs {
       return vint_offs_[0];
     } else {
       LOG(FATAL) << "blob_index is too large.";
+      return -1; // suppress warning
     }
   }
 
