@@ -68,6 +68,17 @@ int main(int argc, char** argv) {
 
   signal(SIGINT, sigint_handler);
 
+  std::cout << "-----------------------------------" << std::endl;
+#ifdef NDEBUG
+  std::cout << "NDEBUG is defined, probably compiled in PRODUCTION mode." << std::endl;
+#else
+  std::cout << "NDEBUG is NOT defined, probably compiled with -O0, "
+    "may perform poorly." << std::endl;
+#endif
+  std::cout << "-----------------------------------" << std::endl;
+  utils::sleep(3);
+
+
   int n_secs = FLAGS_n_secs;
   const int n_threads = FLAGS_n_threads;
   const int n_docs = FLAGS_n_docs;

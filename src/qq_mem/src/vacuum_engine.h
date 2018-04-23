@@ -1,6 +1,8 @@
 #ifndef VACUUM_ENGINE_H
 #define VACUUM_ENGINE_H
 
+#include <sys/mman.h>
+
 #include <iostream>
 #include <string>
 
@@ -26,7 +28,7 @@ class TermIndex {
     while (buf < end) {
       buf = LoadEntry(buf);
       cnt++;
-      if (cnt % 100000 == 0) {
+      if (cnt % 1000000 == 0) {
         std::cout << "Term index entries loaded: " << cnt << std::endl;
       }
     }
@@ -82,8 +84,16 @@ class VacuumInvertedIndex {
     std::cout << "inverted_index_path: " << inverted_index_path << std::endl;
     std::cout << "Loading term index ..................." << std::endl;
     term_index_.Load(term_index_path);
+
+
+    // std::cout << "========================" << std::endl;
+    // std::cout << "Lockall all memory (MCL_CURRENT)" << std::endl;
+    // std::cout << "========================" << std::endl;
+
+    // int ret = mlockall(MCL_CURRENT);
+    // LOG_IF(FATAL, ret == -1) << "Failed to lock memory!";
+
     file_data_ = (uint8_t *)file_map_.Addr();
-    std::cout << "file_map_.Addr(): " << (void *)file_data_ << std::endl;
   }
 
   off_t FindPostingListOffset(const Term term) {

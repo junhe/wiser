@@ -39,6 +39,7 @@ engine_bench:
 	cd build && cmake ../src/ && \
 		make -j32 engine_bench && \
 		CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=locallog -use_profiler=true
+		#HEAPPROFILE=/tmp/heapprof ./engine_bench -exp_mode=locallog -use_profiler=true
 
 heap_check:
 	cd build && cmake ../src/ && \
