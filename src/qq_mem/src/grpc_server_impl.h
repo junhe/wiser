@@ -265,7 +265,7 @@ class AsyncServer : public ServerService {
     std::cout << "Loading search engine..." << std::endl;
     LoadEngine(search_engine_.get(), config);
 
-    std::cout << "Async Server constructed!! " << std::endl;
+    std::cout << "CONGRATS!!!!!!! Async Server constructed!! " << std::endl;
   }
 
   ~AsyncServer() {
