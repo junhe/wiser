@@ -171,7 +171,6 @@ def start_server():
 
         return p
 
-
 def main():
     kill_server()
     kill_client()

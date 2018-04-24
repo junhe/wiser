@@ -111,7 +111,6 @@ class DocLengthCharStore {
     avg_length_ = avg_length_ + (length - avg_length_) / (doc_cnt_ + 1);
 
     vec_char_store_[doc_id] = utils::UintToChar4(length);
-    std::cout << "AddLength(): " << doc_id << "  " << length << " coded: " << vec_char_store_[doc_id]<< std::endl;
     doc_cnt_++;
   }
 

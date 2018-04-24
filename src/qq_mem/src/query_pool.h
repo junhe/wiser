@@ -130,6 +130,7 @@ class QueryProducerService {
   virtual int Size() = 0;
   virtual SearchQuery NextNativeQuery(const int i) = 0;
   virtual qq::SearchRequest NextGrpcQuery(const int i) = 0;
+  virtual bool IsEnd() = 0;
 };
 
 
@@ -168,6 +169,11 @@ class QueryProducer: public QueryProducerService {
     return request;
   }
 
+  // We are looping, so no end
+  bool IsEnd() override {
+    return false;
+  }
+
   int Size() override {
     return term_pool_array_->Size();
   }
@@ -178,15 +184,9 @@ class QueryProducer: public QueryProducerService {
 };
 
 
-class QueryPool {
+class QueryPoolBase {
  public:
-  QueryPool() {}
-
-  const SearchQuery &Next() {
-    int next = access_cnt_ % pool_.size();
-    access_cnt_++;
-    return pool_[next];
-  }
+  QueryPoolBase() {}
 
   void Add(const SearchQuery query) {
     pool_.push_back(query); 
@@ -200,9 +200,30 @@ class QueryPool {
     return pool_.size();
   }
 
- private:
+ protected:
   int access_cnt_ = 0;                // for iterating the query buffer
   std::vector<SearchQuery> pool_;
+};
+
+
+class QueryPool :public QueryPoolBase {
+ public:
+  const SearchQuery &Next() {
+    int next = access_cnt_ % pool_.size();
+    access_cnt_++;
+    return pool_[next];
+  }
+};
+
+
+class QueryPoolNoLoop :public QueryPoolBase {
+ public:
+  const SearchQuery &Next() {
+    int next = access_cnt_;
+    access_cnt_++;
+    DLOG_IF(FATAL, access_cnt_ > pool_.size());
+    return pool_[next];
+  }
 };
 
 
@@ -328,6 +349,11 @@ class QueryProducerByLog: public QueryProducerService {
 
   int Size() override {
     return array_.Size();
+  }
+
+  // We are looping, so no end
+  bool IsEnd() override {
+    return false;
   }
 
  private:

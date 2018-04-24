@@ -359,11 +359,6 @@ class Client {
     std::cout << "num_threads: " << num_threads << std::endl;
     std::cout << "n_client_channels: " << n_client_channels << std::endl;
 
-    if (query_producer_->Size() != num_threads) {
-      throw std::runtime_error(
-          "Query producer size is not the same as the number of threads");
-    }
-
     // initialize hitogram vector  
     for (int i = 0; i < num_threads; i++) {
       histograms_.emplace_back();
@@ -390,7 +385,6 @@ class Client {
     }
     std::cout << channels_.size() << " channels created." << std::endl;
 
-    // create threads and counts
     for(int i = 0; i < num_threads; i++)
     {
       finished_call_counts_.push_back(0);
@@ -416,6 +410,19 @@ class Client {
   }
 
   virtual void ThreadFunc(int thread_idx) = 0;
+
+  void WaitUntilQueriesExhausted() {
+    while (QueryFinished() == false) {
+      utils::sleep(1);
+    }
+
+    std::cout << "All queries finished. Count: " << std::endl;
+
+    DestroyMultithreading();
+
+    std::for_each(threads_.begin(), threads_.end(), std::mem_fn(&std::thread::join));
+  }
+
 
   void Wait() {
     std::cout << "Waiting for " << config_.GetInt("benchmark_duration") << " seconds.\n";
@@ -492,6 +499,10 @@ class Client {
   ReplyPools reply_pools_;
   bool save_reply_;
 
+  bool QueryFinished() {
+    return query_producer_->IsEnd();
+  }
+
   void ShowReplies() {
     std::cout << "save_reply_ == " << save_reply_ << std::endl;
 
@@ -553,15 +564,21 @@ class SyncStreamingClient: public Client {
     std::unique_ptr<ClientReaderWriter<SearchRequest, SearchReply> > stream(
         stub->StreamingSearch(&context));
 
-    while (shutdown_state_[thread_idx]->shutdown == false) {
+    std::cout << "Client: Starting sending requests in thread "
+      << thread_idx << " ..." << std::endl;
+    int query_cnt = 0;
+    while (shutdown_state_[thread_idx]->shutdown == false && QueryFinished() == false) {
       SearchRequest grpc_request = query_producer_->NextGrpcQuery(thread_idx);
 
       StreamingSearch(thread_idx, stream.get(), grpc_request, reply);
+      query_cnt++;
 
       if (save_reply_) {
         reply_pools_[thread_idx].push_back(reply);
       }
     }
+    std::cout << "Query issued in thread " 
+      << thread_idx << " : " << query_cnt << std::endl;
     // context.TryCancel();
     stream->WritesDone();
     stream->Finish();
@@ -713,7 +730,7 @@ class SyncUnaryClient: public Client {
   void ThreadFunc(int thread_idx) {
     SearchReply reply;
 
-    while (shutdown_state_[thread_idx]->shutdown == false) {
+    while (shutdown_state_[thread_idx]->shutdown == false && QueryFinished()) {
       SearchRequest grpc_request = query_producer_->NextGrpcQuery(thread_idx);
 
       UnarySearch(thread_idx, grpc_request, reply);

@@ -21,7 +21,7 @@
 DEFINE_int32(n_threads, 1, "Number of client threads");
 DEFINE_string(exp_mode, "local", "local/grpc/grpclog/localquerylog");
 DEFINE_bool(use_profiler, true, "Use profiler");
-DEFINE_string(grpc_server, "localhost", "network address of the GRPC server");
+DEFINE_string(grpc_server, "localhost", "network address of the GRPC server, port not included");
 DEFINE_int32(run_duration, 15, "number of seconds to run the client");
 
 
@@ -171,8 +171,10 @@ class GrpcLogTreatmentExecutor: public TreatmentExecutor {
     if (treatment.tag != "querylog")
       LOG(FATAL) << "Tag must be set right";
 
+    // return std::unique_ptr<QueryProducerService>(
+        // new QueryProducerByLog(treatment.query_log_path, NumberOfThreads()));
     return std::unique_ptr<QueryProducerService>(
-        new QueryProducerByLog(treatment.query_log_path, NumberOfThreads()));
+        new QueryProducerNoLoop(treatment.query_log_path));
   }
 
   int NumberOfThreads() {return client_config_.GetInt("n_threads");}
@@ -181,7 +183,7 @@ class GrpcLogTreatmentExecutor: public TreatmentExecutor {
     utils::ResultRow row;
 
     auto client = CreateClient(client_config_, MakeProducer(treatment));
-    client->Wait();
+    client->WaitUntilQueriesExhausted();
     row = client->ShowStats();
 
     return row;
