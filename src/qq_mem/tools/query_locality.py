@@ -20,8 +20,17 @@ class QueryAnalyer:
 
         return terms
 
+    def basic_stats(self, terms):
+        n = len(terms)
+        n_uniq = len(set(terms))
+        print "number of terms: ", n
+        print "number of unique terms: ", n_uniq
+        print "Average duplicas:", float(n) / n_uniq
+
     def run(self, path):
         terms = self.extract_terms()
+        self.basic_stats(terms)
+
         window = []
         in_pre_win = []
         win_size = 10000
