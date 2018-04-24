@@ -131,8 +131,8 @@ class GrpcTreatmentExecutor: public TreatmentExecutor {
     utils::ResultRow row;
 
     auto client = CreateClient(client_config_, MakeProducer(treatment));
-    client->Wait();
-    row = client->ShowStats();
+    double dur = client->Wait();
+    row = client->ShowStats(dur);
 
     return row;
   }
@@ -183,8 +183,8 @@ class GrpcLogTreatmentExecutor: public TreatmentExecutor {
     utils::ResultRow row;
 
     auto client = CreateClient(client_config_, MakeProducer(treatment));
-    client->WaitUntilQueriesExhausted();
-    row = client->ShowStats();
+    double dur = client->WaitUntilQueriesExhausted();
+    row = client->ShowStats(dur);
 
     return row;
   }
@@ -259,7 +259,7 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
     auto query_producer = MakeProducer(treatment);
 
     auto start = utils::now();
-    for (int i = 0; i < n_queries; i++) {
+    for (int i = 0; query_producer->IsEnd() == false; i++) {
       auto query = query_producer->NextNativeQuery(0);
       // std::cout << query.ToStr() << std::endl;
       auto result = engine_->Search(query);

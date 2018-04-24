@@ -411,42 +411,63 @@ class Client {
 
   virtual void ThreadFunc(int thread_idx) = 0;
 
-  void WaitUntilQueriesExhausted() {
+  double WaitUntilQueriesExhausted() {
+    auto start_time = utils::now();
+
+    int cnt = 0;
     while (QueryFinished() == false) {
       utils::sleep(1);
+      cnt++;
     }
 
     std::cout << "All queries finished. Count: " << std::endl;
+    auto end_time = utils::now();
 
     DestroyMultithreading();
 
     std::for_each(threads_.begin(), threads_.end(), std::mem_fn(&std::thread::join));
+
+    return utils::duration(start_time, end_time);
   }
 
+  double Wait() {
+    auto start_time = utils::now();
 
-  void Wait() {
     std::cout << "Waiting for " << config_.GetInt("benchmark_duration") << " seconds.\n";
     utils::sleep(config_.GetInt("benchmark_duration"));
     std::cout << "The wait is done" << std::endl;
 
+    auto end_time = utils::now();
+
     DestroyMultithreading();
 
     std::for_each(threads_.begin(), threads_.end(), std::mem_fn(&std::thread::join));
+    
+    return utils::duration(start_time, end_time);
   }
 
-  utils::ResultRow ShowStats() {
+  utils::ResultRow ShowStats(double seconds) {
     utils::ResultRow row;
 
     std::cout << "Finished round trips: " << GetTotalRoundtrips() << std::endl;
 
-    auto n_secs = config_.GetInt("benchmark_duration");
-    row["duration"] = std::to_string(n_secs);
+    row["duration"] = std::to_string(seconds);
 
-    std::cout << "Duration: " << n_secs << std::endl;
+    std::cout << "Duration: " << seconds << std::endl;
     std::cout << "Total roundtrips: " << GetTotalRoundtrips() << std::endl;
-    double qps = GetTotalRoundtrips() / (float) n_secs;
+    double qps = GetTotalRoundtrips() / seconds;
     std::cout << "Roundtrip Per Second (QPS): " << qps << std::endl;
     row["QPS"] = std::to_string(qps);
+
+    utils::ResultRow hist_data = ShowHistogram();
+    row.insert(hist_data.begin(), hist_data.end());
+    ShowReplies();
+
+    return row;
+  }
+
+  utils::ResultRow ShowHistogram() {
+    utils::ResultRow row;
 
     Histogram hist_all;
     for (auto & histogram : histograms_) {
@@ -467,8 +488,6 @@ class Client {
         row["latency_95th"] = latency;
       }
     }
-
-    ShowReplies();
 
     return row;
   }
