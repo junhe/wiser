@@ -13,13 +13,14 @@ n_client_threads = 32
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
 # search_engine = "qq_mem_compressed"
 profile_qq_server = "false"
-server_mem_size = 1241522176 + 10000*MB # 1241522176 is the basic memory 32 threads(locked)
+# server_mem_size = 1241522176 + 500*MB # 1241522176 is the basic memory 32 threads(locked)
 # server_mem_size = 1765810176 + 500*MB # 1765810176 is the basic memory for 64 threads (locked)
+server_mem_size = 622026752 + 50*MB # 622026752 is the basic memory for 1 threads (locked)
 mem_swappiness = 0
 os_swap = False
 device_name = "sdc"
 read_ahead_kb = 4
-do_drop_cache = False
+do_drop_cache = True
 
 gprof_env = os.environ.copy()
 gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
