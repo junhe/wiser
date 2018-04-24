@@ -29,10 +29,12 @@ compression_bench:
 grpc_benchmark:
 	./build.sh
 	echo ------------------------------------------------------
+	sudo pkill qq_server
+	sudo pkill engine_bench
 	python ./tools/run_client_server2.py \
-		./build/engine_bench '-exp_mode=grpclog -n_threads=16 -use_profiler=true -grpc_server=node.conan-wisc.fsperfatscale-pg0:50051' \
-		./build/qq_server '-sync_type=ASYNC -n_threads=4' \
-		15	
+		./build/engine_bench '-exp_mode=grpclog -n_threads=16 -use_profiler=true -grpc_server=localhost' \
+		./build/qq_server '-sync_type=ASYNC -n_threads=1 -addr=localhost -engine=vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic' \
+		20	
 		#./build/engine_bench '-exp_mode=grpclog -n_threads=16 -use_profiler=true -grpc_server=localhost:50051' \
 
 engine_bench:

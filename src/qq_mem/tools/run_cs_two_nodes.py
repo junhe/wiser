@@ -8,17 +8,18 @@ from pyreuse.sysutils.iostat_parser import parse_iostat
 
 server_addr = "node.conan-wisc.fsperfatscale-pg0"
 remote_addr = "node.conan-wisc-2.fsperfatscale-pg0"
-n_server_threads = 32
+n_server_threads = 1
 n_client_threads = 32
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
 # search_engine = "qq_mem_compressed"
 profile_qq_server = "false"
-server_mem_size = 1241522176 + 500*MB # 1241522176 is the basic memory 32 threads(locked)
+server_mem_size = 1241522176 + 10000*MB # 1241522176 is the basic memory 32 threads(locked)
 # server_mem_size = 1765810176 + 500*MB # 1765810176 is the basic memory for 64 threads (locked)
 mem_swappiness = 0
 os_swap = False
 device_name = "sdc"
 read_ahead_kb = 4
+do_drop_cache = False
 
 gprof_env = os.environ.copy()
 gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
@@ -147,7 +148,8 @@ def start_server():
 
     set_swap(os_swap)
     set_read_ahead_kb(read_ahead_kb)
-    drop_cache()
+    if do_drop_cache == True:
+        drop_cache()
 
     cg = Cgroup(name='charlie', subs='memory')
     cg.set_item('memory', 'memory.limit_in_bytes', server_mem_size)
