@@ -8,16 +8,17 @@ from pyreuse.sysutils.iostat_parser import parse_iostat
 
 server_addr = "node.conan-wisc.fsperfatscale-pg0"
 remote_addr = "node.conan-wisc-2.fsperfatscale-pg0"
-n_server_threads = 1
+n_server_threads = 32
 n_client_threads = 32
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
 # search_engine = "qq_mem_compressed"
 profile_qq_server = "false"
+server_mem_size = 300*MB # 1241522176 is the basic memory 32 threads(locked)
 # server_mem_size = 1241522176 + 500*MB # 1241522176 is the basic memory 32 threads(locked)
 # server_mem_size = 1765810176 + 500*MB # 1765810176 is the basic memory for 64 threads (locked)
-server_mem_size = 622026752 + 50*MB # 622026752 is the basic memory for 1 threads (locked)
-mem_swappiness = 0
-os_swap = False
+# server_mem_size = 622026752 + 50*MB # 622026752 is the basic memory for 1 threads (locked)
+mem_swappiness = 60
+os_swap = True
 device_name = "sdc"
 read_ahead_kb = 4
 do_drop_cache = True
@@ -195,7 +196,6 @@ def main():
 
     print "wating for some other time...."
     time.sleep(5)
-
 
     try:
 	client_p.wait()
