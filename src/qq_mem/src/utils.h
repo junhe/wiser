@@ -474,7 +474,6 @@ inline std::string MakeString(char ch) {
 inline void LockAllMemory() {
     std::cout << "========================" << std::endl;
     std::cout << "Locking all memory (MCL_CURRENT) ...." << std::endl;
-    utils::sleep(2);
 
     int ret = mlockall(MCL_CURRENT);
     LOG_IF(FATAL, ret == -1) << "Failed to lock memory!";

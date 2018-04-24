@@ -43,5 +43,28 @@ TEST_CASE( "Query pools", "[qpool]" ) {
     REQUIRE(q.terms == TermList{"nightt", "rain", "nashvil"});
     REQUIRE(q.is_phrase == false);
   }
+
+  SECTION("Query producer from realistic log with lock") {
+    auto path = "src/testdata/query_log_with_phrases";
+    QueryProducerNoLoop producer(path);
+
+    auto q = producer.NextNativeQuery(0);
+    REQUIRE(q.terms == TermList{"greek", "armi"});
+    REQUIRE(q.is_phrase == true);
+
+    q = producer.NextNativeQuery(0);
+    REQUIRE(q.terms == TermList{"nightt", "rain", "nashvil"});
+    REQUIRE(q.is_phrase == false);
+
+    REQUIRE(producer.Size() == 10);
+
+    for (int i = 0; i < 8; i++) {
+      REQUIRE(producer.IsEnd() == false);
+      q = producer.NextNativeQuery(0);
+    }
+    REQUIRE(producer.IsEnd() == true);
+
+  }
+
 }
 

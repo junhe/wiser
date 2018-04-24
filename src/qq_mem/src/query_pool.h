@@ -3,6 +3,7 @@
 
 #include <iostream>
 #include <fstream>
+#include <mutex>
 
 #include <glog/logging.h>
 
@@ -182,8 +183,8 @@ class QueryPool {
   QueryPool() {}
 
   const SearchQuery &Next() {
-    int next = counter_ % pool_.size();
-    counter_++;
+    int next = access_cnt_ % pool_.size();
+    access_cnt_++;
     return pool_[next];
   }
 
@@ -191,12 +192,16 @@ class QueryPool {
     pool_.push_back(query); 
   }
 
+  bool IsEnd() const {
+    return access_cnt_ == pool_.size();
+  }
+
   int Size() const {
     return pool_.size();
   }
 
  private:
-  int counter_ = 0;                // for iterating the query buffer
+  int access_cnt_ = 0;                // for iterating the query buffer
   std::vector<SearchQuery> pool_;
 };
 
@@ -219,6 +224,70 @@ class QueryPoolArray {
 
  private:
   std::vector<QueryPool> array_;
+};
+
+
+class QueryProducerNoLoop: public QueryProducerService {
+ public:
+  QueryProducerNoLoop(const std::string query_path) 
+  {
+    std::cout << "Loading query log from " << query_path << std::endl;
+    QueryLogReader reader(query_path);
+    std::string line;
+    
+    while(reader.NextLine(line)) {
+      utils::trim(line);
+
+      SearchQuery query(GetTerms(line));
+      query.is_phrase = IsPhrase(line);
+
+      pool_.Add(query);
+    }
+  }
+
+  // pool_index is ignored in this class
+  SearchQuery NextNativeQuery(const int pool_index) override {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return pool_.Next();
+  }
+
+  // pool_index is ignored in this class
+  qq::SearchRequest NextGrpcQuery(const int pool_index) override {
+    qq::SearchRequest request;
+
+    SearchQuery query = NextNativeQuery(pool_index);
+    query.CopyTo(&request);
+
+    return request;
+  }
+
+  int Size() override {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return pool_.Size();
+  }
+
+  bool IsEnd() {
+    std::lock_guard<std::mutex> lock(mutex_);
+    return pool_.IsEnd(); 
+  }
+
+ private:
+  TermList GetTerms(std::string line) {
+    if (IsPhrase(line) == true) {
+        line.erase(line.size() - 1, 1);
+        line.erase(0, 1);
+    }
+
+    return utils::explode(line, ' ');
+  }
+
+  bool IsPhrase(const std::string line) {
+    int len = line.size();
+    return line.compare(0, 1, "\"") == 0 && line.compare(len - 1 , 1, "\"") == 0;
+  }
+ 
+  std::mutex mutex_;
+  QueryPool pool_;
 };
 
 

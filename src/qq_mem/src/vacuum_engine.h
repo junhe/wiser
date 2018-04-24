@@ -170,8 +170,6 @@ class VacuumEngine : public SearchEngineServiceNew {
     inverted_index_.LoadTermIndex(utils::JoinPath(engine_dir_path_, "my.tip"));
 
     utils::LockAllMemory(); // <<<<<<< Lock memory
-    std::cout << "sleeping......" << std::endl;
-    utils::sleep(4);
 
     inverted_index_.MapPostingLists(
         utils::JoinPath(engine_dir_path_, "my.vacuum"));
