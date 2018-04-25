@@ -271,9 +271,9 @@ def main():
 
 class Exp(Experiment):
     def __init__(self):
-        self._exp_name = "default-exp-name"
+        self._exp_name = "exp-" + now()
 
-        self.mem_sizes = [10*GB, 4*GB]
+        self.mem_sizes = [32*GB, 16*GB, 8*GB, 4*GB, 2*GB, 512*MB, 256*MB]
         self._n_treatments = len(self.mem_sizes)
 
         self.result = []
@@ -308,6 +308,7 @@ class Exp(Experiment):
 
         client_p = start_client()
 
+        seconds = 0
         while True:
             print_client_output_tail()
             finished = is_client_finished()
@@ -320,6 +321,8 @@ class Exp(Experiment):
                 break
 
             time.sleep(1)
+            seconds += 1
+            print ">>>>> It has been", seconds, "seconds <<<<<<"
 
         mb_read_b = get_iostat_mb_read()
 
@@ -335,7 +338,10 @@ class Exp(Experiment):
         self.result.append(d)
 
     def afterEach(self, conf):
-        print table_to_str(self.result, sep = " ", width = 20)
+        path = os.path.join(self._resultdir, "result.txt")
+        table_to_file(self.result, path, width = 20)
+        shcmd("cat " + path)
+
 
 if __name__ == "__main__":
     # main()
