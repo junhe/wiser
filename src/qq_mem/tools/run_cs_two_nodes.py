@@ -23,20 +23,23 @@ profile_qq_server = "false"
 mem_swappiness = 60
 os_swap = True
 # device_name = "sdc"
-device_name = "nvme0n1p4"
+device_name = "nvme0n1"
+partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
 """
 
 server_addr = "node1"
 remote_addr = "node2"
-n_server_threads = 32
-n_client_threads = 32
+n_server_threads = 64
+n_client_threads = 64
+mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
 profile_qq_server = "false"
 mem_swappiness = 60
 os_swap = True
-device_name = "nvme0n1p4"
+device_name = "nvme0n1"
+partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
 do_block_tracing = False
@@ -117,13 +120,13 @@ class Cgroup(object):
         return path
 
 def get_iostat_mb_read():
-    out = subprocess.check_output("iostat -m {}".format(device_name), shell=True)
+    out = subprocess.check_output("iostat -m {}".format(partition_name), shell=True)
     print out
     return parse_iostat(out)['io']['MB_read']
 
 def create_blktrace_manager(subexpdir):
     return BlockTraceManager(
-            dev = os.path.join("/dev", device_name),
+            dev = os.path.join("/dev", partition_name),
             event_file_column_names = ['pid', 'operation', 'offset', 'size',
                 'timestamp', 'pre_wait_time'],
             to_ftlsim_path = os.path.join(subexpdir, "trace.table"),
@@ -251,13 +254,16 @@ class Exp(Experiment):
     def __init__(self):
         self._exp_name = "exp-" + now()
 
-        self.mem_sizes = [32*GB, 16*GB, 8*GB, 4*GB, 2*GB, 512*MB, 256*MB]
+        self.mem_sizes = mem_size_list
         self._n_treatments = len(self.mem_sizes)
 
         self.result = []
 
     def conf(self, i):
-        return {"server_mem_size": self.mem_sizes[i]}
+        return {"server_mem_size": self.mem_sizes[i],
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads
+                }
 
     def before(self):
         sync_build_dir()
@@ -296,6 +302,11 @@ class Exp(Experiment):
             print_client_output_tail()
             finished = is_client_finished()
             print "is_client_finished()", finished
+
+            is_server_running = is_command_running("./build/qq_server")
+
+            if is_server_running is False:
+                raise RuntimeError("Server just crashed!!!")
 
             if finished:
                 kill_client()

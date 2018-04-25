@@ -59,6 +59,10 @@ sudo ldconfig
 # ccache
 sudo apt-get install ccache
 
+# cgroup
+sudo apt-get install cgroup-bin
+
+sudo apt-get install sysstat
 
 echo "Now, run"
 echo "source ~/.bashrc"
