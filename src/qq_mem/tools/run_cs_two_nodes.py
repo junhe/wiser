@@ -1,10 +1,12 @@
 import subprocess, os
 import time
 import shlex
+import signal
 from pyreuse.helpers import *
 from pyreuse.sysutils.cgroup import *
 from pyreuse.macros import *
 from pyreuse.sysutils.iostat_parser import parse_iostat
+from pyreuse.general.expbase import *
 
 server_addr = "node.conan-wisc.fsperfatscale-pg0"
 remote_addr = "node.conan-wisc-2.fsperfatscale-pg0"
@@ -13,7 +15,7 @@ n_client_threads = 32
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
 # search_engine = "qq_mem_compressed"
 profile_qq_server = "false"
-server_mem_size = 10000*MB # 1241522176 is the basic memory 32 threads(locked)
+# server_mem_size = 10000*MB # 1241522176 is the basic memory 32 threads(locked)
 # server_mem_size = 1241522176 + 500*MB # 1241522176 is the basic memory 32 threads(locked)
 # server_mem_size = 1765810176 + 500*MB # 1765810176 is the basic memory for 64 threads (locked)
 # server_mem_size = 622026752 + 50*MB # 622026752 is the basic memory for 1 threads (locked)
@@ -153,7 +155,6 @@ def start_client():
     print "-" * 20
     print "starting client ..."
     print "-" * 20
-    shcmd("rm -f /tmp/client.out")
     return remote_cmd_chwd(
         "/users/jhe/flashsearch/src/qq_mem/build/",
         "./engine_bench -exp_mode=grpclog -n_threads={n_threads} -use_profiler=true "
@@ -161,6 +162,10 @@ def start_client():
         .format(server = server_addr, n_threads = n_client_threads),
         open("/tmp/client.out", "w")
         )
+
+def print_client_output_tail():
+    out = subprocess.check_output("tail -n 5 /tmp/client.out", shell=True)
+    print out
 
 def is_client_finished():
     out = subprocess.check_output("tail -n 1 /tmp/client.out", shell=True)
@@ -178,26 +183,22 @@ def kill_server():
     shcmd("sudo pkill qq_server", ignore_error=True)
 
 def kill_subprocess(p):
-    os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+    # os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+    p.kill()
     p.wait()
 
 def copy_client_out():
     prepare_dir("/tmp/results")
-    shcmd("cp /tmp/client.out /tmp/results/{}".format(now())
+    shcmd("cp /tmp/client.out /tmp/results/{}".format(now()))
 
-def start_server():
+def start_server(conf):
     print "-" * 20
     print "starting server ..."
-    print "server mem size:", server_mem_size
+    print "server mem size:", conf['server_mem_size']
     print "-" * 20
 
-    set_swap(os_swap)
-    set_read_ahead_kb(read_ahead_kb)
-    if do_drop_cache == True:
-        drop_cache()
-
     cg = Cgroup(name='charlie', subs='memory')
-    cg.set_item('memory', 'memory.limit_in_bytes', server_mem_size)
+    cg.set_item('memory', 'memory.limit_in_bytes', conf['server_mem_size'])
     cg.set_item('memory', 'memory.swappiness', mem_swappiness)
 
     with cd("/users/jhe/flashsearch/src/qq_mem"):
@@ -268,7 +269,77 @@ def main():
 	server_p.wait()
 
 
+class Exp(Experiment):
+    def __init__(self):
+        self._exp_name = "default-exp-name"
+
+        self.mem_sizes = [10*GB, 4*GB]
+        self._n_treatments = len(self.mem_sizes)
+
+        self.result = []
+
+    def conf(self, i):
+        return {"server_mem_size": self.mem_sizes[i]}
+
+    def before(self):
+        sync_build_dir()
+
+    def beforeEach(self, conf):
+        kill_server()
+
+        kill_client()
+        time.sleep(1)
+        shcmd("rm -f /tmp/client.out")
+
+        set_swap(os_swap)
+        set_read_ahead_kb(read_ahead_kb)
+        if do_drop_cache == True:
+            drop_cache()
+
+    def treatment(self, conf):
+        print conf
+        server_p = start_server(conf)
+
+        print "Wating for some time util the server starts...."
+        time.sleep(30)
+        mb_read_a = get_iostat_mb_read()
+
+        check_port()
+
+        client_p = start_client()
+
+        while True:
+            print_client_output_tail()
+            finished = is_client_finished()
+            print "is_client_finished()", finished
+
+            if finished:
+                kill_client()
+                kill_server()
+                copy_client_out()
+                break
+
+            time.sleep(1)
+
+        mb_read_b = get_iostat_mb_read()
+
+        mb_read = int(mb_read_b) - int(mb_read_a)
+        print '-' * 30
+        print "MB read: ", mb_read
+        print '-' * 30
+
+        d = ClientOutput().parse_client_out("/tmp/client.out")
+        d['MB_read'] = mb_read
+        d.update(conf)
+
+        self.result.append(d)
+
+    def afterEach(self, conf):
+        print table_to_str(self.result, sep = " ", width = 20)
 
 if __name__ == "__main__":
-    main()
+    # main()
+    exp = Exp()
+    exp.main()
+
 
