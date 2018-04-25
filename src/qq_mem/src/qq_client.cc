@@ -24,8 +24,8 @@ void bench_async_client(const int n_threads) {
 
   auto async_client = CreateClient(config, 
                                    std::move(query_producer));
-  async_client->Wait();
-  async_client->ShowStats();
+  auto seconds = async_client->Wait();
+  async_client->ShowStats(seconds);
 }
 
 void bench_sync_client(const int n_threads, std::string arity) {
@@ -62,8 +62,8 @@ void bench_sync_client(const int n_threads, std::string arity) {
       new QueryProducer(std::move(array), query_config));
 
   auto async_client = CreateClient(config, std::move(query_producer));
-  async_client->Wait();
-  async_client->ShowStats();
+  auto seconds = async_client->Wait();
+  async_client->ShowStats(seconds);
 }
 
 void sanity_check() {
