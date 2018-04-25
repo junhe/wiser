@@ -1,6 +1,8 @@
 # This Makefile is for organizing frequently used commands, not for compilation.
 .ONESHELL:
 
+NUM_CORES=8
+
 all:
 	./build.sh
 
@@ -13,7 +15,7 @@ scoring_benchmark:
 	mkdir -p ./build
 	cd build
 	cmake ../src/
-	make -j32 scoring_bench
+	make -j${NUM_CORES} scoring_bench
 	
 	cd ..
 	./build/scoring_bench
@@ -39,36 +41,36 @@ grpc_benchmark:
 
 engine_bench:
 	cd build && cmake ../src/ && \
-		make -j32 engine_bench && \
+		make -j${NUM_CORES} engine_bench && \
 		CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=locallog -use_profiler=true
 		#HEAPPROFILE=/tmp/heapprof ./engine_bench -exp_mode=locallog -use_profiler=true
 
 heap_check:
 	cd build && cmake ../src/ && \
-		make -j32 engine_bench && \
+		make -j${NUM_CORES} engine_bench && \
 		HEAPCHECK=normal ./engine_bench -exp_mode=locallog -use_profiler=false
 
 
 
 engine_bench_build:
-	cd build && cmake ../src/ && make -j32 engine_bench
+	cd build && cmake ../src/ && make -j${NUM_CORES} engine_bench
 
 engine_bench_debug:
 	cd build && cmake ../src/ && \
-		make -j32 engine_bench && \
+		make -j${NUM_CORES} engine_bench && \
 		gdb --args ./engine_bench -exp_mode=locallog -use_profiler=false
 
 convert_qq_to_vacuum:
 	cd build && cmake ../src/ && \
-		make -j32 convert_qq_to_vacuum && \
+		make -j${NUM_CORES} convert_qq_to_vacuum && \
 		./convert_qq_to_vacuum
 
 
 two_nodes:
 	cd build 
 	cmake ../src/
-	make -j32 qq_server 
-	make -j32 engine_bench
+	make -j${NUM_CORES} qq_server 
+	make -j${NUM_CORES} engine_bench
 	cd ..
 	python ./tools/run_cs_two_nodes.py
 
@@ -97,7 +99,7 @@ test:
 	mkdir -p ./build
 	cd build
 	cmake ../src/
-	make -j32 testmain
+	make -j${NUM_CORES} testmain
 	cd ..
 	./build/testmain ${args}
 
@@ -106,7 +108,7 @@ test_fast:
 	mkdir -p ./build
 	cd build
 	cmake ../src/
-	make -j32 testmain
+	make -j${NUM_CORES} testmain
 	cd ..
 	./build/testmain '~[grpc]~[slow]'
 
@@ -115,7 +117,7 @@ test_args:
 	mkdir -p ./build
 	cd build
 	cmake ../src/
-	make -j32 testmain
+	make -j${NUM_CORES} testmain
 	cd ..
 	./build/testmain ${args}
 
