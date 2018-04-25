@@ -8,6 +8,7 @@ from pyreuse.macros import *
 from pyreuse.sysutils.iostat_parser import parse_iostat
 from pyreuse.general.expbase import *
 
+"""
 server_addr = "node.conan-wisc.fsperfatscale-pg0"
 remote_addr = "node.conan-wisc-2.fsperfatscale-pg0"
 n_server_threads = 32
@@ -21,9 +22,25 @@ profile_qq_server = "false"
 # server_mem_size = 622026752 + 50*MB # 622026752 is the basic memory for 1 threads (locked)
 mem_swappiness = 60
 os_swap = True
-device_name = "sdc"
+# device_name = "sdc"
+device_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
+"""
+
+server_addr = "node1"
+remote_addr = "node2"
+n_server_threads = 32
+n_client_threads = 32
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
+profile_qq_server = "false"
+mem_swappiness = 60
+os_swap = True
+device_name = "nvme0n1p4"
+read_ahead_kb = 4
+do_drop_cache = True
+do_block_tracing = False
+
 
 gprof_env = os.environ.copy()
 gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
@@ -103,6 +120,16 @@ def get_iostat_mb_read():
     out = subprocess.check_output("iostat -m {}".format(device_name), shell=True)
     print out
     return parse_iostat(out)['io']['MB_read']
+
+def create_blktrace_manager(subexpdir):
+    return BlockTraceManager(
+            dev = os.path.join("/dev", device_name),
+            event_file_column_names = ['pid', 'operation', 'offset', 'size',
+                'timestamp', 'pre_wait_time'],
+            to_ftlsim_path = os.path.join(subexpdir, "trace.table"),
+            sector_size = 512,
+            padding_bytes = 46139392 * 512,
+            do_sort = False)
 
 
 def drop_cache():
@@ -219,55 +246,6 @@ def start_server(conf):
 
         return p
 
-def main():
-    kill_server()
-    kill_client()
-
-    # we already are doing it in Makefile, just make sure you run this script by `make two_nodes`
-    # compile_engine_bench()
-
-    sync_build_dir()
-
-    server_p = start_server()
-
-    print "Wating for some time util the server starts...."
-    time.sleep(30)
-    mb_read_a = get_iostat_mb_read()
-
-    check_port()
-
-    client_p = start_client()
-
-    print "wating for some other time...."
-    time.sleep(5)
-
-    while True:
-        finished = is_client_finished()
-        print "is_client_finished()", finished
-
-        if finished:
-            kill_subprocess(client_p)
-            copy_client_out()
-            break
-
-        time.sleep(1)
-
-    try:
-	client_p.wait()
-	server_p.wait()
-
-    except KeyboardInterrupt:
-	mb_read_b = get_iostat_mb_read()
-        print '-' * 30
-	print "MB read: ", int(mb_read_b) - int(mb_read_a)
-        print '-' * 30
-
-	os.killpg(os.getpgid(client_p.pid), signal.SIGTERM)
-	os.killpg(os.getpgid(server_p.pid), signal.SIGTERM)
-
-	client_p.wait()
-	server_p.wait()
-
 
 class Exp(Experiment):
     def __init__(self):
@@ -306,6 +284,11 @@ class Exp(Experiment):
 
         check_port()
 
+        # Start block tracing after the server is fully loaded
+        if do_block_tracing is True:
+            self.blocktracer = create_blktrace_manager(self._subexpdir)
+            self.blocktracer.start_tracing_and_collecting(['issue'])
+
         client_p = start_client()
 
         seconds = 0
@@ -342,9 +325,11 @@ class Exp(Experiment):
         table_to_file(self.result, path, width = 20)
         shcmd("cat " + path)
 
+        if do_block_tracing is True:
+            self.blocktracer.stop_tracing_and_collecting()
+            self.create_event_file_from_blkparse()
 
 if __name__ == "__main__":
-    # main()
     exp = Exp()
     exp.main()
 
