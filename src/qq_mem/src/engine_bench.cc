@@ -20,7 +20,6 @@
 
 DEFINE_int32(n_threads, 1, "Number of client threads");
 DEFINE_string(exp_mode, "local", "local/grpc/grpclog/localquerylog");
-DEFINE_bool(use_profiler, true, "Use profiler");
 DEFINE_string(grpc_server, "localhost", "network address of the GRPC server, port not included");
 DEFINE_int32(run_duration, 15, "number of seconds to run the client");
 
@@ -408,11 +407,6 @@ class EngineExperiment: public Experiment {
     } else {
       LOG(FATAL) << "Mode not supported:mke engine_bench_build";
     }
-    
-    if (FLAGS_use_profiler == true) {
-      std::cout << "Using profiler..." << std::endl;
-      ProfilerStart("my.profile.new");
-    }
   }
 
   void RunTreatment(const int run_id) {
@@ -428,9 +422,6 @@ class EngineExperiment: public Experiment {
   }
 
   void After() {
-    if (FLAGS_use_profiler == true) {
-      ProfilerStop();
-    }
     std::cout << table_.ToStr();
 
     std::cout << "ExperimentFinished!!!" << std::endl;

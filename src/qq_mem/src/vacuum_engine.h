@@ -4,6 +4,8 @@
 #include <iostream>
 #include <string>
 
+#include <gperftools/profiler.h>
+
 #include "utils.h"
 #include "flash_iterators.h"
 
@@ -148,6 +150,8 @@ class VacuumInvertedIndex {
 };
 
 
+DECLARE_bool(profile_vacuum);
+
 // To use
 // engine = VacuumEngine(path)
 // engine.Load()
@@ -156,6 +160,15 @@ class VacuumEngine : public SearchEngineServiceNew {
   VacuumEngine(const std::string engine_dir_path)
     :engine_dir_path_(engine_dir_path)
   {}
+
+	~VacuumEngine() {
+    if (profiler_started == true) {
+      std::cout << "--------------------------------------" << std::endl;
+			std::cout << "Stopping google profiler..." << std::endl;
+      std::cout << "--------------------------------------" << std::endl;
+      ProfilerStop();
+    }
+  }
 
   void Load() override {
     LOG_IF(FATAL, is_loaded_ == true) << "Engine is already loaded.";
@@ -177,6 +190,14 @@ class VacuumEngine : public SearchEngineServiceNew {
     doc_store_.MapFdt(utils::JoinPath(engine_dir_path_, "my.fdt"));
 
     is_loaded_ = true;
+
+    if (FLAGS_profile_vacuum == true && profiler_started == false) {
+      std::cout << "--------------------------------------" << std::endl;
+			std::cout << "Using profiler..." << std::endl;
+      std::cout << "--------------------------------------" << std::endl;
+			ProfilerStart("vacuum.profile");
+      profiler_started = true;
+    }
   }
 
   int TermCount() const override {
@@ -280,6 +301,7 @@ class VacuumEngine : public SearchEngineServiceNew {
 
   std::string engine_dir_path_;
   bool is_loaded_ = false;
+  bool profiler_started = false;
 };
 
 

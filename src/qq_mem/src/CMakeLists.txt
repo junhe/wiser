@@ -56,6 +56,7 @@ set(ENGINE_SRCS
     grpc_server_impl.cc
     utils.cc
     engine_loader.cc
+    vacuum_engine.cc
     scoring.cc
     highlighter.cc
     flashreader.cc

@@ -36,7 +36,6 @@ using qq::QQEngine;
 using std::chrono::system_clock;
 
 
-DEFINE_bool(use_profiler, false, "Use profiler");
 DEFINE_string(engine, "missing", 
     "[qq_mem_compressed / vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic");
 DEFINE_string(addr, "localhost", "GRPC listening address.");
@@ -115,11 +114,6 @@ int main(int argc, char** argv) {
 
   auto server = CreateServer(config);
 
-  if (FLAGS_use_profiler == true) {
-    std::cout << "Using profiler..." << std::endl;
-    ProfilerStart("qq_server.profile");
-  }
- 
   if (n_secs == 0) {
     while (!got_sigint) {
       gpr_sleep_until(gpr_time_add(gpr_now(GPR_CLOCK_REALTIME),
@@ -129,11 +123,6 @@ int main(int argc, char** argv) {
     server->Wait();
   }
 
-  if (FLAGS_use_profiler == true) {
-    std::cout << "Stopping profiler..............................................." << std::endl;
-    ProfilerStop();
-  }
-
-  std::cout << "Server about to be destruct" << std::endl;
+  std::cout << "--------------Server about to be destruct--------------" << std::endl;
   return 0;
 }
