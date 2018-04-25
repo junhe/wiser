@@ -44,10 +44,8 @@ read_ahead_kb = 4
 do_drop_cache = True
 do_block_tracing = False
 
-
 gprof_env = os.environ.copy()
 gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
-
 
 class ClientOutput:
     def _parse_perf(self, header, data_line):
@@ -99,7 +97,7 @@ class Cgroup(object):
                 '--sticky']
         cg_cmd += cmd
         print cg_cmd
-        p = subprocess.Popen(cg_cmd)
+        p = subprocess.Popen(cg_cmd, preexec_fn=os.setsid)
 
         return p
 
@@ -118,6 +116,10 @@ class Cgroup(object):
     def _path(self, sub, item):
         path = os.path.join('/sys/fs/cgroup', sub, self.name, item)
         return path
+
+def send_sigint(pid):
+    shcmd("bash -c 'sudo kill -SIGINT {}'".format(os.getpgid(pid)))
+    # os.killpg(os.getpgid(pid), signal.SIGINT)
 
 def get_iostat_mb_read():
     out = subprocess.check_output("iostat -m {}".format(partition_name), shell=True)
@@ -187,7 +189,7 @@ def start_client():
     print "-" * 20
     return remote_cmd_chwd(
         "/users/jhe/flashsearch/src/qq_mem/build/",
-        "./engine_bench -exp_mode=grpclog -n_threads={n_threads} -use_profiler=true "
+        "./engine_bench -exp_mode=grpclog -n_threads={n_threads} "
         "-grpc_server={server}"
         .format(server = server_addr, n_threads = n_client_threads),
         open("/tmp/client.out", "w")
@@ -234,7 +236,7 @@ def start_server(conf):
     with cd("/users/jhe/flashsearch/src/qq_mem"):
         cmd = "./build/qq_server "\
               "-sync_type=ASYNC -n_threads={n_threads} "\
-              "-addr={server} -port=50051 -engine={engine} -use_profiler={profile}"\
+              "-addr={server} -port=50051 -engine={engine} -profile_vacuum={profile}"\
               .format(server = server_addr,
                     n_threads = n_server_threads,
                     engine = search_engine,
@@ -310,7 +312,10 @@ class Exp(Experiment):
 
             if finished:
                 kill_client()
-                kill_server()
+                # kill_server()
+                send_sigint(server_p.pid)
+                print "Waiting for server to exit gracefuly"
+                time.sleep(8)
                 copy_client_out()
                 break
 
@@ -343,5 +348,12 @@ class Exp(Experiment):
 if __name__ == "__main__":
     exp = Exp()
     exp.main()
+
+    # p = start_server({'server_mem_size': 10*GB})
+    # print 'pid:', p.pid
+    # time.sleep(15)
+    # send_sigint(p.pid)
+
+    # p.wait()
 
 
