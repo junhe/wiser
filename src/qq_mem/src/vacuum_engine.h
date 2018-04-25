@@ -162,6 +162,10 @@ class VacuumEngine : public SearchEngineServiceNew {
   {}
 
 	~VacuumEngine() {
+    std::cout << "--------------------------------------" << std::endl;
+    std::cout << "Destructing VacuumEngine!!!!" << std::endl;
+    std::cout << "--------------------------------------" << std::endl;
+
     if (profiler_started == true) {
       std::cout << "--------------------------------------" << std::endl;
 			std::cout << "Stopping google profiler..." << std::endl;

@@ -294,7 +294,8 @@ class AsyncServer : public ServerService {
     }
 
     shutdown_thread.join();
-    std::cout << "Server destructed" << std::endl;
+    std::cout << ">>>>>>>>>>> Server destructed" << std::endl;
+    search_engine_.release();
   }
 
   void Wait() {

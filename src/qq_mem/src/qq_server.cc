@@ -51,7 +51,7 @@ static bool got_sigint = false;
 
 
 static void sigint_handler(int x) { 
-  std::cout << "Caught SIGINT" << std::endl;
+  std::cout << "Caught SIGINT <<<<<<<<<<" << std::endl;
   got_sigint = true; 
 }
 
@@ -119,6 +119,7 @@ int main(int argc, char** argv) {
       gpr_sleep_until(gpr_time_add(gpr_now(GPR_CLOCK_REALTIME),
                                    gpr_time_from_seconds(5, GPR_TIMESPAN)));
     }
+    server->Shutdown();
   } else {
     server->Wait();
   }
