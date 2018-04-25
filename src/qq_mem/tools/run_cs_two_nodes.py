@@ -13,7 +13,7 @@ n_client_threads = 32
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
 # search_engine = "qq_mem_compressed"
 profile_qq_server = "false"
-server_mem_size = 300*MB # 1241522176 is the basic memory 32 threads(locked)
+server_mem_size = 10000*MB # 1241522176 is the basic memory 32 threads(locked)
 # server_mem_size = 1241522176 + 500*MB # 1241522176 is the basic memory 32 threads(locked)
 # server_mem_size = 1765810176 + 500*MB # 1765810176 is the basic memory for 64 threads (locked)
 # server_mem_size = 622026752 + 50*MB # 622026752 is the basic memory for 1 threads (locked)
@@ -25,6 +25,25 @@ do_drop_cache = True
 
 gprof_env = os.environ.copy()
 gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
+
+
+class ClientOutput:
+    def _parse_perf(self, header, data_line):
+        header = header.split()
+        items = data_line.split()
+
+        print header
+        print items
+
+        return dict(zip(header, items))
+
+    def parse_client_out(self, path):
+        with open(path) as f:
+            lines = f.readlines()
+
+        for i, line in enumerate(lines):
+            if "latency_95th" in line:
+                return self._parse_perf(lines[i], lines[i+1])
 
 
 class Cgroup(object):
@@ -110,12 +129,16 @@ def check_port():
     print "-" * 20
 
 
-def remote_cmd_chwd(dir_path, cmd):
-    return remote_cmd("cd {}; {}".format(dir_path, cmd))
+def remote_cmd_chwd(dir_path, cmd, fd = None):
+    return remote_cmd("cd {}; {}".format(dir_path, cmd), fd)
 
-def remote_cmd(cmd):
+def remote_cmd(cmd, fd = None):
     print "Starting command on remote node.... ", cmd
-    p = subprocess.Popen(["ssh", remote_addr, cmd])
+    if fd is None:
+        p = subprocess.Popen(["ssh", remote_addr, cmd])
+    else:
+        p = subprocess.Popen(["ssh", remote_addr, cmd], stdout = fd)
+
     return p
 
 def sync_build_dir():
@@ -130,10 +153,22 @@ def start_client():
     print "-" * 20
     print "starting client ..."
     print "-" * 20
-    return remote_cmd_chwd("/users/jhe/flashsearch/src/qq_mem/build/",
+    shcmd("rm -f /tmp/client.out")
+    return remote_cmd_chwd(
+        "/users/jhe/flashsearch/src/qq_mem/build/",
         "./engine_bench -exp_mode=grpclog -n_threads={n_threads} -use_profiler=true "
         "-grpc_server={server}"
-        .format(server = server_addr, n_threads = n_client_threads))
+        .format(server = server_addr, n_threads = n_client_threads),
+        open("/tmp/client.out", "w")
+        )
+
+def is_client_finished():
+    out = subprocess.check_output("tail -n 1 /tmp/client.out", shell=True)
+    print "check out: ", out
+    if "ExperimentFinished!!!" in out:
+        return True
+    else:
+        return False
 
 def kill_client():
     p = remote_cmd("pkill engine_bench")
@@ -141,6 +176,14 @@ def kill_client():
 
 def kill_server():
     shcmd("sudo pkill qq_server", ignore_error=True)
+
+def kill_subprocess(p):
+    os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+    p.wait()
+
+def copy_client_out():
+    prepare_dir("/tmp/results")
+    shcmd("cp /tmp/client.out /tmp/results/{}".format(now())
 
 def start_server():
     print "-" * 20
@@ -196,6 +239,17 @@ def main():
 
     print "wating for some other time...."
     time.sleep(5)
+
+    while True:
+        finished = is_client_finished()
+        print "is_client_finished()", finished
+
+        if finished:
+            kill_subprocess(client_p)
+            copy_client_out()
+            break
+
+        time.sleep(1)
 
     try:
 	client_p.wait()
