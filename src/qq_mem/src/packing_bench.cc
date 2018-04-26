@@ -11,35 +11,60 @@
 #include "utils.h"
 
 
-void Bench() {
-  std::vector<uint32_t> doc_ids;
-  int num_docids = 100000;
-  for (uint32_t i = 0; i < num_docids; i++) {
-    doc_ids.push_back(i);
+const int n_packs = 1000000;
+const int LIMIT = 10000000;
+
+void BenchLittlePackedInts() {
+  std::vector<std::string> data; 
+  srand(0);
+  for (int i = 0; i < n_packs; i++) {
+    LittlePackedIntsWriter writer;
+    for (int j = 0; j < PACK_ITEM_CNT; j++) {
+      writer.Add(rand() % LIMIT);
+    }
+    data.push_back(writer.Serialize());
   }
 
-  std::string path = "/tmp/tmp.docid";
-  FileOffsetsOfBlobs file_offsets = DumpCozyBox(doc_ids, path, true);
-
-  SkipList skip_list = CreateSkipListForDodId(
-      GetSkipPostingPreDocIds(doc_ids), file_offsets.BlobOffsets());
-
-  // Open the file
-  utils::FileMap file_map;
-  file_map.Open(path);
-
-  // Read data by TermFreqIterator
-  DocIdIterator iter((const uint8_t *)file_map.Addr(), &skip_list, num_docids);
-
+  
   auto start = utils::now();
-  for (uint32_t i = 0; i < num_docids; i++) {
-    iter.SkipTo(i);
+  LittlePackedIntsReader reader;
+  for (int i = 0; i < n_packs; i++) {
+    uint8_t *buf = (uint8_t *)data[i].data();
+    reader.Reset(buf);
+    reader.DecodeToCache();
+    for (int j = 0; j < PACK_ITEM_CNT; j++) {
+      reader.Get(j);
+    }
   }
   auto end = utils::now();
+  auto dur = utils::duration(start, end);
+  std::cout << "Duration: " <<  dur << std::endl;
+}
 
-  std::cout << "Duration: " << utils::duration(start, end) << std::endl;
+void BenchPackedInts() {
+  std::vector<std::string> data; 
+  srand(0);
+  for (int i = 0; i < n_packs; i++) {
+    PackedIntsWriter writer;
+    for (int j = 0; j < PACK_ITEM_CNT; j++) {
+      writer.Add(rand() % LIMIT);
+    }
+    data.push_back(writer.Serialize());
+  }
 
-  file_map.Close();
+  
+  auto start = utils::now();
+  PackedIntsReader reader;
+  for (int i = 0; i < n_packs; i++) {
+    uint8_t *buf = (uint8_t *)data[i].data();
+    reader.Reset(buf);
+    for (int j = 0; j < PACK_ITEM_CNT; j++) {
+      reader.Get(j);
+    }
+  }
+  auto end = utils::now();
+  auto dur = utils::duration(start, end);
+  std::cout << "Duration: " <<  dur << std::endl;
 }
 
 int main(int argc, char **argv) {
@@ -49,7 +74,8 @@ int main(int argc, char **argv) {
 
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-  Bench();
+  BenchLittlePackedInts();
+  BenchPackedInts();
 }
 
 
