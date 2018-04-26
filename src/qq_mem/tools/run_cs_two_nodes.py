@@ -33,8 +33,8 @@ do_drop_cache = True
 
 server_addr = "node1"
 remote_addr = "node2"
-n_server_threads = 64
-n_client_threads = 128
+n_server_threads = [64]
+n_client_threads = [128]
 # mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
 mem_size_list = [16*GB]
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
@@ -197,7 +197,7 @@ def sync_build_dir():
 def compile_engine_bench():
     shcmd("make engine_bench_build")
 
-def start_client():
+def start_client(n_threads):
     print "-" * 20
     print "starting client ..."
     print "-" * 20
@@ -205,7 +205,7 @@ def start_client():
         "/users/jhe/flashsearch/src/qq_mem/build/",
         "./engine_bench -exp_mode=grpclog -n_threads={n_threads} "
         "-grpc_server={server}"
-        .format(server = server_addr, n_threads = n_client_threads),
+        .format(server = server_addr, n_threads = n_threads),
         open("/tmp/client.out", "w")
         )
 
@@ -252,7 +252,7 @@ def start_server(conf):
               "-sync_type=ASYNC -n_threads={n_threads} "\
               "-addr={server} -port=50051 -engine={engine} -profile_vacuum={profile}"\
               .format(server = server_addr,
-                    n_threads = n_server_threads,
+                    n_threads = conf['n_server_threads'],
                     engine = search_engine,
                     profile = profile_qq_server)
         print "-" * 20
@@ -270,16 +270,17 @@ class Exp(Experiment):
     def __init__(self):
         self._exp_name = "exp-" + now()
 
-        self.mem_sizes = mem_size_list
-        self._n_treatments = len(self.mem_sizes)
+        self.confs = parameter_combinations({
+                "server_mem_size": mem_size_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads})
+        self._n_treatments = len(self.confs)
 
         self.result = []
 
     def conf(self, i):
-        return {"server_mem_size": self.mem_sizes[i],
-                "n_server_threads": n_server_threads,
-                "n_client_threads": n_client_threads
-                }
+
+        return self.confs[i]
 
     def before(self):
         sync_build_dir()
@@ -314,7 +315,7 @@ class Exp(Experiment):
         print "Wait for client to fully start (1 sec)..."
         time.sleep(1)
 
-        client_p = start_client()
+        client_p = start_client(conf['n_client_threads'])
 
         seconds = 0
         while True:
