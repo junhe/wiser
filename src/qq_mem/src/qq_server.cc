@@ -21,6 +21,8 @@
 #include "qq.grpc.pb.h"
 #include "grpc_server_impl.h"
 
+#include "flash_engine_dumper.h"
+
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
@@ -112,12 +114,14 @@ int main(int argc, char** argv) {
     // nothing to add
   }
 
+  // SkipList::byte_cnt_ = 0;
   auto server = CreateServer(config);
 
   if (n_secs == 0) {
     while (!got_sigint) {
       gpr_sleep_until(gpr_time_add(gpr_now(GPR_CLOCK_REALTIME),
                                    gpr_time_from_seconds(5, GPR_TIMESPAN)));
+      SkipList::ShowTotal();
     }
     server->Shutdown();
   } else {

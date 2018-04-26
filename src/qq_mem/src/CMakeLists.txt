@@ -70,6 +70,7 @@ set(ENGINE_SRCS
     utils.cc
     engine_loader.cc
     vacuum_engine.cc
+    flash_engine_dumper.cc
     scoring.cc
     highlighter.cc
     flashreader.cc

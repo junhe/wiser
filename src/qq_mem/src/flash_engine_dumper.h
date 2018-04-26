@@ -7,7 +7,9 @@
 #include <unistd.h>
 
 #include <string>
+#include <thread>
 #include <iostream>
+#include <set>
 
 #include "qq_mem_engine.h"
 #include "packed_value.h"
@@ -670,6 +672,11 @@ struct SkipEntry {
 
 class SkipList {
  public:
+  // static std::unordered_map<std::thread::id, size_t> byte_cnt_;
+  static size_t byte_cnt_;
+  static std::set<const uint8_t *> visited_;
+  static std::mutex mutex_;
+
   void Load(const uint8_t *buf) {
     // byte 0 is the magic number
     DLOG_IF(FATAL, (buf[0] & 0xFF) != SKIP_LIST_FIRST_BYTE)
@@ -698,6 +705,22 @@ class SkipList {
                file_offset_of_offset_blob,
                in_blob_index_of_offset_bag);
     }
+
+    AddByteCnt(it.CurOffset(), buf);
+  }
+
+  void AddByteCnt(size_t cnt, const uint8_t *buf) {
+    std::lock_guard<std::mutex> lock(mutex_);
+    auto it = visited_.find(buf);
+    if (it == visited_.end()) {
+      visited_.insert(buf);
+      byte_cnt_ += cnt;
+    } else {
+    }
+  }
+
+  static void ShowTotal() {
+    std::cout << "=-=-=-------------------Total bytes: " << SkipList::byte_cnt_ << std::endl;
   }
 
   int NumEntries() const {

@@ -33,10 +33,10 @@ do_drop_cache = True
 
 server_addr = "node1"
 remote_addr = "node2"
-n_server_threads = [25, 128]
+n_server_threads = [25]
 n_client_threads = [128]
-mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
-# mem_size_list = [16*GB]
+# mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
+mem_size_list = [16*GB]
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
 profile_qq_server = "false"
 mem_swappiness = 60

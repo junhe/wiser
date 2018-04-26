@@ -107,6 +107,10 @@ class VarintIterator: public PopIteratorService {
     return index_ == count_;
   }
 
+  int CurOffset() const {
+    return cur_offset_;
+  }
+
   // Must check if it is the end before Pop() is called!
   uint64_t Pop() {
     int len;
