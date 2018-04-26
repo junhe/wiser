@@ -21,7 +21,7 @@ inline int NumBitsInByte(int next_empty_bit) {
   return 8 - (next_empty_bit % 8);
 }
 
-inline int NumBytesInPack(int bits_per_value) {
+inline int NumDataBytesInPack(int bits_per_value) {
   return (bits_per_value * PACK_ITEM_CNT + 7) / 8;
 }
 
@@ -90,6 +90,9 @@ inline long ExtractBits(const uint8_t *buf, const int bit_start, const int n_bit
 // Using the little int packer lib to pack bits
 class LittlePackedIntsWriter {
  public:
+  static constexpr int HEADER_BYTES = 2;
+  static constexpr int BUF_SIZE = HEADER_BYTES + PACK_ITEM_CNT * sizeof(uint32_t);
+
   // although value is `long`, we only support uint32_t
   void Add(long value) {
     values_[add_to_index_++] = value;
@@ -108,11 +111,11 @@ class LittlePackedIntsWriter {
     LOG_IF(FATAL, add_to_index_ != PACK_ITEM_CNT) 
       << "Number of values is not " << PACK_ITEM_CNT;
 
-    uint8_t buf[buf_size_];
+    uint8_t buf[BUF_SIZE];
 
-    turbopack32(values_, PACK_ITEM_CNT, max_bits_per_value_, buf + header_bytes_);
+    turbopack32(values_, PACK_ITEM_CNT, max_bits_per_value_, buf + HEADER_BYTES);
     return std::string(
-        (char *)buf, header_bytes_ + NumBytesInPack(max_bits_per_value_));
+        (char *)buf, HEADER_BYTES + NumDataBytesInPack(max_bits_per_value_));
   }
 
  private:
@@ -122,8 +125,6 @@ class LittlePackedIntsWriter {
     buf[1] = max_bits_per_value_;
   }
 
-  static constexpr int header_bytes_ = 2;
-  static constexpr int buf_size_ = header_bytes_ + PACK_ITEM_CNT * sizeof(uint32_t);
   uint32_t values_[PACK_ITEM_CNT];
   int max_bits_per_value_ = 0;
   int add_to_index_ = 0;
@@ -176,6 +177,63 @@ class PackedIntsWriter {
   std::vector<long> values_;
   int max_bits_per_value_ = 0;
 };
+
+
+// Usage:
+//
+// Reset(buf);
+// DecodeToCache()
+// Get(i)
+class LittlePackedIntsReader {
+ public:
+  LittlePackedIntsReader(const uint8_t *buf) {
+    Reset(buf);
+  }
+
+  LittlePackedIntsReader(){}
+
+  void Reset(const uint8_t *buf) {
+    buf_ = buf; 
+
+    DLOG_IF(FATAL, buf_[0] != PACK_FIRST_BYTE) 
+      << "Magic number for pack is wrong: " << buf_[0];
+
+    DLOG_IF(FATAL, buf_[1] > 64) 
+      << "n_bits_per_value_ is larger than 64, which is wrong.";
+
+    n_bits_per_value_ = buf[1];
+    is_cache_filled_ = false;
+  }
+
+  void DecodeToCache() {
+    turbounpack32(buf_, PACK_ITEM_CNT, n_bits_per_value_, cache_);
+    is_cache_filled_ = true;
+  }
+
+  uint32_t Get(const int index) const {
+    DLOG_IF(FATAL, is_cache_filled_ == false)
+      << "Cache is not filled yet!";
+
+    return cache_[index]; 
+  }
+  
+  int NumBits() const {
+    return n_bits_per_value_;
+  }
+
+  int SerializationSize() const {
+    return LittlePackedIntsWriter::HEADER_BYTES + 
+             NumDataBytesInPack(n_bits_per_value_); 
+  }
+
+ private:
+  const uint8_t *buf_ = nullptr;
+  int n_bits_per_value_ = 0;
+
+  uint32_t cache_[PACK_ITEM_CNT];
+  bool is_cache_filled_ = false;
+};
+
 
 
 class PackedIntsReader {
