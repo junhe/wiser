@@ -7,6 +7,8 @@ from pyreuse.sysutils.cgroup import *
 from pyreuse.macros import *
 from pyreuse.sysutils.iostat_parser import parse_iostat
 from pyreuse.general.expbase import *
+from pyreuse.sysutils.blocktrace import BlockTraceManager
+
 
 """
 server_addr = "node.conan-wisc.fsperfatscale-pg0"
@@ -42,7 +44,12 @@ device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
-do_block_tracing = False
+do_block_tracing = True
+
+if device_name == "sdc":
+    partition_padding_bytes = 0
+elif device_name == "nvme0n1":
+    partition_padding_bytes = 46139392 * 512
 
 gprof_env = os.environ.copy()
 gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
@@ -131,11 +138,14 @@ def create_blktrace_manager(subexpdir):
             dev = os.path.join("/dev", partition_name),
             event_file_column_names = ['pid', 'operation', 'offset', 'size',
                 'timestamp', 'pre_wait_time'],
-            to_ftlsim_path = os.path.join(subexpdir, "trace.table"),
+            resultpath = os.path.join(subexpdir, "raw-trace.txt"),
+            to_ftlsim_path = os.path.join(subexpdir, "trace-table.txt"),
             sector_size = 512,
-            padding_bytes = 46139392 * 512,
+            padding_bytes = partition_padding_bytes,
             do_sort = False)
 
+def kill_blktrace():
+    shcmd("sudo pkill blktrace", ignore_error = True)
 
 def drop_cache():
     shcmd("sudo dropcache")
@@ -171,11 +181,14 @@ def remote_cmd(cmd, fd = None):
     if fd is None:
         p = subprocess.Popen(["ssh", remote_addr, cmd])
     else:
-        p = subprocess.Popen(["ssh", remote_addr, cmd], stdout = fd)
+        p = subprocess.Popen(["ssh", remote_addr, cmd], stdout = fd, stderr = fd)
 
     return p
 
 def sync_build_dir():
+    if server_addr == remote_addr:
+        return
+
     build_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
     shcmd("rsync -avzh --progress {path} {addr}:{path}".format(
         addr=remote_addr, path=build_path))
@@ -272,6 +285,7 @@ class Exp(Experiment):
 
     def beforeEach(self, conf):
         kill_server()
+        kill_blktrace()
 
         kill_client()
         time.sleep(1)
@@ -296,6 +310,8 @@ class Exp(Experiment):
         if do_block_tracing is True:
             self.blocktracer = create_blktrace_manager(self._subexpdir)
             self.blocktracer.start_tracing_and_collecting(['issue'])
+        print "Wait for client to fully start (1 sec)..."
+        time.sleep(1)
 
         client_p = start_client()
 
@@ -343,7 +359,7 @@ class Exp(Experiment):
 
         if do_block_tracing is True:
             self.blocktracer.stop_tracing_and_collecting()
-            self.create_event_file_from_blkparse()
+            self.blocktracer.create_event_file_from_blkparse()
 
 if __name__ == "__main__":
     exp = Exp()
