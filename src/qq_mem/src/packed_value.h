@@ -4,14 +4,25 @@
 #include "compression.h"
 #include "utils.h"
 
+extern "C" {
+#include "bitpacking.h"
+}
+
+
 #define PACK_FIRST_BYTE 0xD5
 #define VINTS_FIRST_BYTE 0x9B
 
 #define PACK_ITEM_CNT 128
 
 
+
+
 inline int NumBitsInByte(int next_empty_bit) {
   return 8 - (next_empty_bit % 8);
+}
+
+inline int NumBytesInPack(int bits_per_value) {
+  return (bits_per_value * PACK_ITEM_CNT + 7) / 8;
 }
 
 // Append the rightmost n_bits of val to next_empty_bit in buf
@@ -77,8 +88,9 @@ inline long ExtractBits(const uint8_t *buf, const int bit_start, const int n_bit
 
 
 // Using the little int packer lib to pack bits
-class LittleIntsWriter {
+class LittlePackedIntsWriter {
  public:
+  // although value is `long`, we only support uint32_t
   void Add(long value) {
     values_[add_to_index_++] = value;
 
@@ -92,11 +104,31 @@ class LittleIntsWriter {
     return max_bits_per_value_;
   }
 
+  std::string Serialize() {
+    LOG_IF(FATAL, add_to_index_ != PACK_ITEM_CNT) 
+      << "Number of values is not " << PACK_ITEM_CNT;
+
+    uint8_t buf[buf_size_];
+
+    turbopack32(values_, PACK_ITEM_CNT, max_bits_per_value_, buf + header_bytes_);
+    return std::string(
+        (char *)buf, header_bytes_ + NumBytesInPack(max_bits_per_value_));
+  }
+
  private:
+  void SetHeader(uint8_t *buf) {
+    // set bit 00__ ____ to distinguish from VINTS
+    buf[0] = PACK_FIRST_BYTE;
+    buf[1] = max_bits_per_value_;
+  }
+
+  static constexpr int header_bytes_ = 2;
+  static constexpr int buf_size_ = header_bytes_ + PACK_ITEM_CNT * sizeof(uint32_t);
   uint32_t values_[PACK_ITEM_CNT];
   int max_bits_per_value_ = 0;
   int add_to_index_ = 0;
 };
+
 
 class PackedIntsWriter {
  public:

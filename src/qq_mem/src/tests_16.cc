@@ -1,6 +1,7 @@
 #include "catch.hpp"
 
 #include "query_pool.h"
+#include "packed_value.h"
 
 extern "C" {
 #include "bitpacking.h"
@@ -91,10 +92,21 @@ TEST_CASE( "Little packed ints", "[pack]" ) {
     }
   }
 
-  SECTION("Write and read") {
+  SECTION("Write and Read") {
+    LittlePackedIntsWriter writer;
 
+    for (int i = 0; i < PACK_ITEM_CNT; i++) {
+      writer.Add(i);  
+    }
 
+    std::string data = writer.Serialize();
+    REQUIRE(data.size() == 112 + 2); // 2 is the size of the header
   }
+
+
+
+
+
 }
 
 
