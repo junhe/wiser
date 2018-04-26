@@ -34,9 +34,10 @@ do_drop_cache = True
 server_addr = "node1"
 remote_addr = "node2"
 n_server_threads = 64
-n_client_threads = 64
-mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
+n_client_threads = 128
+# mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
+mem_size_list = [16*GB]
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
 profile_qq_server = "false"
 mem_swappiness = 60
 os_swap = True
@@ -44,7 +45,7 @@ device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
-do_block_tracing = True
+do_block_tracing = False
 
 if device_name == "sdc":
     partition_padding_bytes = 0
@@ -301,7 +302,7 @@ class Exp(Experiment):
         server_p = start_server(conf)
 
         print "Wating for some time util the server starts...."
-        time.sleep(30)
+        time.sleep(10)
         mb_read_a = get_iostat_mb_read()
 
         check_port()
