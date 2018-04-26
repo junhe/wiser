@@ -33,10 +33,10 @@ do_drop_cache = True
 
 server_addr = "node1"
 remote_addr = "node2"
-n_server_threads = [64]
+n_server_threads = [25, 128]
 n_client_threads = [128]
-# mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
-mem_size_list = [16*GB]
+mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
+# mem_size_list = [16*GB]
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
 profile_qq_server = "false"
 mem_swappiness = 60
@@ -125,6 +125,11 @@ class Cgroup(object):
         path = os.path.join('/sys/fs/cgroup', sub, self.name, item)
         return path
 
+def log_crashed_server(conf):
+    with open("server.log", "w+") as f:
+        f.write("server crashed at " + now())
+        f.write(repr(conf))
+
 def send_sigint(pid):
     shcmd("bash -c 'sudo kill -SIGINT {}'".format(os.getpgid(pid)))
     # os.killpg(os.getpgid(pid), signal.SIGINT)
@@ -210,7 +215,7 @@ def start_client(n_threads):
         )
 
 def print_client_output_tail():
-    out = subprocess.check_output("tail -n 5 /tmp/client.out", shell=True)
+    out = subprocess.check_output("tail -n 2 /tmp/client.out", shell=True)
     print out
 
 def is_client_finished():
@@ -322,11 +327,13 @@ class Exp(Experiment):
             print_client_output_tail()
             finished = is_client_finished()
             print "is_client_finished()", finished
+            print conf
 
             is_server_running = is_command_running("./build/qq_server")
-
             if is_server_running is False:
-                raise RuntimeError("Server just crashed!!!")
+                # raise RuntimeError("Server just crashed!!!")
+                log_crashed_server(conf)
+                return
 
             if finished:
                 kill_client()
