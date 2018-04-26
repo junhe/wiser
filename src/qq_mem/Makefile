@@ -85,6 +85,9 @@ profile:
 server_profile:
 	google-pprof --text ./build/qq_server ./vacuum.profile
 
+server_profile_gv:
+	google-pprof --pdf ./build/qq_server ./vacuum.profile > profile.pdf
+
 profile_gv:
 	google-pprof --pdf ./build/engine_bench ./build/my.profile.new > profile.pdf
 
