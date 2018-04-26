@@ -5,13 +5,16 @@ set(TCMALLOC_OPTS -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -
 
 set(PRODUCTION_OPTS -std=c++11 -O3 -g -Wreturn-type -DNDEBUG)
 set(INDEXING_OPTS   -std=c++11 -O3 -g -Wreturn-type)
-set(DEBUG_OPTS      -std=c++11 -O0 -g -Wreturn-type)
+set(DEBUG_OPTS      "-std=c++11 -O0 -g -Wreturn-type")
 set(DEV_OPTS        -std=c++11 -O0 -g -Wreturn-type)
 
 #add_compile_options(${INDEXING_OPTS})
 #add_compile_options(${DEV_OPTS})
-add_compile_options(${PRODUCTION_OPTS})
+#add_compile_options(${PRODUCTION_OPTS})
 #add_compile_options(${DEBUG_OPTS})
+
+SET(CMAKE_CXX_FLAGS ${DEBUG_OPTS})
+SET(CMAKE_C_FLAGS "-fPIC -std=c99 -O3 -msse4.1  -march=native -Wall -Wextra -pedantic -Wshadow")
 
 set(GPROFILER profiler)
 #set(CMAKE_CXX_COMPILER "/usr/lib/ccache/g++-5")
@@ -26,18 +29,32 @@ find_package(Protobuf REQUIRED)
 find_package(GRPC REQUIRED)
 find_package( Boost 1.5.4 COMPONENTS program_options REQUIRED )
 
+
+
 set(PROTOS
     ${CMAKE_CURRENT_SOURCE_DIR}/protos/qq.proto
     ${CMAKE_CURRENT_SOURCE_DIR}/protos/posting_message.proto
 )
 
+SET(LITTLE_PACKED_INTS_DIR ${CMAKE_CURRENT_SOURCE_DIR}/LittleIntPacker)
+
 set(PROTO_SRC_DIR ${CMAKE_CURRENT_BINARY_DIR}/proto-src)
 file(MAKE_DIRECTORY ${PROTO_SRC_DIR})
 include_directories(${PROTO_SRC_DIR})
 include_directories(${Boost_INCLUDE_DIR})
+INCLUDE_DIRECTORIES(${LITTLE_PACKED_INTS_DIR}/include)
+INCLUDE_DIRECTORIES(${LITTLE_PACKED_INTS_DIR}/src)
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
 
+ADD_LIBRARY(little_packed_ints
+    ${LITTLE_PACKED_INTS_DIR}/src/bitpacking32.c
+    ${LITTLE_PACKED_INTS_DIR}/src/bmipacking32.c
+    ${LITTLE_PACKED_INTS_DIR}/src/horizontalpacking32.c
+    ${LITTLE_PACKED_INTS_DIR}/src/scpacking32.c
+    ${LITTLE_PACKED_INTS_DIR}/src/turbobitpacking32.c
+    ${LITTLE_PACKED_INTS_DIR}/src/util.c
+)
 
 
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_SRC_DIR} ${PROTOS})
@@ -140,6 +157,7 @@ add_executable( testmain
     ${GRPC_SRCS}
     $<TARGET_OBJECTS:CatchMain> catch.hpp )
 target_link_libraries(testmain
+    little_packed_ints
     ${GRPC_LIBS}
     protobuf::libprotobuf
     ${QQ_LIBS}

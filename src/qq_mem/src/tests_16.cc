@@ -2,6 +2,10 @@
 
 #include "query_pool.h"
 
+extern "C" {
+#include "bitpacking.h"
+}
+
 TEST_CASE( "Query pools", "[qpool]" ) {
 
   SECTION("QueryPool") {
@@ -66,5 +70,23 @@ TEST_CASE( "Query pools", "[qpool]" ) {
 
   }
 
+}
+
+
+TEST_CASE( "Little packed ints", "[pack]" ) {
+  uint32_t original_array[128];
+  uint8_t buf[128 * 4];
+  uint32_t unpacked[128];
+
+  for (int i = 0; i < 128; i++) {
+    original_array[i] = i;
+  }
+
+  turbopack32(original_array, 128, 8, buf);
+  turbounpack32(buf, 128, 8, unpacked);
+
+  for (int i = 0; i < 128; i++) {
+    REQUIRE(unpacked[i] == i);
+  }
 }
 
