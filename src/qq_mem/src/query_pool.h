@@ -260,6 +260,9 @@ class QueryProducerNoLoop: public QueryProducerService {
       utils::trim(line);
 
       SearchQuery query(GetTerms(line));
+      query.n_results = 5;
+      query.return_snippets = true;
+      query.n_snippet_passages = 3;
       query.is_phrase = IsPhrase(line);
 
       pool_.Add(query);
