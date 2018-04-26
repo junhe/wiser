@@ -6,7 +6,7 @@
 std::string EncodeToDeltaEncodedPackedInts(const std::vector<uint32_t> &values) {
   std::vector<uint32_t> deltas = EncodeDelta(values);
 
-  PackedIntsWriter writer;
+  LittlePackedIntsWriter writer;
   for (auto &delta : deltas) {
     writer.Add(delta);
   }

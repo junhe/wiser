@@ -149,7 +149,8 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
       size_t file_length;
       utils::MapFile("/tmp/tmp.pos.dumper", &addr, &fd, &file_length);
 
-      PackedIntsReader reader((uint8_t *)addr + file_offs.PackOffs()[0]);
+      LittlePackedIntsReader reader((uint8_t *)addr + file_offs.PackOffs()[0]);
+      reader.DecodeToCache();
       for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
         REQUIRE(reader.Get(i) == deltas[i]);
       }

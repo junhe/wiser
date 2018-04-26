@@ -107,7 +107,7 @@ class LittlePackedIntsWriter {
     return max_bits_per_value_;
   }
 
-  std::string Serialize() {
+  std::string Serialize() const {
     LOG_IF(FATAL, add_to_index_ != PACK_ITEM_CNT) 
       << "Number of values is not " << PACK_ITEM_CNT;
 
@@ -120,7 +120,7 @@ class LittlePackedIntsWriter {
   }
 
  private:
-  void SetHeader(uint8_t *buf) {
+  void SetHeader(uint8_t *buf) const {
     // set bit 00__ ____ to distinguish from VINTS
     buf[0] = PACK_FIRST_BYTE;
     buf[1] = max_bits_per_value_;
@@ -286,6 +286,7 @@ class PackedIntsIterator {
   void Reset(const uint8_t *buf) {
     index_ = 0;
     reader_.Reset(buf);
+    reader_.DecodeToCache();
   }
 
   int SerializationSize() const {
@@ -301,7 +302,7 @@ class PackedIntsIterator {
   }
 
   bool IsEnd() const {
-    return index_ == PackedIntsWriter::PACK_SIZE;
+    return index_ == PACK_ITEM_CNT;
   }
 
   long Value() const {
@@ -314,7 +315,7 @@ class PackedIntsIterator {
 
  private:
   int index_;
-  PackedIntsReader reader_;
+  LittlePackedIntsReader reader_;
 };
 
 
@@ -330,6 +331,7 @@ class DeltaEncodedPackedIntsIterator {
     index_ = 0;
     prev_value_ = pre_pack_int;
     reader_.Reset(buf);
+    reader_.DecodeToCache();
   }
 
   void Advance() {
@@ -351,7 +353,7 @@ class DeltaEncodedPackedIntsIterator {
 
   // If IsEnd() is true, Value() is UNreadable
   bool IsEnd() const {
-    return index_ == PackedIntsWriter::PACK_SIZE;
+    return index_ == PACK_ITEM_CNT;
   }
 
   long Value() const {
@@ -365,7 +367,7 @@ class DeltaEncodedPackedIntsIterator {
  private:
   int index_;
   long prev_value_;
-  PackedIntsReader reader_;
+  LittlePackedIntsReader reader_;
 };
 
 

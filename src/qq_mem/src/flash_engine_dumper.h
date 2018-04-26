@@ -17,9 +17,8 @@
 #define SKIP_LIST_FIRST_BYTE 0xA3
 #define POSTING_LIST_FIRST_BYTE 0xF4
 
-constexpr int SKIP_INTERVAL = PackedIntsWriter::PACK_SIZE;
-constexpr int PACK_SIZE = PackedIntsWriter::PACK_SIZE;
-
+constexpr int SKIP_INTERVAL = PACK_ITEM_CNT;
+constexpr int PACK_SIZE = PACK_ITEM_CNT;
 
 
 struct PostingBagBlobIndex {
@@ -98,11 +97,11 @@ class PostingBagBlobIndexes {
 
 class CozyBoxWriter {
  public:
-  CozyBoxWriter(std::vector<PackedIntsWriter> writers, 
+  CozyBoxWriter(std::vector<LittlePackedIntsWriter> writers, 
                      VIntsWriter vints)
     :pack_writers_(writers), vints_(vints) {}
 
-  const std::vector<PackedIntsWriter> &PackWriters() const {
+  const std::vector<LittlePackedIntsWriter> &PackWriters() const {
     return pack_writers_;
   }
 
@@ -111,7 +110,7 @@ class CozyBoxWriter {
   }
 
  private:
-  std::vector<PackedIntsWriter> pack_writers_;
+  std::vector<LittlePackedIntsWriter> pack_writers_;
   VIntsWriter vints_;
 };
 
@@ -132,8 +131,7 @@ class GeneralTermEntry {
     PostingBagBlobIndexes table;
     
     for (auto &size : posting_bag_sizes_) {
-      table.AddRow(val_index / PackedIntsWriter::PACK_SIZE, 
-          val_index % PackedIntsWriter::PACK_SIZE);
+      table.AddRow(val_index / PACK_ITEM_CNT, val_index % PACK_ITEM_CNT);
       val_index += size;
     }
 
@@ -145,11 +143,11 @@ class GeneralTermEntry {
   }
 
   CozyBoxWriter GetCozyBoxWriter(bool do_delta) const {
-    const int pack_size = PackedIntsWriter::PACK_SIZE;
+    const int pack_size = PACK_ITEM_CNT;
     const int n_packs = values_.size() / pack_size;
     const int n_remains = values_.size() % pack_size;
 
-    std::vector<PackedIntsWriter> pack_writers(n_packs);
+    std::vector<LittlePackedIntsWriter> pack_writers(n_packs);
     VIntsWriter vints;
 
     std::vector<uint32_t> vals;
@@ -387,7 +385,7 @@ class FileDumper : public GeneralFileDumper {
   }
 
   virtual std::vector<off_t> DumpPackedBlocks(
-      const std::vector<PackedIntsWriter> &pack_writers) {
+      const std::vector<LittlePackedIntsWriter> &pack_writers) {
     std::vector<off_t> offs;
 
     for (auto &writer : pack_writers) {
@@ -397,9 +395,9 @@ class FileDumper : public GeneralFileDumper {
     return offs;
   }
 
-  virtual off_t DumpPackedBlock(const PackedIntsWriter &writer) {
+  virtual off_t DumpPackedBlock(const LittlePackedIntsWriter &writer) {
     off_t start_byte = CurrentOffset();
-    std::string data = writer.Serialize();      
+    std::string data = writer.Serialize(); 
 
     utils::Write(fd_, data.data(), data.size());
     return start_byte;
@@ -469,7 +467,7 @@ class FakeFileDumper : public FileDumper {
   }
 
   std::vector<off_t> DumpPackedBlocks(
-      const std::vector<PackedIntsWriter> &pack_writers) {
+      const std::vector<LittlePackedIntsWriter> &pack_writers) {
     std::vector<off_t> offs;
 
     for (auto &writer : pack_writers) {
@@ -479,7 +477,7 @@ class FakeFileDumper : public FileDumper {
     return offs;
   }
 
-  off_t DumpPackedBlock(const PackedIntsWriter &writer) {
+  off_t DumpPackedBlock(const LittlePackedIntsWriter &writer) {
     off_t start_byte = CurrentOffset();
     std::string data = writer.Serialize();      
 
