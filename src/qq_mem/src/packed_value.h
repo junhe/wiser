@@ -9,7 +9,7 @@ extern "C" {
 }
 
 
-#define PACK_FIRST_BYTE 0xD5
+#define PACK_FIRST_BYTE 0xD6
 #define VINTS_FIRST_BYTE 0x9B
 
 #define PACK_ITEM_CNT 128
