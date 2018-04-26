@@ -34,10 +34,6 @@ class TermIndex {
     }
 
     utils::UnmapFile(addr, fd, file_length);
-
-    for (auto &it : index_) {
-      LOG(INFO) << ".tip: " << it.first << ": " << it.second << std::endl;
-    }
   }
 
   const char *LoadEntry(const char *buf) {
