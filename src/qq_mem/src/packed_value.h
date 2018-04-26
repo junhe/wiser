@@ -7,6 +7,8 @@
 #define PACK_FIRST_BYTE 0xD5
 #define VINTS_FIRST_BYTE 0x9B
 
+#define PACK_ITEM_CNT 128
+
 
 inline int NumBitsInByte(int next_empty_bit) {
   return 8 - (next_empty_bit % 8);
@@ -73,6 +75,28 @@ inline long ExtractBits(const uint8_t *buf, const int bit_start, const int n_bit
   return val;
 }
 
+
+// Using the little int packer lib to pack bits
+class LittleIntsWriter {
+ public:
+  void Add(long value) {
+    values_[add_to_index_++] = value;
+
+    int n_bits = utils::NumOfBits(value);
+    n_bits = n_bits == 0? 1 : n_bits;
+    if (n_bits > max_bits_per_value_)
+      max_bits_per_value_ = n_bits;
+  }
+
+  int MaxBitsPerValue() const {
+    return max_bits_per_value_;
+  }
+
+ private:
+  uint32_t values_[PACK_ITEM_CNT];
+  int max_bits_per_value_ = 0;
+  int add_to_index_ = 0;
+};
 
 class PackedIntsWriter {
  public:

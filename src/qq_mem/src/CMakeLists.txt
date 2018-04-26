@@ -3,17 +3,18 @@ cmake_minimum_required(VERSION 3.2)
 
 set(TCMALLOC_OPTS -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free)
 
-set(PRODUCTION_OPTS -std=c++11 -O3 -g -Wreturn-type -DNDEBUG)
-set(INDEXING_OPTS   -std=c++11 -O3 -g -Wreturn-type)
+set(PRODUCTION_OPTS "-std=c++11 -O3 -g -Wreturn-type -DNDEBUG")
+set(INDEXING_OPTS   "-std=c++11 -O3 -g -Wreturn-type")
 set(DEBUG_OPTS      "-std=c++11 -O0 -g -Wreturn-type")
-set(DEV_OPTS        -std=c++11 -O0 -g -Wreturn-type)
+set(DEV_OPTS        "-std=c++11 -O0 -g -Wreturn-type")
 
 #add_compile_options(${INDEXING_OPTS})
 #add_compile_options(${DEV_OPTS})
 #add_compile_options(${PRODUCTION_OPTS})
 #add_compile_options(${DEBUG_OPTS})
 
-SET(CMAKE_CXX_FLAGS ${DEBUG_OPTS})
+#SET(CMAKE_CXX_FLAGS ${PRODUCTION_OPTS})
+SET(CMAKE_CXX_FLAGS ${DEV_OPTS})
 SET(CMAKE_C_FLAGS "-fPIC -std=c99 -O3 -msse4.1  -march=native -Wall -Wextra -pedantic -Wshadow")
 
 set(GPROFILER profiler)
@@ -84,6 +85,7 @@ set(QQ_LIBS
     boost_filesystem
     boost_locale
     lz4
+    little_packed_ints
     )
 
 set(GRPC_LIBS
@@ -157,7 +159,6 @@ add_executable( testmain
     ${GRPC_SRCS}
     $<TARGET_OBJECTS:CatchMain> catch.hpp )
 target_link_libraries(testmain
-    little_packed_ints
     ${GRPC_LIBS}
     protobuf::libprotobuf
     ${QQ_LIBS}
@@ -177,6 +178,23 @@ target_link_libraries(hash_benchmark
     ${GRPC_LIBS}
     protobuf::libprotobuf
     ${QQ_LIBS}
+    ${GLOG_LIB}
+)
+
+
+add_executable(packing_bench
+    packing_bench.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+    test_helpers.cc
+)
+
+target_link_libraries(packing_bench
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${QQ_LIBS}
+    pthread
     ${GLOG_LIB}
 )
 
