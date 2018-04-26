@@ -92,6 +92,42 @@ TEST_CASE( "Little packed ints", "[pack]" ) {
     }
   }
 
+  SECTION("Write and Read all 0") {
+    LittlePackedIntsWriter writer;
+
+    for (int i = 0; i < PACK_ITEM_CNT; i++) {
+      writer.Add(0);  
+    }
+
+    std::string data = writer.Serialize();
+
+    LittlePackedIntsReader reader((uint8_t *)data.data());
+    REQUIRE(reader.NumBits() == 1);
+    reader.DecodeToCache();
+    
+    for (int i = 0; i < PACK_ITEM_CNT; i++) {
+      REQUIRE(reader.Get(i) == 0);
+    }
+  }
+
+  SECTION("Write and Read all 1") {
+    LittlePackedIntsWriter writer;
+
+    for (int i = 0; i < PACK_ITEM_CNT; i++) {
+      writer.Add(1); 
+    }
+
+    std::string data = writer.Serialize();
+
+    LittlePackedIntsReader reader((uint8_t *)data.data());
+    REQUIRE(reader.NumBits() == 1);
+    reader.DecodeToCache();
+    
+    for (int i = 0; i < PACK_ITEM_CNT; i++) {
+      REQUIRE(reader.Get(i) == 1);
+    }
+  }
+
   SECTION("Write and Read") {
     LittlePackedIntsWriter writer;
 
@@ -101,12 +137,34 @@ TEST_CASE( "Little packed ints", "[pack]" ) {
 
     std::string data = writer.Serialize();
     REQUIRE(data.size() == 112 + 2); // 2 is the size of the header
+
+    LittlePackedIntsReader reader((uint8_t *)data.data());
+    REQUIRE(reader.NumBits() == 7);
+    reader.DecodeToCache();
+    
+    for (int i = 0; i < PACK_ITEM_CNT; i++) {
+      REQUIRE(reader.Get(i) == i);
+    }
   }
 
+  SECTION("Write and Read rand numbers") {
+    LittlePackedIntsWriter writer;
 
+    srand(0);
+    for (int i = 0; i < PACK_ITEM_CNT; i++) {
+      writer.Add(rand() % 10000000); 
+    }
 
+    std::string data = writer.Serialize();
 
-
+    LittlePackedIntsReader reader((uint8_t *)data.data());
+    reader.DecodeToCache();
+    
+    srand(0);
+    for (int i = 0; i < PACK_ITEM_CNT; i++) {
+      REQUIRE(reader.Get(i) == rand() % 10000000);
+    }
+  }
 }
 
 

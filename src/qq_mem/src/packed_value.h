@@ -112,6 +112,7 @@ class LittlePackedIntsWriter {
       << "Number of values is not " << PACK_ITEM_CNT;
 
     uint8_t buf[BUF_SIZE];
+    SetHeader(buf);
 
     turbopack32(values_, PACK_ITEM_CNT, max_bits_per_value_, buf + HEADER_BYTES);
     return std::string(
@@ -206,7 +207,8 @@ class LittlePackedIntsReader {
   }
 
   void DecodeToCache() {
-    turbounpack32(buf_, PACK_ITEM_CNT, n_bits_per_value_, cache_);
+    turbounpack32(buf_ + LittlePackedIntsWriter::HEADER_BYTES, PACK_ITEM_CNT, 
+        n_bits_per_value_, cache_);
     is_cache_filled_ = true;
   }
 
