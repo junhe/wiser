@@ -8,6 +8,7 @@ from pyreuse.macros import *
 from pyreuse.sysutils.iostat_parser import parse_iostat
 from pyreuse.general.expbase import *
 from pyreuse.sysutils.blocktrace import BlockTraceManager
+import glob
 
 
 """
@@ -45,7 +46,9 @@ device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
-do_block_tracing = False
+do_block_tracing = True
+# query_paths = ["/mnt/ssd/split-log/xaa"]
+query_paths = glob.glob("/mnt/ssd/split-log/*")
 
 if device_name == "sdc":
     partition_padding_bytes = 0
@@ -202,15 +205,16 @@ def sync_build_dir():
 def compile_engine_bench():
     shcmd("make engine_bench_build")
 
-def start_client(n_threads):
+def start_client(n_threads, query_path):
     print "-" * 20
     print "starting client ..."
     print "-" * 20
     return remote_cmd_chwd(
         "/users/jhe/flashsearch/src/qq_mem/build/",
         "./engine_bench -exp_mode=grpclog -n_threads={n_threads} "
-        "-grpc_server={server}"
-        .format(server = server_addr, n_threads = n_threads),
+        "-grpc_server={server} -query_path={query_path}"
+        .format(server = server_addr, n_threads = n_threads,
+           query_path = query_path),
         open("/tmp/client.out", "w")
         )
 
@@ -278,7 +282,9 @@ class Exp(Experiment):
         self.confs = parameter_combinations({
                 "server_mem_size": mem_size_list,
                 "n_server_threads": n_server_threads,
-                "n_client_threads": n_client_threads})
+                "n_client_threads": n_client_threads,
+                "query_path": query_paths
+                })
         self._n_treatments = len(self.confs)
 
         self.result = []
@@ -320,7 +326,8 @@ class Exp(Experiment):
         print "Wait for client to fully start (1 sec)..."
         time.sleep(1)
 
-        client_p = start_client(conf['n_client_threads'])
+        client_p = start_client(conf['n_client_threads'],
+                                conf['query_path'])
 
         seconds = 0
         while True:
@@ -367,7 +374,9 @@ class Exp(Experiment):
         shcmd("cat " + path)
 
         if do_block_tracing is True:
+            shcmd("sync")
             self.blocktracer.stop_tracing_and_collecting()
+            time.sleep(2)
             self.blocktracer.create_event_file_from_blkparse()
 
 if __name__ == "__main__":

@@ -22,6 +22,7 @@ DEFINE_int32(n_threads, 1, "Number of client threads");
 DEFINE_string(exp_mode, "local", "local/grpc/grpclog/localquerylog");
 DEFINE_string(grpc_server, "localhost", "network address of the GRPC server, port not included");
 DEFINE_int32(run_duration, 15, "number of seconds to run the client");
+DEFINE_string(query_path, "/mnt/ssd/realistic_querylog", "path of the query log");
 
 
 const int K = 1000;
@@ -372,9 +373,11 @@ class EngineExperiment: public Experiment {
     t.terms = {"empty"};
     t.tag = "querylog";
     t.n_queries = -1;
-    t.query_log_path = "/mnt/ssd/realistic_querylog";
+    // t.query_log_path = "/mnt/ssd/realistic_querylog";
     // t.query_log_path = "/mnt/ssd/medium_log";
     // t.query_log_path = "/mnt/ssd/short_log";
+    // t.query_log_path = "/mnt/ssd/hello_log";
+    t.query_log_path = FLAGS_query_path;
     treatments.push_back(t);
 
     // for (auto &t : treatments) {
