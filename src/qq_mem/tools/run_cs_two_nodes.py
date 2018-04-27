@@ -129,9 +129,9 @@ class Cgroup(object):
         return path
 
 def log_crashed_server(conf):
-    with open("server.log", "w+") as f:
-        f.write("server crashed at " + now())
-        f.write(repr(conf))
+    with open("server.log", "a") as f:
+        f.write("server crashed at " + now() + " ")
+        f.write(repr(conf) + "\n")
 
 def send_sigint(pid):
     shcmd("bash -c 'sudo kill -SIGINT {}'".format(os.getpgid(pid)))
