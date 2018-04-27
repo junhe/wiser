@@ -34,21 +34,31 @@ do_drop_cache = True
 
 server_addr = "node1"
 remote_addr = "node2"
-n_server_threads = [25, 128]
-n_client_threads = [128]
-mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
+n_server_threads = [25]
+n_client_threads = [256] # client
+# 128 threads: locked size: 1957826560
+# 25 threads locke size: 1126924288
+# mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
 # mem_size_list = [16*GB]
+# mem_size_list = [4*GB]
+# mem_size_list = [1126924288 + x for x in [128*MB, 64*MB, 32*MB, 16*MB]] # 25threads
+mem_size_list = [1126924288 + x for x in [1*GB]] # 25threads
+# mem_size_list = [1126924288 + x for x in [4*GB, 2*GB, 1*GB, 512*MB, 256*MB]] # 25threads
+# mem_size_list = [1957826560 + 256*MB] # 64 threads
+# mem_size_list = [3297189888 + 512*MB] # 128 threads
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
 profile_qq_server = "false"
 mem_swappiness = 60
 os_swap = True
+lock_memory = "true"
 device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
-do_block_tracing = True
-# query_paths = ["/mnt/ssd/split-log/xaa"]
-query_paths = glob.glob("/mnt/ssd/split-log/*")
+do_block_tracing = False
+# query_paths = ["/mnt/ssd/querylog_no_repeated"]
+query_paths = ["/mnt/ssd/realistic_querylog"]
+# query_paths = glob.glob("/mnt/ssd/split-log/*")
 
 if device_name == "sdc":
     partition_padding_bytes = 0
