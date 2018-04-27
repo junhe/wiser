@@ -1,29 +1,71 @@
 import subprocess, os
 import time
 import shlex
+import signal
 from pyreuse.helpers import *
 from pyreuse.sysutils.cgroup import *
 from pyreuse.macros import *
 from pyreuse.sysutils.iostat_parser import parse_iostat
+from pyreuse.general.expbase import *
 
+"""
 server_addr = "node.conan-wisc.fsperfatscale-pg0"
 remote_addr = "node.conan-wisc-2.fsperfatscale-pg0"
-n_server_threads = 1
+n_server_threads = 32
 n_client_threads = 32
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
 # search_engine = "qq_mem_compressed"
 profile_qq_server = "false"
+# server_mem_size = 10000*MB # 1241522176 is the basic memory 32 threads(locked)
 # server_mem_size = 1241522176 + 500*MB # 1241522176 is the basic memory 32 threads(locked)
 # server_mem_size = 1765810176 + 500*MB # 1765810176 is the basic memory for 64 threads (locked)
-server_mem_size = 622026752 + 50*MB # 622026752 is the basic memory for 1 threads (locked)
-mem_swappiness = 0
-os_swap = False
-device_name = "sdc"
+# server_mem_size = 622026752 + 50*MB # 622026752 is the basic memory for 1 threads (locked)
+mem_swappiness = 60
+os_swap = True
+# device_name = "sdc"
+device_name = "nvme0n1"
+partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
+"""
+
+server_addr = "node1"
+remote_addr = "node2"
+n_server_threads = 64
+n_client_threads = 64
+mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
+profile_qq_server = "false"
+mem_swappiness = 60
+os_swap = True
+device_name = "nvme0n1"
+partition_name = "nvme0n1p4"
+read_ahead_kb = 4
+do_drop_cache = True
+do_block_tracing = False
+
 
 gprof_env = os.environ.copy()
 gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
+
+
+class ClientOutput:
+    def _parse_perf(self, header, data_line):
+        header = header.split()
+        items = data_line.split()
+
+        print header
+        print items
+
+        return dict(zip(header, items))
+
+    def parse_client_out(self, path):
+        with open(path) as f:
+            lines = f.readlines()
+
+        for i, line in enumerate(lines):
+            if "latency_95th" in line:
+                return self._parse_perf(lines[i], lines[i+1])
 
 
 class Cgroup(object):
@@ -78,9 +120,19 @@ class Cgroup(object):
         return path
 
 def get_iostat_mb_read():
-    out = subprocess.check_output("iostat -m {}".format(device_name), shell=True)
+    out = subprocess.check_output("iostat -m {}".format(partition_name), shell=True)
     print out
     return parse_iostat(out)['io']['MB_read']
+
+def create_blktrace_manager(subexpdir):
+    return BlockTraceManager(
+            dev = os.path.join("/dev", partition_name),
+            event_file_column_names = ['pid', 'operation', 'offset', 'size',
+                'timestamp', 'pre_wait_time'],
+            to_ftlsim_path = os.path.join(subexpdir, "trace.table"),
+            sector_size = 512,
+            padding_bytes = 46139392 * 512,
+            do_sort = False)
 
 
 def drop_cache():
@@ -109,12 +161,16 @@ def check_port():
     print "-" * 20
 
 
-def remote_cmd_chwd(dir_path, cmd):
-    return remote_cmd("cd {}; {}".format(dir_path, cmd))
+def remote_cmd_chwd(dir_path, cmd, fd = None):
+    return remote_cmd("cd {}; {}".format(dir_path, cmd), fd)
 
-def remote_cmd(cmd):
+def remote_cmd(cmd, fd = None):
     print "Starting command on remote node.... ", cmd
-    p = subprocess.Popen(["ssh", remote_addr, cmd])
+    if fd is None:
+        p = subprocess.Popen(["ssh", remote_addr, cmd])
+    else:
+        p = subprocess.Popen(["ssh", remote_addr, cmd], stdout = fd)
+
     return p
 
 def sync_build_dir():
@@ -129,10 +185,25 @@ def start_client():
     print "-" * 20
     print "starting client ..."
     print "-" * 20
-    return remote_cmd_chwd("/users/jhe/flashsearch/src/qq_mem/build/",
+    return remote_cmd_chwd(
+        "/users/jhe/flashsearch/src/qq_mem/build/",
         "./engine_bench -exp_mode=grpclog -n_threads={n_threads} -use_profiler=true "
         "-grpc_server={server}"
-        .format(server = server_addr, n_threads = n_client_threads))
+        .format(server = server_addr, n_threads = n_client_threads),
+        open("/tmp/client.out", "w")
+        )
+
+def print_client_output_tail():
+    out = subprocess.check_output("tail -n 5 /tmp/client.out", shell=True)
+    print out
+
+def is_client_finished():
+    out = subprocess.check_output("tail -n 1 /tmp/client.out", shell=True)
+    print "check out: ", out
+    if "ExperimentFinished!!!" in out:
+        return True
+    else:
+        return False
 
 def kill_client():
     p = remote_cmd("pkill engine_bench")
@@ -141,19 +212,23 @@ def kill_client():
 def kill_server():
     shcmd("sudo pkill qq_server", ignore_error=True)
 
-def start_server():
+def kill_subprocess(p):
+    # os.killpg(os.getpgid(p.pid), signal.SIGTERM)
+    p.kill()
+    p.wait()
+
+def copy_client_out():
+    prepare_dir("/tmp/results")
+    shcmd("cp /tmp/client.out /tmp/results/{}".format(now()))
+
+def start_server(conf):
     print "-" * 20
     print "starting server ..."
-    print "server mem size:", server_mem_size
+    print "server mem size:", conf['server_mem_size']
     print "-" * 20
 
-    set_swap(os_swap)
-    set_read_ahead_kb(read_ahead_kb)
-    if do_drop_cache == True:
-        drop_cache()
-
     cg = Cgroup(name='charlie', subs='memory')
-    cg.set_item('memory', 'memory.limit_in_bytes', server_mem_size)
+    cg.set_item('memory', 'memory.limit_in_bytes', conf['server_mem_size'])
     cg.set_item('memory', 'memory.swappiness', mem_swappiness)
 
     with cd("/users/jhe/flashsearch/src/qq_mem"):
@@ -174,47 +249,99 @@ def start_server():
 
         return p
 
-def main():
-    kill_server()
-    kill_client()
 
-    # we already are doing it in Makefile, just make sure you run this script by `make two_nodes`
-    # compile_engine_bench()
+class Exp(Experiment):
+    def __init__(self):
+        self._exp_name = "exp-" + now()
 
-    sync_build_dir()
+        self.mem_sizes = mem_size_list
+        self._n_treatments = len(self.mem_sizes)
 
-    server_p = start_server()
+        self.result = []
 
-    print "Wating for some time util the server starts...."
-    time.sleep(30)
-    mb_read_a = get_iostat_mb_read()
+    def conf(self, i):
+        return {"server_mem_size": self.mem_sizes[i],
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads
+                }
 
-    check_port()
+    def before(self):
+        sync_build_dir()
 
-    client_p = start_client()
+    def beforeEach(self, conf):
+        kill_server()
 
-    print "wating for some other time...."
-    time.sleep(5)
+        kill_client()
+        time.sleep(1)
+        shcmd("rm -f /tmp/client.out")
 
+        set_swap(os_swap)
+        set_read_ahead_kb(read_ahead_kb)
+        if do_drop_cache == True:
+            drop_cache()
 
-    try:
-	client_p.wait()
-	server_p.wait()
+    def treatment(self, conf):
+        print conf
+        server_p = start_server(conf)
 
-    except KeyboardInterrupt:
-	mb_read_b = get_iostat_mb_read()
+        print "Wating for some time util the server starts...."
+        time.sleep(30)
+        mb_read_a = get_iostat_mb_read()
+
+        check_port()
+
+        # Start block tracing after the server is fully loaded
+        if do_block_tracing is True:
+            self.blocktracer = create_blktrace_manager(self._subexpdir)
+            self.blocktracer.start_tracing_and_collecting(['issue'])
+
+        client_p = start_client()
+
+        seconds = 0
+        while True:
+            print_client_output_tail()
+            finished = is_client_finished()
+            print "is_client_finished()", finished
+
+            is_server_running = is_command_running("./build/qq_server")
+
+            if is_server_running is False:
+                raise RuntimeError("Server just crashed!!!")
+
+            if finished:
+                kill_client()
+                kill_server()
+                copy_client_out()
+                break
+
+            time.sleep(1)
+            seconds += 1
+            print ">>>>> It has been", seconds, "seconds <<<<<<"
+
+        mb_read_b = get_iostat_mb_read()
+
+        mb_read = int(mb_read_b) - int(mb_read_a)
         print '-' * 30
-	print "MB read: ", int(mb_read_b) - int(mb_read_a)
+        print "MB read: ", mb_read
         print '-' * 30
 
-	os.killpg(os.getpgid(client_p.pid), signal.SIGTERM)
-	os.killpg(os.getpgid(server_p.pid), signal.SIGTERM)
+        d = ClientOutput().parse_client_out("/tmp/client.out")
+        d['MB_read'] = mb_read
+        d.update(conf)
 
-	client_p.wait()
-	server_p.wait()
+        self.result.append(d)
 
+    def afterEach(self, conf):
+        path = os.path.join(self._resultdir, "result.txt")
+        table_to_file(self.result, path, width = 20)
+        shcmd("cat " + path)
 
+        if do_block_tracing is True:
+            self.blocktracer.stop_tracing_and_collecting()
+            self.create_event_file_from_blkparse()
 
 if __name__ == "__main__":
-    main()
+    exp = Exp()
+    exp.main()
+
 

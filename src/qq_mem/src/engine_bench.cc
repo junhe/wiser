@@ -370,11 +370,12 @@ class EngineExperiment: public Experiment {
     };
 
     Treatment t;
+    t.terms = {"empty"};
     t.tag = "querylog";
     t.n_queries = -1;
-    // t.query_log_path = "/mnt/ssd/realistic_querylog";
+    t.query_log_path = "/mnt/ssd/realistic_querylog";
     // t.query_log_path = "/mnt/ssd/medium_log";
-    t.query_log_path = "/mnt/ssd/short_log";
+    // t.query_log_path = "/mnt/ssd/short_log";
     treatments.push_back(t);
 
     // for (auto &t : treatments) {
@@ -431,6 +432,8 @@ class EngineExperiment: public Experiment {
       ProfilerStop();
     }
     std::cout << table_.ToStr();
+
+    std::cout << "ExperimentFinished!!!" << std::endl;
   }
 
   std::unique_ptr<SearchEngineServiceNew> CreateEngineFromFile() {

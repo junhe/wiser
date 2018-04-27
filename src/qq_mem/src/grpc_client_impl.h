@@ -749,7 +749,7 @@ class SyncUnaryClient: public Client {
   void ThreadFunc(int thread_idx) {
     SearchReply reply;
 
-    while (shutdown_state_[thread_idx]->shutdown == false && QueryFinished()) {
+    while (shutdown_state_[thread_idx]->shutdown == false && QueryFinished() == false) {
       SearchRequest grpc_request = query_producer_->NextGrpcQuery(thread_idx);
 
       UnarySearch(thread_idx, grpc_request, reply);

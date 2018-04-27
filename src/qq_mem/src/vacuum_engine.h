@@ -6,12 +6,18 @@
 
 #include "utils.h"
 #include "flash_iterators.h"
+#include "tsl/htrie_hash.h"
+#include "tsl/htrie_map.h"
 
+#define TRIE_INDEX
 
 class TermIndex {
  public:
   typedef std::unordered_map<Term, off_t> LocalMap;
   typedef LocalMap::const_iterator ConstIterator;
+	
+  typedef tsl::htrie_map<char, int64_t> LocalTrieMap; 
+  typedef LocalTrieMap::const_iterator ConstTrieIterator;
 
   void Load(const std::string &path) {
     int fd;
@@ -32,10 +38,6 @@ class TermIndex {
     }
 
     utils::UnmapFile(addr, fd, file_length);
-
-    for (auto &it : index_) {
-      LOG(INFO) << ".tip: " << it.first << ": " << it.second << std::endl;
-    }
   }
 
   const char *LoadEntry(const char *buf) {
@@ -47,23 +49,44 @@ class TermIndex {
     buf += term_size;
     off_t offset = *((off_t *)buf);
 
+#if defined(TRIE_INDEX)
+    trieindex_[term.c_str()] = (uint64_t)offset;
+#else
     index_[term] = offset;
+#endif
 
     return buf + sizeof(off_t);
   }
 
   int NumTerms () const {
+#if defined(TRIE_INDEX)
+    return trieindex_.size();
+#else
     return index_.size();
+#endif
   }
 
+#if defined(TRIE_INDEX)
+  ConstTrieIterator Find(const Term &term) {
+    ConstTrieIterator it = trieindex_.find(term.c_str());
+    return it;
+  }
+#else
   ConstIterator Find(const Term &term) {
     ConstIterator it = index_.find(term);
     return it;
   }
+#endif
 
   ConstIterator CEnd() {
     return index_.cend();
   }
+
+  ConstTrieIterator CTrieEnd() {
+    return trieindex_.end();
+  }
+
+  LocalTrieMap trieindex_;
 
  private:
   LocalMap index_;
@@ -116,13 +139,26 @@ class VacuumInvertedIndex {
   }
 
   off_t FindPostingListOffset(const Term term) {
+
+#if defined(TRIE_INDEX)
+    TermIndex::ConstTrieIterator it = term_index_.Find(term);
+    it = term_index_.trieindex_.find(term.c_str());
+    if (it == term_index_.trieindex_.end()) {
+      return -1;
+    } else {
+      it = term_index_.trieindex_.find(term.c_str());
+      return it.value();
+    } 
+#else
     TermIndex::ConstIterator it = term_index_.Find(term);
     if (it == term_index_.CEnd()) {
       return -1;
     } else {
+      it = term_index_.Find(term);
       return it->second;
+    } 
+#endif
     }
-  }
 
   std::vector<VacuumPostingListIterator> FindIteratorsSolid(const TermList &terms) {
     std::vector<VacuumPostingListIterator> iterators;
@@ -169,7 +205,7 @@ class VacuumEngine : public SearchEngineServiceNew {
 
     inverted_index_.LoadTermIndex(utils::JoinPath(engine_dir_path_, "my.tip"));
 
-    utils::LockAllMemory(); // <<<<<<< Lock memory
+    // utils::LockAllMemory(); // <<<<<<< Lock memory
 
     inverted_index_.MapPostingLists(
         utils::JoinPath(engine_dir_path_, "my.vacuum"));
