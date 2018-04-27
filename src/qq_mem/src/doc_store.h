@@ -307,6 +307,18 @@ class FlashDocStore {
  public:
   FlashDocStore() :buffer_pool_(32, buffer_size_) {}
 
+  long int get_size(int id) {
+      long int start_off = offset_store_[id];
+      long int doc_len = offset_store_[id + 1] - start_off;
+      return doc_len;
+  }
+  
+  int get_span_pages(int id) {
+      long int start_off = offset_store_[id];
+      long int end_off = offset_store_[id + 1];
+      return (int)(end_off/4096 - start_off/4096 + 1);
+  }
+
   void Load(const std::string fdx_path, const std::string fdt_path) {
     LoadFdx(fdx_path, fdt_path);
     MapFdt(fdt_path);
@@ -381,6 +393,147 @@ class FlashDocStore {
   utils::FileMap fdt_map_;
 };
 
+class AlignedFlashDocStore {
+ public:
+  AlignedFlashDocStore() :buffer_pool_(32, buffer_size_) {}
+
+  long int get_size(int id) {
+      long int start_off = offset_store_[id]/2;
+      if (offset_store_[id] % 2 == 1) {  // was aligned
+        start_off = start_off + 4096 - start_off%4096;
+      }
+      long int doc_len = offset_store_[id + 1]/2 - start_off;
+      return doc_len;
+  }
+  
+  int get_span_pages(int id) {
+      long int start_off = offset_store_[id]/2;
+      if (offset_store_[id] % 2 == 1) {  // was aligned
+        start_off = start_off + 4096 - start_off%4096;
+      }
+      long int end_off = offset_store_[id + 1]/2;
+      return (int)(end_off/4096 - start_off/4096 + 1);
+  }
+
+  void LoadNotAligned(const std::string fdx_path, const std::string fdt_path) {
+    LoadFdx(fdx_path, fdt_path);
+    MapFdt(fdt_path);
+    TransformToAligned();
+    return;
+  }
+  void TransformToAligned() {
+    std::cout << "======== to transform " << std::endl;
+    std::ofstream newfdtfile("/mnt/ssd/newfdtfile", std::ios::binary);
+    std::ofstream newfdxfile("/mnt/ssd/newfdxfile", std::ios::binary);
+    std::vector<long int> new_offset_store_;
+
+    // iterate offset_store
+    long int cur_offset = offset_store_[0];
+    for (int i = 0; i <= max_docid_; i++) {
+      // change the offset_store, write out 
+      long int doc_len = offset_store_[i + 1] - offset_store_[i];
+      if ( (int)((doc_len+4095)/4096) < (int)((cur_offset+doc_len-1)/4096 - cur_offset/4096 + 1) ) {
+          new_offset_store_.push_back(cur_offset*2 + 1); 
+          cur_offset = cur_offset + 4096 - cur_offset%4096;
+      } else {
+          new_offset_store_.push_back(cur_offset*2);    // 1 means start from aligned  0, means start from here
+      }
+      //std::cout << "read in (" << offset_store_[i] << ", " << offset_store_[i+1] << " ) to " << cur_offset << std::endl;
+      
+      newfdtfile.seekp(cur_offset);
+      newfdtfile.write(((char*)fdt_map_.Addr() + offset_store_[i]), doc_len);   // some problem???? TODO alignment
+      cur_offset += doc_len;
+    }
+    
+    // dump offset_store
+    newfdxfile.write(reinterpret_cast<const char *>(&max_docid_), sizeof(max_docid_));
+
+    for (int docid = 0; docid <= max_docid_; docid++) {
+       // write out to fdx
+       newfdxfile.write(reinterpret_cast<const char *>(&new_offset_store_[docid]), sizeof(long int));
+    }
+
+    newfdxfile.close();
+    newfdtfile.close();   
+  } 
+
+  void Load(const std::string fdx_path, const std::string fdt_path) {
+    LoadFdx(fdx_path, fdt_path);
+    MapFdt(fdt_path);
+  }
+
+  void LoadFdx(const std::string fdx_path, const std::string fdt_path) {
+    std::cout << "Loading doc index..." << std::endl; 
+    // open fdx, load index
+    utils::FileMap file_map;
+    file_map.Open(fdx_path);
+    char *addr = file_map.Addr();
+
+    off_t offset = 0;
+    max_docid_ = *(long int *)addr;
+    offset += sizeof(max_docid_);
+    
+    for (int i = 0; i <= max_docid_; i++) {
+      offset_store_.push_back(*(long int *)(addr+offset));
+      offset += sizeof(long int);
+    }
+
+    std::cout << "Doc index loaded." << std::endl; 
+    file_map.Close();
+
+    fdt_map_.Open(fdt_path);
+    offset_store_.push_back(fdt_map_.Length()*2);  // end of file
+    fdt_map_.Close();
+  }
+
+  void MapFdt(const std::string fdt_path) {
+    fdt_map_.Open(fdt_path);
+  }
+
+  ~AlignedFlashDocStore() {
+    fdt_map_.Close();
+  }
+
+  bool Has(int id) {
+    return id <= max_docid_;
+  }
+
+  const std::string Get(int id) { 
+    // TODO different startoffset
+    long int start_off = offset_store_[id]/2;
+    if (offset_store_[id] % 2 == 1) {  // was aligned
+      start_off = start_off + 4096 - start_off%4096;
+    }
+    long int doc_len = offset_store_[id + 1]/2 - start_off;
+
+    std::unique_ptr<char[]> buf = buffer_pool_.Get();
+
+    // decompress
+    const int decompressed_size = 
+      LZ4_decompress_safe(fdt_map_.Addr() + start_off, buf.get(), doc_len, buffer_size_); 
+    if (decompressed_size < 0) {
+      LOG(FATAL) << "Failed to decompresse."; 
+    }
+
+    std::string ret = std::string(buf.get(), decompressed_size);
+    buffer_pool_.Put(std::move(buf));
+
+    return ret;
+  }
+
+  int Size() const {
+    return offset_store_.size() - 1; // minus the laste item (the guard)
+  }
+
+  long int max_docid_;
+ private:
+  BufferPool buffer_pool_;
+  static constexpr int buffer_size_ = 512 * 1024;
+  
+  std::vector<long int> offset_store_;
+  int fd_fdt_;
+  utils::FileMap fdt_map_;
+};
 
 
 #endif

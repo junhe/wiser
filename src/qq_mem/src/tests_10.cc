@@ -446,4 +446,23 @@ TEST_CASE( "General file dumper", "[qqflash]" ) {
   REQUIRE(dumper.End() == 5);
 }
 
+TEST_CASE( "Transform Misaligned to Aligned", "[qqflash]" ) {
+    std::cout << "============================ testing here" << std::endl;
+    std::cout << "============================ testing here" << std::endl;
+    std::cout << "============================ testing here" << std::endl;
+    std::cout << "============================ testing here" << std::endl;
+    std::cout << "============================ testing here" << std::endl;
+    std::cout << "============================ testing here" << std::endl;
+    AlignedFlashDocStore new_store;
+    //search_store.LoadNotAligned("/mnt/ssd/vacuum-files-little-packed/my.fdx", "/mnt/ssd/vacuum-files-little-packed/my.fdt");
+    FlashDocStore old_store;
+    new_store.Load("/mnt/ssd/newfdxfile", "/mnt/ssd/newfdtfile");
+    old_store.Load("/mnt/ssd/vacuum-files-little-packed/my.fdx", "/mnt/ssd/vacuum-files-little-packed/my.fdt");
+    
+    std::cout << "Check overall: " << new_store.max_docid_ << " docs\n";
+    for (int i = 0; i <= new_store.max_docid_; i++) {
+        std::cout << i << " same" <<std::endl;
+        REQUIRE(new_store.Get(i) == old_store.Get(i));
+    }
+}
 
