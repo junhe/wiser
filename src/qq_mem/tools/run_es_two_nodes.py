@@ -32,15 +32,11 @@ do_drop_cache = True
 """
 
 
-# n_threads -> locked java memory
-locked_mem_dict = {}
 
 server_addr = "node.es.spark-pg0.utah.cloudlab.us"
 remote_addr = "node.esquery.spark-pg0.utah.cloudlab.us"
 n_server_threads = [25]
 n_client_threads = [128]
-mem_size_list = [16*GB]
-# mem_size_list = [16*GB]
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
 profile_qq_server = "false"
 mem_swappiness = 60
@@ -49,12 +45,28 @@ device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
-do_block_tracing = True
+do_block_tracing = False
 query_paths = ["/users/kanwu/test_data/realistic_with_phrases"]
 # query_paths = ["/users/kanwu/test_data/short_log"]
 # query_paths = glob.glob("/mnt/ssd/split-log/*")
-init_heap_size = [1*GB]
-max_heap_size = [1*GB]
+
+
+init_heap_size = [512*MB]
+max_heap_size = [512*MB]
+
+# n_threads -> locked java memory
+locked_mem_dict = {25: 937177088}
+page_cache_sizes = [128*MB]
+
+# mem_size_list = [16*GB]
+mem_size_list = []
+for size in page_cache_sizes:
+    assert len(n_server_threads) == 1
+    n_threads = n_server_threads[0]
+    m_size = size + locked_mem_dict[n_threads]
+    mem_size_list.append(m_size)
+
+
 
 
 
@@ -70,7 +82,7 @@ class ClientOutput:
     def _parse_throughput(self, line):
         qps = line.split()[1]
         line = line.replace(",", " ")
-        return {"QPS": qps}
+        return {"QPS": qps.split(".")[0]}
 
     def _parse_latencies(self, line):
         line = line.replace(",", " ")
@@ -93,6 +105,23 @@ class ClientOutput:
                 d.update(self._parse_latencies(lines[i]))
 
         return d
+
+
+def get_cgroup_page_cache_size():
+    def parse_page_cache(line):
+        cache_size = line.split()[2]
+        d = {"page_cache_size": cache_size}
+        return d
+
+    lines = subprocess.check_output(
+            "cgget -g memory:/charlie", shell=True).split('\n')
+
+    d = {}
+    for i, line in enumerate(lines):
+        if line.startswith("memory.stat: cache"):
+            d.update(parse_page_cache(lines[i]))
+
+    return int(d['page_cache_size'])
 
 
 class Cgroup(object):
@@ -390,6 +419,10 @@ class Exp(Experiment):
                 time.sleep(8)
                 copy_client_out()
                 break
+
+            print "*" * 20
+            print "page cache size (MB): ", get_cgroup_page_cache_size()/MB
+            print "*" * 20
 
             time.sleep(1)
             seconds += 1
