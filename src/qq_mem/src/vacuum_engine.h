@@ -147,6 +147,7 @@ class VacuumInvertedIndex {
 
 
 DECLARE_bool(profile_vacuum);
+DECLARE_bool(lock_memory);
 
 // To use
 // engine = VacuumEngine(path)
@@ -182,7 +183,8 @@ class VacuumEngine : public SearchEngineServiceNew {
 
     inverted_index_.LoadTermIndex(utils::JoinPath(engine_dir_path_, "my.tip"));
 
-    // utils::LockAllMemory(); // <<<<<<< Lock memory
+    if (FLAGS_lock_memory == true)
+      utils::LockAllMemory(); // <<<<<<< Lock memory
 
     inverted_index_.MapPostingLists(
         utils::JoinPath(engine_dir_path_, "my.vacuum"));

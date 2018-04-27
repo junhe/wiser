@@ -259,11 +259,13 @@ def start_server(conf):
     with cd("/users/jhe/flashsearch/src/qq_mem"):
         cmd = "./build/qq_server "\
               "-sync_type=ASYNC -n_threads={n_threads} "\
-              "-addr={server} -port=50051 -engine={engine} -profile_vacuum={profile}"\
+              "-addr={server} -port=50051 -engine={engine} -profile_vacuum={profile} "\
+              "-lock_memory={lock_mem}"\
               .format(server = server_addr,
                     n_threads = conf['n_server_threads'],
                     engine = search_engine,
-                    profile = profile_qq_server)
+                    profile = profile_qq_server,
+                    lock_mem = lock_memory)
         print "-" * 20
         print "server cmd:", cmd
         print "-" * 20
