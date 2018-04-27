@@ -59,12 +59,12 @@ locked_mem_dict = {25: 937177088}
 page_cache_sizes = [128*MB]
 
 # mem_size_list = [16*GB]
-mem_size_list = []
-for size in page_cache_sizes:
-    assert len(n_server_threads) == 1
-    n_threads = n_server_threads[0]
-    m_size = size + locked_mem_dict[n_threads]
-    mem_size_list.append(m_size)
+mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 900*GB, 800*GB, 700*GB, 600*GB]
+# for size in page_cache_sizes:
+    # assert len(n_server_threads) == 1
+    # n_threads = n_server_threads[0]
+    # m_size = size + locked_mem_dict[n_threads]
+    # mem_size_list.append(m_size)
 
 
 
@@ -105,6 +105,17 @@ class ClientOutput:
                 d.update(self._parse_latencies(lines[i]))
 
         return d
+
+
+def median(lst):
+    sortedLst = sorted(lst)
+    lstLen = len(lst)
+    index = (lstLen - 1) // 2
+
+    if (lstLen % 2):
+        return sortedLst[index]
+    else:
+        return (sortedLst[index] + sortedLst[index + 1])/2.0
 
 
 def get_cgroup_page_cache_size():
@@ -400,6 +411,7 @@ class Exp(Experiment):
                                 conf['query_path'])
 
         seconds = 0
+        cache_size_log = []
         while True:
             print_client_output_tail()
             finished = is_client_finished()
@@ -420,13 +432,16 @@ class Exp(Experiment):
                 copy_client_out()
                 break
 
+            cache_size = get_cgroup_page_cache_size()/MB
             print "*" * 20
-            print "page cache size (MB): ", get_cgroup_page_cache_size()/MB
+            print "page cache size (MB): ", cache_size
             print "*" * 20
+            cache_size_log.append(cache_size)
 
             time.sleep(1)
             seconds += 1
             print ">>>>> It has been", seconds, "seconds <<<<<<"
+            print "cache_size_log: ", cache_size_log
 
         mb_read_b = get_iostat_mb_read()
 
@@ -438,6 +453,7 @@ class Exp(Experiment):
         d = ClientOutput().parse_client_out("/tmp/client.out")
         shcmd("cat /tmp/client.out")
 
+        d["p_cache_median"] = median(cache_size_log)
         d['MB_read'] = mb_read
         d.update(conf)
         del d['query_path']
