@@ -79,6 +79,9 @@ two_nodes:
 	cd ..
 	python ./tools/run_cs_two_nodes.py
 
+es:
+	python ./tools/run_es_two_nodes.py
+
 profile:
 	google-pprof --text ./build/engine_bench ./build/my.profile.new
 
