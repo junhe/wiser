@@ -9,7 +9,7 @@
 #include "tsl/htrie_hash.h"
 #include "tsl/htrie_map.h"
 
-#define TRIE_INDEX
+#define _TRIE_INDEX
 
 class TermIndex {
  public:
@@ -49,7 +49,7 @@ class TermIndex {
     buf += term_size;
     off_t offset = *((off_t *)buf);
 
-#if defined(TRIE_INDEX)
+#if defined(_TRIE_INDEX)
     trieindex_[term.c_str()] = (uint64_t)offset;
 #else
     index_[term] = offset;
@@ -59,14 +59,14 @@ class TermIndex {
   }
 
   int NumTerms () const {
-#if defined(TRIE_INDEX)
+#if defined(_TRIE_INDEX)
     return trieindex_.size();
 #else
     return index_.size();
 #endif
   }
 
-#if defined(TRIE_INDEX)
+#if defined(_TRIE_INDEX)
   ConstTrieIterator Find(const Term &term) {
     ConstTrieIterator it = trieindex_.find(term.c_str());
     return it;
@@ -140,7 +140,7 @@ class VacuumInvertedIndex {
 
   off_t FindPostingListOffset(const Term term) {
 
-#if defined(TRIE_INDEX)
+#if defined(_TRIE_INDEX)
     TermIndex::ConstTrieIterator it = term_index_.Find(term);
     it = term_index_.trieindex_.find(term.c_str());
     if (it == term_index_.trieindex_.end()) {
