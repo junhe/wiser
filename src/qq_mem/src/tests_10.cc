@@ -396,6 +396,43 @@ TEST_CASE( "Term Index works", "[qqflash]" ) {
   }
 }
 
+TEST_CASE( "Term Trie Index works", "[qqflash]" ) {
+  std::string path = "/tmp/my.tip";
+
+  // Dump
+  TermIndexDumper dumper(path);
+
+  dumper.DumpEntry("hello", 0);
+  dumper.DumpEntry("wisc", 10032);
+
+  dumper.Close();
+
+  //Read
+  TermTrieIndex index;
+  index.Load(path);
+
+  {
+  auto it = index.Find("hello");
+  REQUIRE(it.IsEmpty() == false);
+  REQUIRE(it.Key() == "hello");
+  REQUIRE(it.Value() == 0);
+  }
+
+  {
+  auto it = index.Find("wisc");
+  REQUIRE(it.IsEmpty() == false);
+  REQUIRE(it.Key() == "wisc");
+  REQUIRE(it.Value() == 10032);
+  }
+
+  {
+  auto it = index.Find("notexist");
+  REQUIRE(it.IsEmpty() == true);
+  }
+}
+
+
+
 
 TEST_CASE( "QQFlash Compressed Doc Store", "[qqflash]" ) {
   SECTION("Index Then Search") {

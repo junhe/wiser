@@ -9,6 +9,9 @@
 #include "utils.h"
 #include "flash_iterators.h"
 
+#include "tsl/htrie_hash.h"
+#include "tsl/htrie_map.h"
+
 
 class TermIndexResult {
  public:
@@ -90,6 +93,69 @@ class TermIndex {
  private:
   LocalMap index_;
 };
+
+
+#define _TRIE_INDEX
+
+class TermTrieIndex {
+ public:
+  typedef tsl::htrie_map<char, int64_t> LocalTrieMap; 
+  typedef LocalTrieMap::const_iterator ConstTrieIterator;
+
+  void Load(const std::string &path) {
+    int fd;
+    char *addr;
+    size_t file_length;
+    utils::MapFile(path, &addr, &fd, &file_length);
+
+    const char *end = addr + file_length;
+    const char *buf = addr;
+
+    int cnt = 0;
+    while (buf < end) {
+      buf = LoadEntry(buf);
+      cnt++;
+      if (cnt % 1000000 == 0) {
+        std::cout << "Term index entries loaded: " << cnt << std::endl;
+      }
+    }
+
+    utils::UnmapFile(addr, fd, file_length);
+  }
+
+  const char *LoadEntry(const char *buf) {
+    uint32_t term_size = *((uint32_t *)buf);
+
+    buf += sizeof(uint32_t);
+    std::string term(buf , term_size);
+
+    buf += term_size;
+    off_t offset = *((off_t *)buf);
+
+    trieindex_[term.c_str()] = (uint64_t)offset;
+
+    return buf + sizeof(off_t);
+  }
+
+  int NumTerms () const {
+    return trieindex_.size();
+  }
+
+  TermIndexResult Find(const Term &term) {
+    ConstTrieIterator it = trieindex_.find(term.c_str());
+
+    if (it == trieindex_.end()) {
+      return TermIndexResult("", -1, true);
+    } else {
+      return TermIndexResult(it.key(), it.value(), false);
+    }
+  }
+
+ private:
+  LocalTrieMap trieindex_;
+};
+
+
 
 
 // To use it, you must
