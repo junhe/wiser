@@ -28,17 +28,6 @@ compression_bench:
 	./build.sh
 	./build/compression_bench
 
-term_index_bench:
-	cd build && cmake ../src/ && \
-		make -j${NUM_CORES} term_index_bench && \
-		./term_index_bench
-
-term_index_trie_bench:
-	cd build && cmake ../src/ && \
-		make -j${NUM_CORES} term_index_trie_bench && \
-		./term_index_trie_bench
-
-
 grpc_benchmark:
 	./build.sh
 	echo ------------------------------------------------------

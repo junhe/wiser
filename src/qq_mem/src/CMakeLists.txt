@@ -161,38 +161,6 @@ target_link_libraries(hash_benchmark
     ${GLOG_LIB}
 )
 
-add_executable(term_index_bench
-    term_index_bench.cc
-    ${ENGINE_SRCS}
-    ${PROTO_SRCS}
-    ${GRPC_SRCS}
-)
-
-target_link_libraries(term_index_bench
-    ${GRPC_LIBS}
-    protobuf::libprotobuf
-    ${QQ_LIBS}
-    pthread
-    ${GLOG_LIB}
-)
-
-add_executable(term_index_trie_bench
-    term_index_trie_bench.cc
-    ${ENGINE_SRCS}
-    ${PROTO_SRCS}
-    ${GRPC_SRCS}
-)
-
-target_link_libraries(term_index_trie_bench
-    ${GRPC_LIBS}
-    protobuf::libprotobuf
-    ${QQ_LIBS}
-    pthread
-    ${GLOG_LIB}
-)
-
-
-
 
 add_executable(engine_bench
     engine_bench.cc
