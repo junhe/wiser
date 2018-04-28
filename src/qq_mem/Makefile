@@ -71,16 +71,16 @@ convert_qq_to_vacuum:
 		./convert_qq_to_vacuum
 
 
-two_nodes:
+vacuum_two_nodes:
 	cd build 
 	cmake ../src/
 	make -j${NUM_CORES} qq_server 
 	make -j${NUM_CORES} engine_bench
 	cd ..
-	python ./tools/run_cs_two_nodes.py
+	python ./tools/run_vacuum_two_nodes.py
 
-es:
-	python ./tools/run_es_two_nodes.py
+elastic_two_nodes:
+	python ./tools/run_elastic_two_nodes.py
 
 profile:
 	google-pprof --text ./build/engine_bench ./build/my.profile.new

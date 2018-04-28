@@ -11,30 +11,12 @@ from pyreuse.sysutils.blocktrace import BlockTraceManager
 import glob
 
 
-"""
-server_addr = "node.conan-wisc.fsperfatscale-pg0"
-remote_addr = "node.conan-wisc-2.fsperfatscale-pg0"
-n_server_threads = 32
-n_client_threads = 32
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
-# search_engine = "qq_mem_compressed" profile_qq_server = "false"
-# server_mem_size = 10000*MB # 1241522176 is the basic memory 32 threads(locked)
-# server_mem_size = 1241522176 + 500*MB # 1241522176 is the basic memory 32 threads(locked)
-# server_mem_size = 1765810176 + 500*MB # 1765810176 is the basic memory for 64 threads (locked)
-# server_mem_size = 622026752 + 50*MB # 622026752 is the basic memory for 1 threads (locked)
-mem_swappiness = 60
-os_swap = True
-# device_name = "sdc"
-device_name = "nvme0n1"
-partition_name = "nvme0n1p4"
-read_ahead_kb = 4
-do_drop_cache = True
-"""
+ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
 
 
 
-server_addr = "node.es.spark-pg0.utah.cloudlab.us"
-remote_addr = "node.esquery.spark-pg0.utah.cloudlab.us"
+server_addr = "node1"
+remote_addr = "node2"
 n_server_threads = [25]
 n_client_threads = [128]
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
@@ -46,9 +28,7 @@ partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
 do_block_tracing = False
-query_paths = ["/users/kanwu/test_data/realistic_with_phrases"]
-# query_paths = ["/users/kanwu/test_data/short_log"]
-# query_paths = glob.glob("/mnt/ssd/split-log/*")
+query_paths = ["/mnt/ssd/realistic_querylog"]
 
 
 init_heap_size = [512*MB]
@@ -58,15 +38,13 @@ max_heap_size = [512*MB]
 locked_mem_dict = {25: 937177088}
 page_cache_sizes = [128*MB]
 
-# mem_size_list = [16*GB]
-mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 900*GB, 800*GB, 700*GB, 600*GB]
+mem_size_list = [16*GB]
+# mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 900*GB, 800*GB, 700*GB, 600*GB]
 # for size in page_cache_sizes:
     # assert len(n_server_threads) == 1
     # n_threads = n_server_threads[0]
     # m_size = size + locked_mem_dict[n_threads]
     # mem_size_list.append(m_size)
-
-
 
 
 
@@ -188,7 +166,8 @@ class Cgroup(object):
 
 
 def set_es_yml(conf):
-    with open("/users/kanwu/elasticsearch-5.6.3/config/elasticsearch.yml.template", "r") as f:
+    with open(os.path.join(
+        ELASTIC_DIR, "config/elasticsearch.yml.template"), "r") as f:
         lines = f.readlines()
 
     new_lines = []
@@ -199,11 +178,11 @@ def set_es_yml(conf):
         else:
             new_lines.append(line)
 
-    with open("/users/kanwu/elasticsearch-5.6.3/config/elasticsearch.yml", "w") as f:
+    with open(os.path.join(ELASTIC_DIR, "config/elasticsearch.yml"), "w") as f:
         f.write("".join(new_lines))
 
 def set_jvm_options(conf):
-    with open("/users/kanwu/elasticsearch-5.6.3/config/jvm.options.template", "r") as f:
+    with open(os.path.join(ELASTIC_DIR, "config/jvm.options.template"), "r") as f:
         lines = f.readlines()
 
     new_lines = []
@@ -217,7 +196,7 @@ def set_jvm_options(conf):
         else:
             new_lines.append(line)
 
-    with open("/users/kanwu/elasticsearch-5.6.3/config/jvm.options", "w") as f:
+    with open(os.path.join(ELASTIC_DIR, "config/jvm.options"), "w") as f:
         f.write("".join(new_lines))
 
 
@@ -291,17 +270,14 @@ def compile_engine_bench():
     shcmd("make engine_bench_build")
 
 def start_client(n_threads, query_path):
-    """
-    /users/kanwu/test_data/realistic_with_phrases 32"
-    """
     print "-" * 20
     print "starting client ..."
     print "-" * 20
-    cmd = "sudo python -m benchmarks.rs_bench_go {path} {n}"\
-            .format(path=query_path, n=n_threads)
+    cmd = "sudo python -m benchmarks.rs_bench_go {path} {n} {server}"\
+            .format(path=query_path, n=n_threads, server=server_addr)
 
     return remote_cmd_chwd(
-        "/users/kanwu/flashsearch/src/pysrc",
+        "/users/jhe/flashsearch/src/pysrc",
         cmd,
         open("/tmp/client.out", "w")
         )
@@ -344,8 +320,9 @@ def start_server(conf):
     cg.set_item('memory', 'memory.limit_in_bytes', conf['server_mem_size'])
     cg.set_item('memory', 'memory.swappiness', mem_swappiness)
 
-    p = cg.execute(['sudo', '-u', 'kanwu', '-H', 'sh', '-c',
-        '''"/users/kanwu/elasticsearch-5.6.3/bin/elasticsearch"'''])
+    p = cg.execute([
+        'sudo', '-u', 'jhe', '-H', 'sh', '-c',
+        os.path.join(ELASTIC_DIR, "bin/elasticsearch")])
     time.sleep(1)
     return p
 
@@ -418,7 +395,7 @@ class Exp(Experiment):
             print "is_client_finished()", finished
             print conf
 
-            is_server_running = is_command_running("/usr/bin/java")
+            is_server_running = is_command_running("/usr/lib/jvm/java-8-oracle/bin/java")
             if is_server_running is False:
                 # raise RuntimeError("Server just crashed!!!")
                 log_crashed_server(conf)
@@ -474,6 +451,8 @@ class Exp(Experiment):
 if __name__ == "__main__":
     exp = Exp()
     exp.main()
+    # p = start_client(12, "/mnt/ssd/realistic_querylog")
+    # p.wait()
 
 
 
