@@ -63,6 +63,7 @@ sudo apt-get install ccache
 sudo apt-get install cgroup-bin
 
 sudo apt-get install sysstat
+
 sudo apt-get install -y blktrace
 
 # For elastic search

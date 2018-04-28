@@ -373,7 +373,6 @@ class EngineExperiment: public Experiment {
     t.terms = {"empty"};
     t.tag = "querylog";
     t.n_queries = -1;
-    // t.query_log_path = "/mnt/ssd/realistic_querylog";
     // t.query_log_path = "/mnt/ssd/medium_log";
     // t.query_log_path = "/mnt/ssd/short_log";
     // t.query_log_path = "/mnt/ssd/hello_log";
