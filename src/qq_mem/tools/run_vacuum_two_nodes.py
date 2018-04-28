@@ -11,45 +11,11 @@ from pyreuse.sysutils.blocktrace import BlockTraceManager
 import glob
 
 
-"""
-server_addr = "node.conan-wisc.fsperfatscale-pg0"
-remote_addr = "node.conan-wisc-2.fsperfatscale-pg0"
-n_server_threads = 32
-n_client_threads = 32
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic"
-# search_engine = "qq_mem_compressed"
-profile_qq_server = "false"
-# server_mem_size = 10000*MB # 1241522176 is the basic memory 32 threads(locked)
-# server_mem_size = 1241522176 + 500*MB # 1241522176 is the basic memory 32 threads(locked)
-# server_mem_size = 1765810176 + 500*MB # 1765810176 is the basic memory for 64 threads (locked)
-# server_mem_size = 622026752 + 50*MB # 622026752 is the basic memory for 1 threads (locked)
-mem_swappiness = 60
-os_swap = True
-# device_name = "sdc"
-device_name = "nvme0n1"
-partition_name = "nvme0n1p4"
-read_ahead_kb = 4
-do_drop_cache = True
-"""
-
 server_addr = "node1"
 remote_addr = "node2"
 n_server_threads = [25]
 n_client_threads = [128] # client
-# 128 threads: locked size: 1957826560
-# 25 threads locke size: 1126924288
-# mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
-# mem_size_list = [16*GB]
-# mem_size_list = [2*GB, 1*GB+800*MB, 1*GB+700*MB,
-        # 1*GB+600*MB, 1*GB+500*MB, 1*GB+400*MB,
-        # 1*GB+300*MB, 1*GB+200*MB ]
-mem_size_list = [1*GB+150*MB, 1*GB+100*MB, 1*GB]
-# mem_size_list = [1*GB+80*MB, 1*GB+60*MB, 1*GB+40*MB]
-# mem_size_list = [1126924288 + x for x in [128*MB, 64*MB, 32*MB, 16*MB]] # 25threads
-# mem_size_list = [1126924288 + x for x in [1*GB]] # 25threads
-# mem_size_list = [1126924288 + x for x in [4*GB, 2*GB, 1*GB, 512*MB, 256*MB]] # 25threads
-# mem_size_list = [1957826560 + 256*MB] # 64 threads
-# mem_size_list = [3297189888 + 512*MB] # 128 threads
+mem_size_list = [16*GB]
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
 profile_qq_server = "false"
 mem_swappiness = 60
@@ -61,8 +27,8 @@ read_ahead_kb = 4
 do_drop_cache = True
 do_block_tracing = False
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
-# query_paths = ["/mnt/ssd/realistic_querylog"]
-query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
+query_paths = ["/mnt/ssd/realistic_querylog"]
+# query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/split-log/*")
 
 if device_name == "sdc":

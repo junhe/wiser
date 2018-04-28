@@ -231,6 +231,7 @@ class VacuumInvertedIndex {
 
  private:
   TermIndex term_index_;  
+  // TermTrieIndex term_index_;  
   utils::FileMap file_map_;
   const uint8_t *file_data_; // = file_map_.Addr(), put it here for convenience
 };
