@@ -35,14 +35,18 @@ do_drop_cache = True
 server_addr = "node1"
 remote_addr = "node2"
 n_server_threads = [25]
-n_client_threads = [256] # client
+n_client_threads = [128] # client
 # 128 threads: locked size: 1957826560
 # 25 threads locke size: 1126924288
 # mem_size_list = [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB]
 # mem_size_list = [16*GB]
-# mem_size_list = [4*GB]
+# mem_size_list = [2*GB, 1*GB+800*MB, 1*GB+700*MB,
+        # 1*GB+600*MB, 1*GB+500*MB, 1*GB+400*MB,
+        # 1*GB+300*MB, 1*GB+200*MB ]
+mem_size_list = [1*GB+150*MB, 1*GB+100*MB, 1*GB]
+# mem_size_list = [1*GB+80*MB, 1*GB+60*MB, 1*GB+40*MB]
 # mem_size_list = [1126924288 + x for x in [128*MB, 64*MB, 32*MB, 16*MB]] # 25threads
-mem_size_list = [1126924288 + x for x in [1*GB]] # 25threads
+# mem_size_list = [1126924288 + x for x in [1*GB]] # 25threads
 # mem_size_list = [1126924288 + x for x in [4*GB, 2*GB, 1*GB, 512*MB, 256*MB]] # 25threads
 # mem_size_list = [1957826560 + 256*MB] # 64 threads
 # mem_size_list = [3297189888 + 512*MB] # 128 threads
@@ -57,7 +61,8 @@ read_ahead_kb = 4
 do_drop_cache = True
 do_block_tracing = False
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
-query_paths = ["/mnt/ssd/realistic_querylog"]
+# query_paths = ["/mnt/ssd/realistic_querylog"]
+query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/split-log/*")
 
 if device_name == "sdc":
@@ -138,6 +143,24 @@ class Cgroup(object):
         path = os.path.join('/sys/fs/cgroup', sub, self.name, item)
         return path
 
+
+def get_cgroup_page_cache_size():
+    def parse_page_cache(line):
+        cache_size = line.split()[2]
+        d = {"page_cache_size": cache_size}
+        return d
+
+    lines = subprocess.check_output(
+            "cgget -g memory:/charlie", shell=True).split('\n')
+
+    d = {}
+    for i, line in enumerate(lines):
+        if line.startswith("memory.stat: cache"):
+            d.update(parse_page_cache(lines[i]))
+
+    return int(d['page_cache_size'])
+
+
 def log_crashed_server(conf):
     with open("server.log", "a") as f:
         f.write("server crashed at " + now() + " ")
@@ -212,6 +235,13 @@ def sync_build_dir():
     shcmd("rsync -avzh --progress {path} {addr}:{path}".format(
         addr=remote_addr, path=build_path))
 
+def sync_query_log(path):
+    if server_addr == remote_addr:
+        return
+
+    shcmd("rsync -avzh --progress {path} {addr}:{path}".format(
+        addr=remote_addr, path=path))
+
 def compile_engine_bench():
     shcmd("make engine_bench_build")
 
@@ -239,6 +269,17 @@ def is_client_finished():
         return True
     else:
         return False
+
+def median(lst):
+    sortedLst = sorted(lst)
+    lstLen = len(lst)
+    index = (lstLen - 1) // 2
+
+    if (lstLen % 2):
+        return sortedLst[index]
+    else:
+        return (sortedLst[index] + sortedLst[index + 1])/2.0
+
 
 def kill_client():
     p = remote_cmd("pkill engine_bench")
@@ -321,6 +362,8 @@ class Exp(Experiment):
         if do_drop_cache == True:
             drop_cache()
 
+        sync_query_log(conf['query_path'])
+
     def treatment(self, conf):
         print conf
         server_p = start_server(conf)
@@ -342,6 +385,7 @@ class Exp(Experiment):
                                 conf['query_path'])
 
         seconds = 0
+	cache_size_log = []
         while True:
             print_client_output_tail()
             finished = is_client_finished()
@@ -363,9 +407,17 @@ class Exp(Experiment):
                 copy_client_out()
                 break
 
+            cache_size = get_cgroup_page_cache_size()/MB
+            print "*" * 20
+            print "page cache size (MB): ", cache_size
+            print "*" * 20
+            cache_size_log.append(cache_size)
+
+
             time.sleep(1)
             seconds += 1
             print ">>>>> It has been", seconds, "seconds <<<<<<"
+            print "cache_size_log:", cache_size_log
 
         mb_read_b = get_iostat_mb_read()
 
@@ -375,6 +427,8 @@ class Exp(Experiment):
         print '-' * 30
 
         d = ClientOutput().parse_client_out("/tmp/client.out")
+        d["p_cache_median"] = median(cache_size_log)
+        d["p_cache_max"] = max(cache_size_log)
         d['MB_read'] = mb_read
         d.update(conf)
 
