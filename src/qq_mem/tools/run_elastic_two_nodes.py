@@ -15,19 +15,25 @@ ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
 
 
 
+# for vacuum
+profile_qq_server = "false"
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
+
+# system wide
 server_addr = "node1"
 remote_addr = "node2"
-n_server_threads = [25]
-n_client_threads = [128]
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
-profile_qq_server = "false"
-mem_swappiness = 60
 os_swap = True
 device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
 do_block_tracing = False
+
+
+# elasticsearch
+n_server_threads = [25]
+n_client_threads = [128]
+mem_swappiness = 60
 query_paths = ["/mnt/ssd/realistic_querylog"]
 
 
@@ -45,7 +51,6 @@ mem_size_list = [16*GB]
     # n_threads = n_server_threads[0]
     # m_size = size + locked_mem_dict[n_threads]
     # mem_size_list.append(m_size)
-
 
 
 if device_name == "sdc":
