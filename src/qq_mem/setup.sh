@@ -65,6 +65,13 @@ sudo apt-get install cgroup-bin
 sudo apt-get install sysstat
 sudo apt-get install -y blktrace
 
+# For elastic search
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html
+sudo sysctl -w vm.max_map_count=262144
+
+echo "*            hard   memlock           unlimited" |tee -a /etc/security/limits.conf
+echo "*            soft    memlock           unlimited" | tee -a /etc/security/limits.conf
+
 echo "Now, run"
 echo "source ~/.bashrc"
 
