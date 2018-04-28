@@ -61,6 +61,9 @@ class Buckets(object):
     def load(self, path):
         self.buckets = pickle.load( open( path, "rb" ) )
 
+    def dump_bucket(self, i, path):
+        random.shuffle(self.buckets[i])
+        write_set_to_file(self.buckets[i], path)
 
     def create_set(self, exp, n):
         set_exp = set()
@@ -79,8 +82,9 @@ def main():
     buckets = Buckets()
     buckets.load_term_list("/mnt/ssd/popular_terms")
 
-    s = buckets.create_set(2, 10000)
-    write_set_to_file(s, "unique_terms_1e2.log")
+    for i in range(0, 7):
+        print "dumping", i
+        buckets.dump_bucket(i, "unique_terms_1e" + str(i))
 
 
 if __name__ == "__main__":
