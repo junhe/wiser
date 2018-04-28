@@ -34,23 +34,17 @@ do_block_tracing = False
 n_server_threads = [25]
 n_client_threads = [128]
 mem_swappiness = 60
+lock_es_memory = ["true"]
 query_paths = ["/mnt/ssd/realistic_querylog"]
-
-
+# query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
+# query_paths = ["/mnt/ssd/tugman_log"]
 init_heap_size = [512*MB]
 max_heap_size = [512*MB]
-
-# n_threads -> locked java memory
-locked_mem_dict = {25: 937177088}
-page_cache_sizes = [128*MB]
-
+# mem_size_list = [16*GB, 4*GB, 2*GB, 1*GB, 900*MB, 800*MB, 700*MB]
 mem_size_list = [16*GB]
-# mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 900*GB, 800*GB, 700*GB, 600*GB]
-# for size in page_cache_sizes:
-    # assert len(n_server_threads) == 1
-    # n_threads = n_server_threads[0]
-    # m_size = size + locked_mem_dict[n_threads]
-    # mem_size_list.append(m_size)
+
+
+
 
 
 if device_name == "sdc":
@@ -180,6 +174,9 @@ def set_es_yml(conf):
         if "thread_pool.search.size" in line:
             new_lines.append(
                 "thread_pool.search.size: {}\n".format(conf['n_server_threads']))
+        elif "bootstrap.memory_lock" in line:
+            new_lines.append(
+                "bootstrap.memory_lock: {}\n".format(conf['lock_es_memory']))
         else:
             new_lines.append(line)
 
@@ -288,8 +285,10 @@ def start_client(n_threads, query_path):
         )
 
 def print_client_output_tail():
-    out = subprocess.check_output("tail -n 2 /tmp/client.out", shell=True)
+    out = subprocess.check_output("tail -n 20 /tmp/client.out", shell=True)
+    print "-" * 30
     print out
+    print "-" * 30
 
 def is_client_finished():
     out = subprocess.check_output("tail -n 1 /tmp/client.out", shell=True)
@@ -342,7 +341,8 @@ class Exp(Experiment):
                 "n_client_threads": n_client_threads,
                 "query_path": query_paths,
                 "init_heap_size": init_heap_size,
-                "max_heap_size": max_heap_size
+                "max_heap_size": max_heap_size,
+                "lock_es_memory": lock_es_memory,
                 })
         self._n_treatments = len(self.confs)
 

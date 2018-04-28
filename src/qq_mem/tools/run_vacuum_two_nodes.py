@@ -11,23 +11,28 @@ from pyreuse.sysutils.blocktrace import BlockTraceManager
 import glob
 
 
+# System wide
 server_addr = "node1"
 remote_addr = "node2"
-n_server_threads = [25]
-n_client_threads = [128] # client
-mem_size_list = [16*GB]
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
-profile_qq_server = "false"
-mem_swappiness = 60
 os_swap = True
-lock_memory = "true"
 device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
 do_block_tracing = False
+
+# vacuum
+n_server_threads = [25]
+n_client_threads = [128] # client
+mem_size_list = [16*GB, 4*GB, 2*GB, 1*GB, 900*MB, 800*MB, 700*MB]
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
+profile_qq_server = "false"
+mem_swappiness = 60
+lock_memory = "true"
+
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
-query_paths = ["/mnt/ssd/realistic_querylog"]
+# query_paths = ["/mnt/ssd/realistic_querylog"]
+# query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/split-log/*")
 
