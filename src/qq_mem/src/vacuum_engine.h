@@ -10,6 +10,30 @@
 #include "flash_iterators.h"
 
 
+class TermIndexResult {
+ public:
+  TermIndexResult(std::string key, off_t value, bool is_empty)
+    :key_(key), value_(value), is_empty_(is_empty) {}
+
+  std::string Key() const {
+    return key_;
+  }
+
+  off_t Value() const {
+    return value_;
+  }
+
+  bool IsEmpty() const {
+    return is_empty_;
+  }
+
+ private:
+  std::string key_;
+  off_t value_;
+  bool is_empty_;
+};
+
+
 class TermIndex {
  public:
   typedef std::unordered_map<Term, off_t> LocalMap;
@@ -54,13 +78,13 @@ class TermIndex {
     return index_.size();
   }
 
-  ConstIterator Find(const Term &term) {
+  TermIndexResult Find(const Term &term) {
     ConstIterator it = index_.find(term);
-    return it;
-  }
-
-  ConstIterator CEnd() {
-    return index_.cend();
+    if (it == index_.cend()) {
+      return TermIndexResult("", -1, true);
+    } else {
+      return TermIndexResult(it->first, it->second, false);
+    }
   }
 
  private:
@@ -114,11 +138,11 @@ class VacuumInvertedIndex {
   }
 
   off_t FindPostingListOffset(const Term term) {
-    TermIndex::ConstIterator it = term_index_.Find(term);
-    if (it == term_index_.CEnd()) {
+    TermIndexResult it = term_index_.Find(term);
+    if (it.IsEmpty()) {
       return -1;
     } else {
-      return it->second;
+      return it.Value();
     }
   }
 

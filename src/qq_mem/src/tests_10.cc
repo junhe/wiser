@@ -378,21 +378,21 @@ TEST_CASE( "Term Index works", "[qqflash]" ) {
 
   {
   auto it = index.Find("hello");
-  REQUIRE(it != index.CEnd());
-  REQUIRE(it->first == "hello");
-  REQUIRE(it->second == 0);
+  REQUIRE(it.IsEmpty() == false);
+  REQUIRE(it.Key() == "hello");
+  REQUIRE(it.Value() == 0);
   }
 
   {
   auto it = index.Find("wisc");
-  REQUIRE(it != index.CEnd());
-  REQUIRE(it->first == "wisc");
-  REQUIRE(it->second == 10032);
+  REQUIRE(it.IsEmpty() == false);
+  REQUIRE(it.Key() == "wisc");
+  REQUIRE(it.Value() == 10032);
   }
 
   {
   auto it = index.Find("notexist");
-  REQUIRE(it == index.CEnd());
+  REQUIRE(it.IsEmpty() == true);
   }
 }
 
