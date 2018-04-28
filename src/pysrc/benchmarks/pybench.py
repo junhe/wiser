@@ -29,8 +29,8 @@ def worker(query_pool, query_count, engine):
     for i in range(query_count):
         query = query_pool.next_query()
         ret = client.search(query)
-        if i % 5000 == 0:
-            print os.getpid(), "{}/{}".format(i, query_count)
+        #if i % 5000 == 0:
+        #    print os.getpid(), "{}/{}".format(i, query_count)
 
 
 def create_client(engine):
@@ -48,9 +48,10 @@ class ExperimentEsRs(Experiment):
 
         parameters = {
                     'worker_count': [1, 16, 32, 64, 128],
-                    'query': ['hello', 'barack obama', 'wiki-query-log'],
-                    # 'query': ['wiki-query-log'],
-                    'engine': ['elastic'],
+                    #'query': ['hello', 'barack obama', 'wiki-query-log'],
+                    'query': ['wiki-query-log'],
+                    #'engine': ['elastic'],
+                    'engine': ['redis'],
                     'line_doc_path': ["/mnt/ssd/downloads/enwiki-abstract.linedoc.withurl"],
                     'n_shards': [1],
                     'n_hosts': [1],
@@ -67,10 +68,11 @@ class ExperimentEsRs(Experiment):
 
         conf = {
                 'doc_count': 10**8,
-                'query_count': int(50000 / para['worker_count']),
+                'query_count': int(500000 / para['worker_count']),
                 'query': para['query'],
                 'engine': para['engine'],
-                "benchmark": "PyBench",
+                #"benchmark": "PyBench",
+                "benchmark": "RediSearchBenchmark",
                 "line_doc_path": para['line_doc_path'],
                 'n_clients': para['worker_count'],
                 'rebuild_index': para['rebuild_index'],

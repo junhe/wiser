@@ -1,4 +1,3 @@
-# encoding=utf8  
 import sys
 import requests, json
 import codecs
@@ -66,7 +65,7 @@ def tokenize(line_doc, output):
     doc["analyzer"] = "my_english_analyzer"
     
     header = line_doc.readline()
-    output.write(u"FIELDS_HEADER_INDICATOR###\tdoctitle\tbody\ttokenized\toffsets\n")
+    output.write(u"FIELDS_HEADER_INDICATOR###\tdoctitle\tbody\ttokenized\toffsets\tpositions\n")
     i = 0
     for line in line_doc:
         i+=1
@@ -75,33 +74,45 @@ def tokenize(line_doc, output):
         items = line.split("\t")
         #doc_content = items[1]
         doc_content = unicodedata.normalize('NFKD', unicode(items[1])).encode('ascii', 'ignore')
+        doc_content = doc_content.strip('\n').replace('&', '').replace('<','').replace('>','')#.replace('\"','').replace('\'','')
+        doc_title = unicodedata.normalize('NFKD', unicode(items[0])).encode('ascii', 'ignore')
         doc["text"] = doc_content
         doc_result = json.dumps(doc)
         r = requests.post(url, doc_result, headers=headers)
-        output.write(unicode(items[0] +'\t' + items[1].strip('\n') +'\t'))
-        
+        #print r.text
+        #output.write(unicode(items[0] +'\t' + items[1].strip('\n') +'\t'))
+        output.write(unicode(doc_title +'\t' + doc_content.strip('\n') +'\t')) 
         # unique and collect offsets
         dic = {}
+        dic_pos = {}
         for token in r.json()["tokens"]:
             # also store offsets
 
             #if token["token"].encode('utf8') in dic:
             token_str = unicodedata.normalize('NFKD', unicode(token['token'])).encode('ascii', 'ignore')
             if token_str in dic:
+                # for offsets
                 tmp = dic[token_str]
                 tmp += (str(token["start_offset"]) + ',' + str(token["end_offset"]) + ';')
                 dic[token_str] = tmp
+                # for positions
+                tmp = dic_pos[token_str]
+                tmp += ( str(token["position"])+ ';')
+                dic_pos[token_str] = tmp
+
                 continue
             dic[token_str] = str(token["start_offset"]) + ',' + str(token["end_offset"]) + ';'
+            dic_pos[token_str] = str(token["position"]) + ';'
 
         terms = ""
         offsets = ""
+        positions = ""
         for token in dic:
             terms += token + ' '
             offsets += dic[token] + '.'
+            positions += dic_pos[token] + '.'
             #print token, ': ', dic[token]
-        #output.write(token["token"].encode('utf8') + ' ')
-        output.write( unicode(terms + '\t' + offsets) )
+        output.write( unicode(terms + '\t' + offsets + '\t' + positions) )
         output.write( unicode('\n') )
 
 if __name__=='__main__':
@@ -110,9 +121,6 @@ if __name__=='__main__':
         print('Usage: python tokenize_wiki_linedoc.py [input_name]  (results stored in input_name_tokenized)')
         exit(1)
     
-    reload(sys)  
-    sys.setdefaultencoding('utf8')
-    
     # do analysis
     #line_doc = open(sys.argv[1])
     output = io.open(sys.argv[1] + '_tokenized', 'w', encoding="utf-8")
@@ -120,3 +128,4 @@ if __name__=='__main__':
         tokenize(line_doc, output)
     #line_doc.close()
     output.close()
+
