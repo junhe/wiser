@@ -41,6 +41,7 @@ mem_swappiness = 60
 query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/split-log/*")
+lock_memory = ["false"] # must be string
 
 
 ######################
@@ -48,14 +49,12 @@ query_paths = ["/mnt/ssd/short_log"]
 ######################
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
 profile_qq_server = "false"
-lock_memory = "true"
 
 
 ######################
 # Elastic only
 ######################
 ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
-lock_es_memory = ["true"]
 init_heap_size = [512*MB]
 max_heap_size = [512*MB]
 
@@ -207,7 +206,7 @@ def set_es_yml(conf):
                 "thread_pool.search.size: {}\n".format(conf['n_server_threads']))
         elif "bootstrap.memory_lock" in line:
             new_lines.append(
-                "bootstrap.memory_lock: {}\n".format(conf['lock_es_memory']))
+                "bootstrap.memory_lock: {}\n".format(conf['lock_memory']))
         else:
             new_lines.append(line)
 
@@ -427,7 +426,7 @@ def start_vacuum_server(conf):
                     n_threads = conf['n_server_threads'],
                     engine = search_engine,
                     profile = profile_qq_server,
-                    lock_mem = lock_memory)
+                    lock_mem = conf['lock_memory'])
         print "-" * 20
         print "server cmd:", cmd
         print "-" * 20
@@ -471,7 +470,8 @@ class Exp(Experiment):
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
                 "query_path": query_paths,
-                "engine": engines
+                "engine": engines,
+                "lock_memory": lock_memory
                 })
         self._n_treatments = len(self.confs)
 
