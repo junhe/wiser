@@ -265,6 +265,17 @@ class VacuumEngine : public SearchEngineServiceNew {
   void Load() override {
     LOG_IF(FATAL, is_loaded_ == true) << "Engine is already loaded.";
 
+    // do some ugly check
+    if (doc_store_.IsAligned() == true && 
+        engine_dir_path_.find("misaligned") != std::string::npos) {
+      LOG(FATAL) << "Using AlignedFlashDocStore for misaligned files!!";
+    }
+
+    if (doc_store_.IsAligned() == false && 
+        engine_dir_path_.find("-aligned-") != std::string::npos) {
+      LOG(FATAL) << "Using unaligned FlashDocStore for aligned files!!";
+    }
+
     doc_store_.LoadFdx(utils::JoinPath(engine_dir_path_, "my.fdx"),
                     utils::JoinPath(engine_dir_path_, "my.fdt"));
 

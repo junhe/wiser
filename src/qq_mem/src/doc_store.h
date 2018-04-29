@@ -371,6 +371,10 @@ class FlashDocStore {
     return offset_store_.size() - 1; // minus the laste item (the guard)
   }
 
+  bool IsAligned() const {
+    return true;
+  }
+
  private:
   BufferPool buffer_pool_;
   static constexpr int buffer_size_ = 256 * 1024;
@@ -452,6 +456,10 @@ class AlignedFlashDocStore {
 
   int Size() const {
     return offset_store_.size() - 1; // minus the laste item (the guard)
+  }
+
+  bool IsAligned() const {
+    return true;
   }
 
  private:
