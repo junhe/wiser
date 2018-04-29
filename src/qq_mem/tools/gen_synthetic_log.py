@@ -17,6 +17,25 @@ exp 6 num of terms: 38
 # DEBUG = True
 DEBUG = False
 
+log_to_group = {
+        0: "low",
+        1: "low",
+        2: "low",
+        3: "med",
+        4: "med",
+        5: "high",
+        6: "high"}
+
+
+group_to_log = {}
+for log, group in log_to_group.items():
+    if group_to_log.has_key(group) is False:
+        group_to_log[group] = [log]
+    else:
+        group_to_log[group].append(log)
+
+print log_to_group
+print group_to_log
 
 def rand_item(l):
     total = len(l)
@@ -34,6 +53,7 @@ class Buckets(object):
         self.buckets = {}
         for i in range(10):
             self.buckets[i] = []
+        self.groups = {'low': [], 'med': [], 'high': []}
 
     def load_term_list(self, path):
         print "loading....."
@@ -52,8 +72,8 @@ class Buckets(object):
             doc_freq = int(items[1])
             freq_exp = int(math.log(doc_freq, 10))
 
-            self.add_to_bucket(freq_exp, term)
-
+            # self.add_to_bucket(freq_exp, term)
+            self.add_to_group(freq_exp, term)
 
         print "Loading finished!"
 
@@ -70,6 +90,9 @@ class Buckets(object):
 
     def add_to_bucket(self, exp, term):
         self.buckets[exp].append(term)
+
+    def add_to_group(self, exp, term):
+        self.groups[log_to_group[exp]].append(term)
 
     def dump(self, path):
         ret = raw_input("are you sure to overwrite?")
@@ -94,6 +117,22 @@ class Buckets(object):
 
         random.shuffle(terms)
         return terms[0:n]
+
+    def create_set_from_group(self, group_name, n):
+        """
+        randomly get n terms from a group
+        """
+        terms = copy.copy(self.groups[group_name])
+
+        if n == "all":
+            n = len(terms)
+
+        if len(terms) < n:
+            raise RuntimeError("not enough terms in this bucket")
+
+        random.shuffle(terms)
+        return terms[0:n]
+
 
 def dump_buckets():
     buckets = Buckets()
@@ -124,21 +163,45 @@ def produce_queries_from_unique_terms(unique_terms, n_queries):
     return queries
 
 
+def produce_non_repeat_queries(buckets):
+    pool_sizes = {
+                    # 'low':  30,
+                    # 'med':  10,
+                    # 'high': 20,
+                    'low': 300000,
+                    'med': "all",
+                    'high': 200,
+            }
+
+    for group_name in group_to_log.keys():
+        print group_name
+        queries = buckets.create_set_from_group(group_name, pool_sizes[group_name])
+        print "query count:", len(queries)
+        write_to_file(queries, "/mnt/ssd/query_workload/single_term/type_single.docfreq_" + group_name)
+
 def main():
     buckets = Buckets()
     buckets.load_term_list("/mnt/ssd/popular_terms")
 
-    n_uniq_terms_wanted = [90000, 10000, 1000, 100]
-    for n_wanted in n_uniq_terms_wanted:
-        print "doing", n_wanted
-        queries = get_queries_from_working_set(buckets = buckets,
-                                               bucket_index = 2,
-                                               n_uniq_terms = n_wanted,
-                                               n_queries = 100000)
-        write_to_file(queries, "term_docfreq_1e2_working_set_" + str(n_wanted))
+    produce_non_repeat_queries(buckets)
+
+
+    # print buckets.groups
+    # n_uniq_terms_wanted = [90000, 10000, 1000, 100]
+    # for n_wanted in n_uniq_terms_wanted:
+        # print "doing", n_wanted
+        # queries = get_queries_from_working_set(buckets = buckets,
+                                               # bucket_index = 2,
+                                               # n_uniq_terms = n_wanted,
+                                               # n_queries = 100000)
+        # write_to_file(queries, "term_docfreq_1e2_working_set_" + str(n_wanted))
+
+
+
 
 
 if __name__ == "__main__":
     main()
+    # pass
 
 
