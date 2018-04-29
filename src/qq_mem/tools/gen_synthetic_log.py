@@ -1,6 +1,18 @@
 import math
+import copy
 import random
 import pickle
+
+
+"""
+exp 0 num of terms: 4996891
+exp 1 num of terms: 520675
+exp 2 num of terms: 94721
+exp 3 num of terms: 22139
+exp 4 num of terms: 5717
+exp 5 num of terms: 1434
+exp 6 num of terms: 38
+"""
 
 # DEBUG = True
 DEBUG = False
@@ -11,7 +23,7 @@ def rand_item(l):
     i = random.randint(0, total - 1)
     return l[i]
 
-def write_set_to_file(term_set, path):
+def write_to_file(term_set, path):
     with open(path, "w") as f:
         for term in term_set:
             f.write(term + "\n")
@@ -47,6 +59,12 @@ class Buckets(object):
 
         f.close()
 
+        self.show_stats()
+
+    def show_stats(self):
+        for k, v in self.buckets.items():
+            print "exp", k, "num of terms:", len(v)
+
     def random_pick(self, bucket_index):
         return rand_item(self.buckets[bucket_index])
 
@@ -63,20 +81,19 @@ class Buckets(object):
 
     def dump_bucket(self, i, path):
         random.shuffle(self.buckets[i])
-        write_set_to_file(self.buckets[i], path)
+        write_to_file(self.buckets[i], path)
 
-    def create_set(self, exp, n):
-        set_exp = set()
+    def create_set(self, bucket_index, n):
+        """
+        randomly get n terms from buckets[index]
+        """
+        terms = copy.copy(self.buckets[bucket_index])
 
-        loop_cnt = 0
-        while len(set_exp) < n:
-            loop_cnt += 1
-            set_exp.add(self.random_pick(exp))
-            if loop_cnt % 1000 == 0:
-                print "loop cnt: ", loop_cnt, "set size:", len(set_exp)
+        if len(terms) < n:
+            raise RuntimeError("not enough terms in this bucket")
 
-        return set_exp
-
+        random.shuffle(terms)
+        return terms[0:n]
 
 def dump_buckets():
     buckets = Buckets()
@@ -86,17 +103,39 @@ def dump_buckets():
         print "dumping", i
         buckets.dump_bucket(i, "unique_terms_1e" + str(i))
 
-def dump_with_working_set(bucket_index, n_terms, n_queries):
-    buckets = Buckets()
-    buckets.load_term_list("/mnt/ssd/popular_terms")
+def get_queries_from_working_set(buckets, bucket_index, n_uniq_terms, n_queries):
+    # pick n_terms (working set), unique ones
+    unique_terms = buckets.create_set(bucket_index, n_uniq_terms)
 
-    # pick n_terms
+    print "*" * 30
+    print "Number of unique terms:", len(unique_terms)
+    print "Num of queries to generate:", n_queries
+    print "*" * 30
 
-    # produce n_queries
+    return produce_queries_from_unique_terms(unique_terms, n_queries)
+
+def produce_queries_from_unique_terms(unique_terms, n_queries):
+    n_uniq_terms = len(unique_terms)
+    queries = []
+    for _ in range(n_queries):
+        i = random.randint(0, n_uniq_terms - 1)
+        queries.append(unique_terms[i])
+
+    return queries
 
 
 def main():
-    pass
+    buckets = Buckets()
+    buckets.load_term_list("/mnt/ssd/popular_terms")
+
+    n_uniq_terms_wanted = [90000, 10000, 1000, 100]
+    for n_wanted in n_uniq_terms_wanted:
+        print "doing", n_wanted
+        queries = get_queries_from_working_set(buckets = buckets,
+                                               bucket_index = 2,
+                                               n_uniq_terms = n_wanted,
+                                               n_queries = 100000)
+        write_to_file(queries, "term_docfreq_1e2_working_set_" + str(n_wanted))
 
 
 if __name__ == "__main__":
