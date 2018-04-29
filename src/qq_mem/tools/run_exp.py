@@ -12,6 +12,9 @@ from pyreuse.sysutils.blocktrace import BlockTraceManager
 import glob
 
 
+ELASTIC = "elastic"
+VACUUM = VACUUM
+
 ######################
 # System wide
 ######################
@@ -28,8 +31,8 @@ do_block_tracing = False
 ######################
 # BOTH Elastic and Vacuum
 ######################
-engines = ["vacuum"] # "elastic" or "vacuum"
-n_server_threads = [25]
+engines = [ELASTIC, VACUUM] # ELASTIC or VACUUM
+n_server_threads = [32, 64]
 n_client_threads = [128] # client
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [256*MB, 128*MB]
@@ -117,9 +120,9 @@ class ElasticClientOutput:
         return d
 
 def parse_client_output(conf):
-    if conf['engine'] == "elastic":
+    if conf['engine'] == ELASTIC:
         return ElasticClientOutput().parse_client_out("/tmp/client.out")
-    elif conf['engine'] == "vacuum":
+    elif conf['engine'] == VACUUM:
         return VacuumClientOutput().parse_client_out("/tmp/client.out")
     else:
         raise RuntimeError
@@ -210,9 +213,9 @@ def wait_for_open_port(proc_name):
     time.sleep(2) # always wait for a while
 
 def wait_engine_port(conf):
-    if conf['engine'] == "elastic":
+    if conf['engine'] == ELASTIC:
         wait_for_open_port("java")
-    elif conf['engine'] == "vacuum":
+    elif conf['engine'] == VACUUM:
         wait_for_open_port("qq_server")
     else:
         raise RuntimeError
@@ -315,9 +318,9 @@ def check_es_port():
     print "-" * 20
 
 def check_server_port(engine):
-    if engine == "elastic":
+    if engine == ELASTIC:
         check_es_port()
-    elif engine == "vacuum":
+    elif engine == VACUUM:
         check_vacuum_port()
     else:
         raise RuntimeError
@@ -354,9 +357,9 @@ def compile_engine_bench():
 
 
 def start_engine_client(engine, n_threads, query_path):
-    if engine == "elastic":
+    if engine == ELASTIC:
         return start_elastic_client(n_threads, query_path)
-    elif engine == "vacuum":
+    elif engine == VACUUM:
         return start_vacuum_client(n_threads, query_path)
 
 def start_elastic_client(n_threads, query_path):
@@ -423,9 +426,9 @@ def copy_client_out():
     shcmd("cp /tmp/client.out /tmp/results/{}".format(now()))
 
 def start_engine_server(conf):
-    if conf['engine'] == "elastic":
+    if conf['engine'] == ELASTIC:
         return start_elastic_server(conf)
-    elif conf['engine'] == "vacuum":
+    elif conf['engine'] == VACUUM:
         return start_vacuum_server(conf)
     else:
         raise RuntimeError
@@ -477,9 +480,9 @@ def start_elastic_server(conf):
     return p
 
 def is_engine_server_running(conf):
-    if conf['engine'] == "elastic":
+    if conf['engine'] == ELASTIC:
         return is_command_running("/usr/lib/jvm/java-8-oracle/bin/java")
-    elif conf['engine'] == "vacuum":
+    elif conf['engine'] == VACUUM:
         return is_command_running("./build/qq_server")
     else:
         raise RuntimeError
