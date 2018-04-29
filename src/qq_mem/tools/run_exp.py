@@ -34,27 +34,27 @@ do_block_tracing = False
 ######################
 # engines = [ELASTIC] # ELASTIC or VACUUM
 engines = [VACUUM] # ELASTIC or VACUUM
-n_server_threads = [64]
+n_server_threads = [25]
 n_client_threads = [128] # client
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB] # good one
 mem_size_list = [8*GB]
-# mem_size_list = [256*MB, 128*MB]
+# mem_size_list = [256*MB]
 mem_swappiness = 60
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
-# query_paths = ["/mnt/ssd/realistic_querylog"]
-query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
+query_paths = ["/mnt/ssd/realistic_querylog"]
+# query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
 # query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
-# query_paths = glob.glob("/mnt/ssd/split-log/*")
+# query_paths = glob.glob("/mnt/ssd/query_workload/term_docfreq_1e2_working_set_vary/*")
 lock_memory = ["false"] # must be string
 
 
 ######################
 # Vacuum only
 ######################
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
-# search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
+# search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
 profile_qq_server = "false"
 
 
