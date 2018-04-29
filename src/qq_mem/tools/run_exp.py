@@ -24,10 +24,11 @@ read_ahead_kb = 4
 do_drop_cache = True
 do_block_tracing = False
 
+
 ######################
 # BOTH Elastic and Vacuum
 ######################
-engines = ["vacuum"] # "elastic" or "vacuum"
+engines = ["vacuum", "elastic"] # "elastic" or "vacuum"
 n_server_threads = [25]
 n_client_threads = [128] # client
 # mem_size_list = [16*GB, 4*GB, 2*GB, 1*GB, 900*MB, 800*MB, 700*MB]
@@ -40,7 +41,6 @@ mem_swappiness = 60
 query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/split-log/*")
-
 
 
 ######################
@@ -528,9 +528,9 @@ class Exp(Experiment):
 
             is_server_running = is_engine_server_running(conf)
             if is_server_running is False:
-                raise RuntimeError("Server just crashed!!!")
-                # log_crashed_server(conf)
-                # return
+                # raise RuntimeError("Server just crashed!!!")
+                log_crashed_server(conf)
+                return
 
             if finished:
                 kill_client()
@@ -560,7 +560,7 @@ class Exp(Experiment):
         print '-' * 30
 
         d = parse_client_output(conf)
-        d["cache_mb_median"] = median(cache_size_log)
+        d["cache_mb_obs_median"] = median(cache_size_log)
         d["cache_mb_max"] = max(cache_size_log)
         d['MB_read'] = mb_read
         d.update(conf)
@@ -569,7 +569,7 @@ class Exp(Experiment):
 
     def afterEach(self, conf):
         path = os.path.join(self._resultdir, "result.txt")
-        table_to_file(self.result, path, width = 20)
+        table_to_file(fill_na(self.result), path, width = 20)
         shcmd("cat " + path)
 
         if do_block_tracing is True:
