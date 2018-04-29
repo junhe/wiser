@@ -55,8 +55,8 @@ profile_qq_server = "false"
 # Elastic only
 ######################
 ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
-init_heap_size = [512*MB]
-max_heap_size = [512*MB]
+init_heap_size = [300*MB]
+max_heap_size = [300*MB]
 
 
 
@@ -192,6 +192,10 @@ def get_cgroup_page_cache_size():
             d.update(parse_page_cache(lines[i]))
 
     return int(d['page_cache_size'])
+
+
+def clean_dmesg():
+    shcmd("sudo dmesg -C")
 
 
 def set_es_yml(conf):
@@ -481,6 +485,7 @@ class Exp(Experiment):
         return self.confs[i]
 
     def before(self):
+        clean_dmesg()
         sync_build_dir()
 
     def beforeEach(self, conf):
