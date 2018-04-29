@@ -445,7 +445,8 @@ class AlignedFlashDocStore {
     const int decompressed_size = 
       LZ4_decompress_safe(fdt_map_.Addr() + start_off, buf.get(), doc_len, buffer_size_); 
     if (decompressed_size < 0) {
-      LOG(FATAL) << "Failed to decompresse."; 
+      LOG(FATAL) << "Failed to decompresse." 
+        << "doc len:" << doc_len; 
     }
 
     std::string ret = std::string(buf.get(), decompressed_size);
@@ -465,7 +466,7 @@ class AlignedFlashDocStore {
  private:
   long int max_docid_;
   BufferPool buffer_pool_;
-  static constexpr int buffer_size_ = 256 * 1024;
+  static constexpr int buffer_size_ = 512 * 1024;
   
   std::vector<long int> offset_store_;
   int fd_fdt_;

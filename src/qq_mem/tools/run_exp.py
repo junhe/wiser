@@ -27,6 +27,8 @@ partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
 do_block_tracing = False
+qq_mem_folder = "/users/jhe/flashsearch/src/qq_mem"
+user_name = "jhe"
 
 
 ######################
@@ -44,6 +46,7 @@ mem_swappiness = 60
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
 query_paths = ["/mnt/ssd/realistic_querylog"]
 # query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
+# query_paths = ["/mnt/ssd/realistic_querylog"]
 # query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/term_docfreq_1e2_working_set_vary/*")
@@ -53,18 +56,18 @@ lock_memory = ["false"] # must be string
 ######################
 # Vacuum only
 ######################
-# search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
+# search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
 profile_qq_server = "false"
-
+engine_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
 
 ######################
 # Elastic only
 ######################
-ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
+ELASTIC_DIR = "/users/kanwu/elasticsearch-5.6.3"
 init_heap_size = [300*MB]
 max_heap_size = [300*MB]
-
+rs_bench_go_path = "/users/jhe/flashsearch/src/pysrc"
 
 
 
@@ -345,9 +348,8 @@ def sync_build_dir():
     if server_addr == remote_addr:
         return
 
-    build_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
-    shcmd("rsync -avzh --progress {path} {addr}:{path}".format(
-        addr=remote_addr, path=build_path))
+    shcmd("scp {engine_path} {addr}:/tmp/engine_bench".format(
+        addr=remote_addr, engine_path=engine_path))
 
 def sync_query_log(path):
     if server_addr == remote_addr:
@@ -378,7 +380,7 @@ def start_elastic_client(n_threads, query_path):
             .format(path=query_path, n=n_threads, server=server_addr)
 
     return remote_cmd_chwd(
-        "/users/jhe/flashsearch/src/pysrc",
+        rs_bench_go_path,
         cmd,
         open("/tmp/client.out", "w")
         )
@@ -388,7 +390,7 @@ def start_vacuum_client(n_threads, query_path):
     print "starting client ..."
     print "-" * 20
     return remote_cmd_chwd(
-        "/users/jhe/flashsearch/src/qq_mem/build/",
+        "/tmp/",
         "./engine_bench -exp_mode=grpclog -n_threads={n_threads} "
         "-grpc_server={server} -query_path={query_path}"
         .format(server = server_addr, n_threads = n_threads,
@@ -451,7 +453,7 @@ def start_vacuum_server(conf):
     cg.set_item('memory', 'memory.limit_in_bytes', conf['server_mem_size'])
     cg.set_item('memory', 'memory.swappiness', mem_swappiness)
 
-    with cd("/users/jhe/flashsearch/src/qq_mem"):
+    with cd(qq_mem_folder):
         cmd = "./build/qq_server "\
               "-sync_type=ASYNC -n_threads={n_threads} "\
               "-addr={server} -port=50051 -engine={engine} -profile_vacuum={profile} "\
@@ -482,7 +484,7 @@ def start_elastic_server(conf):
     cg.set_item('memory', 'memory.swappiness', mem_swappiness)
 
     p = cg.execute([
-        'sudo', '-u', 'jhe', '-H', 'sh', '-c',
+        'sudo', '-u', user_name, '-H', 'sh', '-c',
         os.path.join(ELASTIC_DIR, "bin/elasticsearch")])
     time.sleep(1)
     return p
@@ -524,6 +526,7 @@ class Exp(Experiment):
         if 'vacuum' in engines:
             compile_engine_bench()
 
+        kill_client()
         sync_build_dir()
 
     def beforeEach(self, conf):
