@@ -58,7 +58,8 @@ heap_check:
 
 
 engine_bench_build:
-	cd build && cmake ../src/ && make -j${NUM_CORES} engine_bench
+	cd build && cmake ../src/ && make -j${NUM_CORES} engine_bench &&
+	make -j${NUM_CORES} qq_server
 
 engine_bench_debug:
 	cd build && cmake ../src/ && \
