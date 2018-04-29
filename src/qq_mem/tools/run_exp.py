@@ -27,7 +27,7 @@ do_block_tracing = False
 ######################
 # BOTH Elastic and Vacuum
 ######################
-engines = ["elastic"] # "elastic" or "vacuum"
+engines = ["vacuum"] # "elastic" or "vacuum"
 n_server_threads = [25]
 n_client_threads = [128] # client
 # mem_size_list = [16*GB, 4*GB, 2*GB, 1*GB, 900*MB, 800*MB, 700*MB]
@@ -402,9 +402,9 @@ def copy_client_out():
 
 def start_engine_server(conf):
     if conf['engine'] == "elastic":
-        start_elastic_server(conf)
+        return start_elastic_server(conf)
     elif conf['engine'] == "vacuum":
-        start_vacuum_server(conf)
+        return start_vacuum_server(conf)
     else:
         raise RuntimeError
 
@@ -560,8 +560,8 @@ class Exp(Experiment):
         print '-' * 30
 
         d = parse_client_output(conf)
-        d["p_cache_median"] = median(cache_size_log)
-        d["p_cache_max"] = max(cache_size_log)
+        d["cache_mb_median"] = median(cache_size_log)
+        d["cache_mb_max"] = max(cache_size_log)
         d['MB_read'] = mb_read
         d.update(conf)
 
