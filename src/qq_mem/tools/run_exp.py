@@ -28,17 +28,17 @@ do_block_tracing = False
 ######################
 # BOTH Elastic and Vacuum
 ######################
-engines = ["vacuum", "elastic"] # "elastic" or "vacuum"
+engines = ["vacuum"] # "elastic" or "vacuum"
 n_server_threads = [25]
 n_client_threads = [128] # client
-# mem_size_list = [16*GB, 4*GB, 2*GB, 1*GB, 900*MB, 800*MB, 700*MB]
-# mem_size_list = [900*MB, 880*MB, 860*MB, 840*MB, 820*MB]
-mem_size_list = [16*GB]
+# mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
+# mem_size_list = [256*MB, 128*MB]
+mem_size_list = [256*MB, 128*MB]
 mem_swappiness = 60
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
-# query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
-query_paths = ["/mnt/ssd/short_log"]
+query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
+# query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/split-log/*")
 lock_memory = ["false"] # must be string
@@ -523,7 +523,7 @@ class Exp(Experiment):
         server_p = start_engine_server(conf)
 
         print "Wating for some time util the server starts...."
-        time.sleep(10)
+        time.sleep(20)
         mb_read_a = get_iostat_mb_read()
 
         check_server_port(conf['engine'])

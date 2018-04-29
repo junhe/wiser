@@ -305,7 +305,7 @@ class FlashDocStoreDumper : public CompressedDocStore {
 //   MapFdt()
 class FlashDocStore {
  public:
-  FlashDocStore() :buffer_pool_(32, buffer_size_) {}
+  FlashDocStore() :buffer_pool_(16, buffer_size_) {}
 
   void Load(const std::string fdx_path, const std::string fdt_path) {
     LoadFdx(fdx_path, fdt_path);
@@ -373,7 +373,7 @@ class FlashDocStore {
 
  private:
   BufferPool buffer_pool_;
-  static constexpr int buffer_size_ = 512 * 1024;
+  static constexpr int buffer_size_ = 256 * 1024;
   
   std::vector<long int> offset_store_;
   long int max_docid_;
