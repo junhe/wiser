@@ -19,7 +19,7 @@ TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
 
   engine_dumper.Dump();
 
-  VacuumEngine engine(dir_path);
+  VacuumEngine<FlashDocStore> engine(dir_path);
   engine.Load();
 
   // Sanity check
@@ -82,7 +82,7 @@ TEST_CASE( "tests two intersection ngine", "[qqflash][two]" ) {
 
   engine_dumper.Dump();
 
-  VacuumEngine engine(dir_path);
+  VacuumEngine<FlashDocStore> engine(dir_path);
   engine.Load();
 
   SECTION("Two-term non-phrase query") {
@@ -126,7 +126,7 @@ TEST_CASE( "Testing 5 long docs", "[qqflash][dump5]" ) {
 
   engine_dumper.Dump();
 
-  VacuumEngine engine(dir_path);
+  VacuumEngine<FlashDocStore> engine(dir_path);
   engine.Load();
 
   SECTION("one-term query") {
@@ -166,7 +166,7 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
   REQUIRE(engine_dumper.TermCount() > 100);
   engine_dumper.Dump();
 
-  VacuumEngine vacuum_engine(dir_path);
+  VacuumEngine<FlashDocStore> vacuum_engine(dir_path);
   vacuum_engine.Load();
 
 
@@ -211,7 +211,7 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
 
 
 // TEST_CASE( "Load qq mem dump and dump to vacuum format", "[vac]" ) {
-  // VacuumEngine engine("/mnt/ssd/vacuum_engine_dump");
+  // VacuumEngine<FlashDocStore> engine("/mnt/ssd/vacuum_engine_dump");
   // engine.Load();
   // REQUIRE(engine.TermCount() == 10000);
 
@@ -234,7 +234,7 @@ TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
   engine_dumper.SeekInvertedIndexDumper(5*GB - 10);
   engine_dumper.Dump();
 
-  VacuumEngine engine(dir_path);
+  VacuumEngine<FlashDocStore> engine(dir_path);
   engine.Load();
 
   // Sanity check
@@ -306,7 +306,7 @@ TEST_CASE( "Test fake file dumper", "[fake]" ) {
 
 //// vacuum dump files may not exist on this machine
 // TEST_CASE( "Full wiki", "[qqflash][full]" ) {
-  // VacuumEngine engine("/mnt/ssd/vacuum_engine_dump-04-19");
+  // VacuumEngine<FlashDocStore> engine("/mnt/ssd/vacuum_engine_dump-04-19");
 
   // auto a = utils::now();
   // auto result = engine.Search(SearchQuery({"from"}, true));

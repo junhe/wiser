@@ -243,6 +243,7 @@ DECLARE_bool(lock_memory);
 // To use
 // engine = VacuumEngine(path)
 // engine.Load()
+template <typename DocStore_T>
 class VacuumEngine : public SearchEngineServiceNew {
  public:
   VacuumEngine(const std::string engine_dir_path)
@@ -398,8 +399,7 @@ class VacuumEngine : public SearchEngineServiceNew {
 
   VacuumInvertedIndex inverted_index_;
   DocLengthCharStore doc_lengths_;
-  // FlashDocStore doc_store_;
-  AlignedFlashDocStore doc_store_;
+  DocStore_T doc_store_;
 
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
