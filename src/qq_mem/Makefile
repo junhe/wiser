@@ -82,6 +82,9 @@ vacuum_two_nodes:
 elastic_two_nodes:
 	python ./tools/run_elastic_two_nodes.py
 
+exp:
+	python ./tools/run_exp.py
+
 profile:
 	google-pprof --text ./build/engine_bench ./build/my.profile.new
 
