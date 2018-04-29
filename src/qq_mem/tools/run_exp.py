@@ -12,7 +12,9 @@ from pyreuse.sysutils.blocktrace import BlockTraceManager
 import glob
 
 
+######################
 # System wide
+######################
 server_addr = "node1"
 remote_addr = "node2"
 os_swap = True
@@ -22,25 +24,38 @@ read_ahead_kb = 4
 do_drop_cache = True
 do_block_tracing = False
 
-# BOTH
+######################
+# BOTH Elastic and Vacuum
+######################
 n_server_threads = [25]
 n_client_threads = [128] # client
 # mem_size_list = [16*GB, 4*GB, 2*GB, 1*GB, 900*MB, 800*MB, 700*MB]
 # mem_size_list = [900*MB, 880*MB, 860*MB, 840*MB, 820*MB]
 mem_size_list = [815*MB, 810*MB, 805*MB]
 mem_swappiness = 60
-
-
-# Vacuum only
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
-profile_qq_server = "false"
-lock_memory = "true"
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
 query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/split-log/*")
 
+
+
+######################
+# Vacuum only
+######################
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
+profile_qq_server = "false"
+lock_memory = "true"
+
+
+######################
+# Elastic only
+######################
+ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
+lock_es_memory = ["true"]
+init_heap_size = [512*MB]
+max_heap_size = [512*MB]
 
 
 
@@ -53,7 +68,7 @@ elif device_name == "nvme0n1":
 gprof_env = os.environ.copy()
 gprof_env["CPUPROFILE_FREQUENCY"] = '1000'
 
-class ClientOutput:
+class VacuumClientOutput:
     def _parse_perf(self, header, data_line):
         header = header.split()
         items = data_line.split()
@@ -70,6 +85,35 @@ class ClientOutput:
         for i, line in enumerate(lines):
             if "latency_95th" in line:
                 return self._parse_perf(lines[i], lines[i+1])
+
+
+class ElasticClientOutput:
+    def _parse_throughput(self, line):
+        qps = line.split()[1]
+        line = line.replace(",", " ")
+        return {"QPS": qps.split(".")[0]}
+
+    def _parse_latencies(self, line):
+        line = line.replace(",", " ")
+        items = line.split()
+        return {
+                "latency_50th": items[1],
+                "latency_95th": items[2],
+                "latency_99th": items[3]}
+
+    def parse_client_out(self, path):
+        with open(path) as f:
+            lines = f.readlines()
+
+        d = {}
+        for i, line in enumerate(lines):
+            print line
+            if line.startswith("Throughput:"):
+                d.update(self._parse_throughput(lines[i]))
+            elif line.startswith("Latencies:"):
+                d.update(self._parse_latencies(lines[i]))
+
+        return d
 
 
 class Cgroup(object):
@@ -141,6 +185,44 @@ def get_cgroup_page_cache_size():
     return int(d['page_cache_size'])
 
 
+def set_es_yml(conf):
+    with open(os.path.join(
+        ELASTIC_DIR, "config/elasticsearch.yml.template"), "r") as f:
+        lines = f.readlines()
+
+    new_lines = []
+    for line in lines:
+        if "thread_pool.search.size" in line:
+            new_lines.append(
+                "thread_pool.search.size: {}\n".format(conf['n_server_threads']))
+        elif "bootstrap.memory_lock" in line:
+            new_lines.append(
+                "bootstrap.memory_lock: {}\n".format(conf['lock_es_memory']))
+        else:
+            new_lines.append(line)
+
+    with open(os.path.join(ELASTIC_DIR, "config/elasticsearch.yml"), "w") as f:
+        f.write("".join(new_lines))
+
+def set_jvm_options(conf):
+    with open(os.path.join(ELASTIC_DIR, "config/jvm.options.template"), "r") as f:
+        lines = f.readlines()
+
+    new_lines = []
+    for line in lines:
+        if "init_heap_size" in line:
+            new_lines.append(
+                "-Xms{}\n".format(conf['init_heap_size']))
+        elif "max_heap_size" in line:
+            new_lines.append(
+                "-Xmx{}\n".format(conf['max_heap_size']))
+        else:
+            new_lines.append(line)
+
+    with open(os.path.join(ELASTIC_DIR, "config/jvm.options"), "w") as f:
+        f.write("".join(new_lines))
+
+
 def log_crashed_server(conf):
     with open("server.log", "a") as f:
         f.write("server crashed at " + now() + " ")
@@ -188,7 +270,7 @@ def set_read_ahead_kb(val):
     path = "/sys/block/{}/queue/read_ahead_kb".format(device_name)
     shcmd("echo {} |sudo tee {}".format(val, path))
 
-def check_port():
+def check_vacuum_port():
     print "-" * 20
     print "Port of qq server"
     shcmd("sudo netstat -ap | grep qq_server")
@@ -356,7 +438,7 @@ class Exp(Experiment):
         time.sleep(10)
         mb_read_a = get_iostat_mb_read()
 
-        check_port()
+        check_vacuum_port()
 
         # Start block tracing after the server is fully loaded
         if do_block_tracing is True:
@@ -410,7 +492,7 @@ class Exp(Experiment):
         print "MB read: ", mb_read
         print '-' * 30
 
-        d = ClientOutput().parse_client_out("/tmp/client.out")
+        d = VacuumClientOutput().parse_client_out("/tmp/client.out")
         d["p_cache_median"] = median(cache_size_log)
         d["p_cache_max"] = max(cache_size_log)
         d['MB_read'] = mb_read
