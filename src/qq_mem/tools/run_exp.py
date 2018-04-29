@@ -353,6 +353,10 @@ def sync_query_log(path):
     if server_addr == remote_addr:
         return
 
+    dirpath = os.path.dirname(path)
+    p = remote_cmd("mkdir -p {}".format(dirpath))
+    p.wait()
+
     shcmd("rsync -avzh --progress {path} {addr}:{path}".format(
         addr=remote_addr, path=path))
 
