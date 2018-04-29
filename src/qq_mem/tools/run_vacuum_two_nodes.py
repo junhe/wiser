@@ -24,7 +24,9 @@ do_block_tracing = False
 # vacuum
 n_server_threads = [25]
 n_client_threads = [128] # client
-mem_size_list = [16*GB, 4*GB, 2*GB, 1*GB, 900*MB, 800*MB, 700*MB]
+# mem_size_list = [16*GB, 4*GB, 2*GB, 1*GB, 900*MB, 800*MB, 700*MB]
+# mem_size_list = [900*MB, 880*MB, 860*MB, 840*MB, 820*MB]
+mem_size_list = [815*MB, 810*MB, 805*MB]
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
 profile_qq_server = "false"
 mem_swappiness = 60
@@ -32,7 +34,7 @@ lock_memory = "true"
 
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
-# query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
+query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/split-log/*")
 
@@ -253,11 +255,15 @@ def median(lst):
 
 
 def kill_client():
-    p = remote_cmd("pkill engine_bench")
+    p = remote_cmd("sudo pkill RediSearchBench")
     p.wait()
+    p = remote_cmd("sudo pkill engine_bench")
+    p.wait()
+
 
 def kill_server():
     shcmd("sudo pkill qq_server", ignore_error=True)
+    shcmd("sudo pkill java", ignore_error=True)
 
 def kill_subprocess(p):
     # os.killpg(os.getpgid(p.pid), signal.SIGTERM)

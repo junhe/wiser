@@ -35,15 +35,12 @@ n_server_threads = [25]
 n_client_threads = [128]
 mem_swappiness = 60
 lock_es_memory = ["true"]
-query_paths = ["/mnt/ssd/realistic_querylog"]
-# query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
+# query_paths = ["/mnt/ssd/realistic_querylog"]
+query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
 # query_paths = ["/mnt/ssd/tugman_log"]
 init_heap_size = [512*MB]
 max_heap_size = [512*MB]
-# mem_size_list = [16*GB, 4*GB, 2*GB, 1*GB, 900*MB, 800*MB, 700*MB]
-mem_size_list = [16*GB]
-
-
+mem_size_list = [16*GB, 4*GB, 2*GB, 1*GB, 900*MB, 800*MB, 700*MB]
 
 
 
@@ -301,9 +298,12 @@ def is_client_finished():
 def kill_client():
     p = remote_cmd("sudo pkill RediSearchBench")
     p.wait()
+    p = remote_cmd("sudo pkill engine_bench")
+    p.wait()
 
 def kill_server():
     shcmd("sudo pkill java", ignore_error=True)
+    shcmd("sudo pkill qq_server", ignore_error=True)
 
 def kill_subprocess(p):
     # os.killpg(os.getpgid(p.pid), signal.SIGTERM)
