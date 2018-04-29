@@ -475,6 +475,8 @@ class Exp(Experiment):
                 "n_client_threads": n_client_threads,
                 "query_path": query_paths,
                 "engine": engines,
+                "init_heap_size": init_heap_size,
+                "max_heap_size": max_heap_size,
                 "lock_memory": lock_memory
                 })
         self._n_treatments = len(self.confs)
@@ -495,6 +497,14 @@ class Exp(Experiment):
         kill_client()
         time.sleep(1)
         shcmd("rm -f /tmp/client.out")
+
+        if conf['engine'] == 'elastic':
+            set_es_yml(conf)
+            set_jvm_options(conf)
+        elif conf['engine'] == 'vacuum':
+            pass
+        else:
+            raise RuntimeError("Wrong engine")
 
         set_swap(os_swap)
         set_read_ahead_kb(read_ahead_kb)
