@@ -497,6 +497,20 @@ def is_engine_server_running(conf):
     else:
         raise RuntimeError
 
+def parse_filename(path):
+    """
+    example
+    path = "/mnt/ssd/query_workload/single_term/type_single.docfreq_low"
+    {'type': 'single', 'docfreq': 'low'}
+    """
+    filename = os.path.basename(path)
+    items = [ y for x in filename.split(".") for y in x.split("_") ]
+    keys = items[0::2]
+    values = items[1::2]
+
+    d = dict(zip(keys, values))
+    return d
+
 class Exp(Experiment):
     def __init__(self):
         self._exp_name = "exp-" + now()
@@ -513,6 +527,7 @@ class Exp(Experiment):
                 })
         self._n_treatments = len(self.confs)
         pprint.pprint(self.confs)
+        raw_input("This is your config. Enter to continue")
 
         self.result = []
 
@@ -622,6 +637,10 @@ class Exp(Experiment):
         d["cache_mb_obs_median"] = median(cache_size_log)
         d["cache_mb_max"] = max(cache_size_log)
         d['MB_read'] = mb_read
+
+        filename_dict = parse_filename(conf['query_path'])
+
+        d.update(filename_dict)
         d.update(conf)
 
         self.result.append(d)
