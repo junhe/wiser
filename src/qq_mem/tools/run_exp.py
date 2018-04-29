@@ -10,10 +10,11 @@ from pyreuse.sysutils.iostat_parser import parse_iostat
 from pyreuse.general.expbase import *
 from pyreuse.sysutils.blocktrace import BlockTraceManager
 import glob
+import pprint
 
 
 ELASTIC = "elastic"
-VACUUM = VACUUM
+VACUUM = "vacuum"
 
 ######################
 # System wide
@@ -31,8 +32,8 @@ do_block_tracing = False
 ######################
 # BOTH Elastic and Vacuum
 ######################
-engines = [ELASTIC, VACUUM] # ELASTIC or VACUUM
-n_server_threads = [32, 64]
+engines = [VACUUM] # ELASTIC or VACUUM
+n_server_threads = [64]
 n_client_threads = [128] # client
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [256*MB, 128*MB]
@@ -502,6 +503,7 @@ class Exp(Experiment):
                 "lock_memory": lock_memory
                 })
         self._n_treatments = len(self.confs)
+        pprint.pprint(self.confs)
 
         self.result = []
 
@@ -545,6 +547,9 @@ class Exp(Experiment):
         server_p = start_engine_server(conf)
 
         print "Wating for some time util the server starts...."
+        print "Wait for server to load index, ..."
+        time.sleep(15)
+
         wait_engine_port(conf)
         mb_read_a = get_iostat_mb_read()
 
@@ -570,6 +575,9 @@ class Exp(Experiment):
             is_server_running = is_engine_server_running(conf)
             if is_server_running is False:
                 # raise RuntimeError("Server just crashed!!!")
+                print "!" * 40
+                print "Server crashed. See server.log and dmesg for details"
+                print "!" * 40
                 log_crashed_server(conf)
                 return
 
