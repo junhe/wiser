@@ -27,15 +27,17 @@ do_block_tracing = False
 ######################
 # BOTH Elastic and Vacuum
 ######################
+engines = ["elastic"] # "elastic" or "vacuum"
 n_server_threads = [25]
 n_client_threads = [128] # client
 # mem_size_list = [16*GB, 4*GB, 2*GB, 1*GB, 900*MB, 800*MB, 700*MB]
 # mem_size_list = [900*MB, 880*MB, 860*MB, 840*MB, 820*MB]
-mem_size_list = [815*MB, 810*MB, 805*MB]
+mem_size_list = [16*GB]
 mem_swappiness = 60
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
-query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
+# query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
+query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/split-log/*")
 
@@ -114,6 +116,14 @@ class ElasticClientOutput:
                 d.update(self._parse_latencies(lines[i]))
 
         return d
+
+def parse_client_output(conf):
+    if conf['engine'] == "elastic":
+        return ElasticClientOutput().parse_client_out("/tmp/client.out")
+    elif conf['engine'] == "vacuum":
+        return VacuumClientOutput().parse_client_out("/tmp/client.out")
+    else:
+        raise RuntimeError
 
 
 class Cgroup(object):
@@ -276,6 +286,19 @@ def check_vacuum_port():
     shcmd("sudo netstat -ap | grep qq_server")
     print "-" * 20
 
+def check_es_port():
+    print "-" * 20
+    print "Port of elasticsearch "
+    shcmd("sudo netstat -ap | grep java")
+    print "-" * 20
+
+def check_server_port(engine):
+    if engine == "elastic":
+        check_es_port()
+    elif engine == "vacuum":
+        check_vacuum_port()
+    else:
+        raise RuntimeError
 
 def remote_cmd_chwd(dir_path, cmd, fd = None):
     return remote_cmd("cd {}; {}".format(dir_path, cmd), fd)
@@ -307,7 +330,27 @@ def sync_query_log(path):
 def compile_engine_bench():
     shcmd("make engine_bench_build")
 
-def start_client(n_threads, query_path):
+
+def start_engine_client(engine, n_threads, query_path):
+    if engine == "elastic":
+        return start_elastic_client(n_threads, query_path)
+    elif engine == "vacuum":
+        return start_vacuum_client(n_threads, query_path)
+
+def start_elastic_client(n_threads, query_path):
+    print "-" * 20
+    print "starting client ..."
+    print "-" * 20
+    cmd = "sudo python -m benchmarks.rs_bench_go {path} {n} {server}"\
+            .format(path=query_path, n=n_threads, server=server_addr)
+
+    return remote_cmd_chwd(
+        "/users/jhe/flashsearch/src/pysrc",
+        cmd,
+        open("/tmp/client.out", "w")
+        )
+
+def start_vacuum_client(n_threads, query_path):
     print "-" * 20
     print "starting client ..."
     print "-" * 20
@@ -349,21 +392,23 @@ def kill_client():
     p = remote_cmd("sudo pkill engine_bench")
     p.wait()
 
-
 def kill_server():
     shcmd("sudo pkill qq_server", ignore_error=True)
     shcmd("sudo pkill java", ignore_error=True)
-
-def kill_subprocess(p):
-    # os.killpg(os.getpgid(p.pid), signal.SIGTERM)
-    p.kill()
-    p.wait()
 
 def copy_client_out():
     prepare_dir("/tmp/results")
     shcmd("cp /tmp/client.out /tmp/results/{}".format(now()))
 
-def start_server(conf):
+def start_engine_server(conf):
+    if conf['engine'] == "elastic":
+        start_elastic_server(conf)
+    elif conf['engine'] == "vacuum":
+        start_vacuum_server(conf)
+    else:
+        raise RuntimeError
+
+def start_vacuum_server(conf):
     print "-" * 20
     print "starting server ..."
     print "server mem size:", conf['server_mem_size']
@@ -393,6 +438,29 @@ def start_server(conf):
 
         return p
 
+def start_elastic_server(conf):
+    print "-" * 20
+    print "starting server ..."
+    print "server mem size:", conf['server_mem_size']
+    print "-" * 20
+
+    cg = Cgroup(name='charlie', subs='memory')
+    cg.set_item('memory', 'memory.limit_in_bytes', conf['server_mem_size'])
+    cg.set_item('memory', 'memory.swappiness', mem_swappiness)
+
+    p = cg.execute([
+        'sudo', '-u', 'jhe', '-H', 'sh', '-c',
+        os.path.join(ELASTIC_DIR, "bin/elasticsearch")])
+    time.sleep(1)
+    return p
+
+def is_engine_server_running(conf):
+    if conf['engine'] == "elastic":
+        return is_command_running("/usr/lib/jvm/java-8-oracle/bin/java")
+    elif conf['engine'] == "vacuum":
+        return is_command_running("./build/qq_server")
+    else:
+        raise RuntimeError
 
 class Exp(Experiment):
     def __init__(self):
@@ -402,14 +470,14 @@ class Exp(Experiment):
                 "server_mem_size": mem_size_list,
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
-                "query_path": query_paths
+                "query_path": query_paths,
+                "engine": engines
                 })
         self._n_treatments = len(self.confs)
 
         self.result = []
 
     def conf(self, i):
-
         return self.confs[i]
 
     def before(self):
@@ -432,13 +500,13 @@ class Exp(Experiment):
 
     def treatment(self, conf):
         print conf
-        server_p = start_server(conf)
+        server_p = start_engine_server(conf)
 
         print "Wating for some time util the server starts...."
         time.sleep(10)
         mb_read_a = get_iostat_mb_read()
 
-        check_vacuum_port()
+        check_server_port(conf['engine'])
 
         # Start block tracing after the server is fully loaded
         if do_block_tracing is True:
@@ -447,8 +515,8 @@ class Exp(Experiment):
         print "Wait for client to fully start (1 sec)..."
         time.sleep(1)
 
-        client_p = start_client(conf['n_client_threads'],
-                                conf['query_path'])
+        client_p = start_engine_client(
+                conf['engine'], conf['n_client_threads'], conf['query_path'])
 
         seconds = 0
 	cache_size_log = []
@@ -458,16 +526,16 @@ class Exp(Experiment):
             print "is_client_finished()", finished
             print conf
 
-            is_server_running = is_command_running("./build/qq_server")
+            is_server_running = is_engine_server_running(conf)
             if is_server_running is False:
-                # raise RuntimeError("Server just crashed!!!")
-                log_crashed_server(conf)
-                return
+                raise RuntimeError("Server just crashed!!!")
+                # log_crashed_server(conf)
+                # return
 
             if finished:
                 kill_client()
-                # kill_server()
-                send_sigint(server_p.pid)
+                if conf['engine'] == 'vacuum':
+                    send_sigint(server_p.pid)
                 print "Waiting for server to exit gracefuly"
                 time.sleep(8)
                 copy_client_out()
@@ -478,7 +546,6 @@ class Exp(Experiment):
             print "page cache size (MB): ", cache_size
             print "*" * 20
             cache_size_log.append(cache_size)
-
 
             time.sleep(1)
             seconds += 1
@@ -492,7 +559,7 @@ class Exp(Experiment):
         print "MB read: ", mb_read
         print '-' * 30
 
-        d = VacuumClientOutput().parse_client_out("/tmp/client.out")
+        d = parse_client_output(conf)
         d["p_cache_median"] = median(cache_size_log)
         d["p_cache_max"] = max(cache_size_log)
         d['MB_read'] = mb_read
@@ -514,11 +581,4 @@ class Exp(Experiment):
 if __name__ == "__main__":
     exp = Exp()
     exp.main()
-
-    # p = start_server({'server_mem_size': 10*GB})
-    # print 'pid:', p.pid
-    # time.sleep(15)
-    # send_sigint(p.pid)
-
-    # p.wait()
 
