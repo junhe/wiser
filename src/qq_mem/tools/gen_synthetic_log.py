@@ -2,6 +2,7 @@ import math
 import copy
 import random
 import pickle
+from pyreuse.helpers import *
 
 
 """
@@ -21,8 +22,8 @@ log_to_group = {
         0: "low",
         1: "low",
         2: "low",
-        3: "med",
-        4: "med",
+        3: "low",
+        4: "high",
         5: "high",
         6: "high"}
 
@@ -53,7 +54,7 @@ class Buckets(object):
         self.buckets = {}
         for i in range(10):
             self.buckets[i] = []
-        self.groups = {'low': [], 'med': [], 'high': []}
+        self.groups = {'low': [], 'high': []}
 
     def load_term_list(self, path):
         print "loading....."
@@ -156,27 +157,35 @@ def get_queries_from_working_set(buckets, bucket_index, n_uniq_terms, n_queries)
 def produce_queries_from_unique_terms(unique_terms, n_queries):
     n_uniq_terms = len(unique_terms)
     queries = []
-    for _ in range(n_queries):
+    for cnt in range(n_queries):
         i = random.randint(0, n_uniq_terms - 1)
         queries.append(unique_terms[i])
+        if cnt % 10000 == 0:
+            print "cnt:", cnt
 
     return queries
 
 
 def produce_non_repeat_queries(buckets):
-    pool_sizes = {
-                    # 'low':  30,
-                    # 'med':  10,
-                    # 'high': 20,
-                    'low': 300000,
-                    'med': "all",
-                    'high': 200,
+    working_set_sizes = {
+                    'low':   "all",
+                    'high':  "all",
+            }
+    query_cnt  = {
+                    'low':  1000000,
+                    'high':  100000,
             }
 
-    for group_name in group_to_log.keys():
+
+    shcmd("rm -f /mnt/ssd/query_workload/single_term/*")
+
+    for group_name in working_set_sizes.keys():
         print group_name
-        queries = buckets.create_set_from_group(group_name, pool_sizes[group_name])
-        print "query count:", len(queries)
+        working_set = buckets.create_set_from_group(
+                group_name, working_set_sizes[group_name])
+        print "working set size:", len(working_set)
+
+        queries = produce_queries_from_unique_terms(working_set, query_cnt[group_name])
         write_to_file(queries, "/mnt/ssd/query_workload/single_term/type_single.docfreq_" + group_name)
 
 def main():
