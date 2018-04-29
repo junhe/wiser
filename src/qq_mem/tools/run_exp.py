@@ -488,6 +488,11 @@ class Exp(Experiment):
 
     def before(self):
         clean_dmesg()
+
+        engines = [conf['engine'] for conf in self.confs]
+        if 'vacuum' in engines:
+            compile_engine_bench()
+
         sync_build_dir()
 
     def beforeEach(self, conf):
