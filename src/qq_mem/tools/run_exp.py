@@ -32,12 +32,14 @@ do_block_tracing = False
 ######################
 # BOTH Elastic and Vacuum
 ######################
+# engines = [ELASTIC] # ELASTIC or VACUUM
 engines = [VACUUM] # ELASTIC or VACUUM
 n_server_threads = [64]
 n_client_threads = [128] # client
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
+# mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB] # good one
+mem_size_list = [8*GB]
 # mem_size_list = [256*MB, 128*MB]
-mem_size_list = [256*MB, 128*MB]
 mem_swappiness = 60
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
@@ -51,7 +53,8 @@ lock_memory = ["false"] # must be string
 ######################
 # Vacuum only
 ######################
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
+# search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
 profile_qq_server = "false"
 
 

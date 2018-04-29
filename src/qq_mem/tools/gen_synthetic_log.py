@@ -78,13 +78,25 @@ class Buckets(object):
         return set_exp
 
 
-def main():
+def dump_buckets():
     buckets = Buckets()
     buckets.load_term_list("/mnt/ssd/popular_terms")
 
     for i in range(0, 7):
         print "dumping", i
         buckets.dump_bucket(i, "unique_terms_1e" + str(i))
+
+def dump_with_working_set(bucket_index, n_terms, n_queries):
+    buckets = Buckets()
+    buckets.load_term_list("/mnt/ssd/popular_terms")
+
+    # pick n_terms
+
+    # produce n_queries
+
+
+def main():
+    pass
 
 
 if __name__ == "__main__":
