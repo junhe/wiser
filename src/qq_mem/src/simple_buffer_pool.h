@@ -5,6 +5,8 @@
 #include <iostream>
 #include <cassert>
 
+#include <glog/logging.h>
+
 class BufferPool {
  public:
   BufferPool(const int n_buffers, const int buffer_size) {
@@ -20,11 +22,14 @@ class BufferPool {
   BufferPool(const BufferPool &pool) = delete;
   BufferPool &operator = (const BufferPool &pool) = delete;
 
-  // Let it fail if there is not enough buffer
+  // Let it fail if there is not enough buffer!!!
   std::unique_ptr<char[]> Get() {
     std::lock_guard<std::mutex> lock(mutex_);
+
+    DLOG_IF(FATAL, pool_.size() == 0);
     std::unique_ptr<char[]> p = std::move(pool_.back());
     pool_.pop_back();
+
     return p;
   }
 

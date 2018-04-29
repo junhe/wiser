@@ -305,7 +305,7 @@ class FlashDocStoreDumper : public CompressedDocStore {
 //   MapFdt()
 class FlashDocStore {
  public:
-  FlashDocStore() :buffer_pool_(16, buffer_size_) {}
+  FlashDocStore() :buffer_pool_(32, buffer_size_) {}
 
   void Load(const std::string fdx_path, const std::string fdt_path) {
     LoadFdx(fdx_path, fdt_path);
