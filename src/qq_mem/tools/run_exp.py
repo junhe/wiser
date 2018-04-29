@@ -197,6 +197,25 @@ def get_cgroup_page_cache_size():
 def clean_dmesg():
     shcmd("sudo dmesg -C")
 
+def is_port_open(proc_name):
+    cmd = "sudo netstat -ap |grep {} | wc -l".format(proc_name)
+    ret = subprocess.check_output(cmd, shell=True).strip()
+    n = int(ret)
+    return n > 0
+
+def wait_for_open_port(proc_name):
+    print "Waiting open port of", proc_name, "......"
+    while is_port_open(proc_name) is False:
+        time.sleep(2)
+    time.sleep(2) # always wait for a while
+
+def wait_engine_port(conf):
+    if conf['engine'] == "elastic":
+        wait_for_open_port("java")
+    elif conf['engine'] == "vacuum":
+        wait_for_open_port("qq_server")
+    else:
+        raise RuntimeError
 
 def set_es_yml(conf):
     with open(os.path.join(
@@ -523,10 +542,9 @@ class Exp(Experiment):
         server_p = start_engine_server(conf)
 
         print "Wating for some time util the server starts...."
-        time.sleep(20)
+        wait_engine_port(conf)
         mb_read_a = get_iostat_mb_read()
 
-        check_server_port(conf['engine'])
 
         # Start block tracing after the server is fully loaded
         if do_block_tracing is True:
