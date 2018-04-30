@@ -445,6 +445,10 @@ def is_client_finished():
 def median(lst):
     sortedLst = sorted(lst)
     lstLen = len(lst)
+
+    if lstLen == 0:
+        return 0
+
     index = (lstLen - 1) // 2
 
     if (lstLen % 2):
@@ -681,7 +685,7 @@ class Exp(Experiment):
 
         d = parse_client_output(conf)
         d["cache_mb_obs_median"] = median(cache_size_log)
-        d["cache_mb_max"] = max(cache_size_log)
+        d["cache_mb_max"] = max(cache_size_log + [0])
         d['MB_read'] = mb_read
 
         filename_dict = parse_filename(conf['query_path'])
