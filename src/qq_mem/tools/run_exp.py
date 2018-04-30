@@ -60,7 +60,8 @@ lock_memory = ["false"] # must be string
 ######################
 # Vacuum only
 ######################
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_delta_skiplist-04-30"
+# search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
 # search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
 profile_qq_server = "false"
 engine_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
