@@ -44,10 +44,24 @@ def rand_item(l):
     return l[i]
 
 def write_to_file(term_set, path):
+    print "writing to", path
     with open(path, "w") as f:
         for term in term_set:
             f.write(term + "\n")
 
+def rand_items_from_set(item_set, n):
+    """
+    pick n random items from item_set
+    """
+    set_size = len(item_set)
+    items = []
+    for cnt in range(n):
+        i = random.randint(0, set_size - 1)
+        items.append(item_set[i])
+        if cnt % 10000 == 0:
+            print "cnt:", cnt
+
+    return items
 
 class Buckets(object):
     def __init__(self):
@@ -152,21 +166,10 @@ def get_queries_from_working_set(buckets, bucket_index, n_uniq_terms, n_queries)
     print "Num of queries to generate:", n_queries
     print "*" * 30
 
-    return produce_queries_from_unique_terms(unique_terms, n_queries)
-
-def produce_queries_from_unique_terms(unique_terms, n_queries):
-    n_uniq_terms = len(unique_terms)
-    queries = []
-    for cnt in range(n_queries):
-        i = random.randint(0, n_uniq_terms - 1)
-        queries.append(unique_terms[i])
-        if cnt % 10000 == 0:
-            print "cnt:", cnt
-
-    return queries
+    return rand_items_from_set(unique_terms, n_queries)
 
 
-def produce_non_repeat_queries(buckets):
+def single_term_queries(buckets):
     working_set_sizes = {
                     'low':   "all",
                     'high':  "all",
@@ -185,25 +188,77 @@ def produce_non_repeat_queries(buckets):
                 group_name, working_set_sizes[group_name])
         print "working set size:", len(working_set)
 
-        queries = produce_queries_from_unique_terms(working_set, query_cnt[group_name])
-        write_to_file(queries, "/mnt/ssd/query_workload/single_term/type_single.docfreq_" + group_name)
+        queries = rand_items_from_set(working_set, query_cnt[group_name])
+        # write_to_file(queries, "/mnt/ssd/query_workload/single_term/type_single.docfreq_" + group_name)
+
+def two_term_queries(buckets):
+    n_queries = 10000
+
+    queries = set()
+    while len(queries) < n_queries:
+        t1_group = rand_item(["low", "high"])
+        t2_group = rand_item(["low", "high"])
+
+        t1 = rand_item(buckets.groups[t1_group])
+        t2 = rand_item(buckets.groups[t2_group])
+        while t2 == t1:
+            t2 = rand_item(working_set)
+        query = sorted([t1, t2])
+        queries.add(" ".join(query))
+
+    print "number of queries:", len(queries)
+    folder = "/mnt/ssd/query_workload/two_term/"
+    shcmd("rm -f {}/*".format(folder))
+
+    prepare_dir(folder)
+    write_to_file(queries, os.path.join(folder, "type_twoterm"))
+
+def find_all_unique_phrases():
+    """
+    579,151 phrases found
+    """
+    f = open("/mnt/ssd/english-phrases", "r")
+
+    phrases = []
+    term_set = set()
+    for line in f:
+        terms = line.split()
+        if len(terms) != 2:
+            continue
+        if terms[0] in term_set:
+            continue
+        if terms[1] in term_set:
+            continue
+        phrases.append(line.strip())
+    f.close()
+
+    write_to_file(phrases, "/mnt/ssd/query_workload/no-repeated-terms-queries")
+
+def gen_phrase_queries():
+    n_queries = 10000
+    phrase_set = []
+    with open("/mnt/ssd/query_workload/no-repeated-terms-queries") as f:
+        for line in f:
+            phrase_set.append(line.strip())
+
+    phrases = rand_items_from_set(phrase_set, n_queries)
+    phrases = ["\"" + phrase + "\"" for phrase in phrases]
+    folder = "/mnt/ssd/query_workload/two_term_phrases/"
+    prepare_dir(folder)
+    write_to_file(phrases, os.path.join(folder, "type_phrase"))
 
 def main():
-    buckets = Buckets()
-    buckets.load_term_list("/mnt/ssd/popular_terms")
+    # buckets = Buckets()
+    # buckets.load_term_list("/mnt/ssd/popular_terms")
 
-    produce_non_repeat_queries(buckets)
+    # single_term_queries(buckets)
+    # two_term_queries(buckets)
 
+    ## find phrases without repeated terms
+    # find_all_unique_phrases()
 
-    # print buckets.groups
-    # n_uniq_terms_wanted = [90000, 10000, 1000, 100]
-    # for n_wanted in n_uniq_terms_wanted:
-        # print "doing", n_wanted
-        # queries = get_queries_from_working_set(buckets = buckets,
-                                               # bucket_index = 2,
-                                               # n_uniq_terms = n_wanted,
-                                               # n_queries = 100000)
-        # write_to_file(queries, "term_docfreq_1e2_working_set_" + str(n_wanted))
+    ## generatel phrases
+    gen_phrase_queries()
 
 
 
