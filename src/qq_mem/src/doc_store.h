@@ -465,7 +465,7 @@ class AlignedFlashDocStore {
  private:
   long int max_docid_;
   BufferPool buffer_pool_;
-  static constexpr int buffer_size_ = 256 * 1024;
+  static constexpr int buffer_size_ = 512 * 1024;
   
   std::vector<long int> offset_store_;
   int fd_fdt_;

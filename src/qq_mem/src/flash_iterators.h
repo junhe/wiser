@@ -3,6 +3,7 @@
 
 #include "packed_value.h"
 #include "flash_engine_dumper.h"
+#include <sys/mman.h>
 
 enum class BlobFormat {PACKED_INTS, VINTS, NONE};
 
@@ -690,6 +691,13 @@ class VacuumPostingListIterator {
     // third item is the start of skip list
     skip_list_ = std::shared_ptr<SkipList>(new SkipList()); 
     skip_list_->Load(buf);
+
+    int pages_expect = n_postings_/100000;
+    if (madvise((void*)((char*)buf + 4096 - (off_t)buf%4096), pages_expect*4096, MADV_SEQUENTIAL) == -1) {
+        perror("madvise error");
+        return;
+    }
+
 
     doc_id_iter_.Reset(file_data_, skip_list_.get(), n_postings_);
     tf_iter_.Reset(file_data_, skip_list_.get());
