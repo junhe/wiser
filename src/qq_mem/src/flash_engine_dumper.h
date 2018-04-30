@@ -202,6 +202,8 @@ class GeneralTermEntry {
       vals = values_;
     }
 
+    AnalyzeRepeating(vals);
+
     for (int pack_i = 0; pack_i < n_packs; pack_i++) {
       for (int offset = 0; offset < pack_size; offset++) {
         int value_idx = pack_i * pack_size + offset;
@@ -972,6 +974,26 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
       posting_it.Advance();
     }
+    // std::cout << "DocID analysis...." << std::endl;
+    // utils::PrintVec<uint32_t>(entry_set.docid.Values());
+    // entry_set.docid.AnalyzeRepeating();
+
+    // std::cout << "TF analysis...." << std::endl;
+    // utils::PrintVec<uint32_t>(entry_set.termfreq.Values());
+    // entry_set.termfreq.AnalyzeRepeating();
+
+    // std::cout << "Position analysis...." << std::endl;
+    // entry_set.position.AnalyzeRepeating();
+
+    // std::cout << "Offset analysis...." << std::endl;
+    // entry_set.offset.AnalyzeRepeating();
+
+    std::vector<uint32_t> toy_pack;
+    for (int i = 0; i < 128; i++) {
+      toy_pack.push_back(1);
+    }
+    std::cout << "is toy repeated? " << IsAllRepeated(toy_pack) << std::endl;
+
 
     off_t posting_list_start = index_dumper_.CurrentOffset();
 
@@ -980,6 +1002,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     
     // Dump doc freq
     DumpVarint(posting_list.Size());
+    std::cout << "doc freq: " << posting_list.Size() << std::endl;
 
     // Dump skip list
     off_t skip_list_start = index_dumper_.CurrentOffset();
@@ -994,6 +1017,9 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
 
     std::string skip_list_data = real_skiplist_writer.Serialize();
+
+    std::cout << "Real skip list size: " << skip_list_data.size() << std::endl;
+    std::cout << "Estimated skip list size: " << skip_list_est_size << std::endl;
 
     DLOG_IF(FATAL, skip_list_data.size() > skip_list_est_size)  
         << "DATA CORRUPTION!!! Gap for skip list is too small. skip list real size: " 
@@ -1028,12 +1054,20 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
   {
     file_dumper->Seek(file_offset);
 
+    std::cout << "DocID analysis...." << std::endl;
     FileOffsetOfSkipPostingBags docid_skip_offs = 
       DumpTermEntry(entry_set.docid, file_dumper, true);
+
+
+    std::cout << "TF analysis...." << std::endl;
     FileOffsetOfSkipPostingBags tf_skip_offs = 
       DumpTermEntry(entry_set.termfreq, file_dumper, false);
+
+    std::cout << "Position analysis...." << std::endl;
     FileOffsetOfSkipPostingBags pos_skip_offs = 
       DumpTermEntry(entry_set.position, file_dumper, false);
+
+    std::cout << "Offset analysis...." << std::endl;
     FileOffsetOfSkipPostingBags off_skip_offs = 
       DumpTermEntry(entry_set.offset, file_dumper, false);
 
