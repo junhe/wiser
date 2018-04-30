@@ -192,7 +192,7 @@ def single_term_queries(buckets):
         # write_to_file(queries, "/mnt/ssd/query_workload/single_term/type_single.docfreq_" + group_name)
 
 def two_term_queries(buckets):
-    n_queries = 10000
+    n_queries = 100000
 
     queries = set()
     while len(queries) < n_queries:
@@ -202,7 +202,7 @@ def two_term_queries(buckets):
         t1 = rand_item(buckets.groups[t1_group])
         t2 = rand_item(buckets.groups[t2_group])
         while t2 == t1:
-            t2 = rand_item(working_set)
+            t2 = rand_item(buckets.groups[t2_group])
         query = sorted([t1, t2])
         queries.add(" ".join(query))
 
@@ -212,6 +212,9 @@ def two_term_queries(buckets):
 
     prepare_dir(folder)
     write_to_file(queries, os.path.join(folder, "type_twoterm"))
+
+    print "Sanity check..."
+    shcmd("head -n 10 " + os.path.join(folder, "type_twoterm"))
 
 def find_all_unique_phrases():
     """
@@ -248,17 +251,20 @@ def gen_phrase_queries():
     write_to_file(phrases, os.path.join(folder, "type_phrase"))
 
 def main():
-    # buckets = Buckets()
-    # buckets.load_term_list("/mnt/ssd/popular_terms")
+    buckets = Buckets()
+    buckets.load_term_list("/mnt/ssd/popular_terms")
 
+    ## Single term
     # single_term_queries(buckets)
-    # two_term_queries(buckets)
+
+    ## Two term
+    two_term_queries(buckets)
 
     ## find phrases without repeated terms
     # find_all_unique_phrases()
 
     ## generatel phrases
-    gen_phrase_queries()
+    # gen_phrase_queries()
 
 
 
