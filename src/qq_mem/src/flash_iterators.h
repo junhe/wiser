@@ -486,9 +486,9 @@ class InBagOffsetPairIterator: public OffsetPairsIteratorService {
 };
 
 
-class PositionPostingBagIteratorBase {
+class PosAndOffPostingBagIteratorBase {
  public:
-  PositionPostingBagIteratorBase() {}
+  PosAndOffPostingBagIteratorBase() {}
 
   void Reset(
       const uint8_t *buf, const SkipList *skip_list, TermFreqIterator tf_iter) {
@@ -582,7 +582,7 @@ class PositionPostingBagIteratorBase {
 //   while (in_bag_iter.IsEnd()) {
 //     in_bag_iter.Pop()
 //   }
-class PositionPostingBagIterator :public PositionPostingBagIteratorBase {
+class PositionPostingBagIterator :public PosAndOffPostingBagIteratorBase {
  public:
   PositionPostingBagIterator() {}
   PositionPostingBagIterator(
@@ -617,7 +617,7 @@ class PositionPostingBagIterator :public PositionPostingBagIteratorBase {
 };
 
 
-class OffsetPostingBagIterator :public PositionPostingBagIteratorBase {
+class OffsetPostingBagIterator :public PosAndOffPostingBagIteratorBase {
  public:
   OffsetPostingBagIterator() {}
   OffsetPostingBagIterator(
