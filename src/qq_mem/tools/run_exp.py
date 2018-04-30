@@ -26,7 +26,7 @@ device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
 read_ahead_kb = 4
 do_drop_cache = True
-do_block_tracing = False
+do_block_tracing = True
 qq_mem_folder = "/users/jhe/flashsearch/src/qq_mem"
 user_name = "jhe"
 
@@ -35,25 +35,27 @@ user_name = "jhe"
 # BOTH Elastic and Vacuum
 ######################
 # engines = [ELASTIC] # ELASTIC or VACUUM
-engines = [VACUUM, ELASTIC] # ELASTIC or VACUUM
-# engines = [VACUUM] # ELASTIC or VACUUM
-n_server_threads = [25]
-n_client_threads = [128] # client
+# engines = [VACUUM, ELASTIC] # ELASTIC or VACUUM
+engines = [VACUUM] # ELASTIC or VACUUM
+n_server_threads = [1]
+n_client_threads = [1] # client
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
-mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
+# mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB] # good one
-# mem_size_list = [8*GB]
+mem_size_list = [8*GB]
 # mem_size_list = [128*MB]
 mem_swappiness = 60
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
 # query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
-# query_paths = ["/mnt/ssd/short_log"]
+# query_paths = ["/mnt/ssd/query_workload/from_log"]
+query_paths = ["/mnt/ssd/query_workload/also_log"]
+warmup_log = "/mnt/ssd/query_workload/debug/warmup_log"
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/single_term/*")
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm")
-query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
+# query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
 lock_memory = ["false"] # must be string
 
 
@@ -610,8 +612,15 @@ class Exp(Experiment):
         print "Wating for some time util the server starts...."
         print "Wait for server to load index, ..."
         time.sleep(15)
-
         wait_engine_port(conf)
+
+        #####################
+        # warm up
+        if conf['engine'] == ELASTIC:
+            p = start_engine_client(conf["engine"], 1, warmup_log)
+            p.wait()
+            raw_input("Waiting for warmup to finish")
+
         mb_read_a = get_iostat_mb_read()
 
 
