@@ -8,8 +8,8 @@ set(INDEXING_OPTS   "-std=c++11 -O3 -g -Wreturn-type")
 set(DEBUG_OPTS      "-std=c++11 -O0 -g -Wreturn-type")
 set(DEV_OPTS        "-std=c++11 -O0 -g -Wreturn-type")
 
-SET(CMAKE_CXX_FLAGS ${PRODUCTION_OPTS})
-#SET(CMAKE_CXX_FLAGS ${DEV_OPTS})
+#SET(CMAKE_CXX_FLAGS ${PRODUCTION_OPTS})
+SET(CMAKE_CXX_FLAGS ${DEV_OPTS})
 SET(CMAKE_C_FLAGS "-fPIC -std=c99 -O3 -msse4.1  -march=native -Wall -Wextra -pedantic -Wshadow")
 
 set(GPROFILER profiler)

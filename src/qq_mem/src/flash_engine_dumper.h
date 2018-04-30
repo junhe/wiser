@@ -903,11 +903,18 @@ class InvertedIndexDumperBase : public InvertedIndexQqMemDelta {
     int cnt = 0; 
     for (auto it = index_.cbegin(); it != index_.cend(); it++) {
       // LOG(INFO) << "At '" << it->first << "'" << std::endl;
+      if (it->first != "from")
+        continue;
+
+      std::cout << "Dumping 'from'!!!!!!!!" << std::endl;
       DumpPostingList(it->first, it->second);
       cnt++;
       if (cnt % 10000 == 0) {
         std::cout << "Posting list dumpped: " << cnt << std::endl;
       }
+
+      // dump from and then exit
+      break;
     }
   }
   virtual void DumpPostingList(
@@ -1157,11 +1164,11 @@ class FlashEngineDumper {
     std::cout << "Dumping inverted index...\n";
     DumpInvertedIndex();
 
-    std::cout << "Dumping doc length...\n";
-    doc_lengths_.Serialize(utils::JoinPath(dump_dir_path_, "my.doc_length"));
+    // std::cout << "Dumping doc length...\n";
+    // doc_lengths_.Serialize(utils::JoinPath(dump_dir_path_, "my.doc_length"));
 
-    std::cout << "Dumping doc store...\n";
-    doc_store_.Dump(dump_dir_path_ + "/my.fdx", dump_dir_path_ + "/my.fdt");
+    // std::cout << "Dumping doc store...\n";
+    // doc_store_.Dump(dump_dir_path_ + "/my.fdx", dump_dir_path_ + "/my.fdt");
  }
 
   void DumpInvertedIndex() {
@@ -1191,14 +1198,14 @@ class FlashEngineDumper {
     std::cout << "Deserializing meta...\n";
     DeserializeMeta(dir_path + "/engine_meta.dump"); // good
 
-    std::cout << "Deserializing doc store...\n";
-    doc_store_.Deserialize(dir_path + "/doc_store.dump"); //good
+    // std::cout << "Deserializing doc store...\n";
+    // doc_store_.Deserialize(dir_path + "/doc_store.dump"); //good
 
     std::cout << "Deserializing inverted index...\n";
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump"); //good
 
-    std::cout << "Deserializing doc length...\n";
-    doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump"); //good
+    // std::cout << "Deserializing doc length...\n";
+    // doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump"); //good
 
     std::cout << "Reset similarity...\n";
     similarity_.Reset(doc_lengths_.GetAvgLength()); //good
