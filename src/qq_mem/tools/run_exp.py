@@ -24,7 +24,7 @@ remote_addr = "node2"
 os_swap = True
 device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
-read_ahead_kb = 4
+read_ahead_kb_list = [4]
 do_drop_cache = True
 do_block_tracing = False
 qq_mem_folder = "/users/jhe/flashsearch/src/qq_mem"
@@ -138,6 +138,11 @@ def parse_client_output(conf):
         return VacuumClientOutput().parse_client_out("/tmp/client.out")
     else:
         raise RuntimeError
+
+def warmup_elastic():
+    p = start_engine_client("elastic", 1, "/mnt/ssd/query_workload/debug/warmup_log")
+    raw_input("waiting for client to warmup server")
+    p.wait()
 
 
 class Cgroup(object):
@@ -560,7 +565,8 @@ class Exp(Experiment):
                 "engine": engines,
                 "init_heap_size": init_heap_size,
                 "max_heap_size": max_heap_size,
-                "lock_memory": lock_memory
+                "lock_memory": lock_memory,
+                "read_ahead_kb": read_ahead_kb_list,
                 })
         self._n_treatments = len(self.confs)
         pprint.pprint(self.confs)
@@ -598,7 +604,7 @@ class Exp(Experiment):
             raise RuntimeError("Wrong engine")
 
         set_swap(os_swap)
-        set_read_ahead_kb(read_ahead_kb)
+        set_read_ahead_kb(conf['read_ahead_kb'])
         if do_drop_cache == True:
             drop_cache()
 
@@ -614,7 +620,6 @@ class Exp(Experiment):
 
         wait_engine_port(conf)
         mb_read_a = get_iostat_mb_read()
-
 
         # Start block tracing after the server is fully loaded
         if do_block_tracing is True:
