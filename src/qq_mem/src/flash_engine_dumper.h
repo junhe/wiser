@@ -1046,7 +1046,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     LOG(INFO) << "Dumping fake skiplist...........................\n";
     SkipListWriter fake_skiplist_writer = DumpTermEntrySet( 
         &fake_index_dumper_, 
-        skip_list_start + 1024*1024,
+        skip_list_start + 512*1024,
         entry_set,
         entry_set.docid.Values());
 
