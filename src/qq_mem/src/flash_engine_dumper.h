@@ -29,6 +29,20 @@ struct PostingBagBlobIndex {
   int in_blob_idx;
 };
 
+struct SkipListPreRow {
+  void Reset() {
+    pre_doc_id = 0; 
+    doc_id_blob_off = 0;
+    tf_blob_off = 0;
+    pos_blob_off = 0;
+    off_blob_off = 0;
+  }
+  uint32_t pre_doc_id = 0; 
+  off_t doc_id_blob_off = 0;
+  off_t tf_blob_off = 0;
+  off_t pos_blob_off = 0;
+  off_t off_blob_off = 0;
+};
 
 inline std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
   std::vector<uint32_t> positions;
@@ -577,7 +591,8 @@ class SkipListWriter {
      doc_ids_(doc_ids)
   {}
 
-  std::string Serialize() const {
+  std::string Serialize() {
+    pre_row_.Reset();
     VarintBuffer buf;
     auto skip_pre_doc_ids = GetSkipPostingPreDocIds(doc_ids_);
 
@@ -603,21 +618,37 @@ class SkipListWriter {
     for (int i = 0; i < n_rows; i++) {
       AddRow(&buf, i, skip_pre_doc_ids);
     }
+    // std::cout << "number of rows in skip list: " << n_rows << std::endl;
 
     return buf.Data();
   }
 
  private:
   void AddRow(VarintBuffer *buf, int i, 
-      const std::vector<uint32_t> skip_pre_doc_ids) const {
-    buf->Append(skip_pre_doc_ids[i]);
-    buf->Append(docid_offs_[i].file_offset_of_blob);
-    buf->Append(tf_offs_[i].file_offset_of_blob);
-    buf->Append(pos_offs_[i].file_offset_of_blob);
+      const std::vector<uint32_t> skip_pre_doc_ids) {
+    int start_size = buf->Size();
+
+    buf->Append(skip_pre_doc_ids[i] - pre_row_.pre_doc_id);
+    buf->Append(docid_offs_[i].file_offset_of_blob - pre_row_.doc_id_blob_off);
+    buf->Append(tf_offs_[i].file_offset_of_blob - pre_row_.tf_blob_off);
+    buf->Append(pos_offs_[i].file_offset_of_blob - pre_row_.pos_blob_off);
     buf->Append(pos_offs_[i].in_blob_index);
-    buf->Append(off_offs_[i].file_offset_of_blob);
+    buf->Append(off_offs_[i].file_offset_of_blob - pre_row_.off_blob_off);
     buf->Append(off_offs_[i].in_blob_index);
+
+    // update the prev
+    pre_row_.pre_doc_id = skip_pre_doc_ids[i];
+    pre_row_.doc_id_blob_off = docid_offs_[i].file_offset_of_blob ;
+    pre_row_.tf_blob_off = tf_offs_[i].file_offset_of_blob;
+    pre_row_.pos_blob_off = pos_offs_[i].file_offset_of_blob;
+    pre_row_.off_blob_off = off_offs_[i].file_offset_of_blob;
+
+    int end_size = buf->Size();
+
+    // std::cout << end_size - start_size << ",";
   }
+
+  SkipListPreRow pre_row_;
 
   const FileOffsetOfSkipPostingBags docid_offs_;
   const FileOffsetOfSkipPostingBags tf_offs_;
@@ -679,17 +710,20 @@ class SkipList {
     uint32_t num_entries;
     int len = utils::varint_decode_uint32((char *)buf, 1, &num_entries);
 
+    SkipListPreRow pre_row;
+    pre_row.Reset();
     // byte 1 + len is the start of skip list entries
     VarintIterator it((const char *)buf, 1 + len, num_entries);
 
     for (int entry_i = 0; entry_i < num_entries; entry_i++) {
-      uint32_t previous_doc_id = it.Pop();
-      off_t file_offset_of_docid_bag = it.Pop();
-      off_t file_offset_of_tf_bag = it.Pop();
-      off_t file_offset_of_pos_blob = it.Pop();
+      uint32_t previous_doc_id = it.Pop() + pre_row.pre_doc_id;
+      off_t file_offset_of_docid_bag = it.Pop() + pre_row.doc_id_blob_off;
+      off_t file_offset_of_tf_bag = it.Pop() + pre_row.tf_blob_off;
+      off_t file_offset_of_pos_blob = it.Pop() + pre_row.pos_blob_off;
       int in_blob_index_of_pos_bag = it.Pop();
-      off_t file_offset_of_offset_blob = it.Pop();
+      off_t file_offset_of_offset_blob = it.Pop() + pre_row.off_blob_off;
       int in_blob_index_of_offset_bag = it.Pop();
+
       AddEntry(previous_doc_id, 
                file_offset_of_docid_bag, 
                file_offset_of_tf_bag, 
@@ -697,6 +731,12 @@ class SkipList {
                in_blob_index_of_pos_bag, 
                file_offset_of_offset_blob,
                in_blob_index_of_offset_bag);
+
+      pre_row.pre_doc_id = previous_doc_id;
+      pre_row.doc_id_blob_off = file_offset_of_docid_bag;
+      pre_row.tf_blob_off = file_offset_of_tf_bag;
+      pre_row.pos_blob_off = file_offset_of_pos_blob;
+      pre_row.off_blob_off = file_offset_of_offset_blob;
     }
   }
 
