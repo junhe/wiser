@@ -964,7 +964,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
     std::string skip_list_data = real_skiplist_writer.Serialize();
 
-    DLOG_IF(FATAL, skip_list_data.size() > skip_list_est_size)  
+    LOG_IF(FATAL, skip_list_data.size() > skip_list_est_size)  
         << "DATA CORRUPTION!!! Gap for skip list is too small. skip list real size: " 
         << skip_list_data.size() 
         << " skip est size: " << skip_list_est_size;
