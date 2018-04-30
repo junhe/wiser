@@ -35,21 +35,25 @@ user_name = "jhe"
 # BOTH Elastic and Vacuum
 ######################
 # engines = [ELASTIC] # ELASTIC or VACUUM
-engines = [VACUUM] # ELASTIC or VACUUM
+engines = [VACUUM, ELASTIC] # ELASTIC or VACUUM
+# engines = [VACUUM] # ELASTIC or VACUUM
 n_server_threads = [25]
 n_client_threads = [128] # client
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
+mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB] # good one
-mem_size_list = [8*GB]
-# mem_size_list = [256*MB]
+# mem_size_list = [8*GB]
+# mem_size_list = [128*MB]
 mem_swappiness = 60
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
-query_paths = ["/mnt/ssd/realistic_querylog"]
+# query_paths = ["/mnt/ssd/realistic_querylog"]
 # query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
 # query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
-# query_paths = glob.glob("/mnt/ssd/query_workload/term_docfreq_1e2_working_set_vary/*")
+# query_paths = glob.glob("/mnt/ssd/query_workload/single_term/*")
+# query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm")
+query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
 lock_memory = ["false"] # must be string
 
 
@@ -64,7 +68,7 @@ engine_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
 ######################
 # Elastic only
 ######################
-ELASTIC_DIR = "/users/kanwu/elasticsearch-5.6.3"
+ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
 init_heap_size = [300*MB]
 max_heap_size = [300*MB]
 rs_bench_go_path = "/users/jhe/flashsearch/src/pysrc"
@@ -270,6 +274,13 @@ def log_crashed_server(conf):
         f.write("server crashed at " + now() + " ")
         f.write(repr(conf) + "\n")
 
+
+def log_crashed_client(conf):
+    with open("server.log", "a") as f:
+        f.write("CLIENT crashed at " + now() + " ")
+        f.write(repr(conf) + "\n")
+
+
 def send_sigint(pid):
     shcmd("bash -c 'sudo kill -SIGINT {}'".format(os.getpgid(pid)))
     # os.killpg(os.getpgid(pid), signal.SIGINT)
@@ -401,6 +412,27 @@ def start_vacuum_client(n_threads, query_path):
 def print_client_output_tail():
     out = subprocess.check_output("tail -n 2 /tmp/client.out", shell=True)
     print out
+
+def is_client_running(conf):
+    if conf['engine'] == ELASTIC:
+        return is_elastic_client_running()
+    elif conf['engine'] == VACUUM:
+        return is_vacuum_client_running()
+    else:
+        raise RuntimeError
+
+def is_vacuum_client_running():
+    p = remote_cmd("ps -ef|grep engine_bench|wc -l", subprocess.PIPE)
+    out = p.communicate()[0]
+    print out
+    return int(out) > 2 # one of them is the grep, one is the ssh..
+
+def is_elastic_client_running():
+    p = remote_cmd("ps -ef|grep RediSearchBench|wc -l", subprocess.PIPE)
+    out = p.communicate()[0]
+    print out
+    return int(out) > 2 # one of them is the grep
+
 
 def is_client_finished():
     out = subprocess.check_output("tail -n 1 /tmp/client.out", shell=True)
@@ -589,6 +621,10 @@ class Exp(Experiment):
         client_p = start_engine_client(
                 conf['engine'], conf['n_client_threads'], conf['query_path'])
 
+        if conf['engine'] == ELASTIC:
+            print "Waiting for client to start...."
+            time.sleep(5)
+
         seconds = 0
 	cache_size_log = []
         while True:
@@ -606,6 +642,8 @@ class Exp(Experiment):
                 log_crashed_server(conf)
                 return
 
+            is_running = is_client_running(conf)
+
             if finished:
                 kill_client()
                 if conf['engine'] == 'vacuum':
@@ -614,6 +652,14 @@ class Exp(Experiment):
                 time.sleep(8)
                 copy_client_out()
                 break
+
+            # client is not finished, and not running
+            if is_running is False:
+                print "!" * 40
+                print "Client is not running!"
+                print "!" * 40
+                log_crashed_client(conf)
+                return
 
             cache_size = get_cgroup_page_cache_size()/MB
             print "*" * 20
@@ -659,4 +705,5 @@ class Exp(Experiment):
 if __name__ == "__main__":
     exp = Exp()
     exp.main()
+
 
