@@ -52,6 +52,37 @@ inline std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
   return positions;
 }
 
+inline bool IsAllRepeated(std::vector<uint32_t> pack) {
+  assert(pack.size() == 128);
+  for (int i = 1; i < pack.size(); i++) {
+    if (pack[i] != pack[i-1]) 
+      return false;
+  }
+  return true;
+}
+
+inline void AnalyzeRepeating(std::vector<uint32_t> values) {
+  std::vector<uint32_t> pack;
+  int n = values.size();
+  int n_all_same_packs = 0;
+  int total_packs = n / 128;
+
+  for (int i = 0; i < n; i++) {
+    pack.push_back(values[i]);
+    if (pack.size() == 128) {
+      // analyze
+      if (IsAllRepeated(pack) == true)
+        n_all_same_packs++;
+
+      pack.clear();
+    }
+  }
+  std::cout << "n values: " << n
+    << " total number of packs: " << total_packs
+    << " n_all_same_packs: " << n_all_same_packs
+    << std::endl;
+}
+
 inline std::vector<uint32_t> ExtractOffsets(OffsetPairsIteratorService *iterator) {
   std::vector<uint32_t> offsets;
   while (iterator->IsEnd() != true) {
