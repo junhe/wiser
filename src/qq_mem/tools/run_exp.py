@@ -639,8 +639,6 @@ class Exp(Experiment):
 	cache_size_log = []
         while True:
             print_client_output_tail()
-            finished = is_client_finished()
-            print "is_client_finished()", finished
             print conf
 
             is_server_running = is_engine_server_running(conf)
@@ -653,7 +651,13 @@ class Exp(Experiment):
                 return
 
             is_running = is_client_running(conf)
+            if is_running is False:
+                sys.stdout.flush()
+                print "Wait for the client to flush stdout........"
+                time.sleep(1)
 
+            finished = is_client_finished()
+            print "is_client_finished()", finished
             if finished:
                 kill_client()
                 if conf['engine'] == 'vacuum':
@@ -711,6 +715,7 @@ class Exp(Experiment):
             self.blocktracer.stop_tracing_and_collecting()
             time.sleep(2)
             self.blocktracer.create_event_file_from_blkparse()
+        dump_json(conf, os.path.join(self._subexpdir, "config.json"))
 
 if __name__ == "__main__":
     exp = Exp()
