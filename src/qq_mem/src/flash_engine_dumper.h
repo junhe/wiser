@@ -882,6 +882,14 @@ class InvertedIndexDumperBase : public InvertedIndexQqMemDelta {
 
 };
 
+struct ResultOfDumpingTermEntrySet {
+  ResultOfDumpingTermEntrySet(SkipListWriter writer, off_t offset)
+    :skip_list_writer(writer), pos_start_offset(offset)
+  {}
+
+  SkipListWriter skip_list_writer;
+  off_t pos_start_offset;
+};
 
 struct TermEntrySet {
     GeneralTermEntry docid;
@@ -955,14 +963,13 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     int skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
 
     // Dump doc id, term freq, ...
-    SkipListWriter real_skiplist_writer = DumpTermEntrySet( 
+    ResultOfDumpingTermEntrySet real_result = DumpTermEntrySet( 
         &index_dumper_, 
         skip_list_start + skip_list_est_size,
         entry_set,
         entry_set.docid.Values());
 
-
-    std::string skip_list_data = real_skiplist_writer.Serialize();
+    std::string skip_list_data = real_result.skip_list_writer.Serialize();
 
     LOG_IF(FATAL, skip_list_data.size() > skip_list_est_size)  
         << "DATA CORRUPTION!!! Gap for skip list is too small. skip list real size: " 
@@ -974,22 +981,25 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     index_dumper_.SeekToEnd();
 
     // Dump to .tip
+    uint32_t n_pages_prefetch = 
+      (real_result.pos_start_offset - posting_list_start) / 4096;
+
     term_index_dumper_.DumpEntry(term, posting_list_start);
   }
 
  private:
   int EstimateSkipListBytes(off_t skip_list_start, const TermEntrySet &entry_set) {
     LOG(INFO) << "Dumping fake skiplist...........................\n";
-    SkipListWriter fake_skiplist_writer = DumpTermEntrySet( 
+    ResultOfDumpingTermEntrySet fake_result = DumpTermEntrySet( 
         &fake_index_dumper_, 
         skip_list_start + 512*1024,
         entry_set,
         entry_set.docid.Values());
 
-    return fake_skiplist_writer.Serialize().size();
+    return fake_result.skip_list_writer.Serialize().size();
   }
 
-  SkipListWriter DumpTermEntrySet(
+  ResultOfDumpingTermEntrySet DumpTermEntrySet(
     FileDumper *file_dumper,
     off_t file_offset,
     const TermEntrySet &entry_set,
@@ -1001,13 +1011,19 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
       DumpTermEntry(entry_set.docid, file_dumper, true);
     FileOffsetOfSkipPostingBags tf_skip_offs = 
       DumpTermEntry(entry_set.termfreq, file_dumper, false);
+
+    off_t pos_start_offset = file_dumper->CurrentOffset();
+
     FileOffsetOfSkipPostingBags pos_skip_offs = 
       DumpTermEntry(entry_set.position, file_dumper, false);
     FileOffsetOfSkipPostingBags off_skip_offs = 
       DumpTermEntry(entry_set.offset, file_dumper, false);
 
-    return SkipListWriter(docid_skip_offs, tf_skip_offs, 
-        pos_skip_offs, off_skip_offs, entry_set.docid.Values());
+    return ResultOfDumpingTermEntrySet(
+        SkipListWriter(docid_skip_offs, tf_skip_offs, 
+                       pos_skip_offs,   off_skip_offs, 
+                       entry_set.docid.Values()),
+        pos_start_offset);
   }
 
 
