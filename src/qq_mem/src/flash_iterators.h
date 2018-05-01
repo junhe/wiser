@@ -787,8 +787,10 @@ class VacuumPostingListIterator {
   }
 
   std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() {
-    off_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
-    return off_bag_iter_.InBagOffsetPairPtr();
+    std::unique_ptr<OffsetPairsIteratorService> p(
+        new LazyBoundedOffsetPairIterator(
+          doc_id_iter_.PostingIndex(), off_bag_iter_));
+    return p;
   }
 
   void Advance() {
