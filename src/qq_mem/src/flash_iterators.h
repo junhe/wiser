@@ -4,6 +4,11 @@
 #include "packed_value.h"
 #include "flash_engine_dumper.h"
 
+
+DECLARE_bool(enable_prefetch);
+DECLARE_int32(prefetch_threshold);
+
+
 enum class BlobFormat {PACKED_INTS, VINTS, NONE};
 
 
@@ -801,6 +806,23 @@ class VacuumPostingListIterator {
     tf_iter_.Reset(file_data_, skip_list_.get());
     pos_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
     off_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
+  }
+
+  bool ShouldPrefetch() {
+    return  FLAGS_enable_prefetch == true &&
+      term_index_result_.GetNumPagesInPrefetchZone() > FLAGS_prefetch_threshold;
+  }
+  
+  //Note that file_data_ and term_index_result_ must have been set
+  void Prefetch() const {
+	  const void * pl_addr = file_data_ + term_index_result_.GetPostingListOffset();
+    size_t zone_bytes = term_index_result_.GetNumPagesInPrefetchZone() * 4 * KB;
+
+    int ret = madvise((void *) pl_addr, zone_bytes, MADV_SEQUENTIAL);
+
+    if (ret == -1) {
+      LOG(FATAL) << "Failed to prefetch.";
+    }
   }
 
   std::string SkipListString() const {
