@@ -58,9 +58,9 @@ mem_swappiness = 60
 # query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/query_workload/by-doc-freq/type_fiveplus"]
 # query_paths = ["/mnt/ssd/query_workload/single_term/type_single.docfreq_high"]
-query_paths = glob.glob("/mnt/ssd/query_workload/single_term/*") +\
-    glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm") +\
-    glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
+query_paths = glob.glob("/mnt/ssd/query_workload/single_term/*")
+    # glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm") +\
+    # glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm")
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
 lock_memory = ["false"] # must be string
@@ -593,6 +593,7 @@ class Exp(Experiment):
                 })
         self._n_treatments = len(self.confs)
         pprint.pprint(self.confs)
+        print "Number of treatments: ", self._n_treatments
         raw_input("This is your config. Enter to continue")
 
         self.result = []
