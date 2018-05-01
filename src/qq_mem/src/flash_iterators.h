@@ -454,7 +454,7 @@ class InBagPositionIterator {
     Reset(cozy_iter, term_freq);
   }
 
-  void Reset(const CozyBoxIterator cozy_iter, const int term_freq) {
+  void Reset(const CozyBoxIterator &cozy_iter, const int term_freq) {
     cozy_box_iter_ = cozy_iter;
     n_poss_to_go_ = term_freq;
     prev_pos_ = 0;
@@ -638,6 +638,10 @@ class PositionPostingBagIterator :public PosAndOffPostingBagIteratorBase {
 
   InBagPositionIterator InBagPositionBegin() {
     return InBagPositionIterator(cozy_box_iter_, TermFreq());
+  }
+
+  const CozyBoxIterator &GetCozyBoxIterator() const {
+    return cozy_box_iter_;
   }
 
  private:
@@ -849,7 +853,7 @@ class VacuumPostingListIterator {
 
   void AssignPositionBegin(InBagPositionIterator *in_bag_iter) {
     pos_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
-    *in_bag_iter = pos_bag_iter_.InBagPositionBegin();
+    in_bag_iter->Reset(pos_bag_iter_.GetCozyBoxIterator(), pos_bag_iter_.TermFreq());
   }
 
   std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() {
