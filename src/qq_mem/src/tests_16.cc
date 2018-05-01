@@ -192,11 +192,11 @@ TEST_CASE( "Encoding prefetch zone and posting list start", "[dump00]" ) {
   CheckEncoding(0, 0);
   CheckEncoding(1, 1);
   CheckEncoding(128, 8223776);
-  CheckEncoding(1 << 15, 1 << 47); // use the max bit
-  CheckEncoding(5*MB/(4*KB), 50*GB);   
-  CheckEncoding(100*MB/(4*KB), 100*GB); 
+  CheckEncoding(1 << 15, (uint64_t) 1 << 47); // use the max bit
+  CheckEncoding(5*MB/(4*KB), 50L*GB);   
+  CheckEncoding(100*MB/(4*KB), 100L*GB); 
   CheckEncoding(100*MB/(4*KB), 0);   
-  CheckEncoding(0, 100*GB - 888888);   
+  CheckEncoding(0, 100L*GB - 888888);   
 }
 
 
