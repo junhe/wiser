@@ -35,25 +35,28 @@ user_name = "jhe"
 # BOTH Elastic and Vacuum
 ######################
 # engines = [ELASTIC] # ELASTIC or VACUUM
-engines = [VACUUM, ELASTIC] # ELASTIC or VACUUM
-# engines = [VACUUM] # ELASTIC or VACUUM
+# engines = [VACUUM, ELASTIC] # ELASTIC or VACUUM
+engines = [VACUUM] # ELASTIC or VACUUM
 n_server_threads = [25]
 n_client_threads = [128] # client
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
-mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
+# mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB] # good one
-# mem_size_list = [8*GB]
+mem_size_list = [8*GB]
+prefetch_thresholds = [2000] # unit is number of 4KB pages
+enable_prefetch_list = [True]
 # mem_size_list = [128*MB]
 mem_swappiness = 60
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
 # query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
+query_paths = ["/mnt/ssd/query_workload/from_log"]
 # query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/single_term/*")
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm")
-query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
+# query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
 lock_memory = ["false"] # must be string
 
 
@@ -500,10 +503,13 @@ def start_vacuum_server(conf):
         cmd = "./build/qq_server "\
               "-sync_type=ASYNC -n_threads={n_threads} "\
               "-addr={server} -port=50051 -engine={engine} -profile_vacuum={profile} "\
+              "-enable_prefetch={enable_prefetch} -prefetch_threshold={threshold} "\
               "-lock_memory={lock_mem}"\
               .format(server = server_addr,
                     n_threads = conf['n_server_threads'],
                     engine = search_engine,
+                    enable_prefetch = conf['enable_prefetch'],
+                    threshold = conf['prefetch_threshold'],
                     profile = profile_qq_server,
                     lock_mem = conf['lock_memory'])
         print "-" * 20
@@ -568,6 +574,8 @@ class Exp(Experiment):
                 "max_heap_size": max_heap_size,
                 "lock_memory": lock_memory,
                 "read_ahead_kb": read_ahead_kb_list,
+                "prefetch_threshold": prefetch_thresholds,
+                "enable_prefetch": enable_prefetch_list
                 })
         self._n_treatments = len(self.confs)
         pprint.pprint(self.confs)
