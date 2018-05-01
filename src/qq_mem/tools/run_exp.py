@@ -12,7 +12,6 @@ from pyreuse.sysutils.blocktrace import BlockTraceManager
 import glob
 import pprint
 
-
 ELASTIC = "elastic"
 VACUUM = "vacuum"
 
@@ -28,6 +27,7 @@ do_drop_cache = True
 do_block_tracing = False
 qq_mem_folder = "/users/jhe/flashsearch/src/qq_mem"
 user_name = "jhe"
+read_ahead_kb_list = [0]
 
 
 ######################
@@ -45,9 +45,10 @@ mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [256*MB]
 # mem_size_list = [8*GB]
 
-read_ahead_kb_list = [0, 64]
-prefetch_thresholds_kb = [128] # unit is KB
-enable_prefetch_list = [True]
+# Make the a pair?
+enable_prefetch_list = [False] # whether to eanble Vaccum to do prefetch
+prefetch_thresholds_kb = [100000] # unit is KB
+
 
 mem_swappiness = 60
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
