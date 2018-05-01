@@ -1003,10 +1003,12 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     index_dumper_.SeekToEnd();
 
     // Dump to .tip
-    uint32_t n_pages_prefetch = 
+    // Calculate the prefetch zone size!
+    uint32_t n_pages_of_prefetch_zone = 
       (real_result.pos_start_offset - posting_list_start) / 4096;
 
-    term_index_dumper_.DumpEntry(term, posting_list_start);
+    term_index_dumper_.DumpEntry(term, 
+        EncodePrefetchZoneAndOffset(n_pages_of_prefetch_zone, posting_list_start));
   }
 
  private:
