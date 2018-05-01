@@ -519,6 +519,10 @@ class PosAndOffPostingBagIteratorBase {
     cur_posting_bag_ = posting_bag;
   }
 
+  CozyBoxIterator GetCozyBoxIterator() const {
+    return cozy_box_iter_;
+  }
+
  protected:
   virtual int NumCozyEntriesBetween(int bag_a, int bag_b) = 0;
   virtual off_t GetEntryBlobOff(const SkipEntry &ent) = 0;
@@ -656,6 +660,69 @@ class OffsetPostingBagIterator :public PosAndOffPostingBagIteratorBase {
     return n;
   }
 };
+
+
+// Iterating offset pairs in a posting bag.
+// Because it needs to jump in cozy box for offsets, it needs
+// OffsetPostingBagIterator inside.
+class LazyBoundedOffsetPairIterator: public OffsetPairsIteratorService {
+ public:
+  LazyBoundedOffsetPairIterator(
+      int posting_index, 
+      int term_freq, 
+      const OffsetPostingBagIterator off_bag_iter) 
+    :posting_index_(posting_index), off_bag_iter_(off_bag_iter) 
+  {
+    n_single_off_to_go_ = term_freq * 2;
+    prev_off_ = 0;
+    is_cozy_iter_initialized_ = false;
+  }
+
+  bool IsEnd() const {
+    return n_single_off_to_go_ == 0;
+  }
+
+  void Pop(OffsetPair *pair) {
+    if (is_cozy_iter_initialized_ == false)
+      InitializeCozy();
+
+    std::get<0>(*pair) = SinglePop();
+    std::get<1>(*pair) = SinglePop();
+  }
+ 
+ private:
+  void InitializeCozy() {
+    off_bag_iter_.SkipTo(posting_index_);
+    cozy_box_iter_ = off_bag_iter_.GetCozyBoxIterator();
+
+    is_cozy_iter_initialized_ = true;
+  }
+
+  uint32_t SinglePop() {
+    uint32_t off = prev_off_ + cozy_box_iter_.Value();
+    prev_off_ = off;
+    n_single_off_to_go_--; 
+
+    // Cozy box does not know its end, but we do know how many 
+    // positions we need to pop in this class, so we use this 
+    // info in this higher-level class to make the decision.
+    if (n_single_off_to_go_ > 0)
+      cozy_box_iter_.Advance();
+
+    return off;
+  }
+
+  const int posting_index_;
+  OffsetPostingBagIterator off_bag_iter_;
+
+  CozyBoxIterator cozy_box_iter_;
+  uint32_t prev_off_;
+  int n_single_off_to_go_;
+  bool is_cozy_iter_initialized_;
+};
+
+
+
 
 
 // It will iterate postings in a posting list
