@@ -64,6 +64,28 @@ inline std::vector<uint32_t> ExtractOffsets(OffsetPairsIteratorService *iterator
   return offsets;
 }
 
+
+// n_pages_of_zone     posting_list_start 
+// |..................|......................................|
+//    16 bits             48bits
+inline off_t EncodePrefetchZoneAndOffset(
+    const uint32_t n_pages_of_zone, const off_t posting_list_start) {
+  DLOG_IF(FATAL, (((uint64_t) n_pages_of_zone) << 48) >> 48 != n_pages_of_zone)
+    << "n_pages_of_zone is too large to be encoded.";
+  return (((uint64_t) n_pages_of_zone) << 48) | posting_list_start;
+}
+
+inline void DecodePrefetchZoneAndOffset(
+    const off_t offset_from_term_index, uint32_t *n_pages_of_zone, off_t *posting_list_start) {
+  *n_pages_of_zone = ((uint64_t) offset_from_term_index) >> 48;
+  constexpr uint64_t mask = (((~(uint64_t) 0) << 16) >> 16); // 0b0000 111..111   48 1s
+  printf("mask: %lx\n", mask);
+  *posting_list_start = ((uint64_t)offset_from_term_index) & mask;
+}
+
+
+
+
 inline std::vector<uint32_t> GetSkipPostingPreDocIds(const std::vector<uint32_t> &doc_ids) {
   std::vector<uint32_t> skip_pre_doc_ids{0}; // the first is always 0
   for (int skip_posting_i = SKIP_INTERVAL; 

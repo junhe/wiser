@@ -2,6 +2,7 @@
 
 #include "query_pool.h"
 #include "packed_value.h"
+#include "flash_engine_dumper.h"
 
 extern "C" {
 #include "bitpacking.h"
@@ -166,6 +167,49 @@ TEST_CASE( "Little packed ints", "[pack]" ) {
     }
   }
 }
+
+
+void CheckEncoding(uint32_t n_pages, off_t pl_offset) {
+  uint32_t n_pages_decoded;
+  off_t pl_offset_decoded;
+  off_t off_in_index = 
+    
+  off_in_index = EncodePrefetchZoneAndOffset(n_pages, pl_offset);
+  DecodePrefetchZoneAndOffset(off_in_index, &n_pages_decoded, &pl_offset_decoded);
+
+  std::cout << "off_in_index: " << off_in_index << std::endl;
+  std::cout << "n_pages: " << n_pages << std::endl;
+  std::cout << "n_pages_decoded: " << n_pages_decoded << std::endl;
+  std::cout << "pl_offset:" << pl_offset << std::endl;
+  std::cout << "pl_offset_decoded:" << pl_offset_decoded << std::endl;
+
+  REQUIRE(n_pages == n_pages_decoded);
+  REQUIRE(pl_offset == pl_offset_decoded);
+}
+
+
+TEST_CASE( "Encoding prefetch zone and posting list start", "[dump00]" ) {
+  CheckEncoding(0, 0);
+  CheckEncoding(1, 1);
+  CheckEncoding(128, 8223776);
+  CheckEncoding(1 << 15, 1 << 47); // use the max bit
+  CheckEncoding(5*MB/(4*KB), 50*GB);   
+  CheckEncoding(100*MB/(4*KB), 100*GB); 
+  CheckEncoding(100*MB/(4*KB), 0);   
+  CheckEncoding(0, 100*GB - 888888);   
+}
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
