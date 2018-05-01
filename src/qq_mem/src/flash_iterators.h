@@ -523,6 +523,11 @@ class PosAndOffPostingBagIteratorBase {
     return cozy_box_iter_;
   }
 
+  int TermFreq() {
+    tf_iter_.SkipTo(CurPostingBag());
+    return tf_iter_.Value();
+  }
+
  protected:
   virtual int NumCozyEntriesBetween(int bag_a, int bag_b) = 0;
   virtual off_t GetEntryBlobOff(const SkipEntry &ent) = 0;
@@ -559,11 +564,6 @@ class PosAndOffPostingBagIteratorBase {
     int skip_bag = skip_interval * PACK_SIZE;
     int n_entries_between = NumCozyEntriesBetween(skip_bag, posting_bag);
     AdvanceByCozyEntries(n_entries_between);
-  }
-
-  int TermFreq() {
-    tf_iter_.SkipTo(CurPostingBag());
-    return tf_iter_.Value();
   }
 
   void AdvanceByCozyEntries(int n_entries) {
@@ -669,20 +669,22 @@ class LazyBoundedOffsetPairIterator: public OffsetPairsIteratorService {
  public:
   LazyBoundedOffsetPairIterator(
       int posting_index, 
-      int term_freq, 
       const OffsetPostingBagIterator off_bag_iter) 
     :posting_index_(posting_index), off_bag_iter_(off_bag_iter) 
   {
-    n_single_off_to_go_ = term_freq * 2;
     prev_off_ = 0;
     is_cozy_iter_initialized_ = false;
   }
 
-  bool IsEnd() const {
+  bool IsEnd() const override {
+    // Assuming TF always > 0
+    if (is_cozy_iter_initialized_ == false)
+      return false;
+
     return n_single_off_to_go_ == 0;
   }
 
-  void Pop(OffsetPair *pair) {
+  void Pop(OffsetPair *pair) override {
     if (is_cozy_iter_initialized_ == false)
       InitializeCozy();
 
@@ -693,6 +695,8 @@ class LazyBoundedOffsetPairIterator: public OffsetPairsIteratorService {
  private:
   void InitializeCozy() {
     off_bag_iter_.SkipTo(posting_index_);
+    n_single_off_to_go_ = off_bag_iter_.TermFreq() * 2;
+
     cozy_box_iter_ = off_bag_iter_.GetCozyBoxIterator();
 
     is_cozy_iter_initialized_ = true;

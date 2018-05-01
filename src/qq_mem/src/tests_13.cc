@@ -438,36 +438,20 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
 
     SECTION("Very simple, LazyBoundedOffsetPairIterator") {
       int posting_bag = 0;
-      // tf = 3
-      LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, 3, iter);
+      REQUIRE(iter.TermFreq() == 3);
+      LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, iter);
       
       auto good_offsets = GoodOffsets(posting_bag);
-
-      // tf == 3
-      for (int i = 0; i < 3; i++) {
-        OffsetPair pair;
-        in_bag_iter.Pop(&pair);
-        REQUIRE(std::get<0>(pair) == good_offsets[2*i]);
-        REQUIRE(std::get<1>(pair) == good_offsets[2*i + 1]);
-      }
-      REQUIRE(in_bag_iter.IsEnd());
+      CheckOffsets(in_bag_iter, good_offsets);
     }
 
     SECTION("Very simple 2, lazy") {
       int posting_bag = 1;
       // tf = 3
-      LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, 3, iter);
+      LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, iter);
       
       auto good_offsets = GoodOffsets(posting_bag);
-
-      // tf == 3
-      for (int i = 0; i < 3; i++) {
-        OffsetPair pair;
-        in_bag_iter.Pop(&pair);
-        REQUIRE(std::get<0>(pair) == good_offsets[2*i]);
-        REQUIRE(std::get<1>(pair) == good_offsets[2*i + 1]);
-      }
-      REQUIRE(in_bag_iter.IsEnd());
+      CheckOffsets(in_bag_iter, good_offsets);
     }
 
     SECTION("Very simple 2") {
@@ -508,7 +492,7 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
       int posting_bag = n_postings - 1;
 
       // tf = 3
-      LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, 3, iter);
+      LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, iter);
       auto good_offsets = GoodOffsets(posting_bag);
 
       CheckOffsets(in_bag_iter, good_offsets);
@@ -518,7 +502,7 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
       int posting_bag = n_postings / 2;
 
       // tf = 3
-      LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, 3, iter);
+      LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, iter);
       
       auto good_offsets = GoodOffsets(posting_bag);
       CheckOffsets(in_bag_iter, good_offsets);
@@ -543,7 +527,7 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
 
     SECTION("Iterate all posting bags, lazy") {
       for (int posting_bag = 0; posting_bag < n_postings; posting_bag++) {
-        LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, 3, iter);
+        LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, iter);
         auto good_offsets = GoodOffsets(posting_bag);
         CheckOffsets(in_bag_iter, good_offsets);
       }
@@ -551,7 +535,7 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
 
     SECTION("Iterate all posting bags, with strides, lazy") {
       for (int posting_bag = 0; posting_bag < n_postings; posting_bag += 7) {
-        LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, 3, iter);
+        LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, iter);
         auto good_offsets = GoodOffsets(posting_bag);
         CheckOffsets(in_bag_iter, good_offsets);
       }
