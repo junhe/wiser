@@ -6,6 +6,43 @@
 
 enum class BlobFormat {PACKED_INTS, VINTS, NONE};
 
+
+class TermIndexResult {
+ public:
+  TermIndexResult() :is_empty_(true) {}
+  TermIndexResult(std::string key, off_t value, bool is_empty)
+    :key_(key), is_empty_(is_empty) {
+    DecodePrefetchZoneAndOffset(
+        value, &n_pages_of_prefetch_zone_, &posting_list_offset_);
+  }
+
+  std::string Key() const {
+    return key_;
+  }
+
+  off_t GetPostingListOffset() const {
+    return posting_list_offset_;
+  }
+
+  uint32_t GetNumPagesInPrefetchZone() const {
+    return n_pages_of_prefetch_zone_;
+  }
+
+  bool IsEmpty() const {
+    return is_empty_;
+  }
+
+ private:
+  std::string key_;
+
+  uint32_t n_pages_of_prefetch_zone_;
+  off_t posting_list_offset_;
+
+  bool is_empty_;
+};
+
+
+
 inline std::string FormatString(const BlobFormat f) {
   if (f == BlobFormat::PACKED_INTS) {
     return "PACKED_INTS";
@@ -739,10 +776,38 @@ class VacuumPostingListIterator {
     Reset(file_data, offset);
   }
 
-  void Reset(const uint8_t *file_data, const off_t offset) {
-    LOG(INFO) << "In PL iterator: file_data=" << (void *)file_data 
-      << " offset: " << offset;
+  VacuumPostingListIterator(const uint8_t *file_data, const TermIndexResult &result) {
+    ResetWithZoneInfo(file_data, result);
+  }
 
+  void ResetWithZoneInfo(const uint8_t *file_data, const TermIndexResult &result) {
+    int len;
+    file_data_ = file_data;
+    off_t offset = result.GetPostingListOffset();
+
+    const uint8_t *buf = file_data + offset;
+
+    // first byte is the magic number
+    DLOG_IF(FATAL, (buf[0] & 0xFF) != POSTING_LIST_FIRST_BYTE)
+      << "Magic number for posting list is wrong: " 
+      << std::hex << buf[0];
+    buf += 1;
+
+    // second item in the posting list is the doc freq (n_postings_)
+    len = utils::varint_decode_uint8(buf, 0, &n_postings_);
+    buf += len;
+
+    // third item is the start of skip list
+    skip_list_ = std::shared_ptr<SkipList>(new SkipList()); 
+    skip_list_->Load(buf);
+
+    doc_id_iter_.Reset(file_data_, skip_list_.get(), n_postings_);
+    tf_iter_.Reset(file_data_, skip_list_.get());
+    pos_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
+    off_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
+  }
+
+  void Reset(const uint8_t *file_data, const off_t offset) {
     int len;
     file_data_ = file_data;
     offset_ = offset;
@@ -819,7 +884,7 @@ class VacuumPostingListIterator {
 
  private:
   const uint8_t *file_data_;
-  // pointing to the start of the posting list
+  TermIndexResult term_index_result_;
   off_t offset_;
   
   uint32_t n_postings_;

@@ -13,39 +13,6 @@
 #include "tsl/htrie_map.h"
 
 
-class TermIndexResult {
- public:
-  TermIndexResult(std::string key, off_t value, bool is_empty)
-    :key_(key), is_empty_(is_empty) {
-    DecodePrefetchZoneAndOffset(
-        value, &n_pages_of_prefetch_zone_, &posting_list_offset_);
-  }
-
-  std::string Key() const {
-    return key_;
-  }
-
-  off_t GetPostingListOffset() const {
-    return posting_list_offset_;
-  }
-
-  uint32_t GetNumPagesInPrefetchZone() const {
-    return n_pages_of_prefetch_zone_;
-  }
-
-  bool IsEmpty() const {
-    return is_empty_;
-  }
-
- private:
-  std::string key_;
-
-  uint32_t n_pages_of_prefetch_zone_;
-  off_t posting_list_offset_;
-
-  bool is_empty_;
-};
-
 
 class TermIndex {
  public:
@@ -213,8 +180,13 @@ class VacuumInvertedIndex {
     // utils::AdviseDoNotNeed(file_map_.Addr(), file_map_.Length());
   }
 
+  TermIndexResult FindTermIndexResult(const Term &term) {
+    return term_index_.Find(term);
+  }
+
   off_t FindPostingListOffset(const Term term) {
     TermIndexResult result = term_index_.Find(term);
+
     if (result.IsEmpty()) {
       return -1;
     } else {
