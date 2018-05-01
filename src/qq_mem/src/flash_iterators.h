@@ -367,7 +367,39 @@ class CozyBoxIterator {
   std::string Format() const {
     return FormatString(cur_iter_type_);
   }
+  
+  const uint8_t * CurBuf() const {
+    return buf_;
+  }
 
+  const PackedIntsIterator & CurPackedIntsIterator() const {
+    return pack_ints_iter_;
+  }
+
+  const VIntsIterator & CurVIntsIterator() const {
+    return vints_iter_;
+  }
+
+  void CopyFrom(const CozyBoxIterator & from_object) {
+    /*buf_ = from_object.CurBuf();
+    cur_iter_type_ = from_object.CurBlobType();
+    cur_blob_off_ = from_object.CurBlobOffset();
+    cur_in_blob_index_ = from_object.CurInBlobIndex();
+    pack_ints_iter_ = from_object.CurPackedIntsIterator();
+    vints_iter_ = from_object.CurVIntsIterator();*/
+    buf_ = from_object.buf_;
+    cur_iter_type_ = from_object.cur_iter_type_;
+    cur_blob_off_ = from_object.cur_blob_off_;
+    cur_in_blob_index_ = from_object.cur_in_blob_index_;
+    pack_ints_iter_ = from_object.pack_ints_iter_;
+    vints_iter_ = from_object.vints_iter_;
+  }
+
+
+
+
+
+ 
  private:
   off_t CurBlobBytes() const {
     if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
@@ -394,7 +426,7 @@ class CozyBoxIterator {
     cur_blob_off_ = blob_off;
     cur_in_blob_index_ = 0;
   }
-
+ public:
   const uint8_t *buf_; 
   BlobFormat cur_iter_type_;
   off_t cur_blob_off_;
@@ -414,7 +446,8 @@ class InBagPositionIterator {
   }
 
   void Reset(const CozyBoxIterator cozy_iter, const int term_freq) {
-    cozy_box_iter_ = cozy_iter;
+    //cozy_box_iter_ = cozy_iter;
+    cozy_box_iter_.CopyFrom(cozy_iter);
     n_poss_to_go_ = term_freq;
     prev_pos_ = 0;
   }
@@ -437,10 +470,16 @@ class InBagPositionIterator {
     return n_poss_to_go_ == 0;
   }
 
- private:
+ //private:
   CozyBoxIterator cozy_box_iter_;
   uint32_t prev_pos_;
   int n_poss_to_go_;
+
+  void CopyFrom(const InBagPositionIterator & from_object) {
+    cozy_box_iter_.CopyFrom(from_object.cozy_box_iter_);
+    prev_pos_ = from_object.prev_pos_;
+    n_poss_to_go_ = from_object.n_poss_to_go_;
+  }
 };
 
 
@@ -520,6 +559,11 @@ class PositionPostingBagIteratorBase {
     cur_posting_bag_ = posting_bag;
   }
 
+  int TermFreq() {
+    tf_iter_.SkipTo(CurPostingBag());
+    return tf_iter_.Value();
+  }
+  CozyBoxIterator cozy_box_iter_;
  protected:
   virtual int NumCozyEntriesBetween(int bag_a, int bag_b) = 0;
   virtual off_t GetEntryBlobOff(const SkipEntry &ent) = 0;
@@ -558,16 +602,11 @@ class PositionPostingBagIteratorBase {
     AdvanceByCozyEntries(n_entries_between);
   }
 
-  int TermFreq() {
-    tf_iter_.SkipTo(CurPostingBag());
-    return tf_iter_.Value();
-  }
 
   void AdvanceByCozyEntries(int n_entries) {
     cozy_box_iter_.AdvanceBy(n_entries);
   }
 
-  CozyBoxIterator cozy_box_iter_;
   TermFreqIterator tf_iter_;
   const SkipList *skip_list_;
 
@@ -720,7 +759,11 @@ class VacuumPostingListIterator {
 
   void AssignPositionBegin(InBagPositionIterator *in_bag_iter) {
     pos_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
-    *in_bag_iter = pos_bag_iter_.InBagPositionBegin();
+    //*in_bag_iter = pos_bag_iter_.InBagPositionBegin();
+    in_bag_iter->cozy_box_iter_.CopyFrom(pos_bag_iter_.cozy_box_iter_) ;
+    in_bag_iter->n_poss_to_go_ = pos_bag_iter_.TermFreq(); 
+    in_bag_iter->prev_pos_ = 0;
+    //in_bag_iter->CopyFrom(pos_bag_iter_.InBagPositionBegin());
   }
 
   std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() {
