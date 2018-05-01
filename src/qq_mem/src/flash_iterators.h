@@ -773,11 +773,15 @@ class VacuumPostingListIterator {
   }
 
   VacuumPostingListIterator(const uint8_t *file_data, const off_t offset) {
-    Reset(file_data, offset);
+    ResetWithZoneInfo(file_data, TermIndexResult("", offset, false));
   }
 
   VacuumPostingListIterator(const uint8_t *file_data, const TermIndexResult &result) {
     ResetWithZoneInfo(file_data, result);
+  }
+
+  void Reset(const uint8_t *file_data, const off_t offset) {
+    ResetWithZoneInfo(file_data, TermIndexResult("", offset, false));
   }
 
   void ResetWithZoneInfo(const uint8_t *file_data, const TermIndexResult &result) {
@@ -785,32 +789,6 @@ class VacuumPostingListIterator {
     file_data_ = file_data;
     off_t offset = result.GetPostingListOffset();
 
-    const uint8_t *buf = file_data + offset;
-
-    // first byte is the magic number
-    DLOG_IF(FATAL, (buf[0] & 0xFF) != POSTING_LIST_FIRST_BYTE)
-      << "Magic number for posting list is wrong: " 
-      << std::hex << buf[0];
-    buf += 1;
-
-    // second item in the posting list is the doc freq (n_postings_)
-    len = utils::varint_decode_uint8(buf, 0, &n_postings_);
-    buf += len;
-
-    // third item is the start of skip list
-    skip_list_ = std::shared_ptr<SkipList>(new SkipList()); 
-    skip_list_->Load(buf);
-
-    doc_id_iter_.Reset(file_data_, skip_list_.get(), n_postings_);
-    tf_iter_.Reset(file_data_, skip_list_.get());
-    pos_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
-    off_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
-  }
-
-  void Reset(const uint8_t *file_data, const off_t offset) {
-    int len;
-    file_data_ = file_data;
-    offset_ = offset;
     const uint8_t *buf = file_data + offset;
 
     // first byte is the magic number
@@ -879,13 +857,12 @@ class VacuumPostingListIterator {
   }
 
   off_t StartOffset() const {
-    return offset_;
+    return term_index_result_.GetPostingListOffset();
   }
 
  private:
   const uint8_t *file_data_;
   TermIndexResult term_index_result_;
-  off_t offset_;
   
   uint32_t n_postings_;
 
