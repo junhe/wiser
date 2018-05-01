@@ -784,9 +784,12 @@ class VacuumPostingListIterator {
   void ResetWithZoneInfo(const uint8_t *file_data, const TermIndexResult &result) {
     int len;
     file_data_ = file_data;
+    term_index_result_ = result;
     off_t offset = result.GetPostingListOffset();
-
     const uint8_t *buf = file_data + offset;
+
+    if (ShouldPrefetch()) 
+      Prefetch();
 
     // first byte is the magic number
     DLOG_IF(FATAL, (buf[0] & 0xFF) != POSTING_LIST_FIRST_BYTE)
@@ -808,13 +811,17 @@ class VacuumPostingListIterator {
     off_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
   }
 
+  //term_index_result_ must have been set
   bool ShouldPrefetch() {
+    DLOG_IF(FATAL, term_index_result_.IsEmpty() == true) << "term_index_result_ is empty";
     return  FLAGS_enable_prefetch == true &&
       term_index_result_.GetNumPagesInPrefetchZone() > FLAGS_prefetch_threshold;
   }
   
   //Note that file_data_ and term_index_result_ must have been set
   void Prefetch() const {
+    DLOG_IF(FATAL, term_index_result_.IsEmpty() == true);
+
 	  const void * pl_addr = file_data_ + term_index_result_.GetPostingListOffset();
     size_t zone_bytes = term_index_result_.GetNumPagesInPrefetchZone() * 4 * KB;
 
@@ -868,10 +875,6 @@ class VacuumPostingListIterator {
 
   int Size() const {
     return n_postings_;
-  }
-
-  off_t StartOffset() const {
-    return term_index_result_.GetPostingListOffset();
   }
 
  private:
