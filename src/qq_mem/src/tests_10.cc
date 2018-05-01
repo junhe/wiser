@@ -380,14 +380,16 @@ TEST_CASE( "Term Index works", "[qqflash]" ) {
   auto it = index.Find("hello");
   REQUIRE(it.IsEmpty() == false);
   REQUIRE(it.Key() == "hello");
-  REQUIRE(it.Value() == 0);
+  REQUIRE(it.GetPostingListOffset() == 0);
+  REQUIRE(it.GetNumPagesInPrefetchZone() == 0);
   }
 
   {
   auto it = index.Find("wisc");
   REQUIRE(it.IsEmpty() == false);
   REQUIRE(it.Key() == "wisc");
-  REQUIRE(it.Value() == 10032);
+  REQUIRE(it.GetPostingListOffset() == 10032);
+  REQUIRE(it.GetNumPagesInPrefetchZone() == 0);
   }
 
   {
@@ -415,14 +417,16 @@ TEST_CASE( "Term Trie Index works", "[qqflash]" ) {
   auto it = index.Find("hello");
   REQUIRE(it.IsEmpty() == false);
   REQUIRE(it.Key() == "hello");
-  REQUIRE(it.Value() == 0);
+  REQUIRE(it.GetPostingListOffset() == 0);
+  REQUIRE(it.GetNumPagesInPrefetchZone() == 0);
   }
 
   {
   auto it = index.Find("wisc");
   REQUIRE(it.IsEmpty() == false);
   REQUIRE(it.Key() == "wisc");
-  REQUIRE(it.Value() == 10032);
+  REQUIRE(it.GetPostingListOffset() == 10032);
+  REQUIRE(it.GetNumPagesInPrefetchZone() == 0);
   }
 
   {
