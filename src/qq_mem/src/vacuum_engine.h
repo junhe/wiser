@@ -198,9 +198,9 @@ class VacuumInvertedIndex {
     std::vector<VacuumPostingListIterator> iterators;
 
     for (auto &term : terms) {
-      off_t offset = FindPostingListOffset(term); 
-      if (offset != -1) {
-        iterators.emplace_back(file_data_, offset);
+      TermIndexResult result = FindTermIndexResult(term);
+      if (result.IsEmpty() == false) {
+        iterators.emplace_back(file_data_, result);
       }
     }
     return iterators;

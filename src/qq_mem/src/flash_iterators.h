@@ -772,16 +772,8 @@ class VacuumPostingListIterator {
   VacuumPostingListIterator() {
   }
 
-  VacuumPostingListIterator(const uint8_t *file_data, const off_t offset) {
-    ResetWithZoneInfo(file_data, TermIndexResult("", offset, false));
-  }
-
   VacuumPostingListIterator(const uint8_t *file_data, const TermIndexResult &result) {
     ResetWithZoneInfo(file_data, result);
-  }
-
-  void Reset(const uint8_t *file_data, const off_t offset) {
-    ResetWithZoneInfo(file_data, TermIndexResult("", offset, false));
   }
 
   void ResetWithZoneInfo(const uint8_t *file_data, const TermIndexResult &result) {
