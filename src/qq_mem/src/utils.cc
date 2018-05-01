@@ -295,6 +295,12 @@ void MapFile(std::string path, char **ret_addr, int *ret_fd, size_t *ret_file_le
   if (addr == MAP_FAILED)
     handle_error("mmap");
 
+	// All files are advised as random by default
+  if (madvise(addr, file_length, MADV_RANDOM) == -1) {
+    handle_error("madvise error");
+    return;
+  }
+
   *ret_addr = addr;
   *ret_fd = fd;
   *ret_file_length = file_length;
