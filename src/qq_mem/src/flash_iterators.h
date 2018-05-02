@@ -792,9 +792,9 @@ class VacuumPostingListIterator {
     off_t offset = result.GetPostingListOffset();
     const uint8_t *buf = file_data + offset;
 
-    if (ShouldPrefetch()) 
+    /*if (ShouldPrefetch()) 
       Prefetch();
-
+    */
     // first byte is the magic number
     DLOG_IF(FATAL, (buf[0] & 0xFF) != POSTING_LIST_FIRST_BYTE)
       << "Magic number for posting list is wrong: " 
@@ -831,6 +831,21 @@ class VacuumPostingListIterator {
 
     pl_addr = (char *)pl_addr - ((off_t)pl_addr % (4*KB));
     int ret = madvise((void *) pl_addr, zone_bytes, MADV_SEQUENTIAL);
+
+    if (ret == -1) {
+      perror("Fail to do madvise");
+      LOG(FATAL) << "Failed to prefetch.";
+    }
+  }
+  
+  void DisablePrefetch() const {
+    DLOG_IF(FATAL, term_index_result_.IsEmpty() == true);
+
+	  const void * pl_addr = file_data_ + term_index_result_.GetPostingListOffset();
+    size_t zone_bytes = term_index_result_.GetNumPagesInPrefetchZone() * 4 * KB;
+
+    pl_addr = (char *)pl_addr - ((off_t)pl_addr % (4*KB));
+    int ret = madvise((void *) pl_addr, zone_bytes, MADV_RANDOM);
 
     if (ret == -1) {
       perror("Fail to do madvise");

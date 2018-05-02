@@ -321,6 +321,21 @@ class VacuumEngine : public SearchEngineServiceNew {
     if (iterators.size() == 0 || iterators.size() < query.terms.size()) {
       return result;
     }
+    
+    // check prefetch
+    bool prefetch_flag = true;
+    for (auto & it : iterators) {
+      if (it.ShouldPrefetch()==false) {
+        //std::cout << "==== should not prefetch" << std::endl;
+        prefetch_flag = false;
+        break;
+      } 
+    }
+    if (prefetch_flag) {
+      for (auto & it : iterators) {
+        it.Prefetch();
+      }
+    }
 
     // utils::PrintIter<VacuumPostingListIterator, InBagPositionIterator>(
         // iterators[0]);
@@ -343,6 +358,14 @@ class VacuumEngine : public SearchEngineServiceNew {
 
       result.entries.push_back(result_entry);
     }
+
+  
+    // turn off prefetching
+    /*if (prefetch_flag) {
+      for (auto & it : iterators) {
+        it.DisablePrefetch();
+      }
+    }*/
 
     return result;
   }
