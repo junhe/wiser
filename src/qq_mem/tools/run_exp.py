@@ -27,15 +27,15 @@ do_drop_cache = True
 do_block_tracing = False
 qq_mem_folder = "/users/jhe/flashsearch/src/qq_mem"
 user_name = "jhe"
-read_ahead_kb_list = [128]
+read_ahead_kb_list = [32]
 
 
 ######################
 # BOTH Elastic and Vacuum
 ######################
 # engines = [ELASTIC] # ELASTIC or VACUUM
-engines = [ELASTIC] # ELASTIC or VACUUM
-# engines = [VACUUM] # ELASTIC or VACUUM
+# engines = [ELASTIC] # ELASTIC or VACUUM
+engines = [VACUUM] # ELASTIC or VACUUM
 n_server_threads = [25]
 n_client_threads = [128] # client
 mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
@@ -46,8 +46,8 @@ mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [8*GB]
 
 # Make the a pair?
-enable_prefetch_list = [False] # whether to eanble Vaccum to do prefetch
-prefetch_thresholds_kb = [100000] # unit is KB
+enable_prefetch_list = [True] # whether to eanble Vaccum to do prefetch
+prefetch_thresholds_kb = [128] # unit is KB
 
 
 mem_swappiness = 60
@@ -59,6 +59,7 @@ mem_swappiness = 60
 # query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/query_workload/by-doc-freq/type_fiveplus"]
 # query_paths = ["/mnt/ssd/query_workload/single_term/type_single.docfreq_high"]
+# query_paths = glob.glob("/mnt/ssd/query_workload/single_term/type_single.docfreq_high")
 query_paths = glob.glob("/mnt/ssd/query_workload/single_term/*") +\
  glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm") +\
  glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase") +\
