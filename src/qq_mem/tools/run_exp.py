@@ -24,7 +24,7 @@ remote_addr = "node.esquery.spark-pg0.utah.cloudlab.us"
 os_swap = True
 device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
-read_ahead_kb = 4
+read_ahead_kb = 128
 do_drop_cache = True
 do_block_tracing = False
 qq_mem_folder = "/users/kanwu/may/flashsearch/src/qq_mem"
@@ -41,12 +41,13 @@ n_client_threads = [128] # client
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB] # good one
 mem_size_list = [8*GB]
-# mem_size_list = [256*MB, 128*MB]
+# mem_size_list = [512*MB, 256*MB, 128*MB]
 mem_swappiness = 60
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
-query_paths = ["/users/kanwu/test_data/querylog_realistic"]
+# query_paths = ["/users/kanwu/test_data/querylog_realistic"]
 # query_paths = ["/mnt/ssd/short_log"]
+query_paths = ["/mnt/ssd/two_term_phrases/type_phrase"]
 # query_paths = ["/mnt/ssd/querylog_no_repeated.rand"]
 # query_paths = glob.glob("/mnt/ssd/split-log/*")
 lock_memory = ["false"] # must be string
@@ -57,7 +58,7 @@ lock_memory = ["false"] # must be string
 ######################
 search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-little-packed"
 # search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
-profile_qq_server = "false"
+profile_qq_server = "true"
 engine_path = "/users/kanwu/may/flashsearch/src/qq_mem/build/engine_bench"
 
 ######################
