@@ -56,14 +56,14 @@ mem_swappiness = 60
 # query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
 # query_paths = ["/mnt/ssd/query_workload/from_log"]
-query_paths = ["/mnt/ssd/query_workload/type_realistic"]
+# query_paths = ["/mnt/ssd/query_workload/type_realistic"]
 # query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/query_workload/by-doc-freq/type_fiveplus"]
 # query_paths = ["/mnt/ssd/query_workload/single_term/type_single.docfreq_high"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/single_term/type_single.docfreq_high")
 # query_paths = glob.glob("/mnt/ssd/query_workload/single_term/*") +\
- # glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm") +\
- # glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase") +\
+query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm") +\
+ glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
  # ["/mnt/ssd/realistic_querylog"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm")
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
