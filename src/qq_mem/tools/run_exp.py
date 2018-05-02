@@ -63,8 +63,8 @@ mem_swappiness = 60
 # query_paths = glob.glob("/mnt/ssd/query_workload/single_term/type_single.docfreq_high")
 # query_paths = glob.glob("/mnt/ssd/query_workload/single_term/*") +\
 query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm") +\
- glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
- # ["/mnt/ssd/realistic_querylog"]
+ glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase") +\
+ ["/mnt/ssd/realistic_querylog"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm")
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
 lock_memory = ["false"] # must be string
