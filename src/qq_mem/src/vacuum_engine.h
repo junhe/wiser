@@ -322,8 +322,23 @@ class VacuumEngine : public SearchEngineServiceNew {
       return result;
     }
 
-    // utils::PrintIter<VacuumPostingListIterator, InBagPositionIterator>(
-        // iterators[0]);
+
+    if (query.is_phrase == false)  {
+      // check prefetch
+      bool prefetch_flag = true;
+      for (auto & it : iterators) {
+        if (it.ShouldPrefetch() == false) {
+          prefetch_flag = false;
+          break;
+        } 
+      }
+
+      if (prefetch_flag) {
+        for (auto & it : iterators) {
+          it.Prefetch();
+        }
+      }
+    }
 
     auto top_k = qq_search::ProcessQueryDelta
       <VacuumPostingListIterator, InBagPositionIterator>(

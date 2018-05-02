@@ -792,9 +792,6 @@ class VacuumPostingListIterator {
     off_t offset = result.GetPostingListOffset();
     const uint8_t *buf = file_data + offset;
 
-    if (ShouldPrefetch()) 
-      Prefetch();
-
     // first byte is the magic number
     DLOG_IF(FATAL, (buf[0] & 0xFF) != POSTING_LIST_FIRST_BYTE)
       << "Magic number for posting list is wrong: " 
