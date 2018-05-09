@@ -313,10 +313,10 @@ def send_sigint(pid):
     shcmd("bash -c 'sudo kill -SIGINT {}'".format(os.getpgid(pid)))
     # os.killpg(os.getpgid(pid), signal.SIGINT)
 
-def get_iostat_mb_read():
-    out = subprocess.check_output("iostat -m {}".format(partition_name), shell=True)
+def get_iostat_kb_read():
+    out = subprocess.check_output("iostat -k {}".format(partition_name), shell=True)
     print out
-    return parse_iostat(out)['io']['MB_read']
+    return parse_iostat(out)['io']['kB_read']
 
 def create_blktrace_manager(subexpdir):
     return BlockTraceManager(
@@ -647,7 +647,7 @@ class Exp(Experiment):
         time.sleep(15)
 
         wait_engine_port(conf)
-        mb_read_a = get_iostat_mb_read()
+        kb_read_a = get_iostat_kb_read()
 
         # Start block tracing after the server is fully loaded
         if do_block_tracing is True:
@@ -714,17 +714,17 @@ class Exp(Experiment):
             print ">>>>> It has been", seconds, "seconds <<<<<<"
             print "cache_size_log:", cache_size_log
 
-        mb_read_b = get_iostat_mb_read()
+        kb_read_b = get_iostat_kb_read()
 
-        mb_read = int(mb_read_b) - int(mb_read_a)
+        kb_read = int(kb_read_b) - int(kb_read_a)
         print '-' * 30
-        print "MB read: ", mb_read
+        print "KB read: ", kb_read
         print '-' * 30
 
         d = parse_client_output(conf)
         d["cache_mb_obs_median"] = median(cache_size_log)
         d["cache_mb_max"] = max(cache_size_log + [0])
-        d['MB_read'] = mb_read
+        d['KB_read'] = kb_read
 
         filename_dict = parse_filename(conf['query_path'])
 
