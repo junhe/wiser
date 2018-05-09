@@ -165,9 +165,13 @@ def parse_client_output(conf):
         raise RuntimeError
 
 def warmup_elastic():
-    p = start_engine_client("elastic", 1, "/mnt/ssd/query_workload/debug/warmup_log")
-    raw_input("waiting for client to warmup server")
+    # p = start_engine_client("elastic", 1, "/mnt/ssd/query_workload/debug/warmup_log")
+    # raw_input("waiting for client to warmup server")
+    # p.wait()
+    p = start_elastic_pyclient("/mnt/ssd/query_workload/warmup_log")
     p.wait()
+    shcmd("rm -f /tmp/client.out")
+    time.sleep(1)
 
 
 class Cgroup(object):
