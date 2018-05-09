@@ -28,17 +28,18 @@ do_drop_cache = True
 do_block_tracing = False
 qq_mem_folder = "/users/jhe/flashsearch/src/qq_mem"
 user_name = "jhe"
-read_ahead_kb_list = [32]
+read_ahead_kb_list = [0]
 
 
 ######################
 # BOTH Elastic and Vacuum
 ######################
 # engines = [ELASTIC] # ELASTIC or VACUUM
-engines = [ELASTIC_PY] # ELASTIC or VACUUM
-# engines = [VACUUM] # ELASTIC or VACUUM
-n_server_threads = [25]
-n_client_threads = [128] # client
+# engines = [ELASTIC_PY, VACUUM] # ELASTIC or VACUUM
+# engines = [ELASTIC_PY] # ELASTIC or VACUUM
+engines = [VACUUM] # ELASTIC or VACUUM
+n_server_threads = [1]
+n_client_threads = [1] # client
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [8*GB, 4*GB]
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
@@ -47,7 +48,7 @@ n_client_threads = [128] # client
 mem_size_list = [8*GB]
 
 # Make the a pair?
-enable_prefetch_list = [True] # whether to eanble Vaccum to do prefetch
+enable_prefetch_list = [False] # whether to eanble Vaccum to do prefetch
 prefetch_thresholds_kb = [128] # unit is KB
 
 
@@ -58,7 +59,7 @@ mem_swappiness = 60
 # query_paths = ["/mnt/ssd/realistic_querylog"]
 # query_paths = ["/mnt/ssd/query_workload/from_log"]
 # query_paths = ["/mnt/ssd/query_workload/type_realistic"]
-query_paths = ["/mnt/ssd/short_log"]
+# query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/query_workload/by-doc-freq/type_fiveplus"]
 # query_paths = ["/mnt/ssd/query_workload/single_term/type_single.docfreq_high"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/single_term/type_single.docfreq_high")
@@ -67,6 +68,9 @@ query_paths = ["/mnt/ssd/short_log"]
  # glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase") +\
  # ["/mnt/ssd/query_workload/type_realistic"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm")
+# query_paths = glob.glob("/mnt/ssd/query_workload/tmp/head_10")
+# query_paths = glob.glob("/mnt/ssd/query_workload/tmp/seq_*")
+query_paths = glob.glob("/mnt/ssd/query_workload/tmp/myterm_bodi")
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
 lock_memory = ["false"] # must be string
 
@@ -684,6 +688,12 @@ class Exp(Experiment):
         time.sleep(15)
 
         wait_engine_port(conf)
+
+        raw_input("port is ready")
+
+        if conf['engine'] in (ELASTIC_PY, ELASTIC):
+            warmup_elastic()
+
         kb_read_a = get_iostat_kb_read()
 
         # Start block tracing after the server is fully loaded

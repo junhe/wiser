@@ -322,7 +322,6 @@ class VacuumEngine : public SearchEngineServiceNew {
       return result;
     }
 
-
     if (query.is_phrase == false)  {
       // check prefetch
       bool prefetch_flag = true;
@@ -338,6 +337,11 @@ class VacuumEngine : public SearchEngineServiceNew {
           it.Prefetch();
         }
       }
+    }
+
+    std::cout << "#############################################################\n";
+    for (auto & it : iterators) {
+      std::cout << "Number of postings: " << it.Size() << std::endl;
     }
 
     auto top_k = qq_search::ProcessQueryDelta
