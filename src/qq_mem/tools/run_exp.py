@@ -13,6 +13,7 @@ import glob
 import pprint
 
 ELASTIC = "elastic"
+ELASTIC_PY = "elasticpy"
 VACUUM = "vacuum"
 
 ######################
@@ -34,16 +35,16 @@ read_ahead_kb_list = [32]
 # BOTH Elastic and Vacuum
 ######################
 # engines = [ELASTIC] # ELASTIC or VACUUM
-# engines = [ELASTIC] # ELASTIC or VACUUM
-engines = [VACUUM] # ELASTIC or VACUUM
+engines = [ELASTIC_PY] # ELASTIC or VACUUM
+# engines = [VACUUM] # ELASTIC or VACUUM
 n_server_threads = [25]
 n_client_threads = [128] # client
-mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
+# mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [8*GB, 4*GB]
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [256*MB]
-# mem_size_list = [8*GB]
+mem_size_list = [8*GB]
 
 # Make the a pair?
 enable_prefetch_list = [True] # whether to eanble Vaccum to do prefetch
@@ -57,14 +58,14 @@ mem_swappiness = 60
 # query_paths = ["/mnt/ssd/realistic_querylog"]
 # query_paths = ["/mnt/ssd/query_workload/from_log"]
 # query_paths = ["/mnt/ssd/query_workload/type_realistic"]
-# query_paths = ["/mnt/ssd/short_log"]
+query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/query_workload/by-doc-freq/type_fiveplus"]
 # query_paths = ["/mnt/ssd/query_workload/single_term/type_single.docfreq_high"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/single_term/type_single.docfreq_high")
 # query_paths = glob.glob("/mnt/ssd/query_workload/single_term/*") +\
-query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm") +\
- glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase") +\
- ["/mnt/ssd/query_workload/type_realistic"]
+# query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm") +\
+ # glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase") +\
+ # ["/mnt/ssd/query_workload/type_realistic"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm")
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
 lock_memory = ["false"] # must be string
@@ -158,6 +159,8 @@ def parse_client_output(conf):
         return ElasticClientOutput().parse_client_out("/tmp/client.out")
     elif conf['engine'] == VACUUM:
         return VacuumClientOutput().parse_client_out("/tmp/client.out")
+    elif conf['engine'] == ELASTIC_PY:
+        return {}
     else:
         raise RuntimeError
 
@@ -253,6 +256,8 @@ def wait_for_open_port(proc_name):
 
 def wait_engine_port(conf):
     if conf['engine'] == ELASTIC:
+        wait_for_open_port("java")
+    elif conf['engine'] == ELASTIC_PY:
         wait_for_open_port("java")
     elif conf['engine'] == VACUUM:
         wait_for_open_port("qq_server")
@@ -408,8 +413,22 @@ def compile_engine_bench():
 def start_engine_client(engine, n_threads, query_path):
     if engine == ELASTIC:
         return start_elastic_client(n_threads, query_path)
+    elif engine == ELASTIC_PY:
+        return start_elastic_pyclient(query_path)
     elif engine == VACUUM:
         return start_vacuum_client(n_threads, query_path)
+
+def start_elastic_pyclient(query_path):
+    print "-" * 20
+    print "starting client ..."
+    print "-" * 20
+    cmd = "sudo python benchmarks/es_client.py {path}"\
+            .format(path=query_path)
+
+    f = open("/tmp/client.out", "w")
+    with cd(rs_bench_go_path):
+        return subprocess.Popen(cmd, shell=True, stdout = f, stderr = f)
+
 
 def start_elastic_client(n_threads, query_path):
     print "-" * 20
@@ -444,6 +463,8 @@ def print_client_output_tail():
 def is_client_running(conf):
     if conf['engine'] == ELASTIC:
         return is_elastic_client_running()
+    elif conf['engine'] == ELASTIC_PY:
+        return is_elastic_pyclient_running()
     elif conf['engine'] == VACUUM:
         return is_vacuum_client_running()
     else:
@@ -462,9 +483,16 @@ def is_elastic_client_running():
     return int(out) > 2 # one of them is the grep
 
 
+def is_elastic_pyclient_running():
+    p = remote_cmd("ps -ef|grep es_client|wc -l", subprocess.PIPE)
+    out = p.communicate()[0]
+    print out
+    return int(out) > 2 # one of them is the grep
+
+
 def is_client_finished():
     out = subprocess.check_output("tail -n 1 /tmp/client.out", shell=True)
-    print "check out: ", out
+    print "------> Contents of client.out: ", out
     if "ExperimentFinished!!!" in out:
         return True
     else:
@@ -490,6 +518,7 @@ def kill_client():
     p.wait()
     p = remote_cmd("sudo pkill engine_bench")
     p.wait()
+    shcmd("sudo pkill es_client.py", ignore_error = True)
 
 def kill_server():
     shcmd("sudo pkill qq_server", ignore_error=True)
@@ -501,6 +530,8 @@ def copy_client_out():
 
 def start_engine_server(conf):
     if conf['engine'] == ELASTIC:
+        return start_elastic_server(conf)
+    elif conf['engine'] == ELASTIC_PY:
         return start_elastic_server(conf)
     elif conf['engine'] == VACUUM:
         return start_vacuum_server(conf)
@@ -557,7 +588,7 @@ def start_elastic_server(conf):
     return p
 
 def is_engine_server_running(conf):
-    if conf['engine'] == ELASTIC:
+    if conf['engine'] in (ELASTIC, ELASTIC_PY):
         return is_command_running("/usr/lib/jvm/java-8-oracle/bin/java")
     elif conf['engine'] == VACUUM:
         return is_command_running("./build/qq_server")
@@ -623,10 +654,12 @@ class Exp(Experiment):
         time.sleep(1)
         shcmd("rm -f /tmp/client.out")
 
-        if conf['engine'] == 'elastic':
+        if conf['engine'] == ELASTIC:
             set_es_yml(conf)
             set_jvm_options(conf)
-        elif conf['engine'] == 'vacuum':
+        elif conf['engine'] == VACUUM:
+            pass
+        elif conf['engine'] == ELASTIC_PY:
             pass
         else:
             raise RuntimeError("Wrong engine")
@@ -681,8 +714,9 @@ class Exp(Experiment):
             is_running = is_client_running(conf)
             if is_running is False:
                 sys.stdout.flush()
+                kill_client() # hoping the client output will be flushed
                 print "Wait for the client to flush stdout........"
-                time.sleep(1)
+                time.sleep(30)
 
             finished = is_client_finished()
             print "is_client_finished()", finished
@@ -722,7 +756,10 @@ class Exp(Experiment):
         print '-' * 30
 
         d = parse_client_output(conf)
-        d["cache_mb_obs_median"] = median(cache_size_log)
+        if len(cache_size_log) == 0:
+            d["cache_mb_obs_median"] = "NA"
+        else:
+            d["cache_mb_obs_median"] = median(cache_size_log)
         d["cache_mb_max"] = max(cache_size_log + [0])
         d['KB_read'] = kb_read
 
