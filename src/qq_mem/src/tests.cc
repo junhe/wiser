@@ -75,6 +75,7 @@ TEST_CASE( "Compressed Doc Store", "[docstore]" ) {
     REQUIRE(store.Has(doc_id) == false);
 
     store.Add(doc_id, doc);
+    REQUIRE(store.Size() == 1);
     REQUIRE(store.Get(doc_id) == doc);
 
     store.Add(89, "doc89");

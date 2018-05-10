@@ -223,7 +223,33 @@ class SimpleDocStore {
 };
 
 
-class CompressedDocStore {
+class DocStoreBase {
+ public:
+	void Remove(int id) {
+		store_.erase(id);
+	}
+
+	bool Has(int id) {
+		return store_.count(id) == 1;
+	}
+
+	void Clear() {
+		store_.clear();
+	}
+
+	int Size() const {
+		return store_.size();
+	}
+
+	virtual void Add(int id, const std::string document) = 0;
+	virtual const std::string Get(int id) = 0;
+
+ protected:
+	std::map<int, std::string> store_;  
+};
+
+
+class CompressedDocStore :public DocStoreBase {
  public:
 	CompressedDocStore() {
     buffer_ = (char *) malloc(buffer_size_);
@@ -233,7 +259,7 @@ class CompressedDocStore {
     free(buffer_);
   }
 
-	void Add(int id, const std::string document) {
+	void Add(int id, const std::string document) override {
     const int compressed_data_size = 
       LZ4_compress_default(document.c_str(), buffer_, document.size(), buffer_size_);
 
@@ -243,15 +269,8 @@ class CompressedDocStore {
     store_[id] = std::string(buffer_, compressed_data_size);
 	}
 
-	void Remove(int id) {
-		store_.erase(id);
-	}
-
-	bool Has(int id) {
-		return store_.count(id) == 1;
-	}
-
-	const std::string Get(int id) {
+  // WARNING: not thread-safe
+	const std::string Get(int id) override {
 		auto &compressed_str = store_[id];
 		const char *compressed_data = compressed_str.c_str();
     const int decompressed_size = 
@@ -262,14 +281,6 @@ class CompressedDocStore {
     }
     
     return std::string(buffer_, decompressed_size);
-	}
-
-	void Clear() {
-		store_.clear();
-	}
-
-	int Size() const {
-		return store_.size();
 	}
 
   static std::string SerializeEntry(const int doc_id, 
@@ -348,7 +359,6 @@ class CompressedDocStore {
   }
 
  protected:
-	std::map<int,std::string> store_;  
   char *buffer_;
   static const int buffer_size_ = 1024*1024;
 

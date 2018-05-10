@@ -210,6 +210,7 @@ void CheckCompression(std::string text) {
   REQUIRE(text == decompressed);
 }
 
+
 std::string GetRandomText(int n) {
   srand(0);
   std::string ret(n, '0');
@@ -219,6 +220,7 @@ std::string GetRandomText(int n) {
   }
   return ret;
 }
+
 
 TEST_CASE( "Compress and decompress using small buffer", "[doc_store]" ) {
   SECTION("Simple") {
@@ -237,7 +239,5 @@ TEST_CASE( "Compress and decompress using small buffer", "[doc_store]" ) {
     CheckCompression(GetRandomText(1*MB));
   }
 }
-
-
 
 
