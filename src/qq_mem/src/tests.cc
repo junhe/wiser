@@ -14,7 +14,6 @@
 
 #include "doc_store.h"
 #include "utils.h"
-#include "hash_benchmark.h"
 #include "grpc_server_impl.h"
 #include "qq_mem_engine.h"
 
@@ -215,21 +214,6 @@ TEST_CASE( "boost library is usable", "[boost]" ) {
     }
 }
 
-TEST_CASE( "Hash benchmark", "[benchmark]" ) {
-    STLHash stl_hash;
-
-    for (std::size_t i = 0; i < 100; i++) {
-        stl_hash.Put(std::to_string(i), std::to_string(i * 100));
-    }
-
-    for (std::size_t i = 0; i < 100; i++) {
-        std::string v = stl_hash.Get(std::to_string(i));
-        REQUIRE(v == std::to_string(i * 100)); 
-    }
-
-    REQUIRE(stl_hash.Size() == 100);
-
-}
 
 TEST_CASE( "Offsets Parser essential operations are OK", "[offsets_parser]" ) {
     std::string offsets = "1,2;.3,4;5,6;.7,8;.";

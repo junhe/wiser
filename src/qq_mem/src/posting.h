@@ -41,10 +41,10 @@ class PostingSimple : public QqMemPostingService {
 
 class StandardPosting: public QqMemPostingService {
  protected:
-  OffsetPairs offset_pairs_;
-  Positions positions_;
   int doc_id_;
   int term_frequency_;
+  OffsetPairs offset_pairs_;
+  Positions positions_;
 
  public:
   StandardPosting(){}

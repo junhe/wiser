@@ -345,7 +345,7 @@ class DeltaEncodedPackedIntsIterator {
     }
   }
 
-  void SkipForward(uint64_t val) {
+  void SkipForward(long val) {
     while (IsEnd() == false && Value() < val) {
       Advance();
     }

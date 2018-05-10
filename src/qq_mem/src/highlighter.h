@@ -349,11 +349,11 @@ class SimpleHighlighter {
         if (passage->startoffset >= 0) {
           passage->score = passage->score * passage_norm(passage->startoffset); //normalize according to passage's startoffset
           //if (passage_queue.size() == maxPassages && passage->score <= passage_queue.top()->score) {
-          if (passage_queue.size() == maxPassages && passage->score <= min_score) {
+          if (passage_queue.size() == (std::size_t)maxPassages && passage->score <= min_score) {
             passage->reset();
           } else {
             passage_queue.push(passage);
-            if (passage_queue.size() > maxPassages) {
+            if (passage_queue.size() > (std::size_t) maxPassages) {
               passage = passage_queue.top();
               passage_queue.pop();
               passage->reset();
@@ -400,7 +400,7 @@ class SimpleHighlighter {
     passage->score = passage->score * passage_norm(passage->startoffset);
     if (passage->score > 0) {
     //if (passage_queue.size() < maxPassages && passage->score > 0) {
-    if (passage_queue.size() < maxPassages) {
+    if (passage_queue.size() < (std::size_t) maxPassages) {
       passage_queue.push(passage);
     } else {
       //if (passage->score > passage_queue.top()->score) {

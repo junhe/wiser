@@ -4,7 +4,7 @@
 NUM_CORES=8
 
 all:
-	./build.sh
+	./build.sh 2>&1 | tee build.log
 
 hash_benchmark:
 	./build.sh

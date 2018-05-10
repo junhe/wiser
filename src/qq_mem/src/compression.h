@@ -89,8 +89,8 @@ class VarintIterator: public PopIteratorService {
      cur_offset_(0), count_(count) {}
 
   VarintIterator(const VarintIterator &rhs)
-    :data_(rhs.data_), cur_offset_(rhs.cur_offset_), index_(rhs.index_),
-     start_offset_(rhs.start_offset_), count_(rhs.count_)
+    :data_(rhs.data_), index_(rhs.index_),  
+     start_offset_(rhs.start_offset_), cur_offset_(rhs.cur_offset_), count_(rhs.count_)
   {}
 
   VarintIterator& operator=(const VarintIterator &rhs) {
@@ -121,9 +121,9 @@ class VarintIterator: public PopIteratorService {
 
  private:
   const char *data_;
-  int cur_offset_; 
   int index_ = 0;
   int start_offset_;
+  int cur_offset_; 
   int count_;
 };
 

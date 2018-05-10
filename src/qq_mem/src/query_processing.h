@@ -54,7 +54,7 @@ class PositionInfoArray {
 
   PositionInfoArray CompactCopy() const {
     PositionInfoArray ret(next_);
-    for (int i = 0; i < next_; i++) {
+    for (std::size_t i = 0; i < next_; i++) {
       ret.Append(arr_[i].pos, arr_[i].term_appearance);
     }
     return ret;
@@ -75,7 +75,7 @@ class PositionInfoArray {
 
  private:
   std::vector<PositionInfo> arr_;
-  int next_ = 0;
+  std::size_t next_ = 0;
 };
 
 
@@ -140,14 +140,14 @@ class PositionInfoTable2 {
     }
   }
 
-  void Append(const int i, const int pos, const int term_appearance) {
+  void Append(const std::size_t i, const int pos, const int term_appearance) {
     if (i >= rows_.size()) {
       rows_.resize(i + 1);
     }
     rows_[i].Append(pos, term_appearance);
   }
 
-  const PositionInfoArray &operator[](const int i) const {
+  const PositionInfoArray &operator[](const std::size_t i) const {
     return rows_[i];
   }
 

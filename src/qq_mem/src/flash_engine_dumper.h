@@ -87,7 +87,7 @@ inline void DecodePrefetchZoneAndOffset(
 
 inline std::vector<uint32_t> GetSkipPostingPreDocIds(const std::vector<uint32_t> &doc_ids) {
   std::vector<uint32_t> skip_pre_doc_ids{0}; // the first is always 0
-  for (int skip_posting_i = SKIP_INTERVAL; 
+  for (std::size_t skip_posting_i = SKIP_INTERVAL; 
       skip_posting_i < doc_ids.size(); 
       skip_posting_i += SKIP_INTERVAL) 
   {
@@ -199,7 +199,7 @@ class GeneralTermEntry {
       }
     }
     
-    for (int i = n_packs * pack_size; i < vals.size(); i++) {
+    for (std::size_t i = n_packs * pack_size; i < vals.size(); i++) {
       vints.Append(vals[i]);
     }
 
@@ -276,7 +276,7 @@ class FileOffsetsOfBlobs {
     if (a.pack_offs_.size() != b.pack_offs_.size())
       return false;
 
-    for (int i = 0; i < a.pack_offs_.size(); i++) {
+    for (std::size_t i = 0; i < a.pack_offs_.size(); i++) {
       if (a.pack_offs_[i] != b.pack_offs_[i]) {
         return false;
       }
@@ -285,7 +285,7 @@ class FileOffsetsOfBlobs {
     if (a.vint_offs_.size() != b.vint_offs_.size())
       return false;
 
-    for (int i = 0; i < a.vint_offs_.size(); i++) {
+    for (std::size_t i = 0; i < a.vint_offs_.size(); i++) {
       if (a.vint_offs_[i] != b.vint_offs_[i]) {
         return false;
       }
@@ -585,7 +585,7 @@ class FileOffsetOfSkipPostingBags {
     }
   }
 
-  int Size() const {
+  std::size_t Size() const {
     return locations_.size();
   }
 
@@ -647,7 +647,6 @@ class SkipListWriter {
  private:
   void AddRow(VarintBuffer *buf, int i, 
       const std::vector<uint32_t> skip_pre_doc_ids) {
-    int start_size = buf->Size();
 
     buf->Append(skip_pre_doc_ids[i] - pre_row_.pre_doc_id);
     buf->Append(docid_offs_[i].file_offset_of_blob - pre_row_.doc_id_blob_off);
@@ -663,10 +662,6 @@ class SkipListWriter {
     pre_row_.tf_blob_off = tf_offs_[i].file_offset_of_blob;
     pre_row_.pos_blob_off = pos_offs_[i].file_offset_of_blob;
     pre_row_.off_blob_off = off_offs_[i].file_offset_of_blob;
-
-    int end_size = buf->Size();
-
-    // std::cout << end_size - start_size << ",";
   }
 
   SkipListPreRow pre_row_;
@@ -736,7 +731,7 @@ class SkipList {
     // byte 1 + len is the start of skip list entries
     VarintIterator it((const char *)buf, 1 + len, num_entries);
 
-    for (int entry_i = 0; entry_i < num_entries; entry_i++) {
+    for (uint32_t entry_i = 0; entry_i < num_entries; entry_i++) {
       uint32_t previous_doc_id = it.Pop() + pre_row.pre_doc_id;
       off_t file_offset_of_docid_bag = it.Pop() + pre_row.doc_id_blob_off;
       off_t file_offset_of_tf_bag = it.Pop() + pre_row.tf_blob_off;
@@ -981,7 +976,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
     // Dump skip list
     off_t skip_list_start = index_dumper_.CurrentOffset();
-    int skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
+    std::size_t skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
 
     // Dump doc id, term freq, ...
     ResultOfDumpingTermEntrySet real_result = DumpTermEntrySet( 
@@ -1179,14 +1174,15 @@ class FlashEngineDumper {
   }
 
  private:
-  int next_doc_id_ = 0;
-  std::string dump_dir_path_;
 
   FlashDocStoreDumper doc_store_;
   VacuumInvertedIndexDumper inverted_index_;
   DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
+
+  int next_doc_id_ = 0;
+  std::string dump_dir_path_;
 
   int NextDocId() {
     return next_doc_id_++;

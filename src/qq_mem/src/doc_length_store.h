@@ -16,7 +16,7 @@
 class DocLengthStore {
  public:
   void AddLength(const DocIdType &doc_id, const int &length) {
-    if (doc_id >= vec_store_.size()) {
+    if ((std::size_t) doc_id >= vec_store_.size()) {
       vec_store_.resize(doc_id + 1, -1);
       vec_char_store_.resize(doc_id + 1, 0);
     }
@@ -69,11 +69,8 @@ class DocLengthStore {
 
   void Deserialize(std::string path) {
     int fd;
-    int len;
     char *addr;
     size_t file_length;
-    uint32_t var;
-    off_t offset = 0;
 
     avg_length_ = 0;
 
@@ -148,8 +145,9 @@ class DocLengthCharStore {
 
     int count = vec_char_store_.size();
     ret = write(fd, &count, sizeof(int));
+    assert(ret == sizeof(int));
     ret = write(fd, &avg_length_, sizeof(qq_float));
-
+    assert(ret == sizeof(qq_float));
 
     for (int doc_id = 0; doc_id < count; doc_id++) {
       ret = write(fd, (char *)&doc_id, sizeof(int));
@@ -192,7 +190,7 @@ class DocLengthCharStore {
   }
 
   void Show() {
-    for (int i = 0; i < vec_char_store_.size() && i < 100; i++) {
+    for (std::size_t i = 0; i < vec_char_store_.size() && i < 100; i++) {
       std::cout << "docid: " << i << " len: " << GetDecodedLength(i) << "; ";
     }
     std::cout << std::endl;
@@ -200,7 +198,7 @@ class DocLengthCharStore {
 
  private:
   void AddCharLength(const DocIdType doc_id, const char length) {
-    if (doc_id >= vec_char_store_.size()) {
+    if ((std::size_t) doc_id >= vec_char_store_.size()) {
       vec_char_store_.resize(doc_id + 1, 0);
     }
 
