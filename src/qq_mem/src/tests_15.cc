@@ -33,7 +33,7 @@ TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
     SearchResult result = engine.Search(SearchQuery({"a"}, true));
     REQUIRE(result.Size() == 3);
 
-    for (int i = 0; i < result.Size(); i++) {
+    for (std::size_t i = 0; i < result.Size(); i++) {
       if (result[i].doc_id == 0) {
         REQUIRE(result[i].snippet == ""); //TODO: this should be fixed
       } else if (result[i].doc_id == 1) {
@@ -46,7 +46,7 @@ TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
     result = engine.Search(SearchQuery({"b"}, true));
     REQUIRE(result.Size() == 2);
 
-    for (int i = 0; i < result.Size(); i++) {
+    for (std::size_t i = 0; i < result.Size(); i++) {
       if (result[i].doc_id == 1) {
         // REQUIRE(result[i].snippet == "a <b>b <\\b>\n"); //Failed. TODO
       } else if (result[i].doc_id == 2) {
@@ -245,7 +245,7 @@ TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
     SearchResult result = engine.Search(SearchQuery({"a"}, true));
     REQUIRE(result.Size() == 3);
 
-    for (int i = 0; i < result.Size(); i++) {
+    for (std::size_t i = 0; i < result.Size(); i++) {
       if (result[i].doc_id == 0) {
         REQUIRE(result[i].snippet == ""); //TODO: this should be fixed
       } else if (result[i].doc_id == 1) {
@@ -258,7 +258,7 @@ TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
     result = engine.Search(SearchQuery({"b"}, true));
     REQUIRE(result.Size() == 2);
 
-    for (int i = 0; i < result.Size(); i++) {
+    for (std::size_t i = 0; i < result.Size(); i++) {
       if (result[i].doc_id == 1) {
         // REQUIRE(result[i].snippet == "a <b>b <\\b>\n"); //Failed. TODO
       } else if (result[i].doc_id == 2) {

@@ -172,7 +172,7 @@ TEST_CASE( "Little packed ints", "[pack]" ) {
 void CheckEncoding(uint32_t n_pages, off_t pl_offset) {
   uint32_t n_pages_decoded;
   off_t pl_offset_decoded;
-  off_t off_in_index = 
+  off_t off_in_index;
     
   off_in_index = EncodePrefetchZoneAndOffset(n_pages, pl_offset);
   DecodePrefetchZoneAndOffset(off_in_index, &n_pages_decoded, &pl_offset_decoded);

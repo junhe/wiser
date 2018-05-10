@@ -162,7 +162,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       REQUIRE((data[0] & 0xFF) == PACK_FIRST_BYTE); // the header
       REQUIRE(data[1] == 1); // num bits
-      for (int i = 2; i < data.size(); i++) {
+      for (std::size_t i = 2; i < data.size(); i++) {
         REQUIRE(data[i] == 0);
       }
     }
@@ -178,7 +178,7 @@ TEST_CASE( "PackedInts", "[qqflash]" ) {
 
       REQUIRE((data[0] & 0xFF) == PACK_FIRST_BYTE); // the header
       REQUIRE(data[1] == 1); // the header
-      for (int i = 2; i < data.size(); i++) {
+      for (std::size_t i = 2; i < data.size(); i++) {
         REQUIRE(data[i] == (char)0xff);
       }
     }

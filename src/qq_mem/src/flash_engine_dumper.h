@@ -1074,7 +1074,7 @@ class FlashEngineDumper {
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
       int n_rows, const std::string format) {
-    int ret;
+    int ret = 0;
     std::unique_ptr<LineDocParserService> parser;
 
     if (format == "TOKEN_ONLY") {

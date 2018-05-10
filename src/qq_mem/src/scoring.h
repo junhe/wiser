@@ -171,9 +171,8 @@ inline qq_float CalcDocScoreForOneQuery(
 {
   qq_float final_doc_score = 0;
 
-  for (int list_i = 0; list_i < pl_iterators.size(); list_i++) {
+  for (std::size_t list_i = 0; list_i < pl_iterators.size(); list_i++) {
     // calc score of a term in one loop
-
     const int cur_term_freq = pl_iterators[list_i].TermFreq(); 
 
     qq_float idf = idfs_of_terms[list_i];
