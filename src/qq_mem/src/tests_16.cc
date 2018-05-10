@@ -200,17 +200,43 @@ TEST_CASE( "Encoding prefetch zone and posting list start", "[dump00]" ) {
 }
 
 
+void CheckCompression(std::string text) {
+  const std::size_t buf_size = 16 * KB;
+  // const std::size_t buf_size = 16;
+  char *buf = (char *) malloc(buf_size);
 
+  std::string compressed = CompressText(text, buf, buf_size); 
+  std::string decompressed = DecompressText(compressed.data(), buf, buf_size);
+  REQUIRE(text == decompressed);
+}
 
+std::string GetRandomText(int n) {
+  srand(0);
+  std::string ret(n, '0');
+  for (int i = 0; i < n; i++) {
+    char ch = rand() % 128;
+    ret[i] = ch; 
+  }
+  return ret;
+}
 
-
-
-
-
-
-
-
-
+TEST_CASE( "Compress and decompress using small buffer", "[doc_store]" ) {
+  SECTION("Simple") {
+    CheckCompression("Hello!");
+    CheckCompression("H");
+    CheckCompression("hello world is a program that does some output.");
+  }
+  
+  SECTION("Large ones") {
+    CheckCompression(GetRandomText(100));
+    CheckCompression(GetRandomText(1000));
+    CheckCompression(GetRandomText(10000));
+    CheckCompression(GetRandomText(100000));
+    CheckCompression(GetRandomText(100*KB));
+    CheckCompression(GetRandomText(600*KB));
+    CheckCompression(GetRandomText(1*MB));
+  }
+}
 
 
 

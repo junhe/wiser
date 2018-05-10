@@ -160,6 +160,24 @@ target_link_libraries(testmain
     ${GLOG_LIB}
 )
 
+add_executable( testlast
+    tests.cc 
+    tests_16.cc
+    test_helpers.cc
+    grpc_client_impl.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+    $<TARGET_OBJECTS:CatchMain> catch.hpp )
+target_link_libraries(testlast
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${QQ_LIBS}
+    ${GLOG_LIB}
+)
+
+
+
 
 #######################################
 # For benchmarks

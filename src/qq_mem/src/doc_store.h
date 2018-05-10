@@ -23,6 +23,99 @@
 #define handle_error(msg) \
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
+
+namespace {
+
+// text_len and buf size must be not larger than 16*1024
+inline std::string CompressBoundedText(
+    const char *text, std::size_t text_len, char *buf, std::size_t buf_size) {
+  const int compressed_data_size = 
+    LZ4_compress_default(text, buf, text_len, buf_size);
+
+  if (compressed_data_size <= 0)
+    LOG(FATAL) << "Failed to compresse";
+
+  return std::string(buf, compressed_data_size);
+}
+
+inline std::string EncodeHeader(std::vector<std::size_t> chunk_sizes) {
+  VarintBuffer header;
+  header.Append(chunk_sizes.size()); // number of chunks
+  for (auto &size : chunk_sizes) {
+    header.Append(size);
+  }
+
+  return header.Data();
+}
+
+// 128*16*KB=2*MB
+using chunk_sizes_t = std::array<std::size_t, 128>;
+
+inline std::size_t DecodeHeader(
+    std::size_t *n_chunks, chunk_sizes_t *chunk_sizes, const char *buf) 
+{
+  VarintIteratorUnbounded it(buf); // we actually do not know the end, just use 
+  *n_chunks = it.Pop();  
+  for (std::size_t i = 0; i < *n_chunks; i++) {
+    (*chunk_sizes)[i] = it.Pop();
+  }
+
+  return it.CurOffset();
+}
+
+} // namespace
+
+
+// Format:
+// n_chunks:chunk_sz1:chunk_sz2:..:chunk_szN:chunk1:chunk2:...:chunkN
+//
+// buf_size should not be too small. It should be larger than 4KB
+inline std::string CompressText(
+    const std::string &text, char *buf, std::size_t buf_size) {
+  std::size_t n_bytes_left = text.size();  
+  const char *data = text.data();
+  std::vector<std::size_t> chunk_sizes;
+  std::string chunk_data;
+
+  while (n_bytes_left > 0) {
+    std::size_t text_len = std::min(n_bytes_left, buf_size / 2);
+    std::string chunk = CompressBoundedText(data, text_len, buf, buf_size);
+    chunk_sizes.push_back(chunk.size());
+    chunk_data += chunk;
+
+    data += text_len;
+    n_bytes_left -= text_len;
+  }
+
+  return EncodeHeader(chunk_sizes) + chunk_data;
+}
+
+inline std::string DecompressText(
+    const char *compressed, char *buf, std::size_t buf_size) {
+  chunk_sizes_t chunk_sizes; 
+  std::size_t n_chunks;
+  std::string text;
+
+  int chunk_start = DecodeHeader(&n_chunks, &chunk_sizes, compressed);
+  const char *chunk = compressed + chunk_start;
+
+  for (std::size_t i = 0; i < n_chunks; i++) {
+    const int decompressed_size = 
+      LZ4_decompress_safe(chunk, buf, chunk_sizes[i], buf_size);
+
+    if (decompressed_size < 0) {
+      LOG(FATAL) << "Failed to decompresse."; 
+    }
+
+    chunk += chunk_sizes[i];
+    text += std::string(buf, decompressed_size);
+  }
+
+  return text;
+}
+
+
+
 class SimpleDocStore {
  private:
 	std::map<int,std::string> store_;  

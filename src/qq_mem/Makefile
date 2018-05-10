@@ -136,6 +136,24 @@ test_args:
 	cd ..
 	./build/testmain ${args}
 
+test_last:
+	rm -f ./build/testlast
+	mkdir -p ./build
+	cd build
+	cmake ../src/
+	make -j${NUM_CORES} testlast
+	cd ..
+	./build/testlast '~[grpc]~[slow]'
+
+test_last_args:
+	rm -f ./build/testlast
+	mkdir -p ./build
+	cd build
+	cmake ../src/
+	make -j${NUM_CORES} testlast
+	cd ..
+	./build/testmain ${args}
+
 test_qqflash:
 	rm -f ./build/testmain
 	mkdir -p ./build
