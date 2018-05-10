@@ -12,7 +12,6 @@
 #include <cereal/types/vector.hpp>
 #include <cereal/types/utility.hpp>
 #include <cereal/archives/binary.hpp>
-#include "lrucache.h"
 #include <lz4.h>
 
 #include "engine_services.h"

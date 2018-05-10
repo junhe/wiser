@@ -73,7 +73,6 @@ set(ENGINE_SRCS
     flash_iterators.cc
     scoring.cc
     highlighter.cc
-    flashreader.cc
     )
 
 set(QQ_LIBS

@@ -24,8 +24,6 @@
 
 #include "highlighter.h"
 
-#include "lrucache.h"
-
 // cereal
 #include <cereal/archives/binary.hpp>
 
@@ -275,59 +273,6 @@ TEST_CASE( "SentenceBreakIterator essential operations are OK", "[sentence_break
     REQUIRE(breakiterator.getEndOffset() == 39);
     REQUIRE(breakiterator.next(40) == 0);
 }
-
-
-TEST_CASE( "LRUCache Template essential put/get opeartions are OK", "[put_get_LRUCache]") {
-    // create cache
-    cache::lru_cache<int, int> cache_lru(1);
-
-    // put/get test
-    cache_lru.put(7, 777);
-    REQUIRE(cache_lru.exists(7) == true);
-    REQUIRE(777 == cache_lru.get(7));
-    REQUIRE(1 == cache_lru.size());
-
-    // miss
-    REQUIRE(cache_lru.exists(17) == false);
-    REQUIRE_THROWS_AS(cache_lru.get(17), std::range_error);
-}
-
-TEST_CASE( "LRUCache Template essential Capacity limited  opeartions are OK", "[capacity_LRUCache]") {
-    // create cache
-    cache::lru_cache<int, int> cache_lru(10);
-
-    for (int i = 0; i < 20; ++i) {
-        cache_lru.put(i, i);
-    }
-
-    for (int i = 0; i < 10; ++i) {
-        REQUIRE(cache_lru.exists(i) == false);
-    }
-
-    for (int i = 10; i < 20; ++i) {
-        REQUIRE(cache_lru.exists(i) == true);
-        REQUIRE(i == cache_lru.get(i));
-    }
-
-    REQUIRE(cache_lru.size() == 10);
-}
-
-TEST_CASE( "Flash based LRUCache Template essential put/get opeartions are OK", "[put_get_LRUCache_Flash]") {
-    // create cache
-    cache::lru_flash_cache<int, std::string> cache_lru(1, "src/testdata/flash_cache_test");
-
-    // put/get test
-    cache_lru.put(7, "hello world");
-    REQUIRE(cache_lru.exists(7) == true);
-    std::string s("hello world");
-    //REQUIRE( cache_lru.get(7).compare(s) == 0);
-    REQUIRE(1 == cache_lru.size());
-
-    // miss
-    REQUIRE(cache_lru.exists(17) == false);
-    REQUIRE_THROWS_AS(cache_lru.get(17), std::range_error);
-}
-
 
 TEST_CASE("String to char *, back to string works", "[String_To_Char*]") {
     std::string test_str= "hello world";
