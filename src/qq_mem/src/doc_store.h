@@ -434,15 +434,16 @@ class AlignedFlashDocStore {
     // TODO different startoffset
     long int start_off = offset_store_[id]/2;
     if (offset_store_[id] % 2 == 1) {  // was aligned
-      start_off = start_off + 4096 - start_off%4096;
+      start_off = start_off + 4096 - start_off % 4096;
     }
-    long int doc_len = offset_store_[id + 1]/2 - start_off;
+    long int doc_len = offset_store_[id + 1] / 2 - start_off;
 
     std::unique_ptr<char[]> buf = buffer_pool_.Get();
 
     // decompress
     const int decompressed_size = 
-      LZ4_decompress_safe(fdt_map_.Addr() + start_off, buf.get(), doc_len, buffer_size_); 
+      LZ4_decompress_safe(
+          fdt_map_.Addr() + start_off, buf.get(), doc_len, buffer_size_); 
     if (decompressed_size < 0) {
       LOG(FATAL) << "Failed to decompresse." 
         << "doc len:" << doc_len; 
