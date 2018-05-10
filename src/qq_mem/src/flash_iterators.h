@@ -816,7 +816,7 @@ class VacuumPostingListIterator {
   bool ShouldPrefetch() {
     DLOG_IF(FATAL, term_index_result_.IsEmpty() == true) << "term_index_result_ is empty";
     return  FLAGS_enable_prefetch == true &&
-      term_index_result_.GetNumPagesInPrefetchZone() > FLAGS_prefetch_threshold;
+      term_index_result_.GetNumPagesInPrefetchZone() > (uint32_t)FLAGS_prefetch_threshold;
   }
   
   //Note that file_data_ and term_index_result_ must have been set

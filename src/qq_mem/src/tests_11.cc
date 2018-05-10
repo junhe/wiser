@@ -218,7 +218,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
 TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
   SECTION("Simple") {
     std::vector<uint32_t> doc_ids;
-    int num_docids = 200;
+    uint32_t num_docids = 200;
     for (uint32_t i = 0; i < num_docids; i++) {
       doc_ids.push_back(i);
     }

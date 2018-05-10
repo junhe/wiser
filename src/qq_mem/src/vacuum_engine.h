@@ -386,7 +386,7 @@ class VacuumEngine : public SearchEngineServiceNew {
       const int n_passages) {
     OffsetsEnums res = {};
 
-    for (int i = 0; i < offset_table.size(); i++) {
+    for (std::size_t i = 0; i < offset_table.size(); i++) {
       res.push_back(Offset_Iterator(offset_table[i]));
     }
 

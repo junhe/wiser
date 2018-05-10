@@ -196,7 +196,7 @@ std::map<Term, OffsetPairs> extract_offset_pairs(const std::string & token_str) 
   std::string buf = "";
   std::map<Term, OffsetPairs> result;
 
-  int i;
+  std::size_t i;
   for (i = 0; i < n; i++) {
     char ch = token_str[i];
     if (ch != ' ') {
@@ -219,7 +219,7 @@ std::map<Term, OffsetPairs> extract_offset_pairs(const std::string & token_str) 
 std::map<Term, OffsetPairs> construct_offset_pairs(const TermList & tokens, 
                                                    const std::vector<Offsets> & token_offsets) {
   std::map<Term, OffsetPairs> result;
-  for (int i = 0; i < tokens.size(); i++) {
+  for (std::size_t i = 0; i < tokens.size(); i++) {
     result[tokens[i]] = token_offsets[i];
   }
   return result;

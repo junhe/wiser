@@ -102,7 +102,7 @@ class DocLengthStore {
 class DocLengthCharStore {
  public:
   void AddLength(const DocIdType &doc_id, const int &length) {
-    if (doc_id >= vec_char_store_.size()) {
+    if ((std::size_t)doc_id >= vec_char_store_.size()) {
       vec_char_store_.resize(doc_id + 1, 0);
     }
     avg_length_ = avg_length_ + (length - avg_length_) / (doc_cnt_ + 1);
@@ -145,15 +145,15 @@ class DocLengthCharStore {
 
     int count = vec_char_store_.size();
     ret = write(fd, &count, sizeof(int));
-    assert(ret == sizeof(int));
+    DLOG_IF(FATAL, ret != sizeof(int)) << "Write error";
     ret = write(fd, &avg_length_, sizeof(qq_float));
-    assert(ret == sizeof(qq_float));
+    DLOG_IF(FATAL, ret != sizeof(qq_float)) << "Write error";
 
     for (int doc_id = 0; doc_id < count; doc_id++) {
       ret = write(fd, (char *)&doc_id, sizeof(int));
-      assert(ret == sizeof(int));
+      DLOG_IF(FATAL, ret != sizeof(int)) << "Write error";
       ret = write(fd, (char *)&vec_char_store_[doc_id], sizeof(char));
-      assert(ret == sizeof(char));
+      DLOG_IF(FATAL, ret != sizeof(char)) << "Write error";
     }
 
     fsync(fd);

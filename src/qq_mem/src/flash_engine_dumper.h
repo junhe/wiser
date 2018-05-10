@@ -180,7 +180,6 @@ class GeneralTermEntry {
   CozyBoxWriter GetCozyBoxWriter(bool do_delta) const {
     const int pack_size = PACK_ITEM_CNT;
     const int n_packs = values_.size() / pack_size;
-    const int n_remains = values_.size() % pack_size;
 
     std::vector<LittlePackedIntsWriter> pack_writers(n_packs);
     VIntsWriter vints;
@@ -1144,10 +1143,8 @@ class FlashEngineDumper {
 
   void DeserializeMeta(std::string path) {
     int fd;
-    int len;
     char *addr;
     size_t file_length;
-    uint32_t var;
 
     utils::MapFile(path, &addr, &fd, &file_length);
 

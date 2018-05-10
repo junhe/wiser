@@ -167,7 +167,7 @@ TEST_CASE( "Encode positions", "[posting]" ) {
 // dataset must have even number of items
 PositionInfoArray CreateInfoArr(std::vector<int> dataset) {
   PositionInfoArray info_arr(dataset.size() / 2);
-  for (int i = 0; i < dataset.size(); i += 2) {
+  for (std::size_t i = 0; i < dataset.size(); i += 2) {
     //              pos         term_appearance
     info_arr.Append(dataset[i], dataset[i+1]);
   }
@@ -178,8 +178,8 @@ PositionInfoArray CreateInfoArr(std::vector<int> dataset) {
 PositionInfoTable2 CreateInfoTable(std::vector< std::vector<std::pair<int, int>> > table) {
   PositionInfoTable2 pos_table(table.size(), table[0].size());
 
-  for (int row = 0; row < table.size(); row++) {
-    for (int col = 0; col < table[row].size(); col++) {
+  for (std::size_t row = 0; row < table.size(); row++) {
+    for (std::size_t col = 0; col < table[row].size(); col++) {
       pos_table.Append(row, table[row][col].first, table[row][col].second); 
     }
   }
@@ -189,7 +189,7 @@ PositionInfoTable2 CreateInfoTable(std::vector< std::vector<std::pair<int, int>>
 
 PositionInfoVec CreateInfoVec(std::vector<int> dataset) {
   PositionInfoVec info_vec;
-  for (int i = 0; i < dataset.size(); i += 2) {
+  for (std::size_t i = 0; i < dataset.size(); i += 2) {
     PositionInfo info;
     info.pos = dataset[i];
     info.term_appearance = dataset[i+1];

@@ -269,7 +269,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
       int n_rows, const std::string format) {
-    int ret;
+    int ret = -1;
     std::unique_ptr<LineDocParserService> parser;
 
     if (format == "TOKEN_ONLY") {
@@ -396,10 +396,8 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
 
   void DeserializeMeta(std::string path) {
     int fd;
-    int len;
     char *addr;
     size_t file_length;
-    uint32_t var;
 
     utils::MapFile(path, &addr, &fd, &file_length);
 

@@ -221,7 +221,6 @@ class RPCContext {
       ReplyPool *reply_pool, bool save_reply, 
       QueryProducerService *query_producer) {
     TermList terms;
-    int i;
 
     while (true) {
       switch (next_state_) {
@@ -291,9 +290,8 @@ class RPCContext {
   }
 
   void StartNewClone() {
-    auto* clone = new RPCContext(cq_, stub_, n_messages_per_call_, 
-                                 finished_call_counts_, finished_roundtrips_);
-    // clone->Start();
+    new RPCContext(cq_, stub_, n_messages_per_call_, 
+                   finished_call_counts_, finished_roundtrips_);
   }
 
   static void* tag(RPCContext *c) { return reinterpret_cast<void*>(c); }
@@ -315,14 +313,16 @@ class RPCContext {
     FINISH_DONE_DONE
   };
 
+  ClientContext context_;
+
+  CompletionQueue* cq_;
+  QQEngine::Stub* stub_;
+  State next_state_;
   int n_messages_per_call_; 
   int n_issued_;
-  QQEngine::Stub* stub_;
-  ClientContext context_;
-  CompletionQueue* cq_;
+
   SearchRequest req_;
   SearchReply reply_;
-  State next_state_;
   Status status_;
   std::unique_ptr<grpc::ClientAsyncReaderWriter<SearchRequest, SearchReply>> stream_;
   std::vector<int> &finished_call_counts_;
@@ -533,7 +533,7 @@ class Client {
 
     std::cout << "---- Reply Samples ----" << std::endl;
     for (auto &pool : reply_pools_) {
-      for (int i = 0; i < pool.size() && i < 3; i++) {
+      for (std::size_t i = 0; i < pool.size() && i < 3; i++) {
         std::cout << utils::str_qq_search_reply(pool[i]) << std::endl;
       }
     }
@@ -647,7 +647,7 @@ class AsyncClient: public Client {
     for (int ch = 0; ch < n_client_channels; ch++) {
       for (int i = 0; i < n_rpcs_per_channel; i++) {
         auto* cq = cli_cqs_[t].get();
-        auto ctx = new RPCContext(
+        new RPCContext(
             cq, 
             channels_[ch].get_stub(),
             config.GetInt("n_messages_per_call"), 

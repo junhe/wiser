@@ -31,7 +31,7 @@ const int B = 1000 * M;
 
 std::string Concat(TermList terms) {
   std::string s;
-  for (int i = 0; i < terms.size(); i++) {
+  for (std::size_t i = 0; i < terms.size(); i++) {
     s += terms[i];
     if (i < terms.size() - 1) {
       // not the last term

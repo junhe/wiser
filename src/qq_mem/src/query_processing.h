@@ -374,10 +374,10 @@ class PhraseQueryProcessor2 {
   }
 
  private:
-  PositionInfoTable2 pos_table_;
   int n_terms_;
   std::vector<PosIter_T> solid_iterators_;
   std::vector<PositionInfo> last_orig_popped_;
+  PositionInfoTable2 pos_table_;
   bool list_exhausted_ = false;
 };
 
@@ -427,9 +427,10 @@ struct ResultDocEntry {
                  const bool is_phrase_in)
     :doc_id(doc_id_in), 
      score(score_in), 
+     position_table(0, 0),
      offset_iters(offset_iters_in),
-     is_phrase(is_phrase_in),
-     position_table(0, 0) {}
+     is_phrase(is_phrase_in)
+  {}
 
   ResultDocEntry(const DocIdType &doc_id_in, 
                  const qq_float &score_in, 
@@ -438,8 +439,8 @@ struct ResultDocEntry {
                  const bool is_phrase_in)
     :doc_id(doc_id_in), 
      score(score_in), 
-     offset_iters(offset_iters_in),
      position_table(position_table_in), 
+     offset_iters(offset_iters_in),
      is_phrase(is_phrase_in) {}
 
   std::vector<OffsetPairs> OffsetsForHighliting() {
@@ -452,7 +453,7 @@ struct ResultDocEntry {
 
   std::vector<OffsetPairs> ExpandOffsets() {
     std::vector<OffsetPairs> table(offset_iters.size());
-    for (int i = 0; i < offset_iters.size(); i++) {
+    for (std::size_t i = 0; i < offset_iters.size(); i++) {
       auto &it = offset_iters[i];
       while (it->IsEnd() == false) {
         OffsetPair pair;
@@ -540,7 +541,7 @@ class ProcessorBase {
      idfs_of_terms_(pl_iterators->size()),
      n_total_docs_in_index_(n_total_docs_in_index)
   {
-    for (int i = 0; i < pl_iterators_.size(); i++) {
+    for (std::size_t i = 0; i < pl_iterators_.size(); i++) {
       idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
                                       pl_iterators_[i].Size());
     }
@@ -561,13 +562,13 @@ class ProcessorBase {
   }
 
   const Bm25Similarity &similarity_;
-  std::vector<PLIter_T> &pl_iterators_;
-  const int k_;
-  const int n_lists_;
-  const int n_total_docs_in_index_;
-  std::vector<qq_float> idfs_of_terms_;
-  MinPointerHeap<PLIter_T> min_heap_;
   const DocLengthCharStore &doc_lengths_;
+  std::vector<PLIter_T> &pl_iterators_;
+  const int n_lists_;
+  const int k_;
+  std::vector<qq_float> idfs_of_terms_;
+  const int n_total_docs_in_index_;
+  MinPointerHeap<PLIter_T> min_heap_;
 };
 
 
@@ -591,7 +592,7 @@ class NonPhraseProcessorBase: public ProcessorBase<PLIter_T> {
         this->doc_lengths_.GetLength(max_doc_id),
         this->similarity_);
 
-    if (this->min_heap_.size() < this->k_) {
+    if (this->min_heap_.size() < (std::size_t) this->k_) {
       InsertToHeap(max_doc_id, score_of_this_doc);
     } else {
       if (score_of_this_doc > this->min_heap_.top()->score) {
@@ -805,7 +806,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
   int FindPhrase() {
-    for (int i = 0; i < this->pl_iterators_.size(); i++) {
+    for (std::size_t i = 0; i < this->pl_iterators_.size(); i++) {
       PosIter_T *p = phrase_qp_.Iterator(i);
       this->pl_iterators_[i].AssignPositionBegin(p);
     }
@@ -834,7 +835,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
         this->doc_lengths_.GetLength(max_doc_id),
         this->similarity_);
 
-    if (this->min_heap_.size() < this->k_) {
+    if (this->min_heap_.size() < (std::size_t) this->k_) {
       InsertToHeap(max_doc_id, score_of_this_doc, phrase_qp_.Table());
     } else {
       if (score_of_this_doc > this->min_heap_.top()->score) {
@@ -851,7 +852,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
         this->doc_lengths_.GetLength(max_doc_id),
         this->similarity_);
 
-    if (this->min_heap_.size() < this->k_) {
+    if (this->min_heap_.size() < (std::size_t)this->k_) {
       PositionInfoTable2 position_table(0, 0);
       InsertToHeap(max_doc_id, score_of_this_doc, position_table);
     } else {
@@ -877,8 +878,8 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
 			offset_iters, position_table, this->is_phrase_));
   }
 
-  bool is_phrase_;
   PhraseQueryProcessor2<PosIter_T> phrase_qp_;
+  bool is_phrase_;
 };
 
 

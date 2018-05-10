@@ -56,7 +56,7 @@ class PostingList_Vec {
   }
 
   const bool HasSkip(const iterator_t &it) const {
-    return it % skip_span_ == 0 && it + skip_span_ < posting_store_.size();
+    return it % skip_span_ == 0 && (std::size_t)(it + skip_span_) < posting_store_.size();
   }
   const int GetSkipSpan() const { return skip_span_; }
   const Term GetTerm() const {return term_;}
@@ -88,7 +88,7 @@ class PostingList_Vec {
     iterator_t i = it;
     const std::size_t n = posting_store_.size();
 
-    while (i < n && GetPosting(i).GetDocId() < doc_id) {
+    while ((std::size_t)i < n && GetPosting(i).GetDocId() < doc_id) {
       if (HasSkip(i) && GetPosting(i + skip_span_).GetDocId() <= doc_id) {
         i += skip_span_;
       } else {

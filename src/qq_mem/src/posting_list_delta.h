@@ -339,9 +339,9 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   int total_postings_;
 
   struct State {
+    const uint8_t *cur_addr_;
     int cur_posting_index_;
     DocIdType prev_doc_id_; // doc id of posting[cur_posting_index_ - 1]
-    const uint8_t *cur_addr_;
 
     State(const uint8_t *cur_addr, int index, DocIdType id)
       :cur_addr_(cur_addr), cur_posting_index_(index), 

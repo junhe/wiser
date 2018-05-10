@@ -18,7 +18,7 @@ struct DocumentContext {
 
 Snippets highlight_top_k(std::vector<DocumentContext> & contexts, SimpleHighlighter & highlighter) {
   Snippets snippets;
-  for (int i = 0; i < contexts.size(); i++) {
+  for (std::size_t i = 0; i < contexts.size(); i++) {
     auto ctx = contexts[i];
     OffsetsEnums enums = {};
     enums.push_back(Offset_Iterator(ctx.hello_pairs));
@@ -45,7 +45,7 @@ void bench() {
 
   std::vector<DocumentContext> contexts;
 
-  for (int i = 0; i < bodies.size(); i++) {
+  for (std::size_t i = 0; i < bodies.size(); i++) {
     auto body = bodies[i];
     auto doc_id = i;
 

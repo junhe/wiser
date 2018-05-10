@@ -16,7 +16,7 @@ VarintBuffer CreateVarintBuffer(std::vector<int> vec) {
 PostingBagBlobIndexes CreatePostingPackIndexes(
     std::vector<int> block_indexes, std::vector<int> in_block_indexes) {
   PostingBagBlobIndexes indexes;
-  for (int i = 0; i < block_indexes.size(); i++) {
+  for (std::size_t i = 0; i < block_indexes.size(); i++) {
     indexes.AddRow(block_indexes[i], in_block_indexes[i]);
   }
 

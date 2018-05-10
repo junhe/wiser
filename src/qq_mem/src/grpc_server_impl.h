@@ -187,7 +187,7 @@ class ServerService {
         if (line_doc_path.size() > 0) {
           int n_rows = config.GetInt("n_line_doc_rows");
           std::cout << "Loading documents from " << line_doc_path << std::endl;
-          int ret = engine->LoadLocalDocuments(line_doc_path, n_rows, 
+          engine->LoadLocalDocuments(line_doc_path, n_rows, 
               config.GetString("line_doc_format"));
         }
       } else {
@@ -426,14 +426,14 @@ class AsyncServer : public ServerService {
       FINISH_DONE
     };
 
-    State next_state_;
-    grpc::ServerCompletionQueue *cq_;
     AsyncQqGrpcEngineServiceImpl *async_service_;
+    grpc::ServerCompletionQueue *cq_;
     std::unique_ptr<grpc::ServerContext> srv_ctx_;
+    State next_state_;
+    grpc::ServerAsyncReaderWriter<SearchReply, SearchRequest> stream_;
     SearchRequest req_;
     SearchReply response_;
     // std::unique_ptr<grpc::ServerAsyncReaderWriter<SearchReply, SearchRequest>> stream_;
-    grpc::ServerAsyncReaderWriter<SearchReply, SearchRequest> stream_;
     std::mutex mu_;
     grpc::Status status_;
     SearchEngineServiceNew *search_engine_;

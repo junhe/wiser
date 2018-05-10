@@ -61,7 +61,7 @@ TEST_CASE( "Serialization", "[serial]" ) {
     index2.Deserialize(fake_padding + buf, fake_padding.size());
 
     REQUIRE(index.vec.size() == index2.vec.size());
-    for (int i = 0; i < index.vec.size(); i++) {
+    for (std::size_t i = 0; i < index.vec.size(); i++) {
       REQUIRE(index.vec[i].prev_doc_id == index2.vec[i].prev_doc_id);
       REQUIRE(index.vec[i].start_offset == index2.vec[i].start_offset);
     }

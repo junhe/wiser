@@ -5,8 +5,6 @@
 #include "utils.h"
 
 static std::mutex w_mutex;
-static int write_count = 0;
-
 
 std::unique_ptr<AsyncClient> CreateAsyncClient(const GeneralConfig &config,
     std::unique_ptr<QueryProducerService> query_producer) 

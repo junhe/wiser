@@ -8,7 +8,7 @@
 TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
   SECTION("Only some vints") {
     std::vector<uint32_t> vec;
-    int cnt = 8;
+    uint32_t cnt = 8;
     for (uint32_t i = 0; i < cnt; i++) {
       vec.push_back(i);
     }
@@ -54,7 +54,7 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
 
   SECTION("2 packs, some vints") {
     std::vector<uint32_t> vec;
-    int cnt = 300;
+    uint32_t cnt = 300;
     for (uint32_t i = 0; i < cnt; i++) {
       vec.push_back(i);
     }
@@ -154,7 +154,7 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
 }
 
 
-std::vector<uint32_t> GoodPositions(int posting_bag) {
+std::vector<uint32_t> GoodPositions(uint32_t posting_bag) {
   std::vector<uint32_t> ret;
   uint32_t prev = 0;
   for (uint32_t delta = posting_bag * 3; delta < (posting_bag + 1) * 3; delta++) {
@@ -166,7 +166,7 @@ std::vector<uint32_t> GoodPositions(int posting_bag) {
   return ret;
 }
 
-std::vector<uint32_t> GoodOffsets(int posting_bag) {
+std::vector<uint32_t> GoodOffsets(uint32_t posting_bag) {
   std::vector<uint32_t> ret;
   uint32_t prev = 0;
   for (uint32_t delta = posting_bag * 3 * 2; delta < (posting_bag + 1) * 3 * 2; delta++) {
@@ -182,7 +182,7 @@ std::vector<uint32_t> GoodOffsets(int posting_bag) {
 TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
   // Build term frequency iterator
   std::vector<uint32_t> vec;
-  int n_postings = 300;
+  uint32_t n_postings = 300;
   for (uint32_t i = 0; i < n_postings; i++) {
     vec.push_back(3);
   }
@@ -298,7 +298,7 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     }
 
     SECTION("Skip multiple times") {
-      for (int i = 0; i < n_postings; i++) {
+      for (uint32_t i = 0; i < n_postings; i++) {
         pos_iter.SkipTo(i);
 
         InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
@@ -314,7 +314,7 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     }
 
     SECTION("Skip multiple times with strides") {
-      for (int i = 0; i < n_postings; i+=7) {
+      for (uint32_t i = 0; i < n_postings; i+=7) {
         pos_iter.SkipTo(i);
 
         InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
@@ -330,7 +330,7 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     }
 
     SECTION("Skip multiple times with large strides") {
-      for (int i = 0; i < n_postings; i+=100) {
+      for (uint32_t i = 0; i < n_postings; i+=100) {
         pos_iter.SkipTo(i);
 
         InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
@@ -344,8 +344,6 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
         REQUIRE(in_bag_iter.IsEnd() == true);
       }
     }
-
-
   }
 }
 
@@ -367,7 +365,7 @@ void CheckOffsets(LazyBoundedOffsetPairIterator in_bag_iter,
 TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
   // Build term frequency iterator
   std::vector<uint32_t> vec;
-  int n_postings = 300;
+  uint32_t n_postings = 300;
   for (uint32_t i = 0; i < n_postings; i++) {
     vec.push_back(3);
   }
@@ -526,7 +524,7 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
     }
 
     SECTION("Iterate all posting bags, lazy") {
-      for (int posting_bag = 0; posting_bag < n_postings; posting_bag++) {
+      for (uint32_t posting_bag = 0; posting_bag < n_postings; posting_bag++) {
         LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, iter);
         auto good_offsets = GoodOffsets(posting_bag);
         CheckOffsets(in_bag_iter, good_offsets);
@@ -534,7 +532,7 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
     }
 
     SECTION("Iterate all posting bags, with strides, lazy") {
-      for (int posting_bag = 0; posting_bag < n_postings; posting_bag += 7) {
+      for (uint32_t posting_bag = 0; posting_bag < n_postings; posting_bag += 7) {
         LazyBoundedOffsetPairIterator in_bag_iter(posting_bag, iter);
         auto good_offsets = GoodOffsets(posting_bag);
         CheckOffsets(in_bag_iter, good_offsets);
@@ -542,7 +540,7 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
     }
  
     SECTION("Iterate all posting bags") {
-      for (int posting_bag = 0; posting_bag < n_postings; posting_bag++) {
+      for (uint32_t posting_bag = 0; posting_bag < n_postings; posting_bag++) {
         iter.SkipTo(posting_bag);
 
         InBagOffsetPairIterator in_bag_iter = iter.InBagOffsetPairBegin();
@@ -560,7 +558,7 @@ TEST_CASE( "Offset Bag iterator", "[qqflash][offset]" ) {
     }
 
     SECTION("Iterate all posting bags, with strides") {
-      for (int posting_bag = 0; posting_bag < n_postings; posting_bag += 7) {
+      for (uint32_t posting_bag = 0; posting_bag < n_postings; posting_bag += 7) {
         iter.SkipTo(posting_bag);
 
         InBagOffsetPairIterator in_bag_iter = iter.InBagOffsetPairBegin();

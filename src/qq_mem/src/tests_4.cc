@@ -148,7 +148,7 @@ TEST_CASE( "Encoding posting", "[encoding]" ) {
 void test_offset_iterator(std::unique_ptr<OffsetPairsIteratorService> offset_it, 
     OffsetPairs original_pairs) {
   OffsetPairs pairs(original_pairs.size());
-  for (int i = 0; i < original_pairs.size(); i++) {
+  for (std::size_t i = 0; i < original_pairs.size(); i++) {
     REQUIRE(offset_it->IsEnd() == false);
     offset_it->Pop(&pairs[i]);
     REQUIRE(std::get<0>(pairs[i]) == std::get<0>(original_pairs[i]));
