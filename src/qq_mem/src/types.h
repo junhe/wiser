@@ -261,7 +261,7 @@ struct SearchResult {
       return false;
     }
 
-    for (int i = 0; i < a.Size(); i++) {
+    for (std::size_t i = 0; i < a.Size(); i++) {
       if (a[i] != b[i])  {
         std::cout << "entry not equal: " << i << std::endl;
         return false;

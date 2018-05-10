@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.2)
 
 set(TCMALLOC_OPTS -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free)
 
-set(PRODUCTION_OPTS "-std=c++11 -O3 -g -Wreturn-type -DNDEBUG")
-set(INDEXING_OPTS   "-std=c++11 -O3 -g -Wreturn-type")
-set(DEBUG_OPTS      "-std=c++11 -O0 -g -Wreturn-type")
-set(DEV_OPTS        "-std=c++11 -O0 -g -Wreturn-type")
+set(PRODUCTION_OPTS "-std=c++11 -O3 -g -Wreturn-type -DNDEBUG -Wall")
+set(INDEXING_OPTS   "-std=c++11 -O3 -g -Wreturn-type -Wall")
+set(DEBUG_OPTS      "-std=c++11 -O0 -g -Wreturn-type -Wall")
+set(DEV_OPTS        "-std=c++11 -O0 -g -Wreturn-type -Wall")
 
 SET(CMAKE_CXX_FLAGS ${PRODUCTION_OPTS})
 #SET(CMAKE_CXX_FLAGS ${DEV_OPTS})
@@ -165,18 +165,6 @@ target_link_libraries(testmain
 #######################################
 # For benchmarks
 #######################################
-add_executable(hash_benchmark
-    hash_benchmark.cc
-    utils.cc
-)
-
-target_link_libraries(hash_benchmark
-    ${GRPC_LIBS}
-    protobuf::libprotobuf
-    ${QQ_LIBS}
-    ${GLOG_LIB}
-)
-
 
 add_executable(packing_bench
     packing_bench.cc

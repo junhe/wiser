@@ -131,8 +131,8 @@ class Staircase {
   const int step_height_;
   const int step_width_;
   const int n_steps_;
-  const int max_layer_;
   int cur_layer_;
+  const int max_layer_;
   std::string layer_string_;
  
  public:
@@ -146,7 +146,6 @@ class Staircase {
       return "";
 
     const int step = cur_layer_ / step_height_;
-    const int width = (step + 1) * step_width_;
 
     if (cur_layer_ % step_height_ == 0) {
       if (cur_layer_ != 0) {
