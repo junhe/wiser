@@ -413,6 +413,7 @@ class FlashDocStoreDumper : public CompressedDocStore {
 };
 
 
+// Doc may be aligned
 class ChunkedDocStoreDumper : public CompressedDocStore {
  public:
   ChunkedDocStoreDumper() : CompressedDocStore() {
@@ -424,14 +425,7 @@ class ChunkedDocStoreDumper : public CompressedDocStore {
     std::ofstream fdtfile(fdt_path, std::ios::binary);
     std::ofstream fdxfile(fdx_path, std::ios::binary);
 
-    //fdx: max_docid: offset0, offset1, ... offset_docid  (if docid doesn't exist, -1)
-    int n_doc_ids;
-    if (store_.size() == 0) {
-      n_doc_ids = 0;
-    } else {
-      n_doc_ids = store_.rbegin()->first + 1;
-    }
-    fdxfile.write(reinterpret_cast<const char *>(&n_doc_ids), sizeof(n_doc_ids));
+    int n_doc_ids = DumpHeader(fdxfile);
 
     for (int docid = 0; docid < n_doc_ids; docid++) {
       if (store_.count(docid) == 0) {
@@ -445,6 +439,22 @@ class ChunkedDocStoreDumper : public CompressedDocStore {
   }
 
  private:
+  int DumpHeader(std::ofstream &fdx) {
+    int n_doc_ids;
+    if (store_.size() == 0) {
+      n_doc_ids = 0;
+    } else {
+      n_doc_ids = store_.rbegin()->first + 1;
+    }
+    VarintBuffer header;
+    header.Append(n_doc_ids);
+    header.Append(dump_buf_size_);
+
+    fdx.write(header.Data().data(), header.Size());
+
+    return n_doc_ids;
+  }
+
   void DumpDoc(std::ofstream &fdt, std::ofstream &fdx, uint32_t doc_id) {
     off_t offset = fdt.tellp();
     std::string chunk_compressed = CompressText(
@@ -642,6 +652,95 @@ class AlignedFlashDocStore {
   int fd_fdt_;
   utils::FileMap fdt_map_;
 };
+
+
+class ChunkedDocStoreReader {
+ public:
+  ChunkedDocStoreReader() {}
+
+  void Load(const std::string fdx_path, const std::string fdt_path) {
+    LoadFdx(fdx_path);
+    MapFdt(fdt_path);
+  }
+
+  void LoadFdx(const std::string fdx_path) {
+    std::cout << "Loading doc index..." << std::endl; 
+
+    utils::FileMap file_map;
+    file_map.Open(fdx_path);
+    char *addr = file_map.Addr();
+
+    VarintIteratorUnbounded iter(addr);
+    n_doc_ids_ = iter.Pop();
+    buffer_size_ = iter.Pop();
+    InitializeBufferPool(buffer_size_);
+
+    off_t offset = iter.CurOffset();
+    for (int i = 0; i < n_doc_ids_; i++) {
+      offset_store_.push_back(*(off_t *)(addr + offset));
+      offset += sizeof(off_t);
+    }
+
+    std::cout << "Doc index loaded. Count:" << n_doc_ids_ << std::endl; 
+    file_map.Close();
+  }
+
+  void MapFdt(const std::string fdt_path) {
+    std::cout << "Mappign fdt..." << std::endl;
+    fdt_map_.Open(fdt_path);
+    std::cout << "Mappign fdt finished." << std::endl;
+  }
+
+  void UnmapFdt() {
+    fdt_map_.Close();
+  }
+
+  bool Has(int id) {
+    return id < n_doc_ids_;
+  }
+
+  const std::string Get(int id) { 
+    off_t start_off = offset_store_[id];
+    if ((start_off & 0x01) == 0x01) {  
+      // was aligned
+      start_off = start_off >> 1;
+      start_off = start_off + 4096 - start_off % 4096;
+    } else {
+      start_off = start_off >> 1;
+    }
+
+    std::unique_ptr<char[]> buf = buffer_pool_->Get();
+
+    std::string ret = DecompressText(
+      fdt_map_.Addr() + start_off, buf.get(), buffer_size_);
+
+    buffer_pool_->Put(std::move(buf));
+    return ret;
+  }
+
+  int Size() const {
+    return offset_store_.size() - 1; // minus the laste item (the guard)
+  }
+
+  bool IsAligned() const {
+    return true;
+  }
+
+ private:
+  void InitializeBufferPool(int buf_size) {
+    buffer_pool_.reset(new BufferPool(8, buf_size));
+  }
+
+  int n_doc_ids_;
+  std::unique_ptr<BufferPool> buffer_pool_;
+  int buffer_size_;
+  
+  std::vector<long int> offset_store_;
+  int fd_fdt_;
+  utils::FileMap fdt_map_;
+};
+
+
 
 
 

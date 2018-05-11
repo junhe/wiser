@@ -249,9 +249,37 @@ TEST_CASE( "Chunked store", "[doc_store0]" ) {
     REQUIRE(ShouldAlign(1, 4096 * 2) == true);
   }
 
-  SECTION("Chunked doc store") {
+  SECTION("Chunked doc store, one doc") {
     ChunkedDocStoreDumper store;
+    store.Add(0, "hello");
     store.Dump("/tmp/tmp.fdx", "/tmp/tmp.fdt");
+
+    ChunkedDocStoreReader reader;
+    reader.Load("/tmp/tmp.fdx", "/tmp/tmp.fdt");
+    std::string text = reader.Get(0);
+    REQUIRE(text == "hello");
+  }
+
+  SECTION("Chunked doc store, many docs") {
+    ChunkedDocStoreDumper store;
+    int n_docs = 100;
+    std::map<int, std::string> origins;
+
+    for (int i = 0; i < n_docs; i++) {
+      std::string text = GetRandomText(i + 50 * KB);
+      store.Add(i, text);
+      origins[i] = text;
+    }
+
+    store.Dump("/tmp/tmp.fdx", "/tmp/tmp.fdt");
+
+    ChunkedDocStoreReader reader;
+    reader.Load("/tmp/tmp.fdx", "/tmp/tmp.fdt");
+
+    for (int i = 0; i < n_docs; i++) {
+      std::string text = reader.Get(i);
+      REQUIRE(text == origins[i]);
+    }
   }
 }
 
