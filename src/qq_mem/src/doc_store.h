@@ -709,12 +709,12 @@ class ChunkedDocStoreReader {
       start_off = start_off >> 1;
     }
 
-    std::unique_ptr<char[]> buf = buffer_pool_->Get();
+    std::unique_ptr<char[]> buf = buffer_pool_.Get();
 
     std::string ret = DecompressText(
       fdt_map_.Addr() + start_off, buf.get(), buffer_size_);
 
-    buffer_pool_->Put(std::move(buf));
+    buffer_pool_.Put(std::move(buf));
     return ret;
   }
 
@@ -728,11 +728,11 @@ class ChunkedDocStoreReader {
 
  private:
   void InitializeBufferPool(int buf_size) {
-    buffer_pool_.reset(new BufferPool(8, buf_size));
+    buffer_pool_.Reset(8, buf_size);
   }
 
   int n_doc_ids_;
-  std::unique_ptr<BufferPool> buffer_pool_;
+  BufferPool buffer_pool_;
   int buffer_size_;
   
   std::vector<long int> offset_store_;

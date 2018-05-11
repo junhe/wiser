@@ -9,9 +9,17 @@
 
 class BufferPool {
  public:
+  BufferPool(){}
+
   BufferPool(const int n_buffers, const int buffer_size)
-    :buffer_size_(buffer_size) 
   {
+    Reset(n_buffers, buffer_size);
+  }
+
+  void Reset(const int n_buffers, const int buffer_size) {
+    buffer_size_ = buffer_size;
+    pool_.clear();
+
     for (int i = 0; i < n_buffers; i++) {
       std::unique_ptr<char[]> p(new char[buffer_size]);
       pool_.push_back(std::move(p));
@@ -24,11 +32,9 @@ class BufferPool {
   BufferPool(const BufferPool &pool) = delete;
   BufferPool &operator = (const BufferPool &pool) = delete;
 
-  // Let it fail if there is not enough buffer!!!
   std::unique_ptr<char[]> Get() {
     std::lock_guard<std::mutex> lock(mutex_);
 
-    // DLOG_IF(FATAL, pool_.size() == 0);
     // Dynamically grow
     if (pool_.size() == 0) {
       std::unique_ptr<char[]> p(new char[buffer_size_]);
