@@ -241,3 +241,19 @@ TEST_CASE( "Compress and decompress using small buffer", "[doc_store]" ) {
 }
 
 
+TEST_CASE( "Chunked store", "[doc_store0]" ) {
+  SECTION("Should align") {
+    REQUIRE(ShouldAlign(0, 1) == false);
+    REQUIRE(ShouldAlign(0, 4096) == false);
+    REQUIRE(ShouldAlign(1, 4096) == true);
+    REQUIRE(ShouldAlign(1, 4096 * 2) == true);
+  }
+
+  SECTION("Chunked doc store") {
+    ChunkedDocStoreDumper store;
+    store.Dump("/tmp/tmp.fdx", "/tmp/tmp.fdt");
+  }
+}
+
+
+

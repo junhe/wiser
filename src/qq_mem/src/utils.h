@@ -489,6 +489,10 @@ inline void AdviseDoNotNeed(void *addr, size_t len) {
   }
 }
 
+inline std::size_t DivideRoundUp(std::size_t val, std::size_t divider) {
+  return (val + divider - 1) / divider;
+}
+
 
 } // namespace util
 #endif

@@ -24,6 +24,8 @@
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 
+#define DOCSTORE_FIRST_BYTE 0x32
+
 namespace {
 
 // text_len and buf size must be not larger than 16*1024
@@ -64,6 +66,14 @@ inline std::size_t DecodeHeader(
 }
 
 } // namespace
+
+
+inline bool ShouldAlign(off_t start_off, std::size_t size) {
+  int n_blocks_aligned = utils::DivideRoundUp(size, 4*KB);
+  int n_blocks_unaligned = utils::DivideRoundUp((start_off % 4*KB) + size, 4*KB);
+
+  return n_blocks_unaligned > n_blocks_aligned;
+}
 
 
 // Format:
@@ -397,6 +407,60 @@ class FlashDocStoreDumper : public CompressedDocStore {
     fdxfile.close();
     fdtfile.close();   
   }
+};
+
+
+class ChunkedDocStoreDumper : public CompressedDocStore {
+ public:
+  ChunkedDocStoreDumper() : CompressedDocStore() {
+    dump_buf_ = (char *)malloc(dump_buf_size_); 
+  }
+
+  // This will dump to two files, .fdx and .fdt
+	void Dump(const std::string fdx_path, const std::string fdt_path) {
+    std::ofstream fdtfile(fdt_path, std::ios::binary);
+    std::ofstream fdxfile(fdx_path, std::ios::binary);
+
+    //fdx: max_docid: offset0, offset1, ... offset_docid  (if docid doesn't exist, -1)
+    int n_doc_ids;
+    if (store_.size() == 0) {
+      n_doc_ids = 0;
+    } else {
+      n_doc_ids = store_.rbegin()->first + 1;
+    }
+    fdxfile.write(reinterpret_cast<const char *>(&n_doc_ids), sizeof(n_doc_ids));
+
+    for (int docid = 0; docid < n_doc_ids; docid++) {
+      if (store_.count(docid) == 0) {
+        LOG(FATAL) << "We do not allow holes in doc id";
+      }
+      DumpDoc(fdtfile, fdxfile, docid);
+    }
+
+    fdxfile.close();
+    fdtfile.close();   
+  }
+
+ private:
+  void DumpDoc(std::ofstream &fdt, std::ofstream &fdx, uint32_t doc_id) {
+    off_t offset = fdt.tellp();
+    std::string chunk_compressed = CompressText(
+        Get(doc_id), dump_buf_, dump_buf_size_);
+
+    bool do_align = ShouldAlign(offset, chunk_compressed.size());
+    if (do_align) {
+      fdt.seekp((offset / (4 * KB) + 1) * 4*KB);
+    }
+
+    fdt.write(chunk_compressed.data(), chunk_compressed.size());
+
+    off_t encoded_off = (offset << 1) | do_align;
+    fdx.write(
+        reinterpret_cast<const char *>(&encoded_off), sizeof(encoded_off));
+  }
+
+  const std::size_t dump_buf_size_ = 16 * KB;
+  char *dump_buf_; 
 };
 
 
