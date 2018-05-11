@@ -37,6 +37,11 @@
 #define FLAG_SNIPPETS_CACHE_ON_FLASH false
 #define SNIPPETS_CACHE_ON_FLASH_FILE "/mnt/ssd/snippets_store.cache"
 
+
+#define COMPRESSED_DOC_MAGIC 0x33
+
+
+
 const off_t KB = 1024;
 const off_t MB = 1048576;
 const off_t GB = 1073741824L;

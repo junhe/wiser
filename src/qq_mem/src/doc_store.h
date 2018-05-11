@@ -24,8 +24,6 @@
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
 
-#define DOCSTORE_FIRST_BYTE 0x32
-
 namespace {
 
 // text_len and buf size must be not larger than 16*1024
@@ -42,6 +40,7 @@ inline std::string CompressBoundedText(
 
 inline std::string EncodeHeader(std::vector<std::size_t> chunk_sizes) {
   VarintBuffer header;
+  header.Append(utils::MakeString(COMPRESSED_DOC_MAGIC));
   header.Append(chunk_sizes.size()); // number of chunks
   for (auto &size : chunk_sizes) {
     header.Append(size);
@@ -56,13 +55,17 @@ using chunk_sizes_t = std::array<std::size_t, 128>;
 inline std::size_t DecodeHeader(
     std::size_t *n_chunks, chunk_sizes_t *chunk_sizes, const char *buf) 
 {
+  DLOG_IF(FATAL, (buf[0] & 0xFF) != COMPRESSED_DOC_MAGIC)
+    << "Compressed doc has the wrong magic number: " << std::hex << buf[0];
+
+  buf++; // skip the header
   VarintIteratorUnbounded it(buf); // we actually do not know the end, just use 
   *n_chunks = it.Pop();  
   for (std::size_t i = 0; i < *n_chunks; i++) {
     (*chunk_sizes)[i] = it.Pop();
   }
 
-  return it.CurOffset();
+  return 1 + it.CurOffset(); // 1 is for the magic number
 }
 
 } // namespace
