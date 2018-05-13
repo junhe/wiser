@@ -35,8 +35,9 @@ read_ahead_kb_list = [32]
 # BOTH Elastic and Vacuum
 ######################
 # engines = [ELASTIC] # ELASTIC or VACUUM
-engines = [ELASTIC_PY] # ELASTIC or VACUUM
+# engines = [ELASTIC_PY] # ELASTIC or VACUUM
 # engines = [VACUUM] # ELASTIC or VACUUM
+engines = [ELASTIC] # ELASTIC or VACUUM
 n_server_threads = [25]
 n_client_threads = [128] # client
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
@@ -44,7 +45,7 @@ n_client_threads = [128] # client
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [256*MB]
-mem_size_list = [8*GB]
+mem_size_list = ['in-mem']
 
 # Make the a pair?
 enable_prefetch_list = [True] # whether to eanble Vaccum to do prefetch
@@ -68,7 +69,7 @@ query_paths = ["/mnt/ssd/short_log"]
  # ["/mnt/ssd/query_workload/type_realistic"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm")
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
-lock_memory = ["disabled", "lock_small"] # must be string
+lock_memory = ["disabled"] # must be string
 
 
 ######################
@@ -165,11 +166,24 @@ def parse_client_output(conf):
     else:
         raise RuntimeError
 
-def warmup_elastic():
-    # p = start_engine_client("elastic", 1, "/mnt/ssd/query_workload/debug/warmup_log")
-    # raw_input("waiting for client to warmup server")
-    # p.wait()
-    p = start_elastic_pyclient("/mnt/ssd/query_workload/warmup_log")
+def load_mem_engine(conf):
+    if conf['engine'] == ELASTIC:
+        load_mem_elastic(conf['query_path'])
+    elif conf['engine'] == ELASTIC_PY:
+        load_mem_elastic(conf['query_path'])
+    elif conf['engine'] == VACUUM:
+        load_mem_vacuum(conf['query_path'])
+    else:
+        raise RuntimeError
+
+def load_mem_elastic(query_path):
+    p = start_elastic_pyclient(query_path)
+    p.wait()
+    shcmd("rm -f /tmp/client.out")
+    time.sleep(1)
+
+def load_mem_vacuum(query_path):
+    p = start_vacuum_client(32, query_path)
     p.wait()
     shcmd("rm -f /tmp/client.out")
     time.sleep(1)
@@ -555,11 +569,11 @@ def start_engine_server(conf):
 def start_vacuum_server(conf):
     print "-" * 20
     print "starting server ..."
-    print "server mem size:", conf['server_mem_size']
+    print "cgroup mem size:", conf['cgroup_mem_size']
     print "-" * 20
 
     cg = Cgroup(name='charlie', subs='memory')
-    cg.set_item('memory', 'memory.limit_in_bytes', conf['server_mem_size'])
+    cg.set_item('memory', 'memory.limit_in_bytes', conf['cgroup_mem_size'])
     cg.set_item('memory', 'memory.swappiness', mem_swappiness)
 
     with cd(qq_mem_folder):
@@ -588,11 +602,11 @@ def start_vacuum_server(conf):
 def start_elastic_server(conf):
     print "-" * 20
     print "starting server ..."
-    print "server mem size:", conf['server_mem_size']
+    print "cgroup mem size:", conf['cgroup_mem_size']
     print "-" * 20
 
     cg = Cgroup(name='charlie', subs='memory')
-    cg.set_item('memory', 'memory.limit_in_bytes', conf['server_mem_size'])
+    cg.set_item('memory', 'memory.limit_in_bytes', conf['cgroup_mem_size'])
     cg.set_item('memory', 'memory.swappiness', mem_swappiness)
 
     p = cg.execute([
@@ -657,6 +671,10 @@ class Exp(Experiment):
                 # ES does not support locking all memory
                 continue
 
+            conf['cgroup_mem_size'] = conf['server_mem_size']
+            if conf['server_mem_size'] == 'in-mem':
+                conf['cgroup_mem_size'] = 32*GB
+
             new_confs.append(conf)
 
         return new_confs
@@ -708,6 +726,10 @@ class Exp(Experiment):
         time.sleep(15)
 
         wait_engine_port(conf)
+
+        if conf['server_mem_size'] == 'in-mem':
+            load_mem_engine(conf)
+
         kb_read_a = get_iostat_kb_read()
 
         # Start block tracing after the server is fully loaded
