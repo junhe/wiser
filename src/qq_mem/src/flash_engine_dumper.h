@@ -1171,8 +1171,8 @@ class FlashEngineDumper {
   }
 
  private:
-
-  FlashDocStoreDumper doc_store_;
+  // FlashDocStoreDumper doc_store_;
+  ChunkedDocStoreDumper doc_store_;
   VacuumInvertedIndexDumper inverted_index_;
   DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;

@@ -259,8 +259,7 @@ class VacuumEngine : public SearchEngineServiceNew {
       LOG(FATAL) << "Using unaligned FlashDocStore for aligned files!!";
     }
 
-    doc_store_.LoadFdx(utils::JoinPath(engine_dir_path_, "my.fdx"),
-                    utils::JoinPath(engine_dir_path_, "my.fdt"));
+    doc_store_.LoadFdx(utils::JoinPath(engine_dir_path_, "my.fdx"));
 
     doc_lengths_.Deserialize(utils::JoinPath(engine_dir_path_, "my.doc_length"));
 

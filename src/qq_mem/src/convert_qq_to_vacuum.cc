@@ -3,7 +3,7 @@
 
 
 void Convert() {
-  std::string dir_path = "/mnt/ssd/vacuum_engine_dump";
+  std::string dir_path = "/mnt/ssd/vacuum_0511_chunked_doc_store";
   utils::PrepareDir(dir_path);
   FlashEngineDumper engine_dumper(dir_path);
   assert(engine_dumper.TermCount() == 0);

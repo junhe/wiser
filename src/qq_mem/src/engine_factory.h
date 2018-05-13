@@ -38,7 +38,7 @@ inline std::unique_ptr<SearchEngineServiceNew> CreateSearchEngine(
     VacuumConfig config = ParseUrl(engine_type);
     if (config.source_type == "vacuum_dump") {
       // Engine is not loaded yet
-      return std::unique_ptr<SearchEngineServiceNew>(new VacuumEngine<AlignedFlashDocStore>(config.path));
+      return std::unique_ptr<SearchEngineServiceNew>(new VacuumEngine<ChunkedDocStoreReader>(config.path));
     }
   } else {
     throw std::runtime_error("Wrong engine type: " + engine_type);
@@ -46,5 +46,5 @@ inline std::unique_ptr<SearchEngineServiceNew> CreateSearchEngine(
   return nullptr;
 }
 
-
 #endif
+

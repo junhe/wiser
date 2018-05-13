@@ -74,7 +74,8 @@ lock_memory = ["false"] # must be string
 ######################
 # Vacuum only
 ######################
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_0501_prefetch_zone"
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_0511_chunked_doc_store"
+# search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_0501_prefetch_zone"
 # search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_delta_skiplist-04-30"
 # search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
 # search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
