@@ -220,7 +220,7 @@ class VacuumInvertedIndex {
 
 
 DECLARE_bool(profile_vacuum);
-DECLARE_bool(lock_memory);
+DECLARE_string(lock_memory);
 
 // To use
 // engine = VacuumEngine(path)
@@ -247,6 +247,7 @@ class VacuumEngine : public SearchEngineServiceNew {
 
   void Load() override {
     LOG_IF(FATAL, is_loaded_ == true) << "Engine is already loaded.";
+    ValidateLockMemConfig();
 
     // do some ugly check
     if (doc_store_.IsAligned() == true && 
@@ -267,13 +268,16 @@ class VacuumEngine : public SearchEngineServiceNew {
 
     inverted_index_.LoadTermIndex(utils::JoinPath(engine_dir_path_, "my.tip"));
 
-    if (FLAGS_lock_memory == true)
+    if (FLAGS_lock_memory == "lock_small")
       utils::LockAllMemory(); // <<<<<<< Lock memory
 
     inverted_index_.MapPostingLists(
         utils::JoinPath(engine_dir_path_, "my.vacuum"));
 
     doc_store_.MapFdt(utils::JoinPath(engine_dir_path_, "my.fdt"));
+
+    if (FLAGS_lock_memory == "lock_large")
+      utils::LockAllMemory(); // <<<<<<< Lock memory
 
     is_loaded_ = true;
 
@@ -380,6 +384,13 @@ class VacuumEngine : public SearchEngineServiceNew {
   }
 
  private:
+  void ValidateLockMemConfig() {
+    LOG_IF(FATAL, FLAGS_lock_memory != "disabled" && 
+                  FLAGS_lock_memory != "lock_small" &&
+                  FLAGS_lock_memory != "lock_all")
+      << "Wrong lock_memory config: " << FLAGS_lock_memory;
+  }
+
   std::string GenerateSnippet(const DocIdType &doc_id, 
       std::vector<OffsetPairs> &offset_table,
       const int n_passages) {

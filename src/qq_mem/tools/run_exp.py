@@ -68,7 +68,7 @@ query_paths = ["/mnt/ssd/short_log"]
  # ["/mnt/ssd/query_workload/type_realistic"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm")
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
-lock_memory = ["false"] # must be string
+lock_memory = ["disabled", "lock_small"] # must be string
 
 
 ######################
@@ -269,6 +269,14 @@ def wait_engine_port(conf):
     else:
         raise RuntimeError
 
+def convert_es_lock_mem_string(s):
+    d = {
+            'disabled': 'false',
+            'lock_small': 'true',
+            'lock_large': 'true'
+            }
+    return d[s]
+
 def set_es_yml(conf):
     with open(os.path.join(
         ELASTIC_DIR, "config/elasticsearch.yml.template"), "r") as f:
@@ -281,7 +289,8 @@ def set_es_yml(conf):
                 "thread_pool.search.size: {}\n".format(conf['n_server_threads']))
         elif "bootstrap.memory_lock" in line:
             new_lines.append(
-                "bootstrap.memory_lock: {}\n".format(conf['lock_memory']))
+                "bootstrap.memory_lock: {}\n".format(
+                    convert_es_lock_mem_string(conf['lock_memory'])))
         else:
             new_lines.append(line)
 
@@ -618,7 +627,7 @@ class Exp(Experiment):
     def __init__(self):
         self._exp_name = "exp-" + now()
 
-        self.confs = parameter_combinations({
+        confs = parameter_combinations({
                 "server_mem_size": mem_size_list,
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
@@ -631,12 +640,26 @@ class Exp(Experiment):
                 "prefetch_threshold_kb": prefetch_thresholds_kb,
                 "enable_prefetch": enable_prefetch_list
                 })
+        self.confs = self.organize_conf(confs)
+
         self._n_treatments = len(self.confs)
         pprint.pprint(self.confs)
         print "Number of treatments: ", self._n_treatments
         raw_input("This is your config. Enter to continue")
 
         self.result = []
+
+    def organize_conf(self, confs):
+        new_confs = []
+        for conf in confs:
+            if conf['engine'] in (ELASTIC, ELASTIC_PY) and \
+                    conf['lock_memory'] == 'lock_large':
+                # ES does not support locking all memory
+                continue
+
+            new_confs.append(conf)
+
+        return new_confs
 
     def conf(self, i):
         return self.confs[i]
