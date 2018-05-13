@@ -57,12 +57,12 @@ sudo apt-get install -y google-perftools libgoogle-perftools-dev
 sudo ldconfig
 
 # ccache
-sudo apt-get install ccache
+sudo apt-get install -y ccache
 
 # cgroup
-sudo apt-get install cgroup-bin
+sudo apt-get install -y cgroup-bin
 
-sudo apt-get install sysstat
+sudo apt-get install -y sysstat
 
 sudo apt-get install -y blktrace
 
