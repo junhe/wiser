@@ -3,7 +3,7 @@
 
 # install go
 cd ../../scripts
-./install-go.sh
+sudo ./install-go.sh
 cd -
 
 # setup redisearch go bench
