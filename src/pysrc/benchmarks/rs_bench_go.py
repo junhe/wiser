@@ -18,7 +18,7 @@ from pyreuse.sysutils.blocktrace import *
 from pyreuse.sysutils.ncq import *
 from pyreuse.apputils.flamegraph import *
 
-BENCH_EXE = "/root/go/bin/RediSearchBenchmark"
+BENCH_EXE = "/users/jhe/go/bin/RediSearchBenchmark"
 #WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml_1"
 #WIKI_ABSTRACT = "/mnt/ssd/downloads/enwiki-20171020-abstract.xml"
 #WIKI_ABSTRACT = "/mnt/ssd/downloads/test.xml"
@@ -34,6 +34,7 @@ REDISEARCH_SO = "/users/kanwu/RediSearch/src/redisearch.so"
 
 query_log_path = sys.argv[1]
 n_threads = int(sys.argv[2])
+server_addr = sys.argv[3]
 
 
 
@@ -64,7 +65,7 @@ def start_redis(port):
 def update_address(conf):
     if conf['engine'] == "elastic":
         conf['start_port'] = 9200
-        conf['host'] = "http://128.110.153.206"
+        conf['host'] = "http://" + server_addr
     elif conf['engine'] == "redis":
         conf['start_port'] = 6379
         conf['host'] = "localhost"
