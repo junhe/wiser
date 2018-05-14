@@ -15,3 +15,7 @@ source ~/.bashrc
 cd ../../scripts && ./setup-redisearchbench.sh && cd -
 
 
+echo "Now switch to another branch..."
+echo "git checkout es-client-runner"
+
+
