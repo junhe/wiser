@@ -6,6 +6,8 @@ cd ../../scripts
 sudo ./install-go.sh
 cd -
 
+source ~/.bashrc
+
 # setup redisearch go bench
 cd ../../scripts
 ./setup-redisearchbench.sh
