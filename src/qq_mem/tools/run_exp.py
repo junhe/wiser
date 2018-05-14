@@ -632,7 +632,7 @@ def start_elastic_server(conf):
 
 def is_engine_server_running(conf):
     if conf['engine'] in (ELASTIC, ELASTIC_PY):
-        return is_command_running("/usr/lib/jvm/java-8-oracle/bin/java")
+        return is_cmd_running_by_grep("org.elasticsearch")
     elif conf['engine'] == VACUUM:
         return is_command_running("./build/qq_server")
     else:
