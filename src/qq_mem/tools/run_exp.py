@@ -90,6 +90,8 @@ ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
 init_heap_size = [300*MB]
 max_heap_size = [300*MB]
 rs_bench_go_path = "/users/jhe/flashsearch/src/pysrc"
+elastic_data_paths = ['/mnt/ssd/elasticsearch/data', '/mnt/hdd/elasticsearch/data']
+# elastic_data_paths = ['/mnt/ssd/elasticsearch/data']
 
 
 
@@ -305,6 +307,9 @@ def set_es_yml(conf):
             new_lines.append(
                 "bootstrap.memory_lock: {}\n".format(
                     convert_es_lock_mem_string(conf['lock_memory'])))
+        elif line.startswith("path.data"):
+            new_lines.append("path.data: {}\n".format(
+                conf['elastic_data_path']))
         else:
             new_lines.append(line)
 
@@ -652,7 +657,8 @@ class Exp(Experiment):
                 "lock_memory": lock_memory,
                 "read_ahead_kb": read_ahead_kb_list,
                 "prefetch_threshold_kb": prefetch_thresholds_kb,
-                "enable_prefetch": enable_prefetch_list
+                "enable_prefetch": enable_prefetch_list,
+                "elastic_data_path": elastic_data_paths,
                 })
         self.confs = self.organize_conf(confs)
 
