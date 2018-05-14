@@ -1,5 +1,39 @@
 # flashsearch
 
+# How to setup an engine search
+
+1. install java
+
+```
+cd scripts
+./install-java.sh
+```
+
+2. copy elasticsearch files
+
+```
+rsync -avh ~/elasticsearch-5.6.3 REMOTE:./
+```
+
+3. copy elasticsearch index
+4. copy vacuum index
+5. setup vacuum
+
+```
+cd ~/flashsearch/src/qq_mem
+./setup.sh
+```
+
+# How to setup an engine client
+
+1. install go
+2. setup redisearch bench
+3. setup vacuum (you need the environment such as GLOG)
+
+```
+cd ~/flashsearch/src/qq_mem
+./setup.sh
+```
 
 # How to Install Redis
 
@@ -33,8 +67,8 @@ source ~/.bashrc
 2. Download and compile RediSearchBenchmark
 
 ```
-cd $GOPATH
-go get github.com/RedisLabs/RediSearchBenchmark
+cd scripts
+./setup-redisearchbench.sh
 ```
 
 3. The executable is in `$GOPATH/bin`
