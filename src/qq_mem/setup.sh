@@ -70,8 +70,8 @@ sudo apt-get install -y blktrace
 # https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html
 sudo sysctl -w vm.max_map_count=262144
 
-echo "*            hard   memlock           unlimited" |tee -a /etc/security/limits.conf
-echo "*            soft    memlock           unlimited" | tee -a /etc/security/limits.conf
+echo "*            hard   memlock           unlimited" | sudo tee -a /etc/security/limits.conf
+echo "*            soft    memlock           unlimited" | sudo tee -a /etc/security/limits.conf
 
 echo "Now, run"
 echo "source ~/.bashrc"

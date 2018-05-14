@@ -2,8 +2,10 @@ REMOTE=jhe@something.com
 ES_INDEX_PATH=/mnt/ssd/elasticsearch
 
 
+cd $HOME/reuse/scripts && sudo python formatfs.py --devpath /dev/sdc --mountpoint /mnt/ssd --fstype ext4 --owner jhe
+
 # install java
-cd .././scripts/ && ./install-java.sh
+cd ../../scripts/ && ./install-java.sh
 cd -
 
 # copy elasticsearch from remote machine
