@@ -79,9 +79,14 @@ def main():
 
     client = create_client("elastic")
     with open(path) as f:
+        cnt = 0
         for line in f:
             # print line.strip()
             ret = client.search(line.strip())
+            cnt += 1
+            if cnt % 1000 == 0:
+                print "finished", cnt
+
     print "ExperimentFinished!!!"
 
 
