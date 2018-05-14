@@ -9,8 +9,6 @@ cd -
 source ~/.bashrc
 
 # setup redisearch go bench
-cd ../../scripts
-./setup-redisearchbench.sh
-cd -
+cd ../../scripts && ./setup-redisearchbench.sh && cd -
 
 
