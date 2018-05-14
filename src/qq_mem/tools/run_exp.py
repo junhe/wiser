@@ -169,18 +169,28 @@ def parse_client_output(conf):
         raise RuntimeError
 
 def load_mem_engine(conf):
+    print "*" * 30
+    print "Warming up memory..."
+    print "*" * 30
     if conf['engine'] == ELASTIC:
-        load_mem_elastic(conf['query_path'])
+        load_mem_elastic(conf)
     elif conf['engine'] == ELASTIC_PY:
-        load_mem_elastic(conf['query_path'])
+        load_mem_elastic(conf)
     elif conf['engine'] == VACUUM:
         load_mem_vacuum(conf['query_path'])
     else:
         raise RuntimeError
 
-def load_mem_elastic(query_path):
-    p = start_elastic_pyclient(query_path)
+    print "*" * 30
+    print "Warming up memory DONE!!!!"
+    print "*" * 30
+
+def load_mem_elastic(conf):
+    # p = start_elastic_pyclient(conf['query_path'])
+    # p.wait()
+    p = start_elastic_client(conf['n_server_threads'], conf['query_path'])
     p.wait()
+
     shcmd("rm -f /tmp/client.out")
     time.sleep(1)
 
