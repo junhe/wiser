@@ -6,7 +6,7 @@ import signal
 from pyreuse.helpers import *
 from pyreuse.macros import *
 from pyreuse.sysutils.cgroup import *
-from pyreuse.sysutils.iostat_parser import parse_iostat
+from pyreuse.sysutils.iostat_parser import parse_iostat, parse_batch
 from pyreuse.general.expbase import *
 from pyreuse.sysutils.blocktrace import BlockTraceManager
 import glob
@@ -199,6 +199,36 @@ def load_mem_vacuum(query_path):
     p.wait()
     shcmd("rm -f /tmp/client.out")
     time.sleep(1)
+
+def start_iostat_watch(partition, out_path):
+    p = subprocess.Popen(
+            shlex.split("iostat -x -m /dev/nvme0n1p4 1 100000"),
+            stdout = open(out_path, "w"))
+    return p
+
+def stop_iostat_watch(p):
+    p.kill()
+
+def extract_col(table, col_name):
+    ret = []
+    for row in table:
+        ret.append(row[col_name])
+    return ",".join(ret)
+
+def extract_cols_from_file(path):
+    with open(path) as f:
+        text = f.read()
+
+    d = parse_batch(text)
+
+    ret = {
+            'cpu_user': extract_col(d['cpu'], 'user'),
+            'cpu_iowait': extract_col(d['cpu'], 'iowait'),
+            'cpu_wait': extract_col(d['cpu'], 'idle'),
+            'read_bw_mb': extract_col(d['io'], 'rMB/s'),
+            'read_iops': extract_col(d['io'], 'r/s')
+            }
+    return ret
 
 
 class Cgroup(object):
@@ -748,6 +778,9 @@ class Exp(Experiment):
 
         kb_read_a = get_iostat_kb_read()
 
+        p_iostat = start_iostat_watch(partition_name,
+                out_path = os.path.join(self._subexpdir, "iostat.out"))
+
         # Start block tracing after the server is fully loaded
         if do_block_tracing is True:
             self.blocktracer = create_blktrace_manager(self._subexpdir)
@@ -814,6 +847,10 @@ class Exp(Experiment):
             print ">>>>> It has been", seconds, "seconds <<<<<<"
             print "cache_size_log:", cache_size_log
 
+        stop_iostat_watch(p_iostat)
+        d_iostat = extract_cols_from_file(
+                os.path.join(self._subexpdir, "iostat.out"))
+
         kb_read_b = get_iostat_kb_read()
 
         kb_read = int(kb_read_b) - int(kb_read_a)
@@ -833,6 +870,7 @@ class Exp(Experiment):
 
         d.update(filename_dict)
         d.update(conf)
+        d.update(d_iostat)
 
         self.result.append(d)
 
