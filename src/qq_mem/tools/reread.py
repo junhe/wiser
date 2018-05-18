@@ -56,7 +56,9 @@ def analyze(block_offs, win_size):
 
     print "----- window size:", win_size, "------------"
     print 'in_window_cnt:', in_window_cnt
+    print 'in_window_cnt size_MB:', in_window_cnt * 4096 / (1024*1024)
     print 'total_cnt:', total_cnt
+    print 'total_cnt size GB:', total_cnt * 4096 / (1024*1024*1024)
     print 'ratio:', in_window_cnt / float(total_cnt)
 
 
