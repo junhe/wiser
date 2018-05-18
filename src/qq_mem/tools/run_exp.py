@@ -223,8 +223,9 @@ def extract_cols_from_file(path):
 
     ret = {
             'cpu_user': extract_col(d['cpu'], 'user'),
+            'cpu_system': extract_col(d['cpu'], 'system'),
             'cpu_iowait': extract_col(d['cpu'], 'iowait'),
-            'cpu_wait': extract_col(d['cpu'], 'idle'),
+            'cpu_idle': extract_col(d['cpu'], 'idle'),
             'read_bw_mb': extract_col(d['io'], 'rMB/s'),
             'read_iops': extract_col(d['io'], 'r/s')
             }
@@ -741,6 +742,7 @@ class Exp(Experiment):
     def beforeEach(self, conf):
         kill_server()
         kill_blktrace()
+        shcmd("pkill iostat", ignore_error = True)
 
         kill_client()
         time.sleep(1)
@@ -815,6 +817,7 @@ class Exp(Experiment):
                 sys.stdout.flush()
                 kill_client() # hoping the client output will be flushed
                 print "Wait for the client to flush stdout........"
+                stop_iostat_watch(p_iostat)
                 time.sleep(30)
 
             finished = is_client_finished()
@@ -847,7 +850,6 @@ class Exp(Experiment):
             print ">>>>> It has been", seconds, "seconds <<<<<<"
             print "cache_size_log:", cache_size_log
 
-        stop_iostat_watch(p_iostat)
         d_iostat = extract_cols_from_file(
                 os.path.join(self._subexpdir, "iostat.out"))
 
