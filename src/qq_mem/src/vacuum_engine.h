@@ -12,7 +12,7 @@
 #include "tsl/htrie_hash.h"
 #include "tsl/htrie_map.h"
 
-
+DECLARE_bool(enable_prefetch);
 
 class TermIndex {
  public:
@@ -175,9 +175,13 @@ class VacuumInvertedIndex {
   void MapPostingLists(const std::string inverted_index_path) {
     std::cout << "Open inverted_index_path: " << inverted_index_path << std::endl;
     file_map_.Open(inverted_index_path);
-    file_data_ = (uint8_t *)file_map_.Addr();
 
-    // utils::AdviseDoNotNeed(file_map_.Addr(), file_map_.Length());
+    file_data_ = (uint8_t *)file_map_.Addr();
+  }
+
+  // You can only call this after MapPostingLists()
+  void AdviseRandPostingLists() {
+    file_map_.MAdviseRand();
   }
 
   TermIndexResult FindTermIndexResult(const Term &term) {
@@ -273,8 +277,12 @@ class VacuumEngine : public SearchEngineServiceNew {
 
     inverted_index_.MapPostingLists(
         utils::JoinPath(engine_dir_path_, "my.vacuum"));
+    if (FLAGS_enable_prefetch)
+      inverted_index_.AdviseRandPostingLists();
 
     doc_store_.MapFdt(utils::JoinPath(engine_dir_path_, "my.fdt"));
+    if (FLAGS_enable_prefetch)
+      doc_store_.AdviseFdtRandom();
 
     if (FLAGS_lock_memory == "lock_large")
       utils::LockAllMemory(); // <<<<<<< Lock memory

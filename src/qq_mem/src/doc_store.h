@@ -23,7 +23,6 @@
 #define handle_error(msg) \
 	do { perror(msg); exit(EXIT_FAILURE); } while (0)
 
-
 namespace {
 
 // text_len and buf size must be not larger than 16*1024
@@ -688,7 +687,13 @@ class ChunkedDocStoreReader {
   void MapFdt(const std::string fdt_path) {
     std::cout << "Mappign fdt..." << std::endl;
     fdt_map_.Open(fdt_path);
+
     std::cout << "Mappign fdt finished." << std::endl;
+  }
+
+  // You can only call this after MapFdt()
+  void AdviseFdtRandom() {
+    fdt_map_.MAdviseRand();
   }
 
   void UnmapFdt() {

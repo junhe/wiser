@@ -169,6 +169,19 @@ class Staircase {
   }
 };
 
+inline void AdviseDoNotNeed(void *addr, size_t len) {
+  int ret = posix_madvise(addr, len, POSIX_MADV_DONTNEED);
+  if (ret != 0) {
+    perror("AdviseDoNotNeed()");
+    exit(1);
+  }
+}
+
+inline void AdviseRandom(void *addr, size_t len) {
+  if (madvise(addr, len, MADV_RANDOM) == -1) {
+    LOG(FATAL) << "Failed to advise RANDOM";
+  }
+}
 
 template<class T>
 std::string format_with_commas(T value)
@@ -330,6 +343,10 @@ class FileMap {
     MapFile(path, &addr_, &fd_, &file_length_);
   }
 
+  void MAdviseRand() {
+    AdviseRandom(addr_, file_length_);
+  }
+
   void Close() {
     UnmapFile(addr_, fd_, file_length_);
     addr_ = nullptr;
@@ -479,14 +496,6 @@ inline void LockAllMemory() {
 
     std::cout << "Successfully Locked." << std::endl;
     std::cout << "========================" << std::endl;
-}
-
-inline void AdviseDoNotNeed(void *addr, size_t len) {
-  int ret = posix_madvise(addr, len, POSIX_MADV_DONTNEED);
-  if (ret != 0) {
-    perror("AdviseDoNotNeed()");
-    exit(1);
-  }
 }
 
 inline std::size_t DivideRoundUp(std::size_t val, std::size_t divider) {
