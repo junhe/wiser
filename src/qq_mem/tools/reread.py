@@ -1,4 +1,7 @@
 from pprint import pprint
+from pyreuse.general.sliding_window import *
+from pyreuse.macros import *
+
 
 def read_table(path):
     table = []
@@ -36,38 +39,54 @@ def split_chunks(table):
 
     return offsets
 
-def analyze(block_offs, win_size):
-    window = []
-    in_window_cnt = 0
-    total_cnt = 0
-    for off in block_offs:
-        if len(window) < win_size:
-            window.append(off)
-            continue
-
-        assert len(window) == win_size
-
-        if off in window:
-            in_window_cnt += 1
-        total_cnt += 1
-
-        del window[0]
-        window.append(off)
-
-    print "----- window size:", win_size, "------------"
-    print 'in_window_cnt:', in_window_cnt
-    print 'in_window_cnt size_MB:', in_window_cnt * 4096 / (1024*1024)
-    print 'total_cnt:', total_cnt
-    print 'total_cnt size GB:', total_cnt * 4096 / (1024*1024*1024)
-    print 'ratio:', in_window_cnt / float(total_cnt)
-
-
-def main():
-    table = read_table("/tmp/results/exp-2018-05-17-22-06-45.276065/1526616408.02/trace-table.txt")
+def analyze_workload(path, win_sizes):
+    table = read_table(path)
     table = give_names(table)
     block_offs = split_chunks(table)
-    analyze(block_offs, 1000)
-    analyze(block_offs, 10000)
+
+    print 'all:', len(block_offs)
+    print 'unique:', len(set(block_offs))
+    print 'ratio:', len(set(block_offs)) * 1.0 / len(block_offs)
+
+    table = []
+    for size in win_sizes:
+        d = analyze_window(block_offs, size)
+        d = make_it_human(d)
+        table.append(d)
+        print table
+
+    return table
+
+
+def to_gb(n):
+    v = 1.0 * n * 4 * KB / GB
+    return round(v, 2)
+
+def to_mb(n):
+    v = 1.0 * n * 4 * KB / MB
+    return round(v, 2)
+
+def make_it_human(d):
+    """
+    [{'in_win': 0,
+    'total': 704880,
+    'window size': 10,
+    'ratio': 0.0,
+    'seq_size': 704890}]
+    """
+    d['in_win_mb'] = to_mb(d['in_win'])
+    d['in_win_gb'] = to_gb(d['in_win'])
+    d['win_size_mb'] = to_mb(d['window size'])
+    d['win_size_gb'] = to_gb(d['window size'])
+    d['total_mb'] = to_mb(d['total'])
+    d['total_gb'] = to_gb(d['total'])
+
+    return d
+
+def main():
+    pprint(analyze_workload(
+        "/tmp/results/exp-2018-05-22-12-17-37.421507/1527013529.74/trace-table.txt",
+        [10, 100, 1000]))
 
 if __name__ == "__main__":
     main()
