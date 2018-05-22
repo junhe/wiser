@@ -37,6 +37,7 @@ class TestFastWindow(unittest.TestCase):
         win.append(1)
 
         self.assertListEqual(win.list, [3, 2, 2, 1])
+        self.assertEqual(win.size(), 4)
 
         self.assertTrue(win.has(3))
         self.assertTrue(win.has(2))
@@ -44,6 +45,7 @@ class TestFastWindow(unittest.TestCase):
 
         win.pop()
         self.assertListEqual(win.list, [2, 2, 1])
+        self.assertEqual(win.size(), 3)
 
         self.assertFalse(win.has(3))
         self.assertTrue(win.has(2))
@@ -51,6 +53,7 @@ class TestFastWindow(unittest.TestCase):
 
         win.pop()
         self.assertListEqual(win.list, [2, 1])
+        self.assertEqual(win.size(), 2)
 
         self.assertFalse(win.has(3))
         self.assertTrue(win.has(2))
@@ -58,6 +61,7 @@ class TestFastWindow(unittest.TestCase):
 
         win.pop()
         self.assertListEqual(win.list, [1])
+        self.assertEqual(win.size(), 1)
 
         self.assertFalse(win.has(3))
         self.assertFalse(win.has(2))
@@ -65,6 +69,7 @@ class TestFastWindow(unittest.TestCase):
 
         win.pop()
         self.assertListEqual(win.list, [])
+        self.assertEqual(win.size(), 0)
 
         self.assertFalse(win.has(3))
         self.assertFalse(win.has(2))
