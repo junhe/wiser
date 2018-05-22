@@ -235,12 +235,16 @@ class RPCContext {
             return false;
           }
           
-          req_ = query_producer->NextGrpcQuery(thread_idx);
-
-          start_ = utils::now();
-          next_state_ = State::WRITE_DONE;
-          stream_->Write(req_, RPCContext::tag(this));
-          return true;
+          if (query_producer->IsEnd()) {
+            next_state_ = State::STREAM_IDLE;
+            return true;
+          } else {
+            req_ = query_producer->NextGrpcQuery(thread_idx);
+            start_ = utils::now();
+            next_state_ = State::WRITE_DONE;
+            stream_->Write(req_, RPCContext::tag(this));
+            return true;
+          }
         case State::WRITE_DONE:
           if (!ok) {
             return false;
@@ -384,12 +388,6 @@ class Client {
       channels_.emplace_back(config.GetString("target"), i); 
     }
     std::cout << channels_.size() << " channels created." << std::endl;
-
-    for(int i = 0; i < num_threads; i++)
-    {
-      finished_call_counts_.push_back(0);
-      finished_roundtrips_.push_back(0);
-    }
   }
 
   void StartThreads() {
@@ -415,12 +413,13 @@ class Client {
     auto start_time = utils::now();
 
     int cnt = 0;
-    while (QueryFinished() == false) {
+    while (IsWorkloadDone() == false) {
       utils::sleep(1);
       cnt++;
     }
 
-    std::cout << "All queries finished. Count: " << std::endl;
+    std::cout << "All queries finished. Count: " 
+      << query_producer_.Size()  << std::endl;
     auto end_time = utils::now();
 
     DestroyMultithreading();
@@ -522,6 +521,19 @@ class Client {
     return query_producer_->IsEnd();
   }
 
+  bool IsWorkloadDone() {
+    if (query_producer_->IsEnd() == false)
+      return false;
+
+    int n_queries = query_producer_->Size();
+    int total_roundtrips = GetTotalRoundtrips();
+
+    if (n_queries == total_roundtrips) 
+      return true;
+    else
+      return false;
+  }
+
   void ShowReplies() {
     std::cout << "save_reply_ == " << save_reply_ << std::endl;
 
@@ -586,7 +598,8 @@ class SyncStreamingClient: public Client {
     std::cout << "Client: Starting sending requests in thread "
       << thread_idx << " ..." << std::endl;
     int query_cnt = 0;
-    while (shutdown_state_[thread_idx]->shutdown == false && QueryFinished() == false) {
+    while (shutdown_state_[thread_idx]->shutdown == false && 
+        QueryFinished() == false) {
       SearchRequest grpc_request = query_producer_->NextGrpcQuery(thread_idx);
 
       StreamingSearch(thread_idx, stream.get(), grpc_request, reply);
@@ -695,7 +708,7 @@ class AsyncClient: public Client {
         break;
       }
 
-      if (!ctx->RunNextState(ok, thread_idx, &histograms_[thread_idx], 
+      if (false == ctx->RunNextState(ok, thread_idx, &histograms_[thread_idx], 
             &reply_pools_[thread_idx], save_reply_, query_producer_.get())) 
       {
         ctx->StartNewClone();

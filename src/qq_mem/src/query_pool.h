@@ -311,7 +311,7 @@ class QueryProducerNoLoop: public QueryProducerService {
   }
  
   std::mutex mutex_;
-  QueryPool pool_;
+  QueryPoolNoLoop pool_;
 };
 
 
