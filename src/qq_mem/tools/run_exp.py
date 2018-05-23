@@ -87,8 +87,7 @@ engine_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
 # Elastic only
 ######################
 ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
-init_heap_size = [300*MB]
-max_heap_size = [300*MB]
+init_heap_size = [2*GB, 1*GB, 512*MB, 300*MB]
 rs_bench_go_path = "/users/jhe/flashsearch/src/pysrc"
 elastic_data_paths = ['/mnt/ssd/elasticsearch/data', '/mnt/hdd/elasticsearch/data']
 # elastic_data_paths = ['/mnt/ssd/elasticsearch/data']
@@ -694,7 +693,6 @@ class Exp(Experiment):
                 "query_path": query_paths,
                 "engine": engines,
                 "init_heap_size": init_heap_size,
-                "max_heap_size": max_heap_size,
                 "lock_memory": lock_memory,
                 "read_ahead_kb": read_ahead_kb_list,
                 "prefetch_threshold_kb": prefetch_thresholds_kb,
@@ -721,6 +719,8 @@ class Exp(Experiment):
             conf['cgroup_mem_size'] = conf['server_mem_size']
             if conf['server_mem_size'] == 'in-mem':
                 conf['cgroup_mem_size'] = 32*GB
+
+            conf['max_heap_size'] = conf['init_heap_size']
 
             new_confs.append(conf)
 
