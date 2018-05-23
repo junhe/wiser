@@ -74,7 +74,8 @@ convert_qq_to_vacuum:
 create_qq_mem_dump:
 	cd build && cmake ../src/ && \
 	make create_qq_mem_dump && \
-	./create_qq_mem_dump
+	./create_qq_mem_dump -line_doc_path=/mnt/ssd/wiki/line_doc.toy \
+	-dump_dir_path=/tmp/qq-dump
 
 vacuum_two_nodes:
 	cd build 
