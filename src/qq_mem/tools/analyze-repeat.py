@@ -1,6 +1,6 @@
 from pprint import pprint
 from collections import Counter
-from fast_window import *
+from pyreuse.general.sliding_window import *
 
 
 def analyze_workload(path, win_sizes):
@@ -34,11 +34,16 @@ def test():
     assert table[0]['in_win'] == 1
     assert table[0]['total'] == 2
 
+
 def main():
     test()
     pprint( analyze_workload(
-            "/mnt/ssd/query_workload/single_term/type_single.docfreq_low",
-            [10, 100, 1000, 10000]) )
+            # "/mnt/ssd/query_workload/single_term/type_single.docfreq_low",
+            # "/mnt/ssd/query_workload/single_term/type_single.docfreq_high",
+            # "/mnt/ssd/query_workload/two_term/type_twoterm",
+            # "/mnt/ssd/query_workload/two_term_phrases/type_phrase.version_v2",
+            "/mnt/ssd/query_workload/term.zone-size.256KBplus",
+            [10, 100, 500]) )
 
 if __name__ == "__main__":
     main()
