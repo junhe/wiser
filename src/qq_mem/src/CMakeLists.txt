@@ -216,6 +216,23 @@ target_link_libraries(engine_bench
     ${GLOG_LIB}
 )
 
+
+add_executable(create_qq_mem_dump
+    create_qq_mem_dump.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+
+target_link_libraries(create_qq_mem_dump
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${QQ_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
+
+
 add_executable(convert_qq_to_vacuum
     convert_qq_to_vacuum.cc
     ${ENGINE_SRCS}

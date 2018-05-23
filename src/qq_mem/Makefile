@@ -71,6 +71,10 @@ convert_qq_to_vacuum:
 		make -j${NUM_CORES} convert_qq_to_vacuum && \
 		./convert_qq_to_vacuum
 
+create_qq_mem_dump:
+	cd build && cmake ../src/ && \
+	make create_qq_mem_dump && \
+	./create_qq_mem_dump
 
 vacuum_two_nodes:
 	cd build 
@@ -153,6 +157,7 @@ test_last_args:
 	make -j${NUM_CORES} testlast
 	cd ..
 	./build/testmain ${args}
+
 
 test_qqflash:
 	rm -f ./build/testmain
