@@ -419,7 +419,7 @@ class Client {
     }
 
     std::cout << "All queries finished. Count: " 
-      << query_producer_.Size()  << std::endl;
+      << query_producer_->Size()  << std::endl;
     auto end_time = utils::now();
 
     DestroyMultithreading();

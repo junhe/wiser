@@ -146,15 +146,15 @@ class GrpcLogTreatmentExecutor: public TreatmentExecutor {
  public:
   GrpcLogTreatmentExecutor(int n_threads){
     // ASYNC Streaming
-    // client_config_.SetString("synchronization", "SYNC");
+    // client_config_.SetString("synchronization", "ASYNC");
     // client_config_.SetString("rpc_arity", "STREAMING");
-    // client_config_.SetString("target", "localhost:50051");
+    // client_config_.SetString("target", GetTargetUrl(FLAGS_grpc_server));
     // client_config_.SetInt("n_client_channels", 64);
     // client_config_.SetInt("n_rpcs_per_channel", 100);
-    // client_config_.SetInt("n_messages_per_call", 100000);
+    // client_config_.SetInt("n_messages_per_call", 1000000);
     // client_config_.SetInt("n_threads", n_threads); 
     // client_config_.SetInt("n_threads_per_cq", 1);
-    // client_config_.SetInt("benchmark_duration", 5);
+    // client_config_.SetInt("benchmark_duration", FLAGS_run_duration);
     // client_config_.SetBool("save_reply", false);
 
     client_config_.SetString("synchronization", "SYNC");
@@ -163,7 +163,6 @@ class GrpcLogTreatmentExecutor: public TreatmentExecutor {
     client_config_.SetInt("n_client_channels", 64);
     client_config_.SetInt("n_threads", n_threads); 
     client_config_.SetInt("benchmark_duration", FLAGS_run_duration);
-    // client_config_.SetBool("save_reply", true);
     client_config_.SetBool("save_reply", false);
   }
 
