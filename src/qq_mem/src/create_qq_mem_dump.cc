@@ -9,6 +9,8 @@
 
 // This program reads a line doc, convert them to qq memory dump format
 
+DEFINE_string(line_doc_path, "", "path of the line doc");
+DEFINE_string(dump_dir_path, "", "path of the directory to dump to");
 
 std::unique_ptr<SearchEngineServiceNew> 
     CreateQqEngineFromFile(GeneralConfig config) 
@@ -17,7 +19,7 @@ std::unique_ptr<SearchEngineServiceNew>
       config.GetString("engine_type"));
 
   if (config.GetString("load_source") == "linedoc") {
-    engine->LoadLocalDocuments(config.GetString("linedoc_path"), 
+    engine->LoadLocalDocuments(config.GetString("line_doc_path"), 
                                config.GetInt("n_docs"),
                                config.GetString("loader"));
   } else {
@@ -29,15 +31,26 @@ std::unique_ptr<SearchEngineServiceNew>
 }
 
 
+void CheckArgs() {
+  if (FLAGS_line_doc_path == "") {
+    LOG(FATAL) << "Arg line_doc_path is not set";
+  }
+
+  if (FLAGS_dump_dir_path == "") {
+    LOG(FATAL) << "Arg dump_dir_path is not set";
+  }
+}
+
+
 GeneralConfig config_by_jun() {
   GeneralConfig config;
   config.SetString("engine_type", "qq_mem_compressed");
 
   config.SetString("load_source", "linedoc");
-  // config.SetString("load_source", "dump");
 
-  config.SetInt("n_docs", 100);
-  config.SetString("linedoc_path", "/mnt/ssd/wiki/line_doc.toy");
+  config.SetInt("n_docs", 100000000);
+  config.SetString("line_doc_path", FLAGS_line_doc_path);
+  config.SetString("dump_dir_path", FLAGS_dump_dir_path);
   config.SetString("loader", "WITH_POSITIONS");
 
   config.SetInt("n_queries", 1000);
@@ -58,11 +71,13 @@ int main(int argc, char **argv) {
 
 	gflags::ParseCommandLineFlags(&argc, &argv, true);
 
+  CheckArgs();
+
   auto config = config_by_jun();
 
   auto engine = CreateQqEngineFromFile(config); 
 
-  engine->Serialize("/mnt/ssd/tmp");
+  engine->Serialize(config.GetString("dump_dir_path"));
 }
 
 
