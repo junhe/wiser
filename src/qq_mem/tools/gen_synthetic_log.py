@@ -35,9 +35,6 @@ for log, group in log_to_group.items():
     else:
         group_to_log[group].append(log)
 
-print log_to_group
-print group_to_log
-
 def rand_item(l):
     total = len(l)
     i = random.randint(0, total - 1)
@@ -232,10 +229,27 @@ def find_all_unique_phrases():
             continue
         if terms[1] in term_set:
             continue
+        if terms[0] == terms[1]:
+            continue
+
         phrases.append(line.strip())
+        term_set.add(terms[0])
+        term_set.add(terms[1])
     f.close()
 
-    write_to_file(phrases, "/mnt/ssd/query_workload/no-repeated-terms-queries")
+    write_to_file(phrases, "/mnt/ssd/query_workload/no-repeated-terms-queries.corrected")
+
+    def test():
+        terms = []
+        with open("/mnt/ssd/query_workload/no-repeated-terms-queries.corrected") as f:
+            for line in f:
+                terms.extend(line.split())
+        if not len(terms) == len(set(terms)):
+            print len(terms), len(set(terms))
+            raise RuntimeError("not unique!")
+        print "Test passed"
+    test()
+
 
 def gen_phrase_queries():
     n_queries = 10000
@@ -251,14 +265,14 @@ def gen_phrase_queries():
     write_to_file(phrases, os.path.join(folder, "type_phrase"))
 
 def main():
-    buckets = Buckets()
-    buckets.load_term_list("/mnt/ssd/popular_terms")
+    # buckets = Buckets()
+    # buckets.load_term_list("/mnt/ssd/popular_terms")
 
     ## Single term
     # single_term_queries(buckets)
 
     ## Two term
-    two_term_queries(buckets)
+    # two_term_queries(buckets)
 
     ## find phrases without repeated terms
     # find_all_unique_phrases()
@@ -266,7 +280,7 @@ def main():
     ## generatel phrases
     # gen_phrase_queries()
 
-
+    find_all_unique_phrases()
 
 
 
