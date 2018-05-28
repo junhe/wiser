@@ -8,6 +8,13 @@
 #include "qq_mem_engine.h"
 #include "utils.h"
 
+// This program checks if the sizes of posting lists match the doc freqs
+// in the line doc.
+//
+// Input:
+//  1. vacuum engine
+//  2. term and doc freq 
+
 
 struct CountEntry {
   std::string term;
