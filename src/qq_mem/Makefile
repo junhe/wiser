@@ -69,13 +69,20 @@ engine_bench_debug:
 convert_qq_to_vacuum:
 	cd build && cmake ../src/ && \
 		make -j${NUM_CORES} convert_qq_to_vacuum && \
-		./convert_qq_to_vacuum
+		./convert_qq_to_vacuum \
+		-qqdump_dir_path=/mnt/ssd/wiki-May-qq-dump/ \
+		-vacuum_dir_path=/mnt/ssd/vacuum-05-23-wiki-2018May
+
+check_posting_list:
+	cd build && cmake ../src/ && \
+		make -j${NUM_CORES} check_posting_list && \
+		./check_posting_list
 
 create_qq_mem_dump:
 	cd build && cmake ../src/ && \
 	make create_qq_mem_dump && \
-	./create_qq_mem_dump -line_doc_path=/mnt/ssd/wiki/line_doc.toy \
-	-dump_dir_path=/tmp/qq-dump
+	./create_qq_mem_dump -line_doc_path=/mnt/ssd/wiki/wiki_full.linedoc_tokenized \
+	-dump_dir_path=/mnt/ssd/vacuum-may-wiki
 
 vacuum_two_nodes:
 	cd build 

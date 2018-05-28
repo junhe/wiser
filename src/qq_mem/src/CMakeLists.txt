@@ -200,7 +200,6 @@ target_link_libraries(packing_bench
 )
 
 
-
 add_executable(engine_bench
     engine_bench.cc
     ${ENGINE_SRCS}
@@ -225,6 +224,22 @@ add_executable(create_qq_mem_dump
 )
 
 target_link_libraries(create_qq_mem_dump
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${QQ_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
+
+
+add_executable(check_posting_list
+    check_posting_list.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+
+target_link_libraries(check_posting_list
     ${GRPC_LIBS}
     protobuf::libprotobuf
     ${QQ_LIBS}

@@ -333,6 +333,9 @@ class VacuumEngine : public SearchEngineServiceNew {
       return result;
     }
 
+    for (auto &it : iterators) {
+      result.doc_freqs.push_back(it.Size());
+    }
 
     if (query.is_phrase == false)  {
       // check prefetch
