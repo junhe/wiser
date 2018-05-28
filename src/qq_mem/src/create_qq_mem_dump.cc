@@ -19,6 +19,10 @@ std::unique_ptr<SearchEngineServiceNew>
       config.GetString("engine_type"));
 
   if (config.GetString("load_source") == "linedoc") {
+    std::cout << "Loading line doc from "
+      << config.GetString("line_doc_path")
+      << std::endl;
+
     engine->LoadLocalDocuments(config.GetString("line_doc_path"), 
                                config.GetInt("n_docs"),
                                config.GetString("loader"));
