@@ -78,6 +78,11 @@ check_posting_list:
 		make -j${NUM_CORES} check_posting_list && \
 		./check_posting_list
 
+trie_bench:
+	cd build && cmake ../src/ && \
+		make -j${NUM_CORES} trie_bench && \
+		./trie_bench
+
 create_qq_mem_dump:
 	cd build && cmake ../src/ && \
 	make create_qq_mem_dump && \

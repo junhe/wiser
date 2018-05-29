@@ -248,6 +248,24 @@ target_link_libraries(check_posting_list
 )
 
 
+
+add_executable(trie_bench
+    trie_bench.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+
+target_link_libraries(trie_bench
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${QQ_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
+
+
+
 add_executable(convert_qq_to_vacuum
     convert_qq_to_vacuum.cc
     ${ENGINE_SRCS}
