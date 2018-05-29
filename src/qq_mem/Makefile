@@ -163,6 +163,15 @@ test_qqflash:
 	cd ..
 	./build/testmain "[qqflash]"
 
+test_bf:
+	rm -f ./build/testmain
+	mkdir -p ./build
+	cd build
+	cmake ../src/
+	make -j16 testmain
+	cd ..
+	./build/testmain "[bloomfilter]"
+
 snippet_bench:
 	./build.sh
 	./build/snippet_bench

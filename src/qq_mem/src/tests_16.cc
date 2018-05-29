@@ -3,6 +3,8 @@
 #include "query_pool.h"
 #include "packed_value.h"
 #include "flash_engine_dumper.h"
+#include "bloom.h"
+
 
 extern "C" {
 #include "bitpacking.h"
@@ -282,6 +284,45 @@ TEST_CASE( "Chunked store", "[doc_store0]" ) {
     }
   }
 }
+
+
+TEST_CASE( "Bloom Filter", "[bloomfilter]" ) {
+    struct bloom bloom;
+    int expected_entries;
+    float ratio;
+  SECTION("Store the bloom filter") {
+    // init bloom filter (expected added keys, ratio of false-positive(lower, more reliable))
+    expected_entries = 2;
+    ratio = 0.01;
+    bloom_init(&bloom, expected_entries, ratio);
+    
+    // add keys (string, length of string)
+    bloom_add(&bloom, "hello", 6);
+    bloom_add(&bloom, "wisconsin", 10);
+
+    // check keys
+    REQUIRE(bloom_check(&bloom, "hello", 6) == 1);
+    REQUIRE(bloom_check(&bloom, "wisconsin", 10) == 1);
+    REQUIRE(bloom_check(&bloom, "random", 7) == 0);
+    REQUIRE(bloom_check(&bloom, "helle", 6) == 0);
+    REQUIRE(bloom_check(&bloom, "wisconson", 6) == 0);
+    bloom_print(&bloom);
+  }
+
+  SECTION("Load the bloom filter") {
+    // set with know bit array
+    struct bloom bloom_test;
+    bloom_set(&bloom_test, expected_entries, ratio, bloom.bf);
+    
+    // check keys
+    REQUIRE(bloom_check(&bloom_test, "hello", 6) == 1);
+    REQUIRE(bloom_check(&bloom_test, "wisconsin", 10) == 1);
+    REQUIRE(bloom_check(&bloom_test, "random", 7) == 0);
+    REQUIRE(bloom_check(&bloom_test, "helle", 6) == 0);
+    bloom_print(&bloom_test);
+  }
+}
+
 
 
 

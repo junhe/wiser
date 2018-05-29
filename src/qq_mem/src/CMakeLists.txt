@@ -56,6 +56,8 @@ ADD_LIBRARY(little_packed_ints
 protobuf_generate_cpp(PROTO_SRCS PROTO_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 grpc_generate_cpp(GRPC_SRCS GRPC_HDRS ${PROTO_SRC_DIR} ${PROTOS})
 
+LINK_DIRECTORIES(${CMAKE_CURRENT_SOURCE_DIR}/libbloom/build)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/libbloom)
 
 set(ENGINE_SRCS 
     doc_store.cc
@@ -158,6 +160,7 @@ target_link_libraries(testmain
     protobuf::libprotobuf
     ${QQ_LIBS}
     ${GLOG_LIB}
+    bloom
 )
 
 add_executable( testlast
