@@ -28,7 +28,15 @@ do_drop_cache = True
 do_block_tracing = False
 qq_mem_folder = "/users/jhe/flashsearch/src/qq_mem"
 user_name = "jhe"
+
+
+######################
+# Read ahead
+######################
 read_ahead_kb_list = [32]
+enable_prefetch_list = [True] # whether to eanble Vaccum to do prefetch
+prefetch_thresholds_kb = [128] # unit is KB
+force_disable_es_readahead = [True]
 
 
 ######################
@@ -36,20 +44,17 @@ read_ahead_kb_list = [32]
 ######################
 # engines = [ELASTIC] # ELASTIC or VACUUM
 # engines = [ELASTIC_PY] # ELASTIC or VACUUM
+engines = [VACUUM, ELASTIC] # ELASTIC or VACUUM
+# engines = [ELASTIC] # ELASTIC or VACUUM
 # engines = [VACUUM] # ELASTIC or VACUUM
-engines = [ELASTIC] # ELASTIC or VACUUM
 n_server_threads = [25]
 n_client_threads = [128] # client
-# mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
-# mem_size_list = [8*GB, 4*GB]
+mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
+# mem_size_list = [8*GB]
 # mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [256*MB]
-mem_size_list = ['in-mem']
-
-# Make the a pair?
-enable_prefetch_list = [True] # whether to eanble Vaccum to do prefetch
-prefetch_thresholds_kb = [128] # unit is KB
+# mem_size_list = ['in-mem']
 
 
 mem_swappiness = 60
@@ -59,9 +64,11 @@ mem_swappiness = 60
 # query_paths = ["/mnt/ssd/realistic_querylog"]
 # query_paths = ["/mnt/ssd/query_workload/from_log"]
 # query_paths = ["/mnt/ssd/query_workload/type_realistic"]
-query_paths = ["/mnt/ssd/short_log"]
+# query_paths = ["/mnt/ssd/short_log"]
 # query_paths = ["/mnt/ssd/query_workload/by-doc-freq/type_fiveplus"]
 # query_paths = ["/mnt/ssd/query_workload/single_term/type_single.docfreq_high"]
+# query_paths = ["/mnt/ssd/query_workload/two_term_phrases/type_phrase"]
+query_paths = ["/mnt/ssd/query_workload/two_term_phrases/type_phrase.version_v2.replicated"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/single_term/type_single.docfreq_high")
 # query_paths = glob.glob("/mnt/ssd/query_workload/single_term/*") +\
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term/type_twoterm") +\
@@ -71,11 +78,10 @@ query_paths = ["/mnt/ssd/short_log"]
 # query_paths = glob.glob("/mnt/ssd/query_workload/two_term_phrases/type_phrase")
 lock_memory = ["disabled"] # must be string
 
-
 ######################
 # Vacuum only
 ######################
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_0511_chunked_doc_store"
+search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-05-23-wiki-2018May"
 # search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_0501_prefetch_zone"
 # search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_delta_skiplist-04-30"
 # search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
@@ -83,14 +89,16 @@ search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_0511_chunked_doc_store"
 profile_qq_server = "false"
 engine_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
 
+
+
 ######################
 # Elastic only
 ######################
 ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
-init_heap_size = [2*GB, 1*GB, 512*MB, 300*MB]
+init_heap_size = [300*MB]
 rs_bench_go_path = "/users/jhe/flashsearch/src/pysrc"
-elastic_data_paths = ['/mnt/ssd/elasticsearch/data', '/mnt/hdd/elasticsearch/data']
-# elastic_data_paths = ['/mnt/ssd/elasticsearch/data']
+# elastic_data_paths = ['/mnt/ssd/elasticsearch/data', '/mnt/hdd/elasticsearch/data']
+elastic_data_paths = ['/mnt/ssd/elasticsearch/data']
 
 
 
@@ -132,8 +140,11 @@ class VacuumClientOutput:
 class ElasticClientOutput:
     def _parse_throughput(self, line):
         qps = line.split()[1]
-        line = line.replace(",", " ")
         return {"QPS": qps.split(".")[0]}
+
+    def _parse_duration(self, line):
+        duration = line.split()[1]
+        return {"duration": str(round(float(duration), 2))}
 
     def _parse_latencies(self, line):
         line = line.replace(",", " ")
@@ -154,6 +165,8 @@ class ElasticClientOutput:
                 d.update(self._parse_throughput(lines[i]))
             elif line.startswith("Latencies:"):
                 d.update(self._parse_latencies(lines[i]))
+            elif line.startswith("Duration:"):
+                d.update(self._parse_duration(lines[i]))
 
         return d
 
@@ -698,6 +711,7 @@ class Exp(Experiment):
                 "prefetch_threshold_kb": prefetch_thresholds_kb,
                 "enable_prefetch": enable_prefetch_list,
                 "elastic_data_path": elastic_data_paths,
+                "force_disable_es_readahead": force_disable_es_readahead
                 })
         self.confs = self.organize_conf(confs)
 
@@ -722,6 +736,10 @@ class Exp(Experiment):
 
             conf['max_heap_size'] = conf['init_heap_size']
 
+            if conf['force_disable_es_readahead'] is True and \
+                    conf['engine'] in (ELASTIC, ELASTIC_PY):
+                conf['read_ahead_kb'] = 0
+
             new_confs.append(conf)
 
         return new_confs
@@ -733,8 +751,14 @@ class Exp(Experiment):
         clean_dmesg()
 
         engines = [conf['engine'] for conf in self.confs]
-        if 'vacuum' in engines:
+        if VACUUM in engines:
             compile_engine_bench()
+
+        forces = [conf['force_disable_es_readahead']
+                    for conf in self.confs]
+        if (ELASTIC in engines or ELASTIC_PY in engines ) and \
+                True in forces:
+            raw_input("WARNING! forcing all ES to have read_ahead_kb=0")
 
         kill_client()
         sync_build_dir()
