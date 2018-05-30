@@ -81,7 +81,14 @@ check_posting_list:
 trie_bench:
 	cd build && cmake ../src/ && \
 		make -j${NUM_CORES} trie_bench && \
-		./trie_bench
+		./trie_bench \
+		-term_path=/mnt/ssd/benchmark_trie/redditaa_tokenized.terms.set:/mnt/ssd/benchmark_trie/redditab_tokenized.terms.set:/mnt/ssd/benchmark_trie/redditac_tokenized.terms.set:/mnt/ssd/benchmark_trie/redditad_tokenized.terms.set
+		#./trie_bench -term_path=/mnt/ssd/benchmark_trie/popular_terms_2018-may_wiki.shuffled
+		#./trie_bench -term_path=/mnt/ssd/benchmark_trie/popular_terms_2018-may_wiki.shuffled
+		#HEAPPROFILE=/tmp/heapprof ./trie_bench
+
+trie_bench_heap:
+	google-pprof --text build/trie_bench ${path}
 
 create_qq_mem_dump:
 	cd build && cmake ../src/ && \

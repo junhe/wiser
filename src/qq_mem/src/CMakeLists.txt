@@ -1,13 +1,14 @@
 project(grpc-cmake-example)
 cmake_minimum_required(VERSION 3.2)
 
-set(TCMALLOC_OPTS -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free)
+set(TCMALLOC_OPTS "-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
 
 set(PRODUCTION_OPTS "-std=c++11 -O3 -g -Wreturn-type -DNDEBUG -Wall")
 set(INDEXING_OPTS   "-std=c++11 -O3 -g -Wreturn-type -Wall")
 set(DEBUG_OPTS      "-std=c++11 -O0 -g -Wreturn-type -Wall")
 set(DEV_OPTS        "-std=c++11 -O0 -g -Wreturn-type -Wall")
 
+#SET(CMAKE_CXX_FLAGS "${PRODUCTION_OPTS} ${TCMALLOC_OPTS}")
 SET(CMAKE_CXX_FLAGS ${PRODUCTION_OPTS})
 #SET(CMAKE_CXX_FLAGS ${DEV_OPTS})
 SET(CMAKE_C_FLAGS "-fPIC -std=c99 -O3 -msse4.1  -march=native -Wall -Wextra -pedantic -Wshadow")
@@ -264,6 +265,7 @@ target_link_libraries(trie_bench
     ${GLOG_LIB}
 )
 
+#target_compile_options(trie_bench PRIVATE "${TCMALLOC_OPTS}")
 
 
 add_executable(convert_qq_to_vacuum
