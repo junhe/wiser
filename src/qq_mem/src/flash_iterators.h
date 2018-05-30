@@ -559,7 +559,7 @@ class PosAndOffPostingBagIteratorBase {
     cur_posting_bag_ = posting_bag;
   }
 
-  CozyBoxIterator GetCozyBoxIterator() const {
+  const CozyBoxIterator &GetCozyBoxIterator() const {
     return cozy_box_iter_;
   }
 
