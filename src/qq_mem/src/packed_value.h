@@ -212,9 +212,11 @@ class LittlePackedIntsReader {
     is_cache_filled_ = true;
   }
 
-  uint32_t Get(const int index) const {
+  uint32_t Get(const std::size_t index) const {
     DLOG_IF(FATAL, is_cache_filled_ == false)
       << "Cache is not filled yet!";
+
+    DLOG_IF(FATAL, index > PACK_ITEM_CNT) << "index out of bound";
 
     return cache_[index]; 
   }
@@ -455,9 +457,9 @@ class VIntsIterator {
   }
 
  private:
-  int next_index_;
-  uint32_t magic_; 
-  uint32_t varint_bytes_;
+  int next_index_ = -1;
+  uint32_t magic_ = 0; 
+  uint32_t varint_bytes_ = 0;
   VarintIteratorEndBound varint_iter_;
 };
 

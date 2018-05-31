@@ -67,7 +67,7 @@ inline BlobFormat GetBlobFormat(const uint8_t *buf) {
   } else if ((*buf & 0xFF) == PACK_FIRST_BYTE) {
     return BlobFormat::PACKED_INTS;
   } else {
-    LOG(FATAL) << "Wrong format";
+    DLOG(FATAL) << "Wrong format";
   }
 
   return BlobFormat::NONE; // to suppress warning
@@ -87,10 +87,9 @@ class TermFreqIterator {
   }
 
   void SkipTo(int posting_index) {
-    if (posting_index < cur_posting_index_) {
-      LOG(FATAL) << "Posting index " << posting_index 
-        << " is less than current posting index " << cur_posting_index_;
-    }
+    DLOG_IF(FATAL, posting_index < cur_posting_index_) 
+      << "Posting index " << posting_index 
+      << " is less than current posting index " << cur_posting_index_;
 
     int blob_index = posting_index / PACK_SIZE;
     int blob_offset = posting_index % PACK_SIZE;
@@ -116,7 +115,7 @@ class TermFreqIterator {
     } else if (cur_iter_type_ == BlobFormat::VINTS) {
       return vints_iter_.Peek();
     } else {
-      LOG(FATAL) << "blob has not been setup" << std::endl;
+      DLOG(FATAL) << "blob has not been setup" << std::endl;
       return -1;
     }
   }
@@ -242,7 +241,7 @@ class DocIdIterator {
     } else if (cur_iter_type_ == BlobFormat::VINTS) {
       return vints_iter_.Peek();
     } else {
-      LOG(FATAL) << "blob has not been setup" << std::endl;
+      DLOG(FATAL) << "blob has not been setup" << std::endl;
       return -1;
     }
   }
@@ -376,7 +375,7 @@ class CozyBoxIterator {
     } else if (cur_iter_type_ == BlobFormat::VINTS) {
       return vints_iter_.Peek();
     } else {
-      LOG(FATAL) << "blob has not been setup" << std::endl;
+      DLOG(FATAL) << "blob has not been setup" << std::endl;
       return -1;
     }
   }
@@ -416,7 +415,7 @@ class CozyBoxIterator {
     } else if (cur_iter_type_ == BlobFormat::VINTS) {
       return vints_iter_.SerializationSize();
     } else {
-      LOG(FATAL) << "blob has not been setup" << std::endl;
+      DLOG(FATAL) << "blob has not been setup" << std::endl;
       return -1;
     }
   }
@@ -436,10 +435,10 @@ class CozyBoxIterator {
     cur_in_blob_index_ = 0;
   }
 
-  const uint8_t *buf_; 
-  BlobFormat cur_iter_type_;
-  off_t cur_blob_off_;
-  int cur_in_blob_index_;
+  const uint8_t *buf_ = nullptr; 
+  BlobFormat cur_iter_type_ = BlobFormat::NONE;
+  off_t cur_blob_off_ = 0;
+  int cur_in_blob_index_ = 0;
   
   PackedIntsIterator pack_ints_iter_;
   VIntsIterator vints_iter_;
@@ -544,8 +543,7 @@ class PosAndOffPostingBagIteratorBase {
   }
 
   void SkipTo(int posting_bag) {
-    if (posting_bag < cur_posting_bag_)
-      LOG(FATAL) << "posting bag " << posting_bag 
+    DLOG_IF(FATAL, posting_bag < cur_posting_bag_) << "posting bag " << posting_bag 
         << " is smaller than cur_posting_bag_ " << cur_posting_bag_;
 
     if (cozy_box_iter_.CurBlobType() == BlobFormat::NONE || 
@@ -561,7 +559,7 @@ class PosAndOffPostingBagIteratorBase {
     cur_posting_bag_ = posting_bag;
   }
 
-  CozyBoxIterator GetCozyBoxIterator() const {
+  const CozyBoxIterator &GetCozyBoxIterator() const {
     return cozy_box_iter_;
   }
 
@@ -766,8 +764,8 @@ class LazyBoundedOffsetPairIterator: public OffsetPairsIteratorService {
   OffsetPostingBagIterator off_bag_iter_;
 
   CozyBoxIterator cozy_box_iter_;
-  uint32_t prev_off_;
-  int n_single_off_to_go_;
+  uint32_t prev_off_ = 0;
+  int n_single_off_to_go_ = 0;
   bool is_cozy_iter_initialized_;
 };
 
@@ -831,7 +829,7 @@ class VacuumPostingListIterator {
 
     if (ret == -1) {
       perror("Fail to do madvise");
-      LOG(FATAL) << "Failed to prefetch.";
+      DLOG(FATAL) << "Failed to prefetch.";
     }
   }
 

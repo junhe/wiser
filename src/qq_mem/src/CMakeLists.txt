@@ -1,13 +1,14 @@
 project(grpc-cmake-example)
 cmake_minimum_required(VERSION 3.2)
 
-set(TCMALLOC_OPTS -fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free)
+set(TCMALLOC_OPTS "-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
 
-set(PRODUCTION_OPTS "-std=c++11 -O3 -g -Wreturn-type -DNDEBUG -Wall")
-set(INDEXING_OPTS   "-std=c++11 -O3 -g -Wreturn-type -Wall")
-set(DEBUG_OPTS      "-std=c++11 -O0 -g -Wreturn-type -Wall")
-set(DEV_OPTS        "-std=c++11 -O0 -g -Wreturn-type -Wall")
+set(PRODUCTION_OPTS "-std=c++11 -O3 -g -DNDEBUG -Wall -Wno-array-bounds")
+set(INDEXING_OPTS   "-std=c++11 -O3 -g -Wall -Wno-array-bounds")
+set(DEBUG_OPTS      "-std=c++11 -O0 -g -Wall -Wno-array-bounds")
+set(DEV_OPTS        "-std=c++11 -O0 -g -Wall -Wno-array-bounds")
 
+#SET(CMAKE_CXX_FLAGS "${PRODUCTION_OPTS} ${TCMALLOC_OPTS}")
 SET(CMAKE_CXX_FLAGS ${PRODUCTION_OPTS})
 #SET(CMAKE_CXX_FLAGS ${DEV_OPTS})
 SET(CMAKE_C_FLAGS "-fPIC -std=c99 -O3 -msse4.1  -march=native -Wall -Wextra -pedantic -Wshadow")
@@ -205,7 +206,6 @@ target_link_libraries(packing_bench
 )
 
 
-
 add_executable(engine_bench
     engine_bench.cc
     ${ENGINE_SRCS}
@@ -220,6 +220,58 @@ target_link_libraries(engine_bench
     pthread
     ${GLOG_LIB}
 )
+
+
+add_executable(create_qq_mem_dump
+    create_qq_mem_dump.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+
+target_link_libraries(create_qq_mem_dump
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${QQ_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
+
+
+add_executable(check_posting_list
+    check_posting_list.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+
+target_link_libraries(check_posting_list
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${QQ_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
+
+
+
+add_executable(trie_bench
+    trie_bench.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+
+target_link_libraries(trie_bench
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${QQ_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
+
+#target_compile_options(trie_bench PRIVATE "${TCMALLOC_OPTS}")
+
 
 add_executable(convert_qq_to_vacuum
     convert_qq_to_vacuum.cc

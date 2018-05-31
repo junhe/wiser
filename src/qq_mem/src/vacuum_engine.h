@@ -72,8 +72,6 @@ class TermIndex {
 };
 
 
-#define _TRIE_INDEX
-
 class TermTrieIndex {
  public:
   typedef tsl::htrie_map<char, int64_t> LocalTrieMap; 
@@ -100,22 +98,12 @@ class TermTrieIndex {
     utils::UnmapFile(addr, fd, file_length);
   }
 
-  const char *LoadEntry(const char *buf) {
-    uint32_t term_size = *((uint32_t *)buf);
-
-    buf += sizeof(uint32_t);
-    std::string term(buf , term_size);
-
-    buf += term_size;
-    off_t offset = *((off_t *)buf);
-
-    trieindex_[term.c_str()] = (uint64_t)offset;
-
-    return buf + sizeof(off_t);
-  }
-
   int NumTerms () const {
     return trieindex_.size();
+  }
+
+  void Add(const std::string &key, const uint64_t &value) {
+    trieindex_[key.c_str()] = value;
   }
 
   TermIndexResult Find(const Term &term) {
@@ -129,6 +117,21 @@ class TermTrieIndex {
   }
 
  private:
+  const char *LoadEntry(const char *buf) {
+    uint32_t term_size = *((uint32_t *)buf);
+
+    buf += sizeof(uint32_t);
+    std::string term(buf , term_size);
+
+    buf += term_size;
+    off_t offset = *((off_t *)buf);
+
+    Add(term, offset);
+
+    return buf + sizeof(off_t);
+  }
+
+
   LocalTrieMap trieindex_;
 };
 
@@ -333,6 +336,9 @@ class VacuumEngine : public SearchEngineServiceNew {
       return result;
     }
 
+    for (auto &it : iterators) {
+      result.doc_freqs.push_back(it.Size());
+    }
 
     if (query.is_phrase == false)  {
       // check prefetch

@@ -252,9 +252,10 @@ struct SearchResultEntry {
   }
 };
 
+
 struct SearchResult {
   std::vector<SearchResultEntry> entries;
-
+  std::vector<int> doc_freqs; // doc freq of terms queried
 
   const SearchResultEntry &operator [](int i) const {
     return entries[i];

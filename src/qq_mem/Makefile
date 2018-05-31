@@ -69,8 +69,32 @@ engine_bench_debug:
 convert_qq_to_vacuum:
 	cd build && cmake ../src/ && \
 		make -j${NUM_CORES} convert_qq_to_vacuum && \
-		./convert_qq_to_vacuum
+		./convert_qq_to_vacuum \
+		-qqdump_dir_path=/mnt/ssd/wiki-May-qq-dump/ \
+		-vacuum_dir_path=/mnt/ssd/vacuum-05-23-wiki-2018May
 
+check_posting_list:
+	cd build && cmake ../src/ && \
+		make -j${NUM_CORES} check_posting_list && \
+		./check_posting_list
+
+trie_bench:
+	cd build && cmake ../src/ && \
+		make -j${NUM_CORES} trie_bench && \
+		./trie_bench \
+		-term_path=/mnt/ssd/benchmark_trie/redditaa_tokenized.terms.set:/mnt/ssd/benchmark_trie/redditab_tokenized.terms.set:/mnt/ssd/benchmark_trie/redditac_tokenized.terms.set:/mnt/ssd/benchmark_trie/redditad_tokenized.terms.set
+		#./trie_bench -term_path=/mnt/ssd/benchmark_trie/popular_terms_2018-may_wiki.shuffled
+		#./trie_bench -term_path=/mnt/ssd/benchmark_trie/popular_terms_2018-may_wiki.shuffled
+		#HEAPPROFILE=/tmp/heapprof ./trie_bench
+
+trie_bench_heap:
+	google-pprof --text build/trie_bench ${path}
+
+create_qq_mem_dump:
+	cd build && cmake ../src/ && \
+	make create_qq_mem_dump && \
+	./create_qq_mem_dump -line_doc_path=/mnt/ssd/wiki/wiki_full.linedoc_tokenized \
+	-dump_dir_path=/mnt/ssd/vacuum-may-wiki
 
 vacuum_two_nodes:
 	cd build 
@@ -153,6 +177,7 @@ test_last_args:
 	make -j${NUM_CORES} testlast
 	cd ..
 	./build/testmain ${args}
+
 
 test_qqflash:
 	rm -f ./build/testmain
