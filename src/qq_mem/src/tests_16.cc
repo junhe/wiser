@@ -341,15 +341,11 @@ set_pair GetRandSets(std::size_t n) {
 }
 
 void CheckInitializedFilter(struct bloom *blm, const set_pair &setpair) {
-  std::cout << "May in set" << std::endl;
   for (auto &s : setpair.first) {
-    std::cout << s << std::endl;
     REQUIRE(CheckBloom(blm, s) == BLM_MAY_PRESENT);
   }
 
-  std::cout << "NOT in set" << std::endl;
   for (auto &s : setpair.second) {
-    std::cout << s << std::endl;
     REQUIRE(CheckBloom(blm, s) == BLM_NOT_PRESENT);
   }
 }
@@ -357,16 +353,12 @@ void CheckInitializedFilter(struct bloom *blm, const set_pair &setpair) {
 void CheckBloomFilter(std::size_t n) {
   struct bloom bloom;
   int expected_entries = n;
-  float ratio = 0.01;
+  float ratio = 0.00001;
   bloom_init(&bloom, expected_entries, ratio);
-
-  std::cout << "-------------------------------" << std::endl;
 
   set_pair setpair = GetRandSets(n);
 
-  std::cout << "Adding to set:" << std::endl;
   for (auto &s : setpair.first) {
-    std::cout << s << std::endl;
     int ret = AddToBloom(&bloom, s);
     REQUIRE(ret == 0);
   }
@@ -390,44 +382,6 @@ TEST_CASE( "Bloom Filter, extended tests", "[bloomfilter]" ) {
 	CheckBloomFilter(10);
 	CheckBloomFilter(100);
 }
-
-
-TEST_CASE( "Bloom Filter special case", "[bloomfilter]" ) {
-  struct bloom bloom;
-  int expected_entries = 3;
-  float ratio = 0.01;
-  SECTION("Store the bloom filter") {
-    // init bloom filter (expected added keys, ratio of 
-    // false-positive(lower, more reliable))
-    bloom_init(&bloom, expected_entries, ratio);
-    
-    // add keys (string, length of string)
-    bloom_add(&bloom, "hello", 6);
-    bloom_add(&bloom, "wisconsin", 10);
-    bloom_add(&bloom, "madison", 7);
-
-    // check keys
-    REQUIRE(bloom_check(&bloom, "hello", 6) == 1);
-    REQUIRE(bloom_check(&bloom, "wisconsin", 10) == 1);
-    REQUIRE(bloom_check(&bloom, "madison", 7) == 1);
-    REQUIRE(bloom_check(&bloom, "random", 7) == 0);
-    REQUIRE(bloom_check(&bloom, "helle", 6) == 0);
-    REQUIRE(bloom_check(&bloom, "wisconson", 6) == 0);
-    bloom_print(&bloom);
-
-    // set with know bit array
-    struct bloom bloom_test;
-    bloom_set(&bloom_test, expected_entries, ratio, bloom.bf);
-    
-    // check keys
-    REQUIRE(bloom_check(&bloom_test, "hello", 6) == 1);
-    REQUIRE(bloom_check(&bloom_test, "wisconsin", 10) == 1);
-    REQUIRE(bloom_check(&bloom_test, "random", 7) == 0);
-    REQUIRE(bloom_check(&bloom_test, "helle", 6) == 0);
-    bloom_print(&bloom_test);
-  }
-}
-
 
 
 
