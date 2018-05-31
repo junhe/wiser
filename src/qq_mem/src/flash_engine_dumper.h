@@ -824,24 +824,6 @@ class SkipList {
 };
 
 
-class PostingListMetadata {
- public:
-  PostingListMetadata(int doc_freq, const uint8_t *skip_list_buf) 
-    :doc_freq_(doc_freq)
-  {
-    skip_list_.Load(skip_list_buf);
-  }
-
-  int NumPostings() const {
-    return doc_freq_;
-  }
-
- private:
-  SkipList skip_list_;
-  int doc_freq_;
-};
-
-
 class TermDictEntry {
  public:
   void Load(const char *buf) {
