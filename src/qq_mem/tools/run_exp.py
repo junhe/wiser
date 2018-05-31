@@ -207,9 +207,13 @@ def load_mem_elastic(conf):
     time.sleep(1)
 
 def load_mem_vacuum(query_path):
-    p = start_vacuum_client(32, query_path)
-    p.wait()
-    shcmd("rm -f /tmp/client.out")
+    # p = start_vacuum_client(32, query_path)
+    # p.wait()
+
+    engine_path = search_engine.split(":")[2]
+    shcmd("vmtouch -vt {}".format(engine_path))
+
+    # shcmd("rm -f /tmp/client.out")
     time.sleep(1)
 
 def start_iostat_watch(partition, out_path):
