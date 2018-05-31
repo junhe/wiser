@@ -172,11 +172,13 @@ add_executable( testlast
     ${PROTO_SRCS}
     ${GRPC_SRCS}
     $<TARGET_OBJECTS:CatchMain> catch.hpp )
+
 target_link_libraries(testlast
     ${GRPC_LIBS}
     protobuf::libprotobuf
     ${QQ_LIBS}
     ${GLOG_LIB}
+    bloom
 )
 
 

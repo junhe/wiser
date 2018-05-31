@@ -4,11 +4,13 @@
 #include "packed_value.h"
 #include "flash_engine_dumper.h"
 #include "bloom.h"
+#include "bloom_filter.h"
 
 
 extern "C" {
 #include "bitpacking.h"
 }
+
 
 TEST_CASE( "Query pools", "[qpool]" ) {
 
@@ -287,13 +289,12 @@ TEST_CASE( "Chunked store", "[doc_store0]" ) {
 
 
 TEST_CASE( "Bloom Filter", "[bloomfilter]" ) {
-    struct bloom bloom;
-    int expected_entries;
-    float ratio;
+  struct bloom bloom;
+  int expected_entries = 2;
+  float ratio = 0.01;
   SECTION("Store the bloom filter") {
-    // init bloom filter (expected added keys, ratio of false-positive(lower, more reliable))
-    expected_entries = 2;
-    ratio = 0.01;
+    // init bloom filter (expected added keys, ratio of 
+    // false-positive(lower, more reliable))
     bloom_init(&bloom, expected_entries, ratio);
     
     // add keys (string, length of string)
@@ -307,9 +308,7 @@ TEST_CASE( "Bloom Filter", "[bloomfilter]" ) {
     REQUIRE(bloom_check(&bloom, "helle", 6) == 0);
     REQUIRE(bloom_check(&bloom, "wisconson", 6) == 0);
     bloom_print(&bloom);
-  }
 
-  SECTION("Load the bloom filter") {
     // set with know bit array
     struct bloom bloom_test;
     bloom_set(&bloom_test, expected_entries, ratio, bloom.bf);
@@ -323,6 +322,68 @@ TEST_CASE( "Bloom Filter", "[bloomfilter]" ) {
   }
 }
 
+typedef std::pair<std::set<std::string>, std::set<std::string>> set_pair ;
+
+set_pair GetRandSets(std::size_t n) {
+  std::set<std::string> in, out;
+  
+  while (in.size() < n) {
+    in.insert(std::to_string(rand()));
+  }
+
+  while (out.size() < n) {
+    std::string s = std::to_string(rand());
+    if (out.count(s) == 0)
+      out.insert(s);
+  }
+
+  return set_pair(in, out);
+}
+
+void CheckBloomFilter(std::size_t n) {
+  struct bloom bloom;
+  int expected_entries = n;
+  float ratio = 0.01;
+  bloom_init(&bloom, expected_entries, ratio);
+
+  std::cout << "-------------------------------" << std::endl;
+
+  set_pair setpair = GetRandSets(n);
+
+  std::cout << "Adding to set:" << std::endl;
+  for (auto &s : setpair.first) {
+    std::cout << s << std::endl;
+    int ret = AddToBloom(&bloom, s);
+    REQUIRE(ret == 0);
+  }
+  
+	// Load and check
+  struct bloom bloom_test;
+  bloom_set(&bloom_test, expected_entries, ratio, bloom.bf);
+
+  std::cout << "May in set" << std::endl;
+  for (auto &s : setpair.first) {
+    std::cout << s << std::endl;
+    REQUIRE(CheckBloom(&bloom_test, s) == BLM_MAY_PRESENT);
+  }
+
+  std::cout << "NOT in set" << std::endl;
+  for (auto &s : setpair.second) {
+    std::cout << s << std::endl;
+    REQUIRE(CheckBloom(&bloom_test, s) == BLM_NOT_PRESENT);
+  }
+}
+
+
+TEST_CASE( "Bloom Filter, extended tests", "[bloomfilter]" ) {
+  srand(1);
+	CheckBloomFilter(1);
+	CheckBloomFilter(2);
+	CheckBloomFilter(3);
+
+	CheckBloomFilter(10);
+	CheckBloomFilter(100);
+}
 
 
 
