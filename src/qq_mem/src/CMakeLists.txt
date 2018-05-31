@@ -3,10 +3,10 @@ cmake_minimum_required(VERSION 3.2)
 
 set(TCMALLOC_OPTS "-fno-builtin-malloc -fno-builtin-calloc -fno-builtin-realloc -fno-builtin-free")
 
-set(PRODUCTION_OPTS "-std=c++11 -O3 -g -Wreturn-type -DNDEBUG -Wall")
-set(INDEXING_OPTS   "-std=c++11 -O3 -g -Wreturn-type -Wall")
-set(DEBUG_OPTS      "-std=c++11 -O0 -g -Wreturn-type -Wall")
-set(DEV_OPTS        "-std=c++11 -O0 -g -Wreturn-type -Wall")
+set(PRODUCTION_OPTS "-std=c++11 -O3 -g -DNDEBUG -Wall -Wno-array-bounds")
+set(INDEXING_OPTS   "-std=c++11 -O3 -g -Wall -Wno-array-bounds")
+set(DEBUG_OPTS      "-std=c++11 -O0 -g -Wall -Wno-array-bounds")
+set(DEV_OPTS        "-std=c++11 -O0 -g -Wall -Wno-array-bounds")
 
 #SET(CMAKE_CXX_FLAGS "${PRODUCTION_OPTS} ${TCMALLOC_OPTS}")
 SET(CMAKE_CXX_FLAGS ${PRODUCTION_OPTS})

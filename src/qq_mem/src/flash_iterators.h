@@ -435,10 +435,10 @@ class CozyBoxIterator {
     cur_in_blob_index_ = 0;
   }
 
-  const uint8_t *buf_; 
-  BlobFormat cur_iter_type_;
-  off_t cur_blob_off_;
-  int cur_in_blob_index_;
+  const uint8_t *buf_ = nullptr; 
+  BlobFormat cur_iter_type_ = BlobFormat::NONE;
+  off_t cur_blob_off_ = 0;
+  int cur_in_blob_index_ = 0;
   
   PackedIntsIterator pack_ints_iter_;
   VIntsIterator vints_iter_;
@@ -764,8 +764,8 @@ class LazyBoundedOffsetPairIterator: public OffsetPairsIteratorService {
   OffsetPostingBagIterator off_bag_iter_;
 
   CozyBoxIterator cozy_box_iter_;
-  uint32_t prev_off_;
-  int n_single_off_to_go_;
+  uint32_t prev_off_ = 0;
+  int n_single_off_to_go_ = 0;
   bool is_cozy_iter_initialized_;
 };
 
