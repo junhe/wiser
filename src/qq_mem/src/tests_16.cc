@@ -290,7 +290,7 @@ TEST_CASE( "Chunked store", "[doc_store0]" ) {
 
 
 TEST_CASE( "Bloom Filter", "[bloomfilter]" ) {
-  struct bloom bloom;
+  Bloom bloom;
   int expected_entries = 2;
   float ratio = 0.01;
   SECTION("Store the bloom filter") {
@@ -311,7 +311,7 @@ TEST_CASE( "Bloom Filter", "[bloomfilter]" ) {
     bloom_print(&bloom);
 
     // set with know bit array
-    struct bloom bloom_test;
+    Bloom bloom_test;
     bloom_set(&bloom_test, expected_entries, ratio, bloom.bf);
     
     // check keys
@@ -320,10 +320,14 @@ TEST_CASE( "Bloom Filter", "[bloomfilter]" ) {
     REQUIRE(bloom_check(&bloom_test, "random", 7) == 0);
     REQUIRE(bloom_check(&bloom_test, "helle", 6) == 0);
     bloom_print(&bloom_test);
+
+    bloom_free(&bloom);
   }
 }
 
+
 typedef std::pair<std::set<std::string>, std::set<std::string>> set_pair ;
+
 
 set_pair GetRandSets(std::size_t n) {
   std::set<std::string> in, out;
@@ -341,7 +345,7 @@ set_pair GetRandSets(std::size_t n) {
   return set_pair(in, out);
 }
 
-void CheckInitializedFilter(struct bloom *blm, const set_pair &setpair) {
+void CheckInitializedFilter(Bloom *blm, const set_pair &setpair) {
   for (auto &s : setpair.first) {
     REQUIRE(CheckBloom(blm, s) == BLM_MAY_PRESENT);
   }
@@ -352,25 +356,24 @@ void CheckInitializedFilter(struct bloom *blm, const set_pair &setpair) {
 }
 
 void CheckBloomFilter(std::size_t n) {
-  struct bloom bloom;
-  int expected_entries = n;
   float ratio = 0.00001;
-  bloom_init(&bloom, expected_entries, ratio);
-
   set_pair setpair = GetRandSets(n);
-
+  
+  std::vector<std::string> vec;
   for (auto &s : setpair.first) {
-    int ret = AddToBloom(&bloom, s);
-    REQUIRE(ret == 0);
+    vec.push_back(s);
   }
+
+  Bloom bloom = CreateBloom(ratio, vec);
 
   CheckInitializedFilter(&bloom, setpair);
   
 	// Load and check
-  struct bloom bloom_test;
-  bloom_set(&bloom_test, expected_entries, ratio, bloom.bf);
+  Bloom bloom_test;
+  bloom_set(&bloom_test, n, ratio, bloom.bf);
 
   CheckInitializedFilter(&bloom_test, setpair);
+  FreeBloom(&bloom);
 }
 
 
@@ -444,5 +447,19 @@ TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
   }
 }
 
+
+TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
+  BloomFilterStore store(0.00001);
+  store.Add(33, {"hello"}, {"world you"});
+  FilterCases cases = store.Lookup("hello");
+  
+  REQUIRE(cases.size() == 1);
+  REQUIRE(cases[0].doc_id == 33);
+
+  REQUIRE(cases[0].blm.Check("world") == BLM_MAY_PRESENT);
+  REQUIRE(cases[0].blm.Check("you") == BLM_MAY_PRESENT);
+  REQUIRE(cases[0].blm.Check("yeu") == BLM_NOT_PRESENT);
+  REQUIRE(cases[0].blm.Check("yew") == BLM_NOT_PRESENT);
+}
 
 

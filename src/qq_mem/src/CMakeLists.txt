@@ -156,6 +156,7 @@ add_executable( testmain
     ${PROTO_SRCS}
     ${GRPC_SRCS}
     $<TARGET_OBJECTS:CatchMain> catch.hpp )
+
 target_link_libraries(testmain
     ${GRPC_LIBS}
     protobuf::libprotobuf
@@ -165,7 +166,7 @@ target_link_libraries(testmain
 )
 
 add_executable( testlast
-    tests.cc 
+    #tests_17.cc
     tests_16.cc
     test_helpers.cc
     grpc_client_impl.cc

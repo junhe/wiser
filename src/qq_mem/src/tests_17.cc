@@ -2,9 +2,10 @@
 
 #include <iostream>
 
+#include "bloom_filter.h"
+
 
 TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
-  std::cout << "Hello 17" << std::endl; 
 
 }
 

@@ -301,7 +301,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
 
     doc_store_.Add(doc_id, doc_info.Body());
     inverted_index_.AddDocument(doc_id, doc_info);
-    doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); // TODO modify to count on offsets?
+    doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); 
     similarity_.Reset(doc_lengths_.GetAvgLength());
   }
 
