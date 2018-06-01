@@ -80,11 +80,19 @@ typedef std::vector<TermWithOffset> TermWithOffsetList;
 class DocInfo {
  public:
   DocInfo() {}
+
   DocInfo(const std::string &body, const std::string &tokens, 
       const std::string &token_offsets, const std::string &token_positions, 
       const std::string &format) 
     :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
      token_positions_(token_positions), format_(format) {}
+
+  DocInfo(const std::string &body, const std::string &tokens, 
+      const std::string &token_offsets, const std::string &token_positions, 
+      const std::string &phrase_ends, const std::string &format) 
+    :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
+     token_positions_(token_positions), phrase_ends_(phrase_ends), 
+     format_(format) {}
 
   TermList GetTokens() const;
 
@@ -103,6 +111,8 @@ class DocInfo {
   const std::string &TokenOffsets() const {return token_offsets_;}
 
   const std::string &TokenPositions() const {return token_positions_;}
+
+  const std::string &PhraseEnds() const {return phrase_ends_;}
   
   const std::string &Format() const {return format_;}
 
@@ -153,6 +163,7 @@ class DocInfo {
   std::string tokens_;
   std::string token_offsets_;
   std::string token_positions_;
+  std::string phrase_ends_;
   std::string format_;
 };
 

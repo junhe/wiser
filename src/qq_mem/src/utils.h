@@ -502,6 +502,11 @@ inline std::size_t DivideRoundUp(std::size_t val, std::size_t divider) {
   return (val + divider - 1) / divider;
 }
 
+// return if a starts with b
+inline bool StartsWith(const std::string &a, const std::string &b) {
+  return a.compare(0, b.size(), b) == 0;
+}
+
 
 } // namespace util
 #endif

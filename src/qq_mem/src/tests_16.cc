@@ -5,6 +5,7 @@
 #include "flash_engine_dumper.h"
 #include "bloom.h"
 #include "bloom_filter.h"
+#include "engine_factory.h"
 
 
 extern "C" {
@@ -381,6 +382,53 @@ TEST_CASE( "Bloom Filter, extended tests", "[bloomfilter]" ) {
 
 	CheckBloomFilter(10);
 	CheckBloomFilter(100);
+}
+
+
+TEST_CASE( "Check string", "[utils]" ) {
+  REQUIRE(utils::StartsWith("a", "a") == true);
+  REQUIRE(utils::StartsWith("ab", "a") == true);
+  REQUIRE(utils::StartsWith("ab", "ab") == true);
+  REQUIRE(utils::StartsWith("abc", "ab") == true);
+
+  REQUIRE(utils::StartsWith("a", "b") == false);
+  REQUIRE(utils::StartsWith("abc", "abd") == false);
+}
+
+
+TEST_CASE( "Line doc parser for phrase ends", "[engine]" ) {
+  LineDocParserPhraseEnd parser("src/testdata/line_doc.with-bloom.toy");
+  DocInfo info;
+  std::vector<DocInfo> info_arr;
+
+  int cnt = 0;
+  while (parser.Pop(&info)) {
+    cnt++;
+    info_arr.push_back(info);
+  }
+  REQUIRE(cnt == 2);
+
+  REQUIRE(utils::StartsWith(info_arr[0].PhraseEnds(), ".worker page") == true);
+  REQUIRE(utils::StartsWith(info_arr[1].PhraseEnds(), "address commun.fifth.evid..core") == true);
+}
+
+
+TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
+  auto engine = CreateSearchEngine("qq_mem_compressed");
+  REQUIRE(engine->TermCount() == 0);
+  engine->LoadLocalDocuments("src/testdata/line_doc.with-bloom.toy", 10000, 
+      "WITH_PHRASE_END");
+  REQUIRE(engine->TermCount() > 0);
+  auto result = engine->Search(SearchQuery({"prefix"}));
+  std::cout << result.ToStr() << std::endl;
+  REQUIRE(result.Size() > 0);
+
+  {
+    SearchQuery query({"solar", "body"}, true);
+    result = engine->Search(query);
+    std::cout << result.ToStr() << std::endl;
+    REQUIRE(result.Size() == 0); // only solar is a valid term
+  }
 }
 
 

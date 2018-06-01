@@ -26,7 +26,7 @@ class InvertedIndexImpl: public InvertedIndexService {
     } else if (format == "WITH_OFFSETS") {
       AddDocumentWithOffsets(doc_id, doc_info.Body(), doc_info.Tokens(),
           doc_info.TokenOffsets());
-    } else if (format == "WITH_POSITIONS") {
+    } else if (format == "WITH_POSITIONS" || format == "WITH_PHRASE_END") {
 			AddDocumentWithPositions(doc_id, doc_info);
     } else {
       LOG(FATAL) << "Format " << format << " is not supported.\n";
@@ -278,6 +278,8 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
       parser.reset(new LineDocParserOffset(line_doc_path, n_rows));
     } else if (format == "WITH_POSITIONS") {
       parser.reset(new LineDocParserPosition(line_doc_path, n_rows));
+    } else if (format == "WITH_PHRASE_END") {
+      parser.reset(new LineDocParserPhraseEnd(line_doc_path, n_rows));
     } else {
       throw std::runtime_error("Format " + format + " is not supported");
     }
