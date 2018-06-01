@@ -410,6 +410,19 @@ TEST_CASE( "Line doc parser for phrase ends", "[engine]" ) {
 
   REQUIRE(utils::StartsWith(info_arr[0].PhraseEnds(), ".worker page") == true);
   REQUIRE(utils::StartsWith(info_arr[1].PhraseEnds(), "address commun.fifth.evid..core") == true);
+
+  std::cout << info_arr[0].PhraseEnds() << std::endl;
+  std::cout << info_arr[0].Tokens() << std::endl;
+
+  auto tokens = info_arr[0].GetTokens();
+  auto ends = info_arr[0].GetPhraseEnds();
+
+  for (int i = 0; i < 10; i++) {
+    std::cout << tokens[i] << "(" << ends[i] << ")" << std::endl;
+  }
+
+  REQUIRE(info_arr[0].GetPhraseEnds().size() == info_arr[0].GetTokens().size());
+  REQUIRE(info_arr[1].GetPhraseEnds().size() == info_arr[1].GetTokens().size());
 }
 
 

@@ -30,5 +30,12 @@ std::vector<Positions> DocInfo::GetPositions() const {
   return table;
 }
 
-const int DocInfo::BodyLength() const {return utils::count_terms(body_);}
+const int DocInfo::BodyLength() const {
+  return utils::count_terms(body_);
+}
+
+std::vector<Term> DocInfo::GetPhraseEnds() const {
+  return utils::explode_strict(phrase_ends_, '.');
+}
+
 

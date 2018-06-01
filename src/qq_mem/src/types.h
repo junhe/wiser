@@ -104,6 +104,8 @@ class DocInfo {
   // Each row is for a term
   std::vector<Positions> GetPositions() const;
 
+  std::vector<Term> GetPhraseEnds() const;
+
   const std::string &Body() const {return body_;}
 
   const std::string &Tokens() const {return tokens_;}
