@@ -54,7 +54,7 @@ class BloomFilter {
     :n_entries_(n_entries), ratio_(ratio), bit_array_(bit_array)
   {}
 
-  int Check(const std::string &elem) {
+  int Check(const std::string &elem) const {
     Bloom blm;
     unsigned char *buf = (unsigned char *) malloc(bit_array_.size());
     memcpy(buf, bit_array_.data(), bit_array_.size());
@@ -152,7 +152,23 @@ inline void FreeBloom(Bloom *blm) {
 }
 
 
-typedef std::vector<BloomFilterCase> FilterCases;
+class FilterCases {
+ public:
+  void PushBack(const BloomFilterCase &cas) {
+    cases_.push_back(cas);
+  }
+
+  std::size_t Size() const {
+    return cases_.size();
+  }
+
+  const BloomFilterCase operator[] (int i) {
+    return cases_[i];
+  }
+
+ private:
+  std::vector<BloomFilterCase> cases_;
+};
 
 class BloomFilterStore {
  public:
@@ -174,7 +190,7 @@ class BloomFilterStore {
       FreeBloom(&blm);
 
       BloomFilterCase blm_case(blm_filter, doc_id);
-      filter_map_[token].push_back(blm_case);
+      filter_map_[token].PushBack(blm_case);
     }
   }
 

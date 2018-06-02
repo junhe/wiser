@@ -11,7 +11,7 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
     store.Add(33, {"hello"}, {"world you"});
     FilterCases cases = store.Lookup("hello");
     
-    REQUIRE(cases.size() == 1);
+    REQUIRE(cases.Size() == 1);
     REQUIRE(cases[0].doc_id == 33);
 
     REQUIRE(cases[0].blm.Check("world") == BLM_MAY_PRESENT);
