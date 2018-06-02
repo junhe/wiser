@@ -233,21 +233,25 @@ struct Table {
 void CheckStore(BloomFilterStore &store, Table &table) {
   for (auto &row : table.rows) {
     BloomFilterCases cases = store.Lookup(row.token); 
-    REQUIRE(cases.Size() == 1);
     REQUIRE(cases[0].doc_id == 888);
-
-    // Check real ends
-    std::vector<std::string> real_ends = utils::explode(
-        row.phrase_ends, ' ');
-    for (auto &real_end : real_ends) {
-      REQUIRE(cases[0].blm.Check(real_end) == BLM_MAY_PRESENT);
+    if (cases.Size() == 2) {
+      REQUIRE(cases[0].doc_id == 888);
     }
 
-    // check terms that are not in filter
-    std::vector<std::string> outs = utils::explode(
-        row.outs, ' ');
-    for (auto &out : outs) {
-      REQUIRE(cases[0].blm.Check(out) == BLM_NOT_PRESENT);
+    for (std::size_t i = 0; i < cases.Size(); i++) {
+      // Check real ends
+      std::vector<std::string> real_ends = utils::explode(
+          row.phrase_ends, ' ');
+      for (auto &real_end : real_ends) {
+        REQUIRE(cases[i].blm.Check(real_end) == BLM_MAY_PRESENT);
+      }
+
+      // check terms that are not in filter
+      std::vector<std::string> outs = utils::explode(
+          row.outs, ' ');
+      for (auto &out : outs) {
+        REQUIRE(cases[i].blm.Check(out) == BLM_NOT_PRESENT);
+      }
     }
   }
 }
@@ -275,6 +279,23 @@ TEST_CASE( "Bloom filter serialization", "[bloomfilter]" ) {
 
     CheckStore(store2, table);
   }
+
+  SECTION("Each token has two documents") {
+    BloomFilterStore store(0.00001);
+    
+    store.Add(888, table.ColTokens(), table.ColEnds());
+    store.Add(889, table.ColTokens(), table.ColEnds());
+
+    CheckStore(store, table);
+
+    store.Serialize("/tmp/tmp.store");
+
+    BloomFilterStore store2(0.00001);
+    store2.Deserialize("/tmp/tmp.store");
+
+    CheckStore(store2, table);
+  }
+
 }
 
 
