@@ -55,9 +55,6 @@ inline void DecodePrefetchZoneAndOffset(
 }
 
 
-
-
-
 inline std::vector<uint32_t> EncodeDelta(const std::vector<uint32_t> &values) {
   uint32_t prev = 0;
   std::vector<uint32_t> vals;
@@ -69,7 +66,6 @@ inline std::vector<uint32_t> EncodeDelta(const std::vector<uint32_t> &values) {
 
   return vals;
 }
-
 
 
 class GeneralTermEntry {

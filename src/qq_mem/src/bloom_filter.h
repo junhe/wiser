@@ -1,8 +1,12 @@
 #include <unordered_map>
 
-#include "types.h"
+#include <glog/logging.h>
 
 #include "bloom.h"
+
+#include "types.h"
+#include "utils.h"
+#include "compression.h"
 
 
 typedef struct bloom Bloom;
@@ -39,14 +43,15 @@ inline std::string ExtractBitArray(const Bloom *blm) {
 
 class BloomFilter {
  public:
+  BloomFilter() {}
   BloomFilter(const Bloom *blm, const float ratio) {
     n_entries_ = blm->entries;
     ratio_ = ratio;
     bit_array_ = ExtractBitArray(blm);
   }
 
-  BloomFilter(const int n_entries, const std::string &bit_array) 
-    :n_entries_(n_entries), bit_array_(bit_array)
+  BloomFilter(const int n_entries, const float ratio, const std::string &bit_array) 
+    :n_entries_(n_entries), ratio_(ratio), bit_array_(bit_array)
   {}
 
   int Check(const std::string &elem) {
@@ -62,8 +67,32 @@ class BloomFilter {
     return ret;
   }
 
+  std::string Serialize() const {
+    VarintBuffer buf;   
+    buf.Append(n_entries_);
+    buf.Append(utils::SerializeFloat(ratio_));
+    buf.Append(bit_array_.size());
+    buf.Append(bit_array_);
+
+    return buf.Data();
+  }
+
+  void Deserialize(const char *buf) {
+    int len = utils::varint_decode_uint32((const char *)buf, 0, &n_entries_);
+    buf += len;
+
+    ratio_ = utils::DeserializeFloat(buf);
+    buf += sizeof(ratio_);
+    
+    uint32_t array_size;
+    len = utils::varint_decode_uint32((const char *)buf, 0, &array_size);
+    buf += len; 
+
+    bit_array_ = std::string(buf, array_size);
+  }
+
  private:
-  int n_entries_;
+  uint32_t n_entries_;
   float ratio_;
   std::string bit_array_;
 };
@@ -129,11 +158,15 @@ class BloomFilterStore {
     return filter_map_[term];
   }
 
+  const void Serialize(const std::string &path) {
+    for (auto &it : filter_map_) {
+      std::cout << it.first << std::endl;
+    }
+  }
+
  private:
   std::unordered_map<std::string, FilterCases> filter_map_;
   float ratio_;
 };
-
-
 
 

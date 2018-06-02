@@ -448,18 +448,4 @@ TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
 }
 
 
-TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
-  BloomFilterStore store(0.00001);
-  store.Add(33, {"hello"}, {"world you"});
-  FilterCases cases = store.Lookup("hello");
-  
-  REQUIRE(cases.size() == 1);
-  REQUIRE(cases[0].doc_id == 33);
-
-  REQUIRE(cases[0].blm.Check("world") == BLM_MAY_PRESENT);
-  REQUIRE(cases[0].blm.Check("you") == BLM_MAY_PRESENT);
-  REQUIRE(cases[0].blm.Check("yeu") == BLM_NOT_PRESENT);
-  REQUIRE(cases[0].blm.Check("yew") == BLM_NOT_PRESENT);
-}
-
 

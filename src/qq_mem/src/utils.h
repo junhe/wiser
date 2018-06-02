@@ -487,6 +487,16 @@ inline std::string MakeString(char ch) {
   return std::string(1, ch);
 }
 
+inline std::string SerializeFloat(const float &val) {
+  return std::string((char *)&val, sizeof(val));
+}
+
+inline float DeserializeFloat(const char *buf) {
+  float val; 
+  memcpy((char *)&val, buf, sizeof(val));
+  return val;
+}
+
 inline void LockAllMemory() {
     std::cout << "========================" << std::endl;
     std::cout << "Locking all memory (MCL_CURRENT) ...." << std::endl;
