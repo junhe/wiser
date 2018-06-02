@@ -386,4 +386,21 @@ TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
 }
 
 
+void CheckFloat(const float a) {
+  std::string data = utils::SerializeFloat(a);
+  float b = utils::DeserializeFloat(data.data());
+
+  REQUIRE(a == b);
+}
+
+TEST_CASE( "Serializing float", "[utils]" ) {
+  CheckFloat(0.1);
+  CheckFloat(100.1);
+  CheckFloat(100.103);
+  CheckFloat(0.7803);
+  CheckFloat(0.007803);
+}
+
+
+
 

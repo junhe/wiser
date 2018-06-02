@@ -66,8 +66,6 @@ TEST_CASE( "Bloom Filter, extended tests", "[bloomfilter]" ) {
 }
 
 
-
-
 TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
   SECTION("Bloom filter check") {
     BloomFilterStore store(0.00001);
@@ -147,22 +145,6 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
     }
   }
 }
-
-void CheckFloat(const float a) {
-  std::string data = utils::SerializeFloat(a);
-  float b = utils::DeserializeFloat(data.data());
-
-  REQUIRE(a == b);
-}
-
-TEST_CASE( "Serializing float", "[utils]" ) {
-  CheckFloat(0.1);
-  CheckFloat(100.1);
-  CheckFloat(100.103);
-  CheckFloat(0.7803);
-  CheckFloat(0.007803);
-}
-
 
 
 
