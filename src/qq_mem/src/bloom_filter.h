@@ -67,6 +67,10 @@ class BloomFilter {
     return ret;
   }
 
+  const std::string &BitArray() const {
+    return bit_array_;
+  }
+
   std::string Serialize() const {
     VarintBuffer buf;   
     buf.Append(n_entries_);
@@ -77,7 +81,7 @@ class BloomFilter {
     return buf.Data();
   }
 
-  void Deserialize(const char *buf) {
+  const char *Deserialize(const char *buf) {
     int len = utils::varint_decode_uint32((const char *)buf, 0, &n_entries_);
     buf += len;
 
@@ -89,6 +93,9 @@ class BloomFilter {
     buf += len; 
 
     bit_array_ = std::string(buf, array_size);
+    buf += array_size;
+
+    return buf;
   }
 
  private:
@@ -99,8 +106,25 @@ class BloomFilter {
 
 
 struct BloomFilterCase {
+  BloomFilterCase() {}
   BloomFilterCase(const BloomFilter &b, const DocIdType &id) 
     :blm(b), doc_id(id) {}
+
+  std::string Serialize() const {
+    VarintBuffer buf;
+    buf.Append(doc_id);
+    buf.Append(blm.Serialize());
+
+    return buf.Data();
+  }
+
+  void Deserialize(const char *buf) {
+    int len = utils::varint_decode_uint32((const char *)buf, 0, 
+        (uint32_t *)&doc_id);
+    buf += len;
+    
+    blm.Deserialize(buf);
+  }
 
   BloomFilter blm;
   DocIdType doc_id;

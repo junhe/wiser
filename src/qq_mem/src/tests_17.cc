@@ -19,18 +19,38 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
     REQUIRE(cases[0].blm.Check("yeu") == BLM_NOT_PRESENT);
     REQUIRE(cases[0].blm.Check("yew") == BLM_NOT_PRESENT);
 
+    BloomFilterCase f_case = cases[0];
+
     SECTION("Serialize and Deserialize") {
-      std::string data = cases[0].blm.Serialize();
+      std::string data = f_case.blm.Serialize();
+
       BloomFilter blm;
       blm.Deserialize(data.data());
 
-      // REQUIRE(blm.Check("world") == BLM_MAY_PRESENT);
-      // REQUIRE(blm.Check("you") == BLM_MAY_PRESENT);
-      // REQUIRE(blm.Check("yeu") == BLM_NOT_PRESENT);
-      // REQUIRE(blm.Check("yew") == BLM_NOT_PRESENT);
+      REQUIRE(f_case.blm.BitArray() == blm.BitArray());
+
+      REQUIRE(blm.Check("world") == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("you") == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("yeu") == BLM_NOT_PRESENT);
+      REQUIRE(blm.Check("yew") == BLM_NOT_PRESENT);
+    }
+
+    SECTION("Serialize and Deserialize _case_") {
+      std::string data = f_case.Serialize();
+
+      BloomFilterCase filter_case;
+      filter_case.Deserialize(data.data());
+
+      BloomFilter &blm = filter_case.blm;
+
+      REQUIRE(blm.BitArray() == f_case.blm.BitArray());
+
+      REQUIRE(blm.Check("world") == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("you") == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("yeu") == BLM_NOT_PRESENT);
+      REQUIRE(blm.Check("yew") == BLM_NOT_PRESENT);
     }
   }
-
 }
 
 void CheckFloat(const float a) {
