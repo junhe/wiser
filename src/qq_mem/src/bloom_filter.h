@@ -1,3 +1,6 @@
+#ifndef BLOOM_FILTER_H
+#define BLOOM_FILTER_H
+
 #include <unordered_map>
 
 #include <glog/logging.h>
@@ -50,7 +53,7 @@ inline Bloom CreateBloom(
 
   for (auto &end : phrase_ends) {
     int ret = AddToBloom(&bloom, end);
-    assert(ret == 0);
+    LOG_IF(FATAL, ret == -1) << "Failed to add to bloom filter";
   }
 
   return bloom;
@@ -216,7 +219,7 @@ class BloomFilterStore {
   void Add(DocIdType doc_id, std::vector<std::string> tokens, 
       std::vector<std::string> ends) 
   {
-    DLOG_IF(FATAL, tokens.size() != ends.size())
+    LOG_IF(FATAL, tokens.size() != ends.size())
       << "number of tokens does not match number of ends";
     
     for (std::size_t i = 0 ; i < tokens.size(); i++) {
@@ -236,7 +239,7 @@ class BloomFilterStore {
     return filter_map_[term];
   }
 
-  const void Serialize(const std::string &path) {
+  const void Serialize(const std::string &path) const {
     std::ofstream out(path, std::ios::binary);
     for (auto &it : filter_map_) {
       VarintBuffer buf;
@@ -293,4 +296,6 @@ class BloomFilterStore {
   float ratio_;
 };
 
+
+#endif
 

@@ -14,6 +14,7 @@
 #include "engine_loader.h"
 #include "posting_list_delta.h"
 #include "general_config.h"
+#include "bloom_filter.h"
 
 
 class InvertedIndexImpl: public InvertedIndexService {
@@ -303,6 +304,8 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     inverted_index_.AddDocument(doc_id, doc_info);
     doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); 
     similarity_.Reset(doc_lengths_.GetAvgLength());
+    bloom_store_.Add(doc_id, doc_info.GetTokens(), 
+        doc_info.GetPhraseEnds());
   }
 
   std::string GetDocument(const DocIdType &doc_id) {
@@ -420,6 +423,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     doc_store_.Serialize(dir_path + "/doc_store.dump");
     inverted_index_.Serialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Serialize(dir_path + "/doc_lengths.dump");
+    bloom_store_.Serialize(dir_path + "/bloom_filter.dump");
   }
 
   void Deserialize(std::string dir_path) {
@@ -427,6 +431,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     doc_store_.Deserialize(dir_path + "/doc_store.dump"); //good
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
+    bloom_store_.Deserialize(dir_path + "/bloom_filter.dump");
     similarity_.Reset(doc_lengths_.GetAvgLength());
 
     std::cout << "Doc lengths _______________________________________________________\n";
@@ -440,6 +445,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
   DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
+  BloomFilterStore bloom_store_;
 
   int NextDocId() {
     return next_doc_id_++;
