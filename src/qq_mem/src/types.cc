@@ -35,7 +35,12 @@ const int DocInfo::BodyLength() const {
 }
 
 std::vector<Term> DocInfo::GetPhraseEnds() const {
-  return utils::explode_strict(phrase_ends_, '.');
+  std::vector<Term> ret = utils::explode_strict(phrase_ends_, '!');
+  if (ret.size() > 0) {
+    // the last item is an empty one
+    ret.pop_back();
+  }
+  return ret;
 }
 
 

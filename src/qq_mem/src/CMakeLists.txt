@@ -166,6 +166,7 @@ target_link_libraries(testmain
 )
 
 add_executable( testlast
+    tests_16.cc
     tests_17.cc
     test_helpers.cc
     grpc_client_impl.cc
