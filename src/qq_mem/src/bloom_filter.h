@@ -41,6 +41,27 @@ inline std::string ExtractBitArray(const Bloom *blm) {
 }
 
 
+inline Bloom CreateBloom(
+    const float ratio, std::vector<std::string> phrase_ends) 
+{
+  Bloom bloom;
+  const int expected_entries = phrase_ends.size();
+  bloom_init(&bloom, expected_entries, ratio);
+
+  for (auto &end : phrase_ends) {
+    int ret = AddToBloom(&bloom, end);
+    assert(ret == 0);
+  }
+
+  return bloom;
+};
+
+
+inline void FreeBloom(Bloom *blm) {
+  bloom_free(blm);
+}
+
+
 class BloomFilter {
  public:
   BloomFilter() {}
@@ -131,26 +152,6 @@ struct BloomFilterCase {
 };
 
 
-inline Bloom CreateBloom(
-    const float ratio, std::vector<std::string> phrase_ends) 
-{
-  Bloom bloom;
-  const int expected_entries = phrase_ends.size();
-  bloom_init(&bloom, expected_entries, ratio);
-
-  for (auto &end : phrase_ends) {
-    int ret = AddToBloom(&bloom, end);
-    assert(ret == 0);
-  }
-
-  return bloom;
-};
-
-
-inline void FreeBloom(Bloom *blm) {
-  bloom_free(blm);
-}
-
 
 class FilterCases {
  public:
@@ -164,6 +165,43 @@ class FilterCases {
 
   const BloomFilterCase operator[] (int i) {
     return cases_[i];
+  }
+
+  std::string Serialize() const {
+    VarintBuffer buf;
+    
+    buf.Append(cases_.size());
+    
+    for (auto &cas : cases_) {
+      std::string data = cas.Serialize(); 
+      buf.Append(data.size());
+      buf.Append(data);
+    }
+
+    return buf.Data();
+  }
+
+  void Deserialize(const char *buf) {
+    cases_.clear();
+
+    int len;
+    uint32_t n_cases;
+
+    len = utils::varint_decode_uint32(buf, 0, &n_cases);
+    buf += len;
+
+    for (uint32_t i = 0; i < n_cases; i++) {
+      uint32_t case_size;
+
+      len = utils::varint_decode_uint32(buf, 0, &case_size);
+      buf += len;
+
+      BloomFilterCase cas;
+      cas.Deserialize(buf);
+      cases_.push_back(cas);
+
+      buf += case_size;
+    }
   }
 
  private:

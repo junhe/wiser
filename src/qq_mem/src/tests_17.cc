@@ -50,6 +50,22 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
       REQUIRE(blm.Check("yeu") == BLM_NOT_PRESENT);
       REQUIRE(blm.Check("yew") == BLM_NOT_PRESENT);
     }
+
+    SECTION("Serialize/Deserialize cases") {
+      std::string data = cases.Serialize();
+
+      FilterCases new_cases;
+      new_cases.Deserialize(data.data());
+
+      const BloomFilter &blm = new_cases[0].blm;
+
+      REQUIRE(blm.BitArray() == f_case.blm.BitArray());
+
+      REQUIRE(blm.Check("world") == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("you") == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("yeu") == BLM_NOT_PRESENT);
+      REQUIRE(blm.Check("yew") == BLM_NOT_PRESENT);
+    }
   }
 }
 
