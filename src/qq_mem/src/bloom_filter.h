@@ -237,9 +237,55 @@ class BloomFilterStore {
   }
 
   const void Serialize(const std::string &path) {
+    std::ofstream out(path, std::ios::binary);
     for (auto &it : filter_map_) {
-      std::cout << it.first << std::endl;
+      VarintBuffer buf;
+      buf.Append(it.first.size());
+      buf.Append(it.first);
+
+      std::string cases_data = it.second.Serialize();
+      buf.Append(cases_data.size());
+      buf.Append(cases_data);
+
+      out.write(buf.DataPointer()->data(), buf.Size());
     }
+
+    out.close();
+  }
+
+  void Deserialize(const std::string &path) {
+    filter_map_.clear();
+
+    utils::FileMap file_map;
+    file_map.Open(path);
+  
+    const char *buf = file_map.Addr();
+    const char *const end = buf + file_map.Length();
+
+    while (buf < end) {
+      buf = DeserializeEntry(buf);
+    }
+  }
+
+  const char *DeserializeEntry(const char *buf) {
+    uint32_t n;
+    int len;
+
+    len = utils::varint_decode_uint32((const char *)buf, 0, &n);
+    buf += len;
+
+    std::string term(buf, n);
+    buf += n;
+
+    len = utils::varint_decode_uint32((const char *)buf, 0, &n);
+    buf += len;
+
+    FilterCases cases;
+    cases.Deserialize(buf);
+    buf += n;
+
+    filter_map_[term] = cases;
+    return buf;
   }
 
  private:

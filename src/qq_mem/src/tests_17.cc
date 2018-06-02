@@ -66,6 +66,22 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
       REQUIRE(blm.Check("yeu") == BLM_NOT_PRESENT);
       REQUIRE(blm.Check("yew") == BLM_NOT_PRESENT);
     }
+
+    SECTION("Serialize/Deserialize store") {
+      store.Serialize("/tmp/filter.store");
+
+      BloomFilterStore store2(0.00001);
+      store2.Deserialize("/tmp/filter.store");
+      FilterCases cases = store2.Lookup("hello");
+      
+      REQUIRE(cases.Size() == 1);
+      REQUIRE(cases[0].doc_id == 33);
+
+      REQUIRE(cases[0].blm.Check("world") == BLM_MAY_PRESENT);
+      REQUIRE(cases[0].blm.Check("you") == BLM_MAY_PRESENT);
+      REQUIRE(cases[0].blm.Check("yeu") == BLM_NOT_PRESENT);
+      REQUIRE(cases[0].blm.Check("yew") == BLM_NOT_PRESENT);
+    }
   }
 }
 
