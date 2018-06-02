@@ -9,7 +9,7 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
   SECTION("Bloom filter check") {
     BloomFilterStore store(0.00001);
     store.Add(33, {"hello"}, {"world you"});
-    FilterCases cases = store.Lookup("hello");
+    BloomFilterCases cases = store.Lookup("hello");
     
     REQUIRE(cases.Size() == 1);
     REQUIRE(cases[0].doc_id == 33);
@@ -54,7 +54,7 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
     SECTION("Serialize/Deserialize cases") {
       std::string data = cases.Serialize();
 
-      FilterCases new_cases;
+      BloomFilterCases new_cases;
       new_cases.Deserialize(data.data());
 
       const BloomFilter &blm = new_cases[0].blm;
@@ -72,7 +72,7 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
 
       BloomFilterStore store2(0.00001);
       store2.Deserialize("/tmp/filter.store");
-      FilterCases cases = store2.Lookup("hello");
+      BloomFilterCases cases = store2.Lookup("hello");
       
       REQUIRE(cases.Size() == 1);
       REQUIRE(cases[0].doc_id == 33);

@@ -153,7 +153,7 @@ struct BloomFilterCase {
 
 
 
-class FilterCases {
+class BloomFilterCases {
  public:
   void PushBack(const BloomFilterCase &cas) {
     cases_.push_back(cas);
@@ -232,7 +232,7 @@ class BloomFilterStore {
     }
   }
 
-  const FilterCases Lookup(const Term &term) {
+  const BloomFilterCases Lookup(const Term &term) {
     return filter_map_[term];
   }
 
@@ -280,7 +280,7 @@ class BloomFilterStore {
     len = utils::varint_decode_uint32((const char *)buf, 0, &n);
     buf += len;
 
-    FilterCases cases;
+    BloomFilterCases cases;
     cases.Deserialize(buf);
     buf += n;
 
@@ -289,7 +289,7 @@ class BloomFilterStore {
   }
 
  private:
-  std::unordered_map<std::string, FilterCases> filter_map_;
+  std::unordered_map<std::string, BloomFilterCases> filter_map_;
   float ratio_;
 };
 
