@@ -556,13 +556,21 @@ class BloomBoxWriter {
 // Iterate over bit arrays inside a bloom box
 class BloomBoxIterator {
  public:
-  void Reset(const uint8_t *buf) {
+  void Reset(const uint8_t *buf, const int item_bytes) {
     buf_ = buf;
+    item_bytes_ = item_bytes;
     Fill(buf_);
   }
 
   bool HasItem(std::size_t i) {
     return bitmap_[i];
+  }
+
+  const uint8_t *GetBitArray(int i) {
+    if (HasItem(i) == false)
+      return nullptr;
+    else
+      return item_buf_ + map_[i] * item_bytes_;
   }
 
  private:
@@ -574,13 +582,29 @@ class BloomBoxIterator {
     int len = utils::varint_decode_uint32((char *)buf, 0, &n_items_);
     buf += len;
 
-    DecodeBitmap(buf);
+    const int n_bitmap_bytes = utils::DivideRoundUp(n_items_, 8);
+    DecodeBitmap(buf, n_bitmap_bytes);
+    buf += n_bitmap_bytes;
+
+    BuildMap();
+    item_buf_ = buf;
   }
 
-  void DecodeBitmap(const uint8_t *buf) {
-    int n_bytes = utils::DivideRoundUp(n_items_, 8);
+  void BuildMap() {
+    int physical_index = 0;
+    for (std::size_t i = 0; i < n_items_; i++) {
+      if (bitmap_[i] == true) {
+        map_[i] = physical_index;
+        physical_index++;
+      } else {
+        map_[i] = -1;
+      }
+    }
+  }
+
+  void DecodeBitmap(const uint8_t *buf, const int n_bitmap_bytes) {
     bool *bitmap = bitmap_;
-    for (int i = 0; i < n_bytes; i++) {
+    for (int i = 0; i < n_bitmap_bytes; i++) {
       DecodeBitmapByte(*buf, bitmap); 
       buf++;
       bitmap += 8;
@@ -590,6 +614,9 @@ class BloomBoxIterator {
   uint32_t n_items_;
   const uint8_t *buf_;
   bool bitmap_[PACK_ITEM_CNT];
+  const uint8_t *item_buf_;
+  int item_bytes_;
+  int map_[PACK_ITEM_CNT]; // logical index to physical index;
 };
 
 

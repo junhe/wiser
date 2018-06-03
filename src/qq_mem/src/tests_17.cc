@@ -426,7 +426,7 @@ TEST_CASE( "Decode bitmap", "[bloomfilter]" ) {
 TEST_CASE( "Bloom box writer (test bitmap)", "[flash]" ) {
   SECTION("Simple") {
     BloomBoxWriter writer(2);
-    writer.Add("xx");
+    writer.Add("xy");
     writer.Add("");
 
     std::string data = writer.Serialize();
@@ -434,9 +434,11 @@ TEST_CASE( "Bloom box writer (test bitmap)", "[flash]" ) {
     REQUIRE(data[0] == (char)BLOOM_BOX_FIRST_BYTE);
 
     BloomBoxIterator it;
-    it.Reset((const uint8_t *)data.data());
+    it.Reset((const uint8_t *)data.data(), 2);
     REQUIRE(it.HasItem(0) == true);
     REQUIRE(it.HasItem(1) == false);
+    REQUIRE(std::string((char *)it.GetBitArray(0), 2) == "xy");
+    REQUIRE(it.GetBitArray(1) == nullptr);
   }
 
   SECTION("Set every 5") {
@@ -444,7 +446,7 @@ TEST_CASE( "Bloom box writer (test bitmap)", "[flash]" ) {
 
     for (int i = 0; i < 128; i++) {
       if (i % 5 == 0) {
-        writer.Add("xx");
+        writer.Add("xy");
       } else {
         writer.Add("");
       }
@@ -455,13 +457,15 @@ TEST_CASE( "Bloom box writer (test bitmap)", "[flash]" ) {
     REQUIRE(data[0] == (char)BLOOM_BOX_FIRST_BYTE);
 
     BloomBoxIterator it;
-    it.Reset((const uint8_t *)data.data());
-
+    it.Reset((const uint8_t *)data.data(), 2);
+    
     for (int i = 0; i < 128; i++) {
       if (i % 5 == 0) {
         REQUIRE(it.HasItem(i) == true);
+        REQUIRE(std::string((char *)it.GetBitArray(i), 2) == "xy");
       } else {
         REQUIRE(it.HasItem(i) == false);
+        REQUIRE(it.GetBitArray(i) == nullptr);
       }
     }
   }
