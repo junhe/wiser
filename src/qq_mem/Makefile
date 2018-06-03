@@ -93,8 +93,8 @@ trie_bench_heap:
 create_qq_mem_dump:
 	cd build && cmake ../src/ && \
 	make create_qq_mem_dump && \
-	./create_qq_mem_dump -line_doc_path=/mnt/ssd/wiki/wiki_full.linedoc_tokenized \
-	-dump_dir_path=/mnt/ssd/vacuum-may-wiki
+	./create_qq_mem_dump -line_doc_path=/mnt/ssd/wiki/wiki_full.linedoc_tokenized_preprocessed \
+	-dump_dir_path=/mnt/ssd/vacuum-june-wiki-bloom
 
 vacuum_two_nodes:
 	cd build 

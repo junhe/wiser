@@ -236,6 +236,7 @@ target_link_libraries(create_qq_mem_dump
     ${QQ_LIBS}
     pthread
     ${GLOG_LIB}
+    bloom
 )
 
 

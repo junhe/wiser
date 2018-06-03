@@ -517,6 +517,20 @@ inline bool StartsWith(const std::string &a, const std::string &b) {
   return a.compare(0, b.size(), b) == 0;
 }
 
+// index is from right to left
+// 63 62 ... 1 0
+inline void SetBit(uint64_t *val, int index) {
+  *val = *val | ((uint64_t) 1 << index);
+}
+
+// index is from left to right
+// 0 1 .. 62 63
+inline void SetBitReverse(uint64_t *val, int index) {
+  *val = *val | ((uint64_t) 1 << (63 - index));
+}
+
+
+
 
 } // namespace util
 #endif

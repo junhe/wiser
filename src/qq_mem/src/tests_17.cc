@@ -299,5 +299,35 @@ TEST_CASE( "Bloom filter serialization", "[bloomfilter]" ) {
 }
 
 
+TEST_CASE( "Set bits", "[utils]" ) {
+  uint64_t val = 0;
+  utils::SetBit(&val, 0);
+  REQUIRE(val == 0x1);
+
+  val = 0;
+  utils::SetBit(&val, 63);
+  REQUIRE(val == ((uint64_t) 1 << 63));
+  utils::SetBit(&val, 62);
+  REQUIRE(val == (((uint64_t) 1 << 63) | ((uint64_t) 1 << 62)));
+
+  val = 0;
+  utils::SetBitReverse(&val, 0);
+  REQUIRE(val == ((uint64_t) 1 << 63));
+
+  val = 0;
+  utils::SetBitReverse(&val, 63);
+  REQUIRE(val == ((uint64_t) 1 << 0));
+
+  for (int i = 0; i < 64; i++) {
+    utils::SetBitReverse(&val, i);
+  }
+  REQUIRE(val == ~((uint64_t) 0x00));
+}
+
+
+TEST_CASE( "Bloom box writer", "[flash]" ) {
+
+
+}
 
 

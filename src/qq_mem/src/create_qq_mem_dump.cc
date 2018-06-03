@@ -55,7 +55,7 @@ GeneralConfig config_by_jun() {
   config.SetInt("n_docs", 100000000);
   config.SetString("line_doc_path", FLAGS_line_doc_path);
   config.SetString("dump_dir_path", FLAGS_dump_dir_path);
-  config.SetString("loader", "WITH_POSITIONS");
+  config.SetString("loader", "WITH_PHRASE_END");
 
   config.SetInt("n_queries", 1000);
   config.SetInt("n_passages", 3);

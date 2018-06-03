@@ -476,9 +476,27 @@ class TermDictEntry {
 };
 
 
+class BloomBoxWriter {
+ public:
+  void Add(std::string bitarray) {
+    bit_arrays_.push_back(bitarray);
+  }
 
+  std::string Serialize() const {
+  }
 
+  std::string Bitmap() const {
+    uint8_t byte = 0x00;
+    std::string ret;
+    for (int i = 0; i < bit_arrays_.size(); i++) {
+      uint8_t bit = bit_arrays_[i] == ""? 0 : 1;
+      byte = (byte << 1) | bit;
+    }
+  }
 
+ private:
+  std::vector<std::string> bit_arrays_;
+};
 
 
 #endif
