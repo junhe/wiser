@@ -253,7 +253,7 @@ class AsyncServer : public ServerService {
               &async_service_, srv_cqs_[j].get(), search_engine_.get()));
       }
     }
-    assert(contexts_.size() == 5000 * num_cqs);
+    assert(contexts_.size() == (std::size_t) 5000 * num_cqs);
     std::cout << "All RPC contexts are created " << factor * num_cqs << std::endl;
 
 

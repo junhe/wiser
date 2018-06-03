@@ -29,4 +29,12 @@ SkipList CreateSkipListForPosition( std::vector<off_t> blob_offsets,
                                     std::vector<int> in_blob_indexes);
 SkipList CreateSkipListForOffset( std::vector<off_t> blob_offsets, 
                                     std::vector<int> in_blob_indexes);
+
+inline int PsudoIncreasingRandom(int i) {
+  int seed = 6263;
+  int rand = (i * seed + 12345) % 23;
+  return 1 + i * 30 + rand;
+}
+
+
 #endif

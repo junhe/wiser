@@ -28,12 +28,6 @@ std::string EncodeToDeltaEncodedVInts(const std::vector<uint32_t> &values) {
 }
 
 
-int PsudoIncreasingRandom(int i) {
-  int seed = 6263;
-  int rand = (i * seed + 12345) % 23;
-  return 1 + i * 30 + rand;
-}
-
 
 TEST_CASE( "Delta Encoded PackedIntsIterator", "[qqflash]" ) {
   SECTION("Simple sequence, read by Reader") {

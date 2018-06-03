@@ -539,7 +539,7 @@ inline std::ifstream::pos_type GetFileSize(const std::string &path)
 
 template <typename T>
 inline std::vector<T> EncodeDelta(const std::vector<T> &values) {
-  uint32_t prev = 0;
+  T prev = 0;
   std::vector<T> vals;
 
   for (auto &v : values) {

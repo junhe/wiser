@@ -390,7 +390,7 @@ class SkipList {
     return skip_interval * PACK_SIZE;
   }
 
-  const SkipEntry &operator [](int interval_idx) const {
+  const SkipEntry &operator [](std::size_t interval_idx) const {
     DLOG_IF(FATAL, interval_idx >= skip_table_.size())
       << "Trying to access skip entry out of bound!";
 
@@ -619,6 +619,61 @@ class BloomBoxIterator {
   int map_[PACK_ITEM_CNT]; // logical index to physical index;
 };
 
+
+class BloomSkipListWriter {
+ public:
+  BloomSkipListWriter(const std::vector<off_t> &bloom_box_offs)
+    :bloom_box_offs_(bloom_box_offs) {}
+  
+  std::string Serialize() const {
+    VarintBuffer buf;
+    buf.Append(utils::MakeString(BLOOM_SKIP_LIST_FIRST_BYTE));
+    buf.Append(bloom_box_offs_.size());
+
+    std::vector<off_t> deltas = utils::EncodeDelta<off_t>(bloom_box_offs_);
+
+    for (auto &val : deltas) {
+      buf.Append(val);
+    }
+
+    return buf.Data();
+  }
+
+ private:
+  std::vector<off_t> bloom_box_offs_;
+};
+
+class BloomSkipList {
+ public:
+  void Load(const uint8_t *buf) {
+    DLOG_IF(FATAL, buf[0] != BLOOM_SKIP_LIST_FIRST_BYTE)
+      << "First byte of bloom skip list not not right" << std::endl;
+    buf++;
+
+    uint32_t n_entries;
+    int len = utils::varint_decode_uint32((const char *)buf, 0, &n_entries);
+    buf += len;
+
+    VarintIterator it((const char *)buf, 0, n_entries);
+    off_t prev = 0;
+    while (it.IsEnd() == false) {
+      off_t offset = prev + it.Pop();
+      bloom_box_offs_.push_back(offset);
+      prev = offset;
+    }
+  }
+
+  off_t operator [](int index) {
+    return bloom_box_offs_[index];
+  }
+
+  std::size_t Size() const {
+    return bloom_box_offs_.size(); 
+  }
+
+ private:
+  std::vector<off_t> bloom_box_offs_;
+};
 
 
 
