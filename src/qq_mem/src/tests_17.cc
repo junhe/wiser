@@ -3,6 +3,7 @@
 #include <iostream>
 
 #include "bloom_filter.h"
+#include "flash_containers.h"
 
 
 typedef std::pair<std::set<std::string>, std::set<std::string>> set_pair ;
@@ -324,10 +325,63 @@ TEST_CASE( "Set bits", "[utils]" ) {
   REQUIRE(val == ~((uint64_t) 0x00));
 }
 
+TEST_CASE( "Bitmap generation", "[bloomfilter]" ) {
+  std::vector<std::string> vec;
+  SECTION("Simple") {
+    vec.push_back("x");
+    std::string bitmap = ProduceBitmap(vec);
+
+    REQUIRE(bitmap.size() == 1);
+    REQUIRE(bitmap[0] == (char)0x80);
+  }
+
+  SECTION("One empty") {
+    vec.push_back("");
+    std::string bitmap = ProduceBitmap(vec);
+
+    REQUIRE(bitmap.size() == 1);
+    REQUIRE(bitmap[0] == (char)0x00);
+  }
+
+  SECTION("Four bits") {
+    vec.push_back("");
+    vec.push_back("");
+    vec.push_back("");
+    vec.push_back("");
+
+    vec.push_back("x");
+    vec.push_back("x");
+    vec.push_back("x");
+    vec.push_back("x");
+
+    std::string bitmap = ProduceBitmap(vec);
+
+    REQUIRE(bitmap.size() == 1);
+    REQUIRE(bitmap[0] == (char)0x0F);
+  }
+
+  SECTION("Two bytes") {
+    vec.push_back("x");
+    vec.push_back("");
+    vec.push_back("x");
+    vec.push_back("");
+
+    vec.push_back("x");
+    vec.push_back("x");
+    vec.push_back("x");
+    vec.push_back("x");
+
+    vec.push_back("x");
+    vec.push_back("");
+    std::string bitmap = ProduceBitmap(vec);
+
+    REQUIRE(bitmap.size() == 2);
+    REQUIRE(bitmap[0] == (char)0xAF);
+    REQUIRE(bitmap[1] == (char)0x80);
+  }
+}
 
 TEST_CASE( "Bloom box writer", "[flash]" ) {
-
-
 }
 
 

@@ -1,6 +1,8 @@
 #ifndef FLASH_CONTAINERS_H
 #define FLASH_CONTAINERS_H
 
+#include "packed_value.h"
+
 
 #define SKIP_LIST_FIRST_BYTE 0xA3
 #define POSTING_LIST_FIRST_BYTE 0xF4
@@ -19,8 +21,6 @@ inline std::vector<uint32_t> GetSkipPostingPreDocIds(const std::vector<uint32_t>
   }
   return skip_pre_doc_ids;
 }
-
-
 
 
 struct PostingBagBlobIndex {
@@ -476,6 +476,38 @@ class TermDictEntry {
 };
 
 
+inline std::string ProduceBitmap(const std::vector<std::string> &vec) {
+  const int n = vec.size();
+  const int n_full_chunks = n / 8;
+  const int rem = n % 8;
+  uint8_t bits;
+  std::string ret;
+
+  for (int chunk_i = 0; chunk_i < n_full_chunks; chunk_i++) {
+    bits = 0;
+    for (int offset = 0; offset < 8; offset++) {
+      const int i = chunk_i * 8 + offset;
+      if (vec[i].size() > 0) {
+        bits = bits | (1 << (7 - offset));
+      }
+    }
+    ret += utils::MakeString(bits);
+  }
+
+  if (rem > 0) {
+    bits = 0;
+    for (int offset = 0; offset < rem; offset++) {
+      const int i = n_full_chunks * 8 + offset;
+      if (vec[i].size() > 0) {
+        bits = bits | (1 << (7 - offset));
+      }
+    }
+    ret += utils::MakeString(bits);
+  }
+
+  return ret;
+}
+
 class BloomBoxWriter {
  public:
   void Add(std::string bitarray) {
@@ -483,15 +515,6 @@ class BloomBoxWriter {
   }
 
   std::string Serialize() const {
-  }
-
-  std::string Bitmap() const {
-    uint8_t byte = 0x00;
-    std::string ret;
-    for (int i = 0; i < bit_arrays_.size(); i++) {
-      uint8_t bit = bit_arrays_[i] == ""? 0 : 1;
-      byte = (byte << 1) | bit;
-    }
   }
 
  private:
