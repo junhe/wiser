@@ -382,6 +382,14 @@ TEST_CASE( "Bitmap generation", "[bloomfilter]" ) {
 }
 
 TEST_CASE( "Bloom box writer", "[flash]" ) {
+  SECTION("Simple") {
+    BloomBoxWriter writer(2);
+    writer.Add("xx");
+    writer.Add("");
+    std::string data = writer.Serialize();
+    REQUIRE(data.size() > 0);
+    REQUIRE(data[0] == (char)BLOOM_BOX_FIRST_BYTE);
+  }
 }
 
 

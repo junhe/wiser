@@ -1,11 +1,9 @@
 #ifndef FLASH_CONTAINERS_H
 #define FLASH_CONTAINERS_H
 
+#include "types.h"
 #include "packed_value.h"
 
-
-#define SKIP_LIST_FIRST_BYTE 0xA3
-#define POSTING_LIST_FIRST_BYTE 0xF4
 
 constexpr int SKIP_INTERVAL = PACK_ITEM_CNT;
 constexpr int PACK_SIZE = PACK_ITEM_CNT;
@@ -508,17 +506,33 @@ inline std::string ProduceBitmap(const std::vector<std::string> &vec) {
   return ret;
 }
 
+
 class BloomBoxWriter {
  public:
+  BloomBoxWriter(std::size_t array_bytes) :array_bytes_(array_bytes) {}
+
   void Add(std::string bitarray) {
+    LOG_IF(FATAL, 
+        !(bitarray.size() == array_bytes_ || bitarray.size() == 0))
+      << "Size of bitarray does not match the expected";
     bit_arrays_.push_back(bitarray);
   }
 
   std::string Serialize() const {
+    VarintBuffer buf;
+    buf.Append(utils::MakeString(BLOOM_BOX_FIRST_BYTE));
+    buf.Append(bit_arrays_.size());
+    buf.Append(ProduceBitmap(bit_arrays_));
+    for (auto &s : bit_arrays_) {
+      buf.Append(s);
+    }
+
+    return buf.Data();
   }
 
  private:
   std::vector<std::string> bit_arrays_;
+  std::size_t array_bytes_;
 };
 
 
