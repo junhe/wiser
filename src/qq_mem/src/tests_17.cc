@@ -381,14 +381,89 @@ TEST_CASE( "Bitmap generation", "[bloomfilter]" ) {
   }
 }
 
-TEST_CASE( "Bloom box writer", "[flash]" ) {
+void EqualBitmap(bool bitmap1[], bool bitmap2[], const int n) {
+  for (int i = 0; i < n; i++) {
+    REQUIRE(bitmap1[i] == bitmap2[i]);
+  }
+}
+
+TEST_CASE( "Decode bitmap", "[bloomfilter]" ) {
+  SECTION("1") {
+    bool bitmap[8];  
+    DecodeBitmapByte(0x80, bitmap);
+    bool bitmap2[8] = {true, false, false, false,  false, false, false, false};
+    EqualBitmap(bitmap, bitmap2, 8);
+  }
+
+  SECTION("2") {
+    bool bitmap[8];  
+    DecodeBitmapByte(0xFF, bitmap);
+    bool bitmap2[8] = {true,true,true,true, true,true,true,true};
+    EqualBitmap(bitmap, bitmap2, 8);
+  }
+
+  SECTION("3") {
+    bool bitmap[8];  
+    DecodeBitmapByte(0xF0, bitmap);
+    bool bitmap2[8] = {true,true,true,true, false,false,false,false};
+    EqualBitmap(bitmap, bitmap2, 8);
+  }
+
+  SECTION("16 bits") {
+    bool bitmap[16];  
+    DecodeBitmapByte(0xF0, bitmap);
+    DecodeBitmapByte(0xA0, bitmap + 8);
+    bool bitmap2[16] = {
+      true,true,true,true, false,false,false,false,
+      true,false,true,false, false,false,false,false
+    };
+    EqualBitmap(bitmap, bitmap2, 16);
+  }
+
+}
+
+
+TEST_CASE( "Bloom box writer (test bitmap)", "[flash]" ) {
   SECTION("Simple") {
     BloomBoxWriter writer(2);
     writer.Add("xx");
     writer.Add("");
+
     std::string data = writer.Serialize();
     REQUIRE(data.size() > 0);
     REQUIRE(data[0] == (char)BLOOM_BOX_FIRST_BYTE);
+
+    BloomBoxIterator it;
+    it.Reset((const uint8_t *)data.data());
+    REQUIRE(it.HasItem(0) == true);
+    REQUIRE(it.HasItem(1) == false);
+  }
+
+  SECTION("Set every 5") {
+    BloomBoxWriter writer(2);
+
+    for (int i = 0; i < 128; i++) {
+      if (i % 5 == 0) {
+        writer.Add("xx");
+      } else {
+        writer.Add("");
+      }
+    }
+
+    std::string data = writer.Serialize();
+    REQUIRE(data.size() > 0);
+    REQUIRE(data[0] == (char)BLOOM_BOX_FIRST_BYTE);
+
+    BloomBoxIterator it;
+    it.Reset((const uint8_t *)data.data());
+
+    for (int i = 0; i < 128; i++) {
+      if (i % 5 == 0) {
+        REQUIRE(it.HasItem(i) == true);
+      } else {
+        REQUIRE(it.HasItem(i) == false);
+      }
+    }
   }
 }
 

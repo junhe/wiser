@@ -21,6 +21,17 @@ inline std::vector<uint32_t> GetSkipPostingPreDocIds(const std::vector<uint32_t>
 }
 
 
+inline void DecodeBitmapByte(const uint8_t byte, bool *bitmap) {
+  bitmap[0] = byte & 0x80;
+  bitmap[1] = byte & 0x40;
+  bitmap[2] = byte & 0x20;
+  bitmap[3] = byte & 0x10;
+  bitmap[4] = byte & 0x08;
+  bitmap[5] = byte & 0x04;
+  bitmap[6] = byte & 0x02;
+  bitmap[7] = byte & 0x01;
+}
+
 struct PostingBagBlobIndex {
   PostingBagBlobIndex(int block_idx, int offset_idx)
     : blob_index(block_idx), in_blob_idx(offset_idx) {}
@@ -43,6 +54,9 @@ struct SkipListPreRow {
   off_t pos_blob_off = 0;
   off_t off_blob_off = 0;
 };
+
+
+
 
 
 class PostingBagBlobIndexes {
@@ -516,12 +530,15 @@ class BloomBoxWriter {
         !(bitarray.size() == array_bytes_ || bitarray.size() == 0))
       << "Size of bitarray does not match the expected";
     bit_arrays_.push_back(bitarray);
+    LOG_IF(FATAL, bit_arrays_.size() > PACK_ITEM_CNT)
+      << "Too many items in the bloom box";
   }
 
   std::string Serialize() const {
     VarintBuffer buf;
     buf.Append(utils::MakeString(BLOOM_BOX_FIRST_BYTE));
-    buf.Append(bit_arrays_.size());
+    // won't be larger than 1 byte, because the max is 128
+    buf.Append(bit_arrays_.size()); 
     buf.Append(ProduceBitmap(bit_arrays_));
     for (auto &s : bit_arrays_) {
       buf.Append(s);
@@ -534,6 +551,49 @@ class BloomBoxWriter {
   std::vector<std::string> bit_arrays_;
   std::size_t array_bytes_;
 };
+
+
+// Iterate over bit arrays inside a bloom box
+class BloomBoxIterator {
+ public:
+  void Reset(const uint8_t *buf) {
+    buf_ = buf;
+    Fill(buf_);
+  }
+
+  bool HasItem(std::size_t i) {
+    return bitmap_[i];
+  }
+
+ private:
+  void Fill(const uint8_t *buf) {
+    DLOG_IF(FATAL, buf[0] != BLOOM_BOX_FIRST_BYTE)
+      << "Wrong first byte for a bloom box";
+    buf += 1;
+
+    int len = utils::varint_decode_uint32((char *)buf, 0, &n_items_);
+    buf += len;
+
+    DecodeBitmap(buf);
+  }
+
+  void DecodeBitmap(const uint8_t *buf) {
+    int n_bytes = utils::DivideRoundUp(n_items_, 8);
+    bool *bitmap = bitmap_;
+    for (int i = 0; i < n_bytes; i++) {
+      DecodeBitmapByte(*buf, bitmap); 
+      buf++;
+      bitmap += 8;
+    }
+  }
+
+  uint32_t n_items_;
+  const uint8_t *buf_;
+  bool bitmap_[PACK_ITEM_CNT];
+};
+
+
+
 
 
 #endif
