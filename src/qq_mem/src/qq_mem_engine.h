@@ -304,8 +304,9 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     inverted_index_.AddDocument(doc_id, doc_info);
     doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); 
     similarity_.Reset(doc_lengths_.GetAvgLength());
-    bloom_store_.Add(doc_id, doc_info.GetTokens(), 
-        doc_info.GetPhraseEnds());
+    if (doc_info.Format() == "WITH_PHRASE_END")
+      bloom_store_.Add(doc_id, doc_info.GetTokens(), 
+          doc_info.GetPhraseEnds());
   }
 
   std::string GetDocument(const DocIdType &doc_id) {
@@ -431,7 +432,10 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     doc_store_.Deserialize(dir_path + "/doc_store.dump"); //good
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
-    bloom_store_.Deserialize(dir_path + "/bloom_filter.dump");
+
+    std::string bloom_path = dir_path + "/bloom_filter.dump";
+    if (utils::PathExists(bloom_path)) 
+      bloom_store_.Deserialize(bloom_path);
     similarity_.Reset(doc_lengths_.GetAvgLength());
 
     std::cout << "Doc lengths _______________________________________________________\n";

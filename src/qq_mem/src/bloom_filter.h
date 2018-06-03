@@ -259,6 +259,9 @@ class BloomFilterStore {
   void Deserialize(const std::string &path) {
     filter_map_.clear();
 
+    if (utils::GetFileSize(path) == 0)
+      return;
+
     utils::FileMap file_map;
     file_map.Open(path);
   

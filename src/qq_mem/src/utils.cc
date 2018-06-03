@@ -292,8 +292,10 @@ void MapFile(std::string path, char **ret_addr, int *ret_fd, size_t *ret_file_le
   file_length = sb.st_size;
 
   addr = (char *) mmap(NULL, file_length, PROT_READ, MAP_PRIVATE, fd, 0);
-  if (addr == MAP_FAILED)
-    handle_error("mmap");
+  if (addr == MAP_FAILED) {
+    std::string msg = "mmap(" + path + ")";
+    handle_error(msg.c_str());
+  }
 
   *ret_addr = addr;
   *ret_fd = fd;
@@ -326,6 +328,9 @@ std::string JoinPath(const std::string a, const std::string b) {
   return path.string();
 }
 
+bool PathExists(std::string path) {
+  return boost::filesystem::exists(path);
+}
 
 void PrintVInts(const uint8_t *buf) {
   VIntsIterator iter(buf);

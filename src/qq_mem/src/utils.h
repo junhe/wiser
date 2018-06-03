@@ -529,7 +529,13 @@ inline void SetBitReverse(uint64_t *val, int index) {
   *val = *val | ((uint64_t) 1 << (63 - index));
 }
 
+bool PathExists(std::string path);
 
+inline std::ifstream::pos_type GetFileSize(const std::string &path)
+{
+  std::ifstream in(path, std::ifstream::ate | std::ifstream::binary);
+  return in.tellg(); 
+}
 
 
 } // namespace util
