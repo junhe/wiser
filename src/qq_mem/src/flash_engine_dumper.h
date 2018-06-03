@@ -54,20 +54,6 @@ inline void DecodePrefetchZoneAndOffset(
   *posting_list_start = ((uint64_t)offset_from_term_index) & mask;
 }
 
-
-inline std::vector<uint32_t> EncodeDelta(const std::vector<uint32_t> &values) {
-  uint32_t prev = 0;
-  std::vector<uint32_t> vals;
-
-  for (auto &v : values) {
-    vals.push_back(v - prev);
-    prev = v;
-  }
-
-  return vals;
-}
-
-
 class GeneralTermEntry {
  public:
   // Values can be positions, offsets, term frequencies
@@ -104,7 +90,7 @@ class GeneralTermEntry {
 
     std::vector<uint32_t> vals;
     if (do_delta) {
-      vals = EncodeDelta(values_);
+      vals = utils::EncodeDelta<uint32_t>(values_);
     } else {
       vals = values_;
     }
@@ -217,11 +203,11 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
       // Position
       entry_set.position.AddPostingBag(
-          EncodeDelta(ExtractPositions(posting_it.PositionBegin().get())));
+          utils::EncodeDelta<uint32_t>(ExtractPositions(posting_it.PositionBegin().get())));
 
       // Offset
       entry_set.offset.AddPostingBag(
-          EncodeDelta(ExtractOffsets(posting_it.OffsetPairsBegin().get())));
+          utils::EncodeDelta<uint32_t>(ExtractOffsets(posting_it.OffsetPairsBegin().get())));
 
       posting_it.Advance();
     }

@@ -4,7 +4,7 @@
 #include "utils.h"
 
 std::string EncodeToDeltaEncodedPackedInts(const std::vector<uint32_t> &values) {
-  std::vector<uint32_t> deltas = EncodeDelta(values);
+  std::vector<uint32_t> deltas = utils::EncodeDelta<uint32_t>(values);
 
   LittlePackedIntsWriter writer;
   for (auto &delta : deltas) {
@@ -15,7 +15,7 @@ std::string EncodeToDeltaEncodedPackedInts(const std::vector<uint32_t> &values) 
 
 
 std::string EncodeToDeltaEncodedVInts(const std::vector<uint32_t> &values) {
-  std::vector<uint32_t> deltas = EncodeDelta(values);
+  std::vector<uint32_t> deltas = utils::EncodeDelta<uint32_t>(values);
 
   VIntsWriter writer;
   for (auto &delta : deltas) {

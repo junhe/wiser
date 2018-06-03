@@ -537,6 +537,20 @@ inline std::ifstream::pos_type GetFileSize(const std::string &path)
   return in.tellg(); 
 }
 
+template <typename T>
+inline std::vector<T> EncodeDelta(const std::vector<T> &values) {
+  uint32_t prev = 0;
+  std::vector<T> vals;
+
+  for (auto &v : values) {
+    vals.push_back(v - prev);
+    prev = v;
+  }
+
+  return vals;
+}
+
+
 
 } // namespace util
 #endif
