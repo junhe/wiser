@@ -2,6 +2,7 @@
 
 #include "flash_iterators.h"
 #include "utils.h"
+#include "test_helpers.h"
 
 std::string EncodeToDeltaEncodedPackedInts(const std::vector<uint32_t> &values) {
   std::vector<uint32_t> deltas = utils::EncodeDelta<uint32_t>(values);

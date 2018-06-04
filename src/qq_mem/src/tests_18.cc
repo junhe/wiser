@@ -140,7 +140,3 @@ TEST_CASE( "Blooom filter column writer", "[bloomfilter]" ) {
 }
 
 
-
-
-
-
