@@ -227,9 +227,14 @@ class BloomFilterCases {
 class BloomFilterStore {
  public:
   BloomFilterStore(const float ratio, const int expected_entries) 
-    :ratio_(ratio), expected_entries_(expected_entries) {}
+    :ratio_(ratio), expected_entries_(expected_entries) 
+  {
+    bit_array_bytes_ = bloom_bytes(expected_entries, ratio);   
+  }
 
-  BloomFilterStore() :ratio_(0.001), expected_entries_(5) {}
+  BloomFilterStore() :ratio_(0.001), expected_entries_(5) {
+    bit_array_bytes_ = bloom_bytes(expected_entries_, ratio_);   
+  }
 
   void Add(DocIdType doc_id, std::vector<std::string> tokens, 
       std::vector<std::string> ends) 
@@ -242,6 +247,9 @@ class BloomFilterStore {
       std::vector<std::string> end_list = utils::explode(ends[i], ' ');
 
       Bloom blm = CreateBloomFixedEntries(ratio_, expected_entries_, end_list);
+      LOG_IF(FATAL, bit_array_bytes_ != blm.bytes) 
+        << "Bytes do not match!";
+
       BloomFilter blm_filter(&blm, ratio_);
       FreeBloom(&blm);
 
@@ -295,6 +303,8 @@ class BloomFilterStore {
     expected_entries_ = *((int *)buf);
     buf += sizeof(int);
 
+    bit_array_bytes_ = bloom_bytes(expected_entries_, ratio_);   
+
     while (buf < end) {
       buf = DeserializeEntry(buf);
     }
@@ -333,6 +343,7 @@ class BloomFilterStore {
   std::unordered_map<std::string, BloomFilterCases> filter_map_;
   float ratio_;
   int expected_entries_;
+  int bit_array_bytes_;
 };
 
 
