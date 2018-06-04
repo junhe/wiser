@@ -7,8 +7,8 @@ int main( int argc, char* argv[] ) {
   // global setup...
   google::InitGoogleLogging(argv[0]);
   FLAGS_logtostderr = 1; // print to stderr instead of file
-  // FLAGS_minloglevel = 0;  // All
-  FLAGS_minloglevel = 3; // ONLY FATAL
+  FLAGS_minloglevel = 0;  // All
+  // FLAGS_minloglevel = 3; // ONLY FATAL
 
   int result = Catch::Session().run( argc, argv );
 

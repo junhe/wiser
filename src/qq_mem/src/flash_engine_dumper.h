@@ -153,21 +153,6 @@ struct ResultOfDumpingTermEntrySet {
   off_t pos_start_offset;
 };
 
-// The contents of a posting list
-struct TermEntrySet {
-    GeneralTermEntry docid;
-    GeneralTermEntry termfreq;
-    GeneralTermEntry position;
-    GeneralTermEntry offset;
-};
-
-inline FileOffsetOfSkipPostingBags DumpTermEntry(
-    const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
-  FileOffsetsOfBlobs file_offs = dumper->Dump(term_entry.GetCozyBoxWriter(do_delta));
-  PostingBagBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
-  return FileOffsetOfSkipPostingBags(pack_indexes, file_offs);
-}
-
 
 class BloomFilterColumnWriter {
  public:
@@ -217,15 +202,31 @@ class BloomFilterColumnWriter {
 };
 
 
+// The contents of a posting list
+struct TermEntrySet {
+    GeneralTermEntry docid;
+    GeneralTermEntry termfreq;
+    GeneralTermEntry position;
+    GeneralTermEntry offset;
+};
+
+
+inline FileOffsetOfSkipPostingBags DumpTermEntry(
+    const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
+  FileOffsetsOfBlobs file_offs = dumper->Dump(term_entry.GetCozyBoxWriter(do_delta));
+  PostingBagBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
+  return FileOffsetOfSkipPostingBags(pack_indexes, file_offs);
+}
+
 
 class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
  public:
   VacuumInvertedIndexDumper(const std::string dump_dir_path)
     :index_dumper_(dump_dir_path + "/my.vacuum"),
      fake_index_dumper_(dump_dir_path + "/fake.vacuum"),
-     term_index_dumper_(dump_dir_path + "/my.tip")
-  {
-  }
+     term_index_dumper_(dump_dir_path + "/my.tip"),
+     bloom_store_(nullptr)
+  {}
 
   // Only for testing at this time
   void SeekFileDumper(off_t pos) {
@@ -233,8 +234,20 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     fake_index_dumper_.Seek(pos);
   }
 
+  void SetBloomStore(BloomFilterStore *bloom_store) {
+    bloom_store_ = bloom_store;
+  }
+
   void DumpPostingList(const Term &term, 
       const PostingListDelta &posting_list) override {
+    if (bloom_store_ == nullptr) 
+      DumpPostingListNoBloom(term, posting_list);
+    else
+      DumpPostingListWithBloom(term, posting_list);
+  }
+
+  void DumpPostingListNoBloom(const Term &term, 
+      const PostingListDelta &posting_list) {
     PostingListDeltaIterator posting_it = posting_list.Begin2();
     LOG(INFO) << "Dumping Posting List of " << term << std::endl;
     LOG(INFO) << "Number of postings: " << posting_it.Size() << std::endl;
@@ -301,6 +314,88 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
         EncodePrefetchZoneAndOffset(n_pages_of_prefetch_zone, posting_list_start));
   }
 
+  void DumpPostingListWithBloom(const Term &term, 
+      const PostingListDelta &posting_list) {
+    PostingListDeltaIterator posting_it = posting_list.Begin2();
+    LOG(INFO) << "Dumping Posting List of " << term << std::endl;
+    LOG(INFO) << "Number of postings: " << posting_it.Size() << std::endl;
+
+    const BloomFilterCases &bloom_cases = bloom_store_->Lookup(term);
+    auto bloom_iter = bloom_cases.Begin();
+
+    TermEntrySet entry_set;
+
+    while (posting_it.IsEnd() == false) {
+      LOG(INFO) << "DocId: " << posting_it.DocId() << std::endl;
+
+      LOG_IF(FATAL, posting_it.DocId() != bloom_iter->doc_id)
+        << "doc IDs do not match";
+
+      //doc id
+      entry_set.docid.AddPostingBag(
+          std::vector<uint32_t>{(uint32_t)posting_it.DocId()});
+
+      //Term Freq
+      entry_set.termfreq.AddPostingBag(
+          std::vector<uint32_t>{(uint32_t)posting_it.TermFreq()});
+
+      //Bloom filters
+      // entry_set.bloom_filter.AddPostingBag(bloom_iter->blm.BitArray());
+
+      // Position
+      entry_set.position.AddPostingBag(
+          utils::EncodeDelta<uint32_t>(ExtractPositions(posting_it.PositionBegin().get())));
+
+      // Offset
+      entry_set.offset.AddPostingBag(
+          utils::EncodeDelta<uint32_t>(ExtractOffsets(posting_it.OffsetPairsBegin().get())));
+
+      posting_it.Advance();
+      bloom_iter++;
+    }
+    LOG_IF(FATAL, bloom_iter != bloom_cases.End())
+      << "bloom iter is not at the end";
+
+    off_t posting_list_start = index_dumper_.CurrentOffset();
+
+    // Dump magic number
+    index_dumper_.Dump(utils::MakeString(POSTING_LIST_FIRST_BYTE));
+    
+    // Dump doc freq
+    DumpVarint(posting_list.Size());
+
+    // Dump skip list
+    off_t skip_list_start = index_dumper_.CurrentOffset();
+    std::size_t skip_list_est_size = EstimateSkipListBytes(
+        skip_list_start, entry_set);
+
+    // Dump doc id, term freq, ...
+    ResultOfDumpingTermEntrySet real_result = DumpTermEntrySetWithBloom( 
+        &index_dumper_, 
+        skip_list_start + skip_list_est_size,
+        entry_set,
+        entry_set.docid.Values());
+
+    std::string skip_list_data = real_result.skip_list_writer.Serialize();
+
+    LOG_IF(FATAL, skip_list_data.size() > skip_list_est_size)  
+        << "DATA CORRUPTION!!! Gap for skip list is too small. skip list real size: " 
+        << skip_list_data.size() 
+        << " skip est size: " << skip_list_est_size;
+
+    index_dumper_.Seek(skip_list_start);
+    index_dumper_.Dump(skip_list_data); 
+    index_dumper_.SeekToEnd();
+
+    // Dump to .tip
+    // Calculate the prefetch zone size!
+    uint32_t n_pages_of_prefetch_zone = 
+      (real_result.pos_start_offset - posting_list_start) / 4096;
+
+    term_index_dumper_.DumpEntry(term, 
+        EncodePrefetchZoneAndOffset(n_pages_of_prefetch_zone, posting_list_start));
+  }
+
  private:
   int EstimateSkipListBytes(off_t skip_list_start, const TermEntrySet &entry_set) {
     LOG(INFO) << "Dumping fake skiplist...........................\n";
@@ -340,6 +435,32 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
         pos_start_offset);
   }
 
+  ResultOfDumpingTermEntrySet DumpTermEntrySetWithBloom(
+    FileDumper *file_dumper,
+    off_t file_offset,
+    const TermEntrySet &entry_set,
+    const std::vector<uint32_t> &doc_ids) 
+  {
+    file_dumper->Seek(file_offset);
+
+    FileOffsetOfSkipPostingBags docid_skip_offs = 
+      DumpTermEntry(entry_set.docid, file_dumper, true);
+    FileOffsetOfSkipPostingBags tf_skip_offs = 
+      DumpTermEntry(entry_set.termfreq, file_dumper, false);
+
+    off_t pos_start_offset = file_dumper->CurrentOffset();
+
+    FileOffsetOfSkipPostingBags pos_skip_offs = 
+      DumpTermEntry(entry_set.position, file_dumper, false);
+    FileOffsetOfSkipPostingBags off_skip_offs = 
+      DumpTermEntry(entry_set.offset, file_dumper, false);
+
+    return ResultOfDumpingTermEntrySet(
+        SkipListWriter(docid_skip_offs, tf_skip_offs, 
+                       pos_skip_offs,   off_skip_offs, 
+                       entry_set.docid.Values()),
+        pos_start_offset);
+  }
 
   void DumpVarint(uint32_t val) {
     VarintBuffer buf;
@@ -349,8 +470,10 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
   FileDumper index_dumper_;
   FakeFileDumper fake_index_dumper_;
+  bool use_bloom_filters_;
 
   TermIndexDumper term_index_dumper_;
+  BloomFilterStore *bloom_store_;
 };
 
 
@@ -363,9 +486,11 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 // Better design: decouple setting dump path and construction
 class FlashEngineDumper {
  public:
-  FlashEngineDumper(const std::string dump_dir_path)
+  FlashEngineDumper(const std::string dump_dir_path, 
+      const bool use_bloom_filters = false)
     :inverted_index_(dump_dir_path),
-     dump_dir_path_(dump_dir_path)
+     dump_dir_path_(dump_dir_path),
+     use_bloom_filters_(use_bloom_filters)
   {}
 
   // colum 2 should be tokens
@@ -430,6 +555,12 @@ class FlashEngineDumper {
  }
 
   void DumpInvertedIndex() {
+    if (use_bloom_filters_ == true) {
+      inverted_index_.SetBloomStore(&bloom_store_);
+    } else {
+      inverted_index_.SetBloomStore(nullptr);
+    }
+
     inverted_index_.Dump();
   }
 
@@ -465,6 +596,11 @@ class FlashEngineDumper {
 
     std::cout << "Reset similarity...\n";
     similarity_.Reset(doc_lengths_.GetAvgLength()); //good
+
+    if (use_bloom_filters_ == true) {
+      std::cout << "Loading bloom filter..." << std::endl;
+      bloom_store_.Deserialize(dir_path + "/bloom_filter.dump");
+    }
   }
 
  private:
@@ -474,9 +610,11 @@ class FlashEngineDumper {
   DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
+  BloomFilterStore bloom_store_;
 
   int next_doc_id_ = 0;
   std::string dump_dir_path_;
+  bool use_bloom_filters_;
 
   int NextDocId() {
     return next_doc_id_++;

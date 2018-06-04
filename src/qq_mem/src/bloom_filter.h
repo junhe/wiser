@@ -184,6 +184,14 @@ class BloomFilterCases {
     return buf.Data();
   }
 
+  std::vector<BloomFilterCase>::const_iterator Begin() const {
+    return cases_.cbegin();
+  }
+
+  std::vector<BloomFilterCase>::const_iterator End() const {
+    return cases_.cend();
+  }
+
   void Deserialize(const char *buf) {
     cases_.clear();
 
@@ -235,7 +243,7 @@ class BloomFilterStore {
     }
   }
 
-  const BloomFilterCases Lookup(const Term &term) {
+  const BloomFilterCases &Lookup(const Term &term) {
     return filter_map_[term];
   }
 

@@ -367,25 +367,6 @@ TEST_CASE( "Line doc parser for phrase ends", "[engine]" ) {
 }
 
 
-TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
-  auto engine = CreateSearchEngine("qq_mem_compressed");
-  REQUIRE(engine->TermCount() == 0);
-  engine->LoadLocalDocuments("src/testdata/line_doc.with-bloom.toy", 10000, 
-      "WITH_PHRASE_END");
-  REQUIRE(engine->TermCount() > 0);
-  auto result = engine->Search(SearchQuery({"prefix"}));
-  std::cout << result.ToStr() << std::endl;
-  REQUIRE(result.Size() > 0);
-
-  {
-    SearchQuery query({"solar", "body"}, true);
-    result = engine->Search(query);
-    std::cout << result.ToStr() << std::endl;
-    REQUIRE(result.Size() == 0); // only solar is a valid term
-  }
-}
-
-
 void CheckFloat(const float a) {
   std::string data = utils::SerializeFloat(a);
   float b = utils::DeserializeFloat(data.data());
