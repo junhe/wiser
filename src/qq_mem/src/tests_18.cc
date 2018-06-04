@@ -79,13 +79,20 @@ TEST_CASE( "Blooom filter column Reader", "[bloomfilter]" ) {
   // Read
 }
 
+std::string GenBitarray(int i, int array_bytes) {
+  if (i % 5 == 0) 
+    return "";
+  else
+    return utils::fill_zeros(std::to_string(i), array_bytes);
+}
+
 void CheckBloomColumn(const int n_items) {
   const int array_bytes = 4;
   // Write the column
   BloomFilterColumnWriter writer(array_bytes);
 
   for (int i = 0; i < n_items; i++) {
-    writer.AddPostingBag(utils::fill_zeros(std::to_string(i), array_bytes));
+    writer.AddPostingBag(GenBitarray(i, array_bytes));
   }
 
   FileDumper file_dumper("/tmp/temp.dumper");
@@ -110,8 +117,15 @@ void CheckBloomColumn(const int n_items) {
 
   for (int i = 0; i < n_items; i++) {
     reader.SkipTo(i);
-    REQUIRE(utils::fill_zeros(std::to_string(i), array_bytes) 
-        == std::string((const char *)reader.BitArray(), array_bytes));
+    std::string array_in_file;
+    if (reader.BitArray() == nullptr) {
+      array_in_file = "";
+    } else {
+      array_in_file = std::string(
+          (const char *)reader.BitArray(), array_bytes);
+    }
+
+    REQUIRE(GenBitarray(i, array_bytes) == array_in_file);
   }
 
   file_map.Close();
