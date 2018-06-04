@@ -43,12 +43,10 @@ inline std::string ExtractBitArray(const Bloom *blm) {
   return std::string((char *)blm->bf, blm->bytes);
 }
 
-
-inline Bloom CreateBloom(
-    const float ratio, std::vector<std::string> phrase_ends) 
+inline Bloom CreateBloomFixedEntries(const float ratio, 
+    const int expected_entries, std::vector<std::string> phrase_ends) 
 {
   Bloom bloom;
-  const int expected_entries = phrase_ends.size();
   bloom_init(&bloom, expected_entries, ratio);
 
   for (auto &end : phrase_ends) {
@@ -59,11 +57,16 @@ inline Bloom CreateBloom(
   return bloom;
 };
 
+inline Bloom CreateBloom(
+    const float ratio, std::vector<std::string> phrase_ends) 
+{
+  return CreateBloomFixedEntries(ratio, phrase_ends.size(), phrase_ends);
+};
+
 
 inline void FreeBloom(Bloom *blm) {
   bloom_free(blm);
 }
-
 
 class BloomFilter {
  public:
@@ -74,7 +77,8 @@ class BloomFilter {
     bit_array_ = ExtractBitArray(blm);
   }
 
-  BloomFilter(const int n_entries, const float ratio, const std::string &bit_array) 
+  BloomFilter(const int n_entries, const float ratio, 
+      const std::string &bit_array) 
     :n_entries_(n_entries), ratio_(ratio), bit_array_(bit_array)
   {}
 
