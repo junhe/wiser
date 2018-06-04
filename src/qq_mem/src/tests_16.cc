@@ -326,6 +326,24 @@ TEST_CASE( "Bloom Filter", "[bloomfilter]" ) {
 }
 
 
+void CheckBytes(int n_entries, float ratio) {
+  Bloom bloom;
+  bloom_init(&bloom, n_entries, ratio);
+
+  REQUIRE(bloom_bytes(n_entries, ratio) == bloom.bytes);
+  bloom_free(&bloom);
+}
+
+
+TEST_CASE( "Calculate bytes of bloom filter", "[bloomfilter]" ) {
+  CheckBytes(1, 0.001);
+  CheckBytes(5, 0.01);
+  CheckBytes(100, 0.0001);
+  CheckBytes(100, 0.00001);
+}
+
+
+
 TEST_CASE( "Check string", "[utils]" ) {
   REQUIRE(utils::StartsWith("a", "a") == true);
   REQUIRE(utils::StartsWith("ab", "a") == true);

@@ -114,6 +114,29 @@ int bloom_set(struct bloom * bloom, int entries, double error, unsigned char * b
   return 0;
 }
 
+int bloom_bytes(int entries, double error)
+{
+  /* bloom->entries = entries; */
+  /* bloom->error = error; */
+
+  double num = log(error);
+  double denom = 0.480453013918201; // ln(2)^2
+  double bpe = -(num / denom);
+
+  double dentries = (double)entries;
+  int bits = (int)(dentries * bpe);
+
+  int bytes;
+  if (bits % 8) {
+    bytes = (bits / 8) + 1;
+  } else {
+    bytes = bits / 8;
+  }
+
+  return bytes;
+}
+
+
 int bloom_init(struct bloom * bloom, int entries, double error)
 {
   bloom->ready = 0;

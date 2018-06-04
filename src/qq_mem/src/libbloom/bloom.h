@@ -69,6 +69,9 @@ struct bloom
 int bloom_init(struct bloom * bloom, int entries, double error);
 int bloom_set(struct bloom * bloom, int entries, double error, unsigned char * bf_set);
 
+/* Calculate the number of bytes */
+int bloom_bytes(int entries, double error);
+
 
 /** ***************************************************************************
  * Deprecated, use bloom_init()
