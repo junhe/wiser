@@ -70,5 +70,63 @@ TEST_CASE( "Varint large number", "[varint]" ) {
 }
 
 
+TEST_CASE( "Blooom filter column Reader", "[bloomfilter]" ) {
+  // Construct bloom filter column 
+    
+
+
+  // Construct bloom skip list
+  // Read
+}
+
+void CheckBloomColumn(const int n_items) {
+  const int array_bytes = 4;
+  // Write the column
+  BloomFilterColumnWriter writer(array_bytes);
+
+  for (int i = 0; i < n_items; i++) {
+    writer.AddPostingBag(utils::fill_zeros(std::to_string(i), array_bytes));
+  }
+
+  FileDumper file_dumper("/tmp/temp.dumper");
+  std::vector<off_t> offs = writer.Dump(&file_dumper);
+  file_dumper.Flush();
+  file_dumper.Close();
+
+  // Get skip list
+  BloomSkipListWriter skip_list_writer(offs);
+  std::string skip_list_data = skip_list_writer.Serialize();
+
+  // Read it back
+  utils::FileMap file_map;
+  file_map.Open("/tmp/temp.dumper");
+
+  BloomFilterColumnReader reader;
+  reader.Reset(
+      (const uint8_t *)file_map.Addr(), 
+      (const uint8_t *)skip_list_data.data(), 
+      array_bytes);
+  reader.LoadSkipList();
+
+  for (int i = 0; i < n_items; i++) {
+    reader.SkipTo(i);
+    REQUIRE(utils::fill_zeros(std::to_string(i), array_bytes) 
+        == std::string((const char *)reader.BitArray(), array_bytes));
+  }
+
+  file_map.Close();
+}
+
+TEST_CASE( "Blooom filter column writer", "[bloomfilter]" ) {
+  CheckBloomColumn(1);
+  CheckBloomColumn(3);
+  CheckBloomColumn(128);
+  CheckBloomColumn(129);
+  CheckBloomColumn(300);
+}
+
+
+
+
 
 

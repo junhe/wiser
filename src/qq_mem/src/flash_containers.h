@@ -620,6 +620,8 @@ class BloomBoxIterator {
 };
 
 
+// The offsets store in bloom skip lists should be relative to
+// the start of the posting list.
 class BloomSkipListWriter {
  public:
   BloomSkipListWriter(const std::vector<off_t> &bloom_box_offs)
@@ -674,7 +676,6 @@ class BloomSkipList {
  private:
   std::vector<off_t> bloom_box_offs_;
 };
-
 
 
 

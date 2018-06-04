@@ -153,6 +153,7 @@ struct ResultOfDumpingTermEntrySet {
   off_t pos_start_offset;
 };
 
+// The contents of a posting list
 struct TermEntrySet {
     GeneralTermEntry docid;
     GeneralTermEntry termfreq;
@@ -166,6 +167,55 @@ inline FileOffsetOfSkipPostingBags DumpTermEntry(
   PostingBagBlobIndexes pack_indexes = term_entry.GetPostingBagIndexes();
   return FileOffsetOfSkipPostingBags(pack_indexes, file_offs);
 }
+
+
+class BloomFilterColumnWriter {
+ public:
+  BloomFilterColumnWriter(std::size_t array_bytes)
+    : array_bytes_(array_bytes) {}
+
+  void AddPostingBag(const std::string &bit_array) {
+    bit_arrays_.push_back(bit_array);
+  }
+
+  std::vector<off_t> Dump(FileDumper *file_dumper) {
+    std::vector<BloomBoxWriter> writers = GetWriters();
+    std::vector<off_t> ret;
+
+    for (auto &writer : writers) {
+      ret.push_back(file_dumper->CurrentOffset());
+      file_dumper->Dump(writer.Serialize());  
+    }
+
+    return ret;
+  }
+
+ private:
+  std::vector<BloomBoxWriter> GetWriters() const {
+    const std::size_t n = bit_arrays_.size();
+    std::size_t index = 0;
+    std::vector<BloomBoxWriter> ret;
+
+    while (index < n) {
+      const int rem = n - index;
+      const int box_size = rem < PACK_ITEM_CNT? rem : PACK_ITEM_CNT;
+
+      BloomBoxWriter box_writer(array_bytes_);
+      for (int i = 0; i < box_size; i++) {
+        box_writer.Add(bit_arrays_[index + i]); 
+      }
+      ret.push_back(box_writer);
+
+      index += box_size;
+    }
+
+    return ret;
+  }
+
+  std::size_t array_bytes_;
+  std::vector<std::string> bit_arrays_;
+};
+
 
 
 class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {

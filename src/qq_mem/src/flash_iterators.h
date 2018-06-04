@@ -770,6 +770,58 @@ class LazyBoundedOffsetPairIterator: public OffsetPairsIteratorService {
 };
 
 
+// Usage:
+//  Reset()
+//  LoadSkipList()
+//  SkipTo(x)
+class BloomFilterColumnReader {
+ public:
+  void Reset(const uint8_t *pl_buf, 
+      const uint8_t *bloom_skip_list_buf, int bit_array_bytes) 
+  {
+    pl_buf_ = pl_buf;
+    skip_list_buf_ = bloom_skip_list_buf;
+    cur_posting_index_ = -1;
+    bit_array_bytes_ = bit_array_bytes;
+  }
+
+  void SkipTo(int posting_index) {
+    int box_index = posting_index / PACK_SIZE;
+
+    if (cur_posting_index_ == -1 || CurBoxIndex() != box_index) {
+      SetupBox(box_index);
+    }
+    cur_posting_index_ = posting_index;
+  }
+
+  const uint8_t *BitArray() {
+    int box_offset =  cur_posting_index_ % PACK_SIZE;
+    return box_iter_.GetBitArray(box_offset); 
+  }
+
+  void LoadSkipList() {
+    skip_list_.Load(skip_list_buf_); 
+  }
+
+ private:
+  int CurBoxIndex() const {
+    return cur_posting_index_ / PACK_SIZE;
+  }
+
+  void SetupBox(int box_index) {
+    const uint8_t *box_buf = pl_buf_ + skip_list_[box_index];
+    box_iter_.Reset(box_buf, bit_array_bytes_);
+  }
+
+  const uint8_t *pl_buf_;
+  const uint8_t *skip_list_buf_;
+  
+  int cur_posting_index_;
+  int bit_array_bytes_;
+  
+  BloomSkipList skip_list_;
+  BloomBoxIterator box_iter_;
+};
 
 
 

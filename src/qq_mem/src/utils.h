@@ -550,8 +550,6 @@ inline std::vector<T> EncodeDelta(const std::vector<T> &values) {
   return vals;
 }
 
-
-
 } // namespace util
 #endif
 
