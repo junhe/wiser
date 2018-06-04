@@ -223,10 +223,13 @@ class BloomFilterCases {
   std::vector<BloomFilterCase> cases_;
 };
 
+
 class BloomFilterStore {
  public:
-  BloomFilterStore(float ratio) :ratio_(ratio) {}
-  BloomFilterStore() :ratio_(0.001) {}
+  BloomFilterStore(const float ratio, const int expected_entries) 
+    :ratio_(ratio), expected_entries_(expected_entries) {}
+
+  BloomFilterStore() :ratio_(0.001), expected_entries_(5) {}
 
   void Add(DocIdType doc_id, std::vector<std::string> tokens, 
       std::vector<std::string> ends) 
@@ -238,7 +241,7 @@ class BloomFilterStore {
       std::string token = tokens[i];
       std::vector<std::string> end_list = utils::explode(ends[i], ' ');
 
-      Bloom blm = CreateBloom(ratio_, end_list);
+      Bloom blm = CreateBloomFixedEntries(ratio_, expected_entries_, end_list);
       BloomFilter blm_filter(&blm, ratio_);
       FreeBloom(&blm);
 
@@ -253,6 +256,12 @@ class BloomFilterStore {
 
   const void Serialize(const std::string &path) const {
     std::ofstream out(path, std::ios::binary);
+    
+    std::string ratio = utils::SerializeFloat(ratio_);
+    out.write(ratio.data(), ratio.size());
+
+    out.write((const char*)&expected_entries_, sizeof(expected_entries_));
+
     for (auto &it : filter_map_) {
       VarintBuffer buf;
       buf.Append(it.first.size());
@@ -280,6 +289,12 @@ class BloomFilterStore {
     const char *buf = file_map.Addr();
     const char *const end = buf + file_map.Length();
 
+    ratio_ = utils::DeserializeFloat(buf);
+    buf += sizeof(float);
+
+    expected_entries_ = *((int *)buf);
+    buf += sizeof(int);
+
     while (buf < end) {
       buf = DeserializeEntry(buf);
     }
@@ -306,9 +321,18 @@ class BloomFilterStore {
     return buf;
   }
 
+  float Ratio() const {
+    return ratio_;
+  }
+
+  int ExpectedEntries() const {
+    return expected_entries_;
+  }
+
  private:
   std::unordered_map<std::string, BloomFilterCases> filter_map_;
   float ratio_;
+  int expected_entries_;
 };
 
 

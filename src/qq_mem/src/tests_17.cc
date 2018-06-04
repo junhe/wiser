@@ -7,9 +7,7 @@
 
 
 typedef std::pair<std::set<std::string>, std::set<std::string>> set_pair ;
-typedef std::pair<std::string, std::string> string_pair;
-
-set_pair GetRandSets(std::size_t n) {
+typedef std::pair<std::string, std::string> string_pair; set_pair GetRandSets(std::size_t n) {
   std::set<std::string> in, out;
   
   while (in.size() < n) {
@@ -106,7 +104,7 @@ TEST_CASE( "Bloom Filter, extended tests", "[bloomfilter]" ) {
 
 TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
   SECTION("Bloom filter check") {
-    BloomFilterStore store(0.00001);
+    BloomFilterStore store(0.00001, 5);
     store.Add(33, {"hello"}, {"world you"});
     BloomFilterCases cases = store.Lookup("hello");
     
@@ -169,7 +167,7 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
     SECTION("Serialize/Deserialize store") {
       store.Serialize("/tmp/filter.store");
 
-      BloomFilterStore store2(0.00001);
+      BloomFilterStore store2(0.00001, 5);
       store2.Deserialize("/tmp/filter.store");
       BloomFilterCases cases = store2.Lookup("hello");
       
@@ -267,7 +265,7 @@ TEST_CASE( "Bloom filter serialization", "[bloomfilter]" ) {
   }
 
   SECTION("All tokens belong to the same the doc") {
-    BloomFilterStore store(0.00001);
+    BloomFilterStore store(0.00001, 10);
     
     store.Add(888, table.ColTokens(), table.ColEnds());
 
@@ -275,14 +273,16 @@ TEST_CASE( "Bloom filter serialization", "[bloomfilter]" ) {
 
     store.Serialize("/tmp/tmp.store");
 
-    BloomFilterStore store2(0.00001);
+    BloomFilterStore store2;
     store2.Deserialize("/tmp/tmp.store");
+    REQUIRE(store2.Ratio() == store.Ratio());
+    REQUIRE(store2.ExpectedEntries() == store.ExpectedEntries());
 
     CheckStore(store2, table);
   }
 
   SECTION("Each token has two documents") {
-    BloomFilterStore store(0.00001);
+    BloomFilterStore store(0.00001, 10);
     
     store.Add(888, table.ColTokens(), table.ColEnds());
     store.Add(889, table.ColTokens(), table.ColEnds());
@@ -291,8 +291,10 @@ TEST_CASE( "Bloom filter serialization", "[bloomfilter]" ) {
 
     store.Serialize("/tmp/tmp.store");
 
-    BloomFilterStore store2(0.00001);
+    BloomFilterStore store2;
     store2.Deserialize("/tmp/tmp.store");
+    REQUIRE(store2.Ratio() == store.Ratio());
+    REQUIRE(store2.ExpectedEntries() == store.ExpectedEntries());
 
     CheckStore(store2, table);
   }

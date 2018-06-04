@@ -166,7 +166,7 @@ target_link_libraries(testmain
 )
 
 add_executable( testlast
-    tests_18.cc
+    tests_17.cc
     test_helpers.cc
     grpc_client_impl.cc
     ${ENGINE_SRCS}
