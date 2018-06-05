@@ -1,3 +1,4 @@
+mkdir -p $GOPATH
 cd $GOPATH
 go get github.com/RedisLabs/RediSearchBenchmark
 cd $GOPATH/src/github.com/RedisLabs/
