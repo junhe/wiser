@@ -26,8 +26,8 @@ cd ~/flashsearch/src/qq_mem
 
 # How to setup an engine client
 
-1. install go
-2. setup redisearch bench
+1. install go by `install-go.sh`
+2. setup redisearch bench by `setup-redisearchbench.sh`
 3. setup vacuum (you need the environment such as GLOG)
 
 ```
