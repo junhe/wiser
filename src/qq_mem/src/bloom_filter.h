@@ -339,6 +339,10 @@ class BloomFilterStore {
     return expected_entries_;
   }
 
+  int BitArrayBytes() const {
+    return bit_array_bytes_;
+  }
+
  private:
   std::unordered_map<std::string, BloomFilterCases> filter_map_;
   float ratio_;

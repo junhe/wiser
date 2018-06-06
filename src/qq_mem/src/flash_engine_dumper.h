@@ -218,6 +218,23 @@ inline std::vector<off_t> GetSerializedOffsets(
 }
 
 
+inline std::size_t GetBloomSkipListSize(std::vector<off_t> box_offs) {
+  BloomSkipListWriter writer(box_offs);
+  return writer.Serialize().size();
+}
+
+inline std::size_t EstimateBloomSkipListSize(const off_t start_off,
+    const std::vector<off_t> &box_offs) 
+{
+  std::vector<off_t> offs = box_offs;   
+  for (auto &off : offs) {
+    off += start_off;
+  }
+
+  return GetBloomSkipListSize(offs);
+}
+
+
 // The contents of a posting list
 struct TermEntrySet {
     GeneralTermEntry docid;
@@ -339,6 +356,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     const BloomFilterCases &bloom_cases = bloom_store_->Lookup(term);
     auto bloom_iter = bloom_cases.Begin();
 
+    BloomFilterColumnWriter bloom_col_writer(bloom_store_->BitArrayBytes());
+
     TermEntrySet entry_set;
 
     while (posting_it.IsEnd() == false) {
@@ -356,7 +375,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
           std::vector<uint32_t>{(uint32_t)posting_it.TermFreq()});
 
       //Bloom filters
-      // entry_set.bloom_filter.AddPostingBag(bloom_iter->blm.BitArray());
+      bloom_col_writer.AddPostingBag(bloom_iter->blm.BitArray());
 
       // Position
       entry_set.position.AddPostingBag(
