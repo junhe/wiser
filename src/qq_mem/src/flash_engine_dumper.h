@@ -144,6 +144,7 @@ class InvertedIndexDumperBase : public InvertedIndexQqMemDelta {
 
 };
 
+
 struct ResultOfDumpingTermEntrySet {
   ResultOfDumpingTermEntrySet(SkipListWriter writer, off_t offset)
     :skip_list_writer(writer), pos_start_offset(offset)
@@ -152,6 +153,21 @@ struct ResultOfDumpingTermEntrySet {
   SkipListWriter skip_list_writer;
   off_t pos_start_offset;
 };
+
+
+struct ResultOfDumpingTermEntrySetWithBloom {
+  ResultOfDumpingTermEntrySetWithBloom(SkipListWriter writer, off_t offset, 
+      off_t bloom_off)
+    :skip_list_writer(writer), pos_start_offset(offset),
+     bloom_section_offset(bloom_off)
+  {}
+
+  SkipListWriter skip_list_writer;
+  off_t pos_start_offset;
+  off_t bloom_section_offset;
+};
+
+
 
 
 class BloomFilterColumnWriter {
@@ -163,7 +179,7 @@ class BloomFilterColumnWriter {
     bit_arrays_.push_back(bit_array);
   }
 
-  std::vector<off_t> Dump(FileDumper *file_dumper) {
+  std::vector<off_t> Dump(FileDumper *file_dumper) const {
     std::vector<BloomBoxWriter> writers = GetWriters();
     std::vector<off_t> ret;
 
@@ -399,17 +415,21 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     // Dump doc freq
     DumpVarint(posting_list.Size());
 
-    // Dump skip list
+    // Reserve space for the location of bloom skip list
+    off_t bloom_pointer_location = index_dumper_.CurrentOffset();
+    index_dumper_.Seek(bloom_pointer_location + 4);
+
+    // Estimate skip list size
     off_t skip_list_start = index_dumper_.CurrentOffset();
     std::size_t skip_list_est_size = EstimateSkipListBytes(
         skip_list_start, entry_set);
 
     // Dump doc id, term freq, ...
-    ResultOfDumpingTermEntrySet real_result = DumpTermEntrySetWithBloom( 
+    ResultOfDumpingTermEntrySetWithBloom real_result = DumpTermEntrySetWithBloom( 
         &index_dumper_, 
         skip_list_start + skip_list_est_size,
         entry_set,
-        entry_set.docid.Values());
+        bloom_col_writer);
 
     std::string skip_list_data = real_result.skip_list_writer.Serialize();
 
@@ -420,6 +440,10 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
     index_dumper_.Seek(skip_list_start);
     index_dumper_.Dump(skip_list_data); 
+
+    index_dumper_.Seek(bloom_pointer_location);
+    DumpVarint(real_result.bloom_section_offset - posting_list_start);
+
     index_dumper_.SeekToEnd();
 
     // Dump to .tip
@@ -470,11 +494,11 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
         pos_start_offset);
   }
 
-  ResultOfDumpingTermEntrySet DumpTermEntrySetWithBloom(
+  ResultOfDumpingTermEntrySetWithBloom DumpTermEntrySetWithBloom(
     FileDumper *file_dumper,
     off_t file_offset,
     const TermEntrySet &entry_set,
-    const std::vector<uint32_t> &doc_ids) 
+    const BloomFilterColumnWriter &bloom_writer)
   {
     file_dumper->Seek(file_offset);
 
@@ -483,6 +507,9 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     FileOffsetOfSkipPostingBags tf_skip_offs = 
       DumpTermEntry(entry_set.termfreq, file_dumper, false);
 
+    off_t bloom_start_offset = file_dumper->CurrentOffset();
+    DumpBloom(file_dumper, bloom_writer);
+
     off_t pos_start_offset = file_dumper->CurrentOffset();
 
     FileOffsetOfSkipPostingBags pos_skip_offs = 
@@ -490,11 +517,34 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     FileOffsetOfSkipPostingBags off_skip_offs = 
       DumpTermEntry(entry_set.offset, file_dumper, false);
 
-    return ResultOfDumpingTermEntrySet(
+    return ResultOfDumpingTermEntrySetWithBloom(
         SkipListWriter(docid_skip_offs, tf_skip_offs, 
                        pos_skip_offs,   off_skip_offs, 
                        entry_set.docid.Values()),
-        pos_start_offset);
+        pos_start_offset, 
+        bloom_start_offset
+        );
+  }
+
+  void DumpBloom(FileDumper *file_dumper, const BloomFilterColumnWriter &writer) 
+  {
+    off_t start_off = file_dumper->CurrentOffset();
+
+    std::size_t est_skip_list_sz = EstimateBloomSkipListSize(
+        start_off + 512 * 1024,
+        GetSerializedOffsets(writer));
+
+    // Dump bloom boxes
+    file_dumper->Seek(start_off + est_skip_list_sz); 
+    std::vector<off_t> real_box_offs = writer.Dump(file_dumper);
+    off_t bloom_end_off = file_dumper->CurrentOffset();
+
+    // Dump the real skip list
+    BloomSkipListWriter skip_writer(real_box_offs);
+    file_dumper->Seek(start_off);
+    file_dumper->Dump(skip_writer.Serialize());
+
+    file_dumper->Seek(bloom_end_off);
   }
 
   void DumpVarint(uint32_t val) {
