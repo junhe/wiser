@@ -175,7 +175,6 @@ class BloomFilterColumnWriter {
     return ret;
   }
 
- private:
   std::vector<BloomBoxWriter> GetWriters() const {
     const std::size_t n = bit_arrays_.size();
     std::size_t index = 0;
@@ -197,9 +196,26 @@ class BloomFilterColumnWriter {
     return ret;
   }
 
+ private:
   std::size_t array_bytes_;
   std::vector<std::string> bit_arrays_;
 };
+
+
+inline std::vector<off_t> GetSerializedOffsets(
+    const BloomFilterColumnWriter &col_writer)
+{
+  std::vector<off_t> ret;
+  off_t cur_off = 0;
+
+  std::vector<BloomBoxWriter> writers = col_writer.GetWriters();
+  for (auto &writer : writers) {
+    ret.push_back(cur_off);
+    cur_off += writer.Serialize().size();
+  }
+
+  return ret;
+}
 
 
 // The contents of a posting list

@@ -24,7 +24,7 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_LIST_DIR}/cmake")
 
 find_package(Protobuf REQUIRED)
 find_package(GRPC REQUIRED)
-find_package( Boost 1.5.4 COMPONENTS program_options REQUIRED )
+find_package(Boost 1.5.4 COMPONENTS program_options REQUIRED )
 
 
 
@@ -166,7 +166,7 @@ target_link_libraries(testmain
 )
 
 add_executable( testlast
-    tests_17.cc
+    tests_18.cc
     test_helpers.cc
     grpc_client_impl.cc
     ${ENGINE_SRCS}

@@ -175,6 +175,23 @@ TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
   }
 }
 
+TEST_CASE( "Get Serialized offsetes", "[bloomfilter]" ) {
+  const int array_bytes = 4;
+  // Write the column
+  BloomFilterColumnWriter writer(array_bytes);
 
+  for (int i = 0; i < 300; i++) {
+    writer.AddPostingBag(GenBitarray(i, array_bytes));
+  }
+
+  FileDumper file_dumper("/tmp/temp.dumper");
+  std::vector<off_t> offs = writer.Dump(&file_dumper);
+  file_dumper.Flush();
+  file_dumper.Close();
+
+  std::vector<off_t> offs2 = GetSerializedOffsets(writer);
+
+  REQUIRE(offs == offs2);
+}
 
 
