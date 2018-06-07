@@ -126,23 +126,6 @@ class GeneralTermEntry {
 
 
 
-class InvertedIndexDumperBase : public InvertedIndexQqMemDelta {
- public:
-  void Dump() {
-    int cnt = 0; 
-    for (auto it = index_.cbegin(); it != index_.cend(); it++) {
-      // LOG(INFO) << "At '" << it->first << "'" << std::endl;
-      DumpPostingList(it->first, it->second);
-      cnt++;
-      if (cnt % 10000 == 0) {
-        std::cout << "Posting list dumpped: " << cnt << std::endl;
-      }
-    }
-  }
-  virtual void DumpPostingList(
-      const Term &term, const PostingListDelta &posting_list) = 0;
-
-};
 
 
 struct ResultOfDumpingTermEntrySet {
@@ -268,7 +251,7 @@ inline FileOffsetOfSkipPostingBags DumpTermEntry(
 }
 
 
-class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
+class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
  public:
   VacuumInvertedIndexDumper(const std::string dump_dir_path)
     :index_dumper_(dump_dir_path + "/my.vacuum"),
@@ -276,6 +259,18 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
      term_index_dumper_(dump_dir_path + "/my.tip"),
      bloom_store_(nullptr)
   {}
+
+  void Dump() {
+    int cnt = 0; 
+    for (auto it = index_.cbegin(); it != index_.cend(); it++) {
+      // LOG(INFO) << "At '" << it->first << "'" << std::endl;
+      DumpPostingList(it->first, it->second);
+      cnt++;
+      if (cnt % 10000 == 0) {
+        std::cout << "Posting list dumpped: " << cnt << std::endl;
+      }
+    }
+  }
 
   // Only for testing at this time
   void SeekFileDumper(off_t pos) {
@@ -288,7 +283,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
   }
 
   void DumpPostingList(const Term &term, 
-      const PostingListDelta &posting_list) override {
+      const PostingListDelta &posting_list) {
     if (bloom_store_ == nullptr) 
       DumpPostingListNoBloom(term, posting_list);
     else
