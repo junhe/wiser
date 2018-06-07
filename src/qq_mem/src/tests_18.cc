@@ -223,17 +223,35 @@ TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
       std::cout << result.ToStr() << std::endl;
       REQUIRE(result.Size() > 0); // only solar is a valid term
 
-      // Must find these phrases
-      std::vector<TermList> phrases = GetPhrases();
-      for (auto &phrase : phrases) {
-        SearchQuery query(phrase);
-        query.is_phrase = true;
+      SECTION("Query existing phrases") {
+        // Must find these phrases
+        std::vector<TermList> phrases = GetPhrases();
+        for (auto &phrase : phrases) {
+          SearchQuery query(phrase);
+          query.is_phrase = true;
 
-        std::cout << query.ToStr() << std::endl;
+          std::cout << query.ToStr() << std::endl;
 
-        result = vac_engine->Search(query);
-        std::cout << result.ToStr() << std::endl;
-        REQUIRE(result.Size() > 0); // only solar is a valid term
+          result = vac_engine->Search(query);
+          std::cout << result.ToStr() << std::endl;
+          REQUIRE(result.Size() > 0); // only solar is a valid term
+        }
+      }
+
+      SECTION("Query non-existing phrases") {
+        // Must find these phrases
+        std::vector<TermList> phrases = GetPhrases();
+        for (auto &phrase : phrases) {
+          phrase[1] = "xxyxz3";
+          SearchQuery query(phrase);
+          query.is_phrase = true;
+
+          std::cout << query.ToStr() << std::endl;
+
+          result = vac_engine->Search(query);
+          std::cout << result.ToStr() << std::endl;
+          REQUIRE(result.Size() == 0); // only solar is a valid term
+        }
       }
     }
   }
@@ -294,8 +312,5 @@ TEST_CASE( "Loading Engine with phrase end (3 docs)", "[blm]" ) {
     }
   }
 }
-
-
-
 
 
