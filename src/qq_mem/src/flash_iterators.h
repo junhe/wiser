@@ -824,6 +824,36 @@ class BloomFilterColumnReader {
 };
 
 
+struct VacuumHeader {
+  void Load(const uint8_t *buf) {
+    // Head is at the first 100 bytes of the .vacuum file  
+    int len;
+    uint32_t val;
+
+    LOG_IF(FATAL, buf[0] != VACUUM_FIRST_BYTE) 
+      << "Vacuum's first byte is wrong";
+    buf++;
+  
+    len = utils::varint_decode_uint32((const char *)buf, 0, &val);
+    use_bloom_filters = val;
+    buf += len;
+
+    len = utils::varint_decode_uint32((const char *)buf, 0, &bit_array_bytes);
+    buf += len;
+
+    len = utils::varint_decode_uint32((const char *)buf, 0, &expected_entries);
+    buf += len;
+
+    bloom_ratio = utils::DeserializeFloat((const char *)buf);
+    buf += sizeof(float);
+  }
+
+  bool use_bloom_filters;
+  uint32_t bit_array_bytes;
+  uint32_t expected_entries;
+  float bloom_ratio;
+};
+
 
 // It will iterate postings in a posting list
 class VacuumPostingListIterator {
@@ -831,16 +861,20 @@ class VacuumPostingListIterator {
   VacuumPostingListIterator() {
   }
 
-  VacuumPostingListIterator(const uint8_t *file_data, const TermIndexResult &result) {
-    ResetWithZoneInfo(file_data, result);
+  VacuumPostingListIterator(const uint8_t *file_data, 
+      const VacuumHeader *header, const TermIndexResult &result) {
+    ResetWithZoneInfo(file_data, header, result);
   }
 
-  void ResetWithZoneInfo(const uint8_t *file_data, const TermIndexResult &result) {
+  void ResetWithZoneInfo(const uint8_t *file_data, 
+      const VacuumHeader *header, const TermIndexResult &result) {
     int len;
     file_data_ = file_data;
     term_index_result_ = result;
-    off_t offset = result.GetPostingListOffset();
+    const off_t offset = result.GetPostingListOffset();
     const uint8_t *buf = file_data + offset;
+
+    header_ = header;
 
     // first byte is the magic number
     DLOG_IF(FATAL, (buf[0] & 0xFF) != POSTING_LIST_FIRST_BYTE)
@@ -852,7 +886,17 @@ class VacuumPostingListIterator {
     len = utils::varint_decode_uint8(buf, 0, &n_postings_);
     buf += len;
 
-    // third item is the start of skip list
+    // third item is the location of bloom skip list
+    uint32_t bloom_offset;
+    utils::varint_decode_uint8(buf, 0, &bloom_offset);
+    if (header_->use_bloom_filters == true) {
+      bloom_reader_.Reset(file_data_ + offset, 
+                          file_data_ + offset + bloom_offset, 
+                          header->bit_array_bytes);
+    }
+    buf += 4; // we reserved 4 bytes for this value
+
+    // fourth item is the start of skip list
     skip_list_ = std::shared_ptr<SkipList>(new SkipList()); 
     skip_list_->Load(buf);
 
@@ -933,6 +977,7 @@ class VacuumPostingListIterator {
  private:
   const uint8_t *file_data_;
   TermIndexResult term_index_result_;
+  const VacuumHeader *header_;
   
   uint32_t n_postings_;
 
@@ -941,6 +986,7 @@ class VacuumPostingListIterator {
   TermFreqIterator tf_iter_;
   PositionPostingBagIterator pos_bag_iter_;
   OffsetPostingBagIterator off_bag_iter_;
+  BloomFilterColumnReader bloom_reader_;
 
   std::shared_ptr<SkipList> skip_list_;
 };

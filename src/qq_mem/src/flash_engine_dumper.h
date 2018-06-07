@@ -347,6 +347,11 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     // Dump doc freq
     DumpVarint(posting_list.Size());
 
+    // Bloom skip list
+    off_t bloom_pointer_location = index_dumper_.CurrentOffset();
+    DumpVarint(0); 
+    index_dumper_.Seek(bloom_pointer_location + 4);
+
     // Dump skip list
     off_t skip_list_start = index_dumper_.CurrentOffset();
     std::size_t skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);

@@ -322,6 +322,8 @@ struct SearchResult {
 };
 
 
+
+
 // Basic types for precomputation
 // for snippet generating
 typedef std::pair<int, float> Passage_Score; // (passage,score)

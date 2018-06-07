@@ -136,37 +136,6 @@ class TermTrieIndex {
 };
 
 
-struct VacuumHeader {
-  void Load(const uint8_t *buf) {
-    // Head is at the first 100 bytes of the .vacuum file  
-    int len;
-    uint32_t val;
-
-    LOG_IF(FATAL, buf[0] != VACUUM_FIRST_BYTE) 
-      << "Vacuum's first byte is wrong";
-    buf++;
-  
-    len = utils::varint_decode_uint32((const char *)buf, 0, &val);
-    use_bloom_filters = val;
-    buf += len;
-
-    len = utils::varint_decode_uint32((const char *)buf, 0, &bit_array_bytes);
-    buf += len;
-
-    len = utils::varint_decode_uint32((const char *)buf, 0, &expected_entries);
-    buf += len;
-
-    bloom_ratio = utils::DeserializeFloat((const char *)buf);
-    buf += sizeof(float);
-  }
-
-  bool use_bloom_filters;
-  uint32_t bit_array_bytes;
-  uint32_t expected_entries;
-  float bloom_ratio;
-};
-
-
 // To use it, you must
 //
 // 1. LoadTermIndex()
@@ -238,7 +207,7 @@ class VacuumInvertedIndex {
     for (auto &term : terms) {
       TermIndexResult result = FindTermIndexResult(term);
       if (result.IsEmpty() == false) {
-        iterators.emplace_back(file_data_, result);
+        iterators.emplace_back(file_data_, &header_, result);
       }
     }
     return iterators;

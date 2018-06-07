@@ -171,7 +171,15 @@ TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
     engine_dumper.LoadQqMemDump("/tmp/bloom-qq-engine-tmp");
     engine_dumper.Dump();
 
-    // 
+    SECTION("Load to Vacuum") {
+      auto vac_engine = CreateSearchEngine(
+          "vacuum:vacuum_dump:/tmp/bloom-vacuum-engine-tmp");
+      vac_engine->Load();
+      SearchQuery query({"close"});
+      result = vac_engine->Search(query);
+      std::cout << result.ToStr() << std::endl;
+      REQUIRE(result.Size() > 0); // only solar is a valid term
+    }
   }
 }
 
