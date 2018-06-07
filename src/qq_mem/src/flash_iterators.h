@@ -887,8 +887,8 @@ class VacuumPostingListIterator {
 
     // third item is the location of bloom skip list
     uint32_t bloom_offset;
-    utils::varint_decode_uint8(buf, 0, &bloom_offset);
     if (header_->use_bloom_filters == true) {
+      utils::varint_decode_uint32((const char *)buf, 0, &bloom_offset);
       bloom_reader_.Reset(file_data_ + offset, 
                           file_data_ + offset + bloom_offset, 
                           header->bit_array_bytes);

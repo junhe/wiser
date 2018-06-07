@@ -265,7 +265,6 @@ class SkipListWriter {
     for (int i = 0; i < n_rows; i++) {
       AddRow(&buf, i, skip_pre_doc_ids);
     }
-    // std::cout << "number of rows in skip list: " << n_rows << std::endl;
 
     return buf.Data();
   }
@@ -576,7 +575,8 @@ class BloomBoxIterator {
  private:
   void Fill(const uint8_t *buf) {
     DLOG_IF(FATAL, buf[0] != BLOOM_BOX_FIRST_BYTE)
-      << "Wrong first byte for a bloom box";
+      << "Wrong first byte for a bloom box"
+      << std::hex << (char) buf[0] << "!=" << BLOOM_BOX_FIRST_BYTE;
     buf += 1;
 
     int len = utils::varint_decode_uint32((char *)buf, 0, &n_items_);

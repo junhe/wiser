@@ -167,7 +167,8 @@ test_last:
 	cmake ../src/
 	make -j${NUM_CORES} testlast
 	cd ..
-	./build/testlast '~[grpc]~[slow]'
+	./build/testlast 
+	#./build/testlast '[blm]'
 
 test_last_args:
 	rm -f ./build/testlast

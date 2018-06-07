@@ -168,7 +168,8 @@ class BloomFilterColumnWriter {
 
     for (auto &writer : writers) {
       ret.push_back(file_dumper->CurrentOffset());
-      file_dumper->Dump(writer.Serialize());  
+      std::string data = writer.Serialize();
+      file_dumper->Dump(data);  
     }
 
     return ret;
@@ -222,7 +223,8 @@ inline std::size_t GetBloomSkipListSize(std::vector<off_t> box_offs) {
   return writer.Serialize().size();
 }
 
-inline std::size_t EstimateBloomSkipListSize(const off_t start_off,
+inline std::size_t EstimateBloomSkipListSize(
+    const off_t start_off,
     const std::vector<off_t> &box_offs) 
 {
   std::vector<off_t> offs = box_offs;   
@@ -231,6 +233,18 @@ inline std::size_t EstimateBloomSkipListSize(const off_t start_off,
   }
 
   return GetBloomSkipListSize(offs);
+}
+
+
+inline std::vector<off_t> GetRelativeOffsets(const off_t posting_list_start,
+    const std::vector<off_t> &offs) 
+{
+  std::vector<off_t> ret = offs;
+  for (auto &off : ret) {
+    off -= posting_list_start;
+  }
+
+  return ret;
 }
 
 
@@ -446,6 +460,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
 
     // Dump doc id, term freq, ...
     ResultOfDumpingTermEntrySetWithBloom real_result = DumpTermEntrySetWithBloom( 
+        posting_list_start,
         &index_dumper_, 
         skip_list_start + skip_list_est_size,
         entry_set,
@@ -515,6 +530,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
   }
 
   ResultOfDumpingTermEntrySetWithBloom DumpTermEntrySetWithBloom(
+    off_t posting_list_start,
     FileDumper *file_dumper,
     off_t file_offset,
     const TermEntrySet &entry_set,
@@ -528,7 +544,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
       DumpTermEntry(entry_set.termfreq, file_dumper, false);
 
     off_t bloom_start_offset = file_dumper->CurrentOffset();
-    DumpBloom(file_dumper, bloom_writer);
+    DumpBloom(posting_list_start, file_dumper, bloom_writer);
 
     off_t pos_start_offset = file_dumper->CurrentOffset();
 
@@ -546,23 +562,32 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
         );
   }
 
-  void DumpBloom(FileDumper *file_dumper, const BloomFilterColumnWriter &writer) 
+  void DumpBloom(off_t posting_list_start, FileDumper *file_dumper, 
+      const BloomFilterColumnWriter &writer) 
   {
     off_t start_off = file_dumper->CurrentOffset();
 
     std::size_t est_skip_list_sz = EstimateBloomSkipListSize(
-        start_off + 512 * 1024,
+        start_off + 512 * 1024 - posting_list_start,
         GetSerializedOffsets(writer));
 
     // Dump bloom boxes
     file_dumper->Seek(start_off + est_skip_list_sz); 
-    std::vector<off_t> real_box_offs = writer.Dump(file_dumper);
+    std::vector<off_t> real_box_offs = GetRelativeOffsets(
+        posting_list_start,
+        writer.Dump(file_dumper));
+
     off_t bloom_end_off = file_dumper->CurrentOffset();
 
     // Dump the real skip list
     BloomSkipListWriter skip_writer(real_box_offs);
     file_dumper->Seek(start_off);
-    file_dumper->Dump(skip_writer.Serialize());
+    std::string data = skip_writer.Serialize();
+    LOG_IF(FATAL, data.size() > est_skip_list_sz)
+      << "Data corruption! Bloom skip list overwrites other stuff";
+    LOG_IF(FATAL, est_skip_list_sz - data.size() > 4)
+      << "Wasting too much space for bloom skip list";
+    file_dumper->Dump(data);
 
     file_dumper->Seek(bloom_end_off);
   }
