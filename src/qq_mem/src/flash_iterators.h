@@ -21,7 +21,7 @@ class TermIndexResult {
         value, &n_pages_of_prefetch_zone_, &posting_list_offset_);
   }
 
-  std::string Key() const {
+  const std::string &Key() const {
     return key_;
   }
 
@@ -45,7 +45,6 @@ class TermIndexResult {
 
   bool is_empty_;
 };
-
 
 
 inline std::string FormatString(const BlobFormat f) {
@@ -893,6 +892,8 @@ class VacuumPostingListIterator {
       bloom_reader_.Reset(file_data_ + offset, 
                           file_data_ + offset + bloom_offset, 
                           header->bit_array_bytes);
+      bloom_set(&bloom_, header->expected_entries, header->bloom_ratio, 
+          nullptr);
     }
     buf += 4; // we reserved 4 bytes for this value
 
@@ -904,6 +905,8 @@ class VacuumPostingListIterator {
     tf_iter_.Reset(file_data_, skip_list_.get());
     pos_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
     off_bag_iter_.Reset(file_data_, skip_list_.get(), tf_iter_);
+
+    is_bloom_skip_list_loaded_ = false;
   }
 
   //term_index_result_ must have been set
@@ -942,6 +945,22 @@ class VacuumPostingListIterator {
     return tf_iter_.Value();
   }
 
+  int HasNextTerm(const std::string &term) {
+    if (header_->use_bloom_filters == true) {
+      if (is_bloom_skip_list_loaded_ == false) {
+        is_bloom_skip_list_loaded_ = true;
+        bloom_reader_.LoadSkipList();
+      }
+
+      bloom_reader_.SkipTo(doc_id_iter_.PostingIndex());
+      // WARNING: casting from const to non-const
+      bloom_.bf = (unsigned char *)bloom_reader_.BitArray();
+      return CheckBloom(&bloom_, term);
+    } else {
+      return BLM_MAY_PRESENT;
+    }
+  }
+
   void AssignPositionBegin(InBagPositionIterator *in_bag_iter) {
     pos_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
     in_bag_iter->Reset(pos_bag_iter_.GetCozyBoxIterator(), pos_bag_iter_.TermFreq());
@@ -974,10 +993,15 @@ class VacuumPostingListIterator {
     return n_postings_;
   }
 
+  const std::string &Term() {
+    return term_index_result_.Key();
+  }
+
  private:
   const uint8_t *file_data_;
   TermIndexResult term_index_result_;
   const VacuumHeader *header_;
+  bool is_bloom_skip_list_loaded_;
   
   uint32_t n_postings_;
 
@@ -987,6 +1011,8 @@ class VacuumPostingListIterator {
   PositionPostingBagIterator pos_bag_iter_;
   OffsetPostingBagIterator off_bag_iter_;
   BloomFilterColumnReader bloom_reader_;
+
+  Bloom bloom_;
 
   std::shared_ptr<SkipList> skip_list_;
 };

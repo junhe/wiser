@@ -48,6 +48,9 @@
 #define BLOOM_BOX_FIRST_BYTE 0xF5
 #define VACUUM_FIRST_BYTE 0x88
 
+const int BLM_NOT_PRESENT = 0;
+const int BLM_MAY_PRESENT = 1;
+const int BLM_NOT_INITIALIZED = -1;
 
 
 const off_t KB = 1024;

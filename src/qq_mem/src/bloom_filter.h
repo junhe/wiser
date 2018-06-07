@@ -24,10 +24,6 @@ inline int AddToBloom(Bloom *blm, const std::string &s) {
 }
 
 
-const int BLM_NOT_PRESENT = 0;
-const int BLM_MAY_PRESENT = 1;
-const int BLM_NOT_INITIALIZED = -1;
-
 
 // Return:
 // -------

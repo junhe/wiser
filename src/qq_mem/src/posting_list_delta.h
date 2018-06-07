@@ -207,6 +207,18 @@ class PostingListDeltaIterator: public PostingListIteratorService {
       cur_state_.cur_posting_index_ + skip_span_ < total_postings_;
   }
 
+  void SetTerm(const std::string &term) {
+    term_ = term;
+  }
+
+  int HasNextTerm(const std::string &term) {
+    return BLM_MAY_PRESENT;
+  }
+
+  const std::string &Term() {
+    return term_;
+  }
+
   // Only call this when the iterator HasSkip() == true
   DocIdType NextSpanDocId() const noexcept {
     int index = (cur_state_.cur_posting_index_ / skip_span_) + 1;
@@ -374,6 +386,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   };
   // Cached data of cur_posting_index_
   PostingCache cache_;
+  std::string term_;
 };
 
 

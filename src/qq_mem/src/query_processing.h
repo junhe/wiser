@@ -806,6 +806,14 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
   int FindPhrase() {
+    for (std::size_t i = 0; i < this->pl_iterators_.size() - 1; i++) {
+      if (this->pl_iterators_[i].HasNextTerm(
+            this->pl_iterators_[i + 1].Term()) == BLM_NOT_PRESENT)
+      {
+        return 0;
+      }
+    }
+
     for (std::size_t i = 0; i < this->pl_iterators_.size(); i++) {
       PosIter_T *p = phrase_qp_.Iterator(i);
       this->pl_iterators_[i].AssignPositionBegin(p);
