@@ -502,7 +502,10 @@ inline void LockAllMemory() {
     std::cout << "Locking all memory (MCL_CURRENT) ...." << std::endl;
 
     int ret = mlockall(MCL_CURRENT);
-    LOG_IF(FATAL, ret == -1) << "Failed to lock memory!";
+    if (ret == -1) {
+      perror("Failed to lock memory!");
+      exit(-1);
+    }
 
     std::cout << "Successfully Locked." << std::endl;
     std::cout << "========================" << std::endl;
