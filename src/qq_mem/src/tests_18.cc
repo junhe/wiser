@@ -141,6 +141,49 @@ TEST_CASE( "Blooom filter column writer", "[bloomfilter]" ) {
 }
 
 
+TEST_CASE( "Get Serialized offsetes", "[bloomfilter]" ) {
+  const int array_bytes = 4;
+  // Write the column
+  BloomFilterColumnWriter writer(array_bytes);
+
+  for (int i = 0; i < 300; i++) {
+    writer.AddPostingBag(GenBitarray(i, array_bytes));
+  }
+
+  FileDumper file_dumper("/tmp/temp.dumper");
+  std::vector<off_t> offs = writer.Dump(&file_dumper);
+  file_dumper.Flush();
+  file_dumper.Close();
+
+  std::vector<off_t> offs2 = GetSerializedOffsets(writer);
+
+  REQUIRE(offs == offs2);
+}
+
+// Return a list of phrase that exist in the phrase file
+std::vector<TermList> GetPhrases() {
+  std::vector<TermList> phrases;
+
+  std::vector<std::string> lines = utils::ReadLines(
+      "src/testdata/line_doc.with-bloom.toy-phrases");
+
+  for (auto &line : lines) {
+    std::vector<std::string> items = utils::explode(line, ':');
+    std::string first = items[0];
+
+    if (items.size() > 1) {
+      std::vector<std::string> ends = utils::explode(items[1], ' ');      
+      for (auto &end : ends) {
+        TermList phrase = {first, end};
+        phrases.push_back(phrase);
+      }
+    }
+  }
+
+  return phrases;
+}
+
+
 TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
   auto engine = CreateSearchEngine("qq_mem_compressed");
   REQUIRE(engine->TermCount() == 0);
@@ -179,27 +222,23 @@ TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
       result = vac_engine->Search(query);
       std::cout << result.ToStr() << std::endl;
       REQUIRE(result.Size() > 0); // only solar is a valid term
+
+      // Must find these phrases
+      std::vector<TermList> phrases = GetPhrases();
+      for (auto &phrase : phrases) {
+        SearchQuery query(phrase);
+        query.is_phrase = true;
+
+        std::cout << query.ToStr() << std::endl;
+
+        result = vac_engine->Search(query);
+        std::cout << result.ToStr() << std::endl;
+        REQUIRE(result.Size() > 0); // only solar is a valid term
+      }
     }
   }
 }
 
-TEST_CASE( "Get Serialized offsetes", "[bloomfilter]" ) {
-  const int array_bytes = 4;
-  // Write the column
-  BloomFilterColumnWriter writer(array_bytes);
 
-  for (int i = 0; i < 300; i++) {
-    writer.AddPostingBag(GenBitarray(i, array_bytes));
-  }
-
-  FileDumper file_dumper("/tmp/temp.dumper");
-  std::vector<off_t> offs = writer.Dump(&file_dumper);
-  file_dumper.Flush();
-  file_dumper.Close();
-
-  std::vector<off_t> offs2 = GetSerializedOffsets(writer);
-
-  REQUIRE(offs == offs2);
-}
 
 

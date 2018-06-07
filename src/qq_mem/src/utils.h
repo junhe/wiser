@@ -79,6 +79,26 @@ class LineDoc {
   }
 };
 
+
+inline std::vector<std::string> ReadLines(const std::string &path) {
+  std::vector<std::string> lines;
+
+  std::ifstream infile;
+  infile.open(path);
+
+  if (infile.good() == false) {
+    throw std::runtime_error("File may not exist");
+  }
+
+  std::string line;
+  while (std::getline(infile, line)) {
+    lines.push_back(line);
+  }
+
+  return lines;
+}
+
+
 class ResultTable {
  public:
   std::vector<ResultRow> table_;
