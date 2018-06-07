@@ -231,7 +231,11 @@ TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
   REQUIRE(engine_dumper.TermCount() == 3);
 
   // Dump the engine_dumper
-  engine_dumper.SeekInvertedIndexDumper(5*GB - 10);
+  // Do a regular dump so the header check won't fail
+  engine_dumper.Dump();
+
+  off_t fake_content_off = 5*GB - 10;
+  engine_dumper.SeekInvertedIndexDumper(fake_content_off);
   engine_dumper.Dump();
 
   VacuumEngine<ChunkedDocStoreReader> engine(dir_path);

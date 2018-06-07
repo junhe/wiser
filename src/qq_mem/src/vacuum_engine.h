@@ -136,6 +136,35 @@ class TermTrieIndex {
 };
 
 
+struct VacuumHeader {
+  void Load(const uint8_t *buf) {
+    // Head is at the first 100 bytes of the .vacuum file  
+    int len;
+    uint32_t val;
+
+    LOG_IF(FATAL, buf[0] != VACUUM_FIRST_BYTE) 
+      << "Vacuum's first byte is wrong";
+    buf++;
+  
+    len = utils::varint_decode_uint32((const char *)buf, 0, &val);
+    use_bloom_filters = val;
+    buf += len;
+
+    len = utils::varint_decode_uint32((const char *)buf, 0, &bit_array_bytes);
+    buf += len;
+
+    len = utils::varint_decode_uint32((const char *)buf, 0, &expected_entries);
+    buf += len;
+
+    bloom_ratio = utils::DeserializeFloat((const char *)buf);
+    buf += sizeof(float);
+  }
+
+  bool use_bloom_filters;
+  uint32_t bit_array_bytes;
+  uint32_t expected_entries;
+  float bloom_ratio;
+};
 
 
 // To use it, you must
@@ -180,6 +209,8 @@ class VacuumInvertedIndex {
     file_map_.Open(inverted_index_path);
 
     file_data_ = (uint8_t *)file_map_.Addr();
+
+    header_.Load(file_data_);
   }
 
   // You can only call this after MapPostingLists()
@@ -217,12 +248,11 @@ class VacuumInvertedIndex {
     return term_index_.NumTerms();
   }
 
-
  private:
-  // TermIndex term_index_;  
   TermTrieIndex term_index_;  
   utils::FileMap file_map_;
   const uint8_t *file_data_; // = file_map_.Addr(), put it here for convenience
+  VacuumHeader header_;
 };
 
 
