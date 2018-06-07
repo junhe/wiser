@@ -261,6 +261,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
   {}
 
   void Dump() {
+    DumpHeader();
+
     int cnt = 0; 
     for (auto it = index_.cbegin(); it != index_.cend(); it++) {
       // LOG(INFO) << "At '" << it->first << "'" << std::endl;
@@ -270,6 +272,24 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
         std::cout << "Posting list dumpped: " << cnt << std::endl;
       }
     }
+  }
+
+  void DumpHeader() {
+    index_dumper_.Dump(utils::MakeString(VACUUM_FIRST_BYTE));
+
+    if (bloom_store_ == nullptr) {
+      DumpVarint(0);
+      DumpVarint(0);
+      DumpVarint(0);
+      index_dumper_.Dump(utils::SerializeFloat(0));
+    } else {
+      DumpVarint(1);
+      DumpVarint(bloom_store_->BitArrayBytes());
+      DumpVarint(bloom_store_->ExpectedEntries());
+      index_dumper_.Dump(utils::SerializeFloat(bloom_store_->Ratio()));
+    }
+      
+    index_dumper_.Seek(100);
   }
 
   // Only for testing at this time
