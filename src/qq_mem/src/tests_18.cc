@@ -313,4 +313,16 @@ TEST_CASE( "Loading Engine with phrase end (3 docs)", "[blm]" ) {
   }
 }
 
+TEST_CASE( "Bloom filter store with empty phrase ends", "[bloomfilter]" ) {
+  BloomFilterStore store(0.00001, 5);
+  store.Add(33, {"hello"}, {"world"});
+  BloomFilterCases cases = store.Lookup("hello");
+  
+  BloomFilterStore store2(0.00001, 5);
+  store2.Add(33, {"hello"}, {""});
+  BloomFilterCases cases2 = store2.Lookup("hello");
+   
+  REQUIRE(cases.Serialize().size() > cases2.Serialize().size());
+}
+
 

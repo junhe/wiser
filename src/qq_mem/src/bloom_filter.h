@@ -79,6 +79,9 @@ class BloomFilter {
   {}
 
   int Check(const std::string &elem) const {
+    if (bit_array_.size() == 0)
+      return BLM_NOT_PRESENT;
+
     Bloom blm;
     unsigned char *buf = (unsigned char *) malloc(bit_array_.size());
     memcpy(buf, bit_array_.data(), bit_array_.size());
@@ -242,15 +245,21 @@ class BloomFilterStore {
       std::string token = tokens[i];
       std::vector<std::string> end_list = utils::explode(ends[i], ' ');
 
-      Bloom blm = CreateBloomFixedEntries(ratio_, expected_entries_, end_list);
-      LOG_IF(FATAL, bit_array_bytes_ != blm.bytes) 
-        << "Bytes do not match!";
+      if (end_list.size() > 0) {
+        Bloom blm = CreateBloomFixedEntries(ratio_, expected_entries_, end_list);
+        LOG_IF(FATAL, bit_array_bytes_ != blm.bytes) 
+          << "Bytes do not match!";
 
-      BloomFilter blm_filter(&blm, ratio_);
-      FreeBloom(&blm);
+        BloomFilter blm_filter(&blm, ratio_);
+        FreeBloom(&blm);
 
-      BloomFilterCase blm_case(blm_filter, doc_id);
-      filter_map_[token].PushBack(blm_case);
+        BloomFilterCase blm_case(blm_filter, doc_id);
+        filter_map_[token].PushBack(blm_case);
+      } else {
+        BloomFilter blm_filter(expected_entries_, ratio_, "");
+        BloomFilterCase blm_case(blm_filter, doc_id);
+        filter_map_[token].PushBack(blm_case);
+      }
     }
   }
 

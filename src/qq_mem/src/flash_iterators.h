@@ -953,9 +953,14 @@ class VacuumPostingListIterator {
       }
 
       bloom_reader_.SkipTo(doc_id_iter_.PostingIndex());
-      // WARNING: casting from const to non-const
-      bloom_.bf = (unsigned char *)bloom_reader_.BitArray();
-      return CheckBloom(&bloom_, term);
+      const uint8_t *bf = bloom_reader_.BitArray();
+      if (bf == nullptr) {
+        return BLM_NOT_PRESENT;
+      } else {
+        // WARNING: casting from const to non-const
+        bloom_.bf = (unsigned char *) bf;
+        return CheckBloom(&bloom_, term);
+      }
     } else {
       return BLM_MAY_PRESENT;
     }
