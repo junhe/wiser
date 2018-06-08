@@ -72,6 +72,7 @@ sudo sysctl -w vm.max_map_count=262144
 
 echo "*            hard   memlock           unlimited" | sudo tee -a /etc/security/limits.conf
 echo "*            soft    memlock           unlimited" | sudo tee -a /etc/security/limits.conf
+echo "WARNING: The commands above may not be executed"
 
 echo "Now, run"
 echo "source ~/.bashrc"
