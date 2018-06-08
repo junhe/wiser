@@ -9,8 +9,8 @@ set(DEBUG_OPTS      "-std=c++11 -O0 -g -Wall -Wno-array-bounds")
 set(DEV_OPTS        "-std=c++11 -O0 -g -Wall -Wno-array-bounds")
 
 #SET(CMAKE_CXX_FLAGS "${PRODUCTION_OPTS} ${TCMALLOC_OPTS}")
-#SET(CMAKE_CXX_FLAGS ${PRODUCTION_OPTS})
-SET(CMAKE_CXX_FLAGS ${DEV_OPTS})
+SET(CMAKE_CXX_FLAGS ${PRODUCTION_OPTS})
+#SET(CMAKE_CXX_FLAGS ${DEV_OPTS})
 SET(CMAKE_C_FLAGS "-fPIC -std=c99 -O3 -msse4.1  -march=native -Wall -Wextra -pedantic -Wshadow")
 
 set(GPROFILER profiler)
@@ -84,6 +84,7 @@ set(QQ_LIBS
     boost_locale
     lz4
     little_packed_ints
+    bloom
     )
 
 set(GRPC_LIBS
@@ -162,7 +163,6 @@ target_link_libraries(testmain
     protobuf::libprotobuf
     ${QQ_LIBS}
     ${GLOG_LIB}
-    bloom
 )
 
 add_executable( testlast
@@ -179,7 +179,6 @@ target_link_libraries(testlast
     protobuf::libprotobuf
     ${QQ_LIBS}
     ${GLOG_LIB}
-    bloom
 )
 
 
@@ -235,7 +234,6 @@ target_link_libraries(create_qq_mem_dump
     ${QQ_LIBS}
     pthread
     ${GLOG_LIB}
-    bloom
 )
 
 
