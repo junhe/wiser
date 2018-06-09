@@ -255,6 +255,22 @@ target_link_libraries(check_posting_list
 )
 
 
+add_executable(show_bloom_store_stats
+    show_bloom_store_stats.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+
+target_link_libraries(show_bloom_store_stats
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${QQ_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
+
+
 
 add_executable(trie_bench
     trie_bench.cc
