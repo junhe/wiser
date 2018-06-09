@@ -98,6 +98,16 @@ inline std::vector<std::string> ReadLines(const std::string &path) {
   return lines;
 }
 
+inline void AppendLines(const std::string &path, std::vector<std::string> lines) 
+{
+  std::ofstream myfile;
+  myfile.open (path, std::ios::app);
+  for (auto &line : lines) {
+    myfile << line << std::endl;
+  }
+  myfile.close();
+}
+
 
 class ResultTable {
  public:
