@@ -326,3 +326,14 @@ TEST_CASE( "Bloom filter store with empty phrase ends", "[bloomfilter]" ) {
 }
 
 
+TEST_CASE( "Write and read file", "[utils]" ) {
+  utils::AppendLines("/tmp/tmpout", {"hello1", "hello2"});
+  utils::AppendLines("/tmp/tmpout", {"hello3", "hello4"});
+  auto lines = utils::ReadLines("/tmp/tmpout");
+  REQUIRE(lines[0] == "hello1");
+  REQUIRE(lines[1] == "hello2");
+  REQUIRE(lines[2] == "hello3");
+  REQUIRE(lines[3] == "hello4");
+}
+
+
