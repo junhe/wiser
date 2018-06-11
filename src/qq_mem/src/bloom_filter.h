@@ -268,10 +268,17 @@ class BloomFilterStore {
     :ratio_(ratio), expected_entries_(expected_entries) 
   {
     bit_array_bytes_ = bloom_bytes(expected_entries, ratio);   
+    std::cout << "======= Bloom Filter Store ===========\n";
+    std::cout << "ratio: " << ratio_ << std::endl;
+    std::cout << "n entries: " << expected_entries_ << std::endl;
+    std::cout << "n bytes: " << bit_array_bytes_ << std::endl;
   }
 
   BloomFilterStore() :ratio_(0.001), expected_entries_(5) {
     bit_array_bytes_ = bloom_bytes(expected_entries_, ratio_);   
+    std::cout << "ratio: " << ratio_ << std::endl;
+    std::cout << "n entries: " << expected_entries_ << std::endl;
+    std::cout << "n bytes: " << bit_array_bytes_ << std::endl;
   }
 
   void Add(DocIdType doc_id, std::vector<std::string> tokens, 
