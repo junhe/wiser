@@ -78,6 +78,12 @@ check_posting_list:
 		make -j${NUM_CORES} check_posting_list && \
 		./check_posting_list
 
+show_bloom_store_stats:
+	cd build && cmake ../src/ && \
+		make -j${NUM_CORES} show_bloom_store_stats && \
+		./show_bloom_store_stats
+
+
 trie_bench:
 	cd build && cmake ../src/ && \
 		make -j${NUM_CORES} trie_bench && \

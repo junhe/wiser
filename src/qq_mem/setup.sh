@@ -1,3 +1,5 @@
+set +e
+
 sudo apt-get install -y curl
 
 # install dev tools
@@ -77,3 +79,4 @@ echo "WARNING: The commands above may not be executed"
 echo "Now, run"
 echo "source ~/.bashrc"
 
+echo "If you are on client, build and copy libbloom to /usr/lib"

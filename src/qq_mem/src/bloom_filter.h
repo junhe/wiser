@@ -94,6 +94,10 @@ class BloomFilter {
     return ret;
   }
 
+  bool IsEmpty() const {
+    return bit_array_.size() == 0;
+  }
+
   const std::string &BitArray() const {
     return bit_array_;
   }
@@ -153,16 +157,51 @@ struct BloomFilterCase {
     blm.Deserialize(buf);
   }
 
+  bool IsEmpty() const {
+    return blm.IsEmpty();
+  }
+
   BloomFilter blm;
   DocIdType doc_id;
 };
 
 
+struct CaseCount {
+  int n_empty = 0;
+  int n_non_empty = 0;
+
+  void Add(const CaseCount &cc) {
+    n_empty += cc.n_empty;
+    n_non_empty += cc.n_non_empty;
+  }
+
+  std::string ToStr() const {
+    std::string s;
+    s = "empty: " + std::to_string(n_empty) + "\n" + \
+         "non-empty: " + std::to_string(n_non_empty) + "\n";
+
+    return s;
+  }
+};
 
 class BloomFilterCases {
  public:
   void PushBack(const BloomFilterCase &cas) {
     cases_.push_back(cas);
+  }
+
+  CaseCount CountCases() const {
+    CaseCount count;
+
+    for (auto &cas : cases_) {
+      if (cas.IsEmpty()) {
+        count.n_empty++;
+      } else {
+        count.n_non_empty++;
+      }
+    }
+
+    return count;
   }
 
   std::size_t Size() const {
@@ -226,13 +265,23 @@ class BloomFilterCases {
 class BloomFilterStore {
  public:
   BloomFilterStore(const float ratio, const int expected_entries) 
-    :ratio_(ratio), expected_entries_(expected_entries) 
+    :ratio_(ratio), expected_entries_(expected_entries),
+     end_cnt_hist_(100000, 0) 
   {
     bit_array_bytes_ = bloom_bytes(expected_entries, ratio);   
+    std::cout << "======= Bloom Filter Store ===========\n";
+    std::cout << "ratio: " << ratio_ << std::endl;
+    std::cout << "n entries: " << expected_entries_ << std::endl;
+    std::cout << "n bytes: " << bit_array_bytes_ << std::endl;
   }
 
-  BloomFilterStore() :ratio_(0.001), expected_entries_(5) {
+  BloomFilterStore() :ratio_(0.001), expected_entries_(5),
+     end_cnt_hist_(100000, 0) 
+  {
     bit_array_bytes_ = bloom_bytes(expected_entries_, ratio_);   
+    std::cout << "ratio: " << ratio_ << std::endl;
+    std::cout << "n entries: " << expected_entries_ << std::endl;
+    std::cout << "n bytes: " << bit_array_bytes_ << std::endl;
   }
 
   void Add(DocIdType doc_id, std::vector<std::string> tokens, 
@@ -244,6 +293,12 @@ class BloomFilterStore {
     for (std::size_t i = 0 ; i < tokens.size(); i++) {
       std::string token = tokens[i];
       std::vector<std::string> end_list = utils::explode(ends[i], ' ');
+
+      if (end_list.size() >= end_cnt_hist_.size()) {
+        std::cout << "one out of bound" << std::endl;
+      } else {
+        end_cnt_hist_[end_list.size()]++;
+      }
 
       if (end_list.size() > 0) {
         Bloom blm = CreateBloomFixedEntries(ratio_, expected_entries_, end_list);
@@ -260,6 +315,19 @@ class BloomFilterStore {
         BloomFilterCase blm_case(blm_filter, doc_id);
         filter_map_[token].PushBack(blm_case);
       }
+    }
+
+    n++;
+    if (n % 10000 == 0) {
+      std::vector<std::string> lines;
+      for (std::size_t i = 0; i < 100; i++) {
+        std::string line = std::to_string(i) + ":" + std::to_string(end_cnt_hist_[i]);
+        lines.push_back(line);
+      }
+      std::cout 
+        << "phrase end histogram has been written to /tmp/ends_hist.txt" 
+        << std::endl;
+      utils::AppendLines("/tmp/ends_hist.txt", lines);
     }
   }
 
@@ -310,12 +378,21 @@ class BloomFilterStore {
 
     bit_array_bytes_ = bloom_bytes(expected_entries_, ratio_);   
 
+    CaseCount cnt;
+    int n = 0;
     while (buf < end) {
-      buf = DeserializeEntry(buf);
+      buf = DeserializeEntry(buf, &cnt);
+      n++;
+
+      if (n % 100000 == 0)
+        std::cout << cnt.ToStr();
     }
+
+    std::cout << "Bloom filter stats:" << std::endl;
+    std::cout << cnt.ToStr();
   }
 
-  const char *DeserializeEntry(const char *buf) {
+  const char *DeserializeEntry(const char *buf, CaseCount *cnt) {
     uint32_t n;
     int len;
 
@@ -333,6 +410,9 @@ class BloomFilterStore {
     buf += n;
 
     filter_map_[term] = cases;
+
+    cnt->Add(cases.CountCases());
+
     return buf;
   }
 
@@ -353,6 +433,8 @@ class BloomFilterStore {
   float ratio_;
   int expected_entries_;
   int bit_array_bytes_;
+  std::vector<int> end_cnt_hist_;
+  int n = 0;
 };
 
 
