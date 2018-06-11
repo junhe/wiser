@@ -806,13 +806,8 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
   int FindPhrase() {
-    for (std::size_t i = 0; i < this->pl_iterators_.size() - 1; i++) {
-      if (this->pl_iterators_[i].HasNextTerm(
-            this->pl_iterators_[i + 1].Term()) == BLM_NOT_PRESENT)
-      {
-        return 0;
-      }
-    }
+    if (UseBloomFilters() == true && CheckBloom() == false)
+      return 0;
 
     for (std::size_t i = 0; i < this->pl_iterators_.size(); i++) {
       PosIter_T *p = phrase_qp_.Iterator(i);
@@ -823,6 +818,23 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
     phrase_qp_.Process();
 
     return phrase_qp_.NumOfMatches();
+  }
+
+  // Return false if it is impossible to have a match
+  bool CheckBloom() {
+    for (std::size_t i = 0; i < this->pl_iterators_.size() - 1; i++) {
+      if (this->pl_iterators_[i].HasNextTerm(
+            this->pl_iterators_[i + 1].Term()) == BLM_NOT_PRESENT)
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool UseBloomFilters() {
+    return true;
+    return this->pl_iterators_[0].Size() * 10 < this->pl_iterators_[1].Size();
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
