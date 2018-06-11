@@ -21,7 +21,7 @@ void Convert() {
   std::string vacuum_to_path = FLAGS_vacuum_dir_path;
   utils::PrepareDir(vacuum_to_path);
 
-  FlashEngineDumper engine_dumper(vacuum_to_path);
+  FlashEngineDumper engine_dumper(vacuum_to_path, true);
   assert(engine_dumper.TermCount() == 0);
 
   engine_dumper.LoadQqMemDump(FLAGS_qqdump_dir_path);
