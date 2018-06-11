@@ -324,6 +324,9 @@ class BloomFilterStore {
         std::string line = std::to_string(i) + ":" + std::to_string(end_cnt_hist_[i]);
         lines.push_back(line);
       }
+      std::cout 
+        << "phrase end histogram has been written to /tmp/ends_hist.txt" 
+        << std::endl;
       utils::AppendLines("/tmp/ends_hist.txt", lines);
     }
   }

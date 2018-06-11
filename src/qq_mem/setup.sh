@@ -1,3 +1,5 @@
+set +e
+
 sudo apt-get install -y curl
 
 # install dev tools
