@@ -265,7 +265,8 @@ class BloomFilterCases {
 class BloomFilterStore {
  public:
   BloomFilterStore(const float ratio, const int expected_entries) 
-    :ratio_(ratio), expected_entries_(expected_entries) 
+    :ratio_(ratio), expected_entries_(expected_entries),
+     end_cnt_hist_(100000, 0) 
   {
     bit_array_bytes_ = bloom_bytes(expected_entries, ratio);   
     std::cout << "======= Bloom Filter Store ===========\n";
@@ -274,7 +275,9 @@ class BloomFilterStore {
     std::cout << "n bytes: " << bit_array_bytes_ << std::endl;
   }
 
-  BloomFilterStore() :ratio_(0.001), expected_entries_(5) {
+  BloomFilterStore() :ratio_(0.001), expected_entries_(5),
+     end_cnt_hist_(100000, 0) 
+  {
     bit_array_bytes_ = bloom_bytes(expected_entries_, ratio_);   
     std::cout << "ratio: " << ratio_ << std::endl;
     std::cout << "n entries: " << expected_entries_ << std::endl;
@@ -291,6 +294,12 @@ class BloomFilterStore {
       std::string token = tokens[i];
       std::vector<std::string> end_list = utils::explode(ends[i], ' ');
 
+      if (end_list.size() >= end_cnt_hist_.size()) {
+        std::cout << "one out of bound" << std::endl;
+      } else {
+        end_cnt_hist_[end_list.size()]++;
+      }
+
       if (end_list.size() > 0) {
         Bloom blm = CreateBloomFixedEntries(ratio_, expected_entries_, end_list);
         LOG_IF(FATAL, bit_array_bytes_ != blm.bytes) 
@@ -306,6 +315,16 @@ class BloomFilterStore {
         BloomFilterCase blm_case(blm_filter, doc_id);
         filter_map_[token].PushBack(blm_case);
       }
+    }
+
+    n++;
+    if (n % 10000 == 0) {
+      std::vector<std::string> lines;
+      for (std::size_t i = 0; i < 100; i++) {
+        std::string line = std::to_string(i) + ":" + std::to_string(end_cnt_hist_[i]);
+        lines.push_back(line);
+      }
+      utils::AppendLines("/tmp/ends_hist.txt", lines);
     }
   }
 
@@ -411,6 +430,8 @@ class BloomFilterStore {
   float ratio_;
   int expected_entries_;
   int bit_array_bytes_;
+  std::vector<int> end_cnt_hist_;
+  int n = 0;
 };
 
 
