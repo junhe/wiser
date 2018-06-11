@@ -268,7 +268,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
 class QqMemEngineDelta: public SearchEngineServiceNew {
  public:
-  QqMemEngineDelta() {}
+  QqMemEngineDelta() :bloom_store_(0.01, 2) {}
 
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
