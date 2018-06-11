@@ -218,7 +218,7 @@ def load_mem_vacuum(query_path):
 
 def start_iostat_watch(partition, out_path):
     p = subprocess.Popen(
-            shlex.split("iostat -x -m /dev/nvme0n1p4 1 100000"),
+            shlex.split("iostat -x -m /dev/{} 1 100000".format(partition_name)),
             stdout = open(out_path, "w"))
     return p
 
@@ -479,9 +479,6 @@ def remote_cmd(cmd, fd = None):
     return p
 
 def sync_build_dir():
-    if server_addr == remote_addr:
-        return
-
     shcmd("scp {engine_path} {addr}:/tmp/engine_bench".format(
         addr=remote_addr, engine_path=engine_path))
 
@@ -919,5 +916,4 @@ class Exp(Experiment):
 if __name__ == "__main__":
     exp = Exp()
     exp.main()
-
 
