@@ -833,7 +833,6 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
   bool UseBloomFilters() {
-    return true;
     return this->pl_iterators_[0].Size() * 10 < this->pl_iterators_[1].Size();
   }
 
