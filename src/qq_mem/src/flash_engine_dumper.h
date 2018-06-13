@@ -658,11 +658,11 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
 class FlashEngineDumper {
  public:
   FlashEngineDumper(const std::string dump_dir_path, 
-      const bool use_bloom_filters_end = false)
+      const bool use_bloom_filters = false)
     :inverted_index_(dump_dir_path),
      dump_dir_path_(dump_dir_path),
-     use_bloom_filters_begin_(false),
-     use_bloom_filters_end_(use_bloom_filters_end)
+     use_bloom_filters_begin_(use_bloom_filters),
+     use_bloom_filters_end_(use_bloom_filters)
   {}
 
   FlashEngineDumper(const std::string dump_dir_path, 

@@ -175,11 +175,12 @@ std::vector<TermList> GetPhrases() {
 }
 
 
-TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
+TEST_CASE( "Loading Engine with phrase begin and ends", "[engine]" ) {
   auto engine = CreateSearchEngine("qq_mem_compressed");
   REQUIRE(engine->TermCount() == 0);
-  engine->LoadLocalDocuments("src/testdata/line_doc.with-bloom.toy", 10000, 
-      "WITH_PHRASE_END");
+  engine->LoadLocalDocuments("src/testdata/wiki_linedoc.toy.pre-suf-bloom", 
+      10000, 
+      "WITH_BI_BLOOM");
   REQUIRE(engine->TermCount() > 0);
   auto result = engine->Search(SearchQuery({"prefix"}));
   std::cout << result.ToStr() << std::endl;
@@ -248,61 +249,6 @@ TEST_CASE( "Loading Engine with phrase end", "[engine]" ) {
   }
 }
 
-TEST_CASE( "Loading Engine with phrase end (3 docs)", "[blm]" ) {
-  auto engine = CreateSearchEngine("qq_mem_compressed");
-  REQUIRE(engine->TermCount() == 0);
-  engine->LoadLocalDocuments("src/testdata/iter_test_3_docs_tf_phrases", 
-      10000, "WITH_PHRASE_END");
-  REQUIRE(engine->TermCount() > 0);
-  auto result = engine->Search(SearchQuery({"a"}));
-  std::cout << result.ToStr() << std::endl;
-  REQUIRE(result.Size() > 0);
-
-  SECTION("Serialize it") {
-    utils::RemoveDir("/tmp/bloom-qq-engine-tmp");
-    utils::RemoveDir("/tmp/bloom-vacuum-engine-tmp");
-
-    // Dump to qq mem format
-    engine->Serialize("/tmp/bloom-qq-engine-tmp");
-
-    // Dump to vacuum format
-    utils::PrepareDir("/tmp/bloom-vacuum-engine-tmp");
-    FlashEngineDumper engine_dumper("/tmp/bloom-vacuum-engine-tmp", true);
-    engine_dumper.LoadQqMemDump("/tmp/bloom-qq-engine-tmp");
-    engine_dumper.Dump();
-
-    SECTION("Load to Vacuum") {
-      auto vac_engine = CreateSearchEngine(
-          "vacuum:vacuum_dump:/tmp/bloom-vacuum-engine-tmp");
-      vac_engine->Load();
-      {
-        SearchQuery query({"a"});
-        result = vac_engine->Search(query);
-        std::cout << result.ToStr() << std::endl;
-        REQUIRE(result.Size() > 0); // only solar is a valid term
-      }
-      {
-        SearchQuery query({"z"});
-        result = vac_engine->Search(query);
-        std::cout << result.ToStr() << std::endl;
-        REQUIRE(result.Size() == 0); // only solar is a valid term
-      }
-
-      // Must find these phrases
-      std::vector<TermList> phrases = {{"a", "b"}, {"b", "c"}};
-      for (auto &phrase : phrases) {
-        SearchQuery query(phrase);
-        query.is_phrase = true;
-
-        std::cout << query.ToStr() << std::endl;
-
-        result = vac_engine->Search(query);
-        std::cout << result.ToStr() << std::endl;
-        REQUIRE(result.Size() > 0); // only solar is a valid term
-      }
-    }
-  }
-}
 
 TEST_CASE( "Bloom filter store with empty phrase ends", "[bloomfilter]" ) {
   BloomFilterStore store(0.00001, 5);
@@ -329,7 +275,7 @@ TEST_CASE( "Write and read file", "[utils]" ) {
 
 
 
-TEST_CASE( "Loading Engine with bi-bloom (3 docs)", "[blm]" ) {
+TEST_CASE( "Loading Engine with bi-bloom (3 docs)", "[blmxx]" ) {
   auto engine = CreateSearchEngine("qq_mem_compressed");
   REQUIRE(engine->TermCount() == 0);
   engine->LoadLocalDocuments("src/testdata/iter_test_3_docs_tf_bi-bloom",
