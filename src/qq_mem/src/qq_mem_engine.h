@@ -316,10 +316,10 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
       bloom_store_end_.Add(doc_id, doc_info.GetTokens(), 
           doc_info.GetPhraseEnds());
     } else if (doc_info.Format() == "WITH_BI_BLOOM") {
+      bloom_store_begin_.Add(doc_id, doc_info.GetTokens(), 
+          doc_info.GetPhraseBegins());
       bloom_store_end_.Add(doc_id, doc_info.GetTokens(), 
           doc_info.GetPhraseEnds());
-      bloom_store_end_.Add(doc_id, doc_info.GetTokens(), 
-          doc_info.GetPhraseBegins());
     }
   }
 
