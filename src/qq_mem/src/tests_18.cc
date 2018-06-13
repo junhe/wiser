@@ -208,7 +208,7 @@ TEST_CASE( "Loading Engine with phrase begin and ends", "[engine]" ) {
 
     SECTION("Load to Vacuum") {
       auto vac_engine = CreateSearchEngine(
-          "vacuum:vacuum_dump:/tmp/bloom-vacuum-engine-tmp");
+          "vacuum:vacuum_dump:/tmp/bloom-vacuum-engine-tmp", 1);
       vac_engine->Load();
       SearchQuery query({"close"});
       result = vac_engine->Search(query);
