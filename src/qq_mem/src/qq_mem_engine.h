@@ -27,7 +27,9 @@ class InvertedIndexImpl: public InvertedIndexService {
     } else if (format == "WITH_OFFSETS") {
       AddDocumentWithOffsets(doc_id, doc_info.Body(), doc_info.Tokens(),
           doc_info.TokenOffsets());
-    } else if (format == "WITH_POSITIONS" || format == "WITH_PHRASE_END") {
+    } else if (format == "WITH_POSITIONS" || 
+               format == "WITH_PHRASE_END" || 
+               format == "WITH_BI_BLOOM") {
 			AddDocumentWithPositions(doc_id, doc_info);
     } else {
       LOG(FATAL) << "Format " << format << " is not supported.\n";
