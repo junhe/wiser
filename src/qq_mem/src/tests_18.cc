@@ -363,7 +363,7 @@ TEST_CASE( "Loading Engine with bi-bloom (3 docs)", "[blm]" ) {
 
     SECTION("Load to Vacuum") {
       auto vac_engine = CreateSearchEngine(
-          "vacuum:vacuum_dump:/tmp/bloom-vacuum-engine-tmp");
+          "vacuum:vacuum_dump:/tmp/bloom-vacuum-engine-tmp", BLOOM_ALWAYS_USE);
       vac_engine->Load();
       {
         SearchQuery query({"a"});
@@ -388,8 +388,21 @@ TEST_CASE( "Loading Engine with bi-bloom (3 docs)", "[blm]" ) {
 
         result = vac_engine->Search(query);
         std::cout << result.ToStr() << std::endl;
-        REQUIRE(result.Size() > 0); // only solar is a valid term
+        REQUIRE(result.Size() > 0); 
       }
+
+      std::vector<TermList> non_phrases = {{"a", "x"}, {"x", "c"}};
+      for (auto &phrase : non_phrases) {
+        SearchQuery query(phrase);
+        query.is_phrase = true;
+
+        std::cout << query.ToStr() << std::endl;
+
+        result = vac_engine->Search(query);
+        std::cout << result.ToStr() << std::endl;
+        REQUIRE(result.Size() == 0); 
+      }
+  
     }
   }
 }

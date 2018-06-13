@@ -927,13 +927,17 @@ class VacuumPostingListIterator {
       // for bloom begin
       len = utils::varint_decode_uint32((const char *)buf, 0, &bloom_offset);
       buf += len;
+      bloom_begin_reader_.Reset(file_data_ + offset, 
+                          file_data_ + offset + bloom_offset, 
+                          header->bit_array_bytes);
 
       // for bloom end
       len = utils::varint_decode_uint32((const char *)buf, 0, &bloom_offset);
       buf += len;
-      bloom_reader_.Reset(file_data_ + offset, 
+      bloom_end_reader_.Reset(file_data_ + offset, 
                           file_data_ + offset + bloom_offset, 
                           header->bit_array_bytes);
+
       bloom_set(&bloom_, header->expected_entries, header->bloom_ratio, 
           nullptr);
     }
@@ -987,25 +991,12 @@ class VacuumPostingListIterator {
     return tf_iter_.Value();
   }
 
-  int HasNextTerm(const std::string &term) {
-    if (header_->has_bloom_filters == true) {
-      if (is_bloom_skip_list_loaded_ == false) {
-        is_bloom_skip_list_loaded_ = true;
-        bloom_reader_.LoadSkipList();
-      }
+  int HasPriorTerm(const std::string &term) {
+    return HasTerm(&bloom_begin_reader_, term);
+  }
 
-      bloom_reader_.SkipTo(doc_id_iter_.PostingIndex());
-      const uint8_t *bf = bloom_reader_.BitArray();
-      if (bf == nullptr) {
-        return BLM_NOT_PRESENT;
-      } else {
-        // WARNING: casting from const to non-const
-        bloom_.bf = (unsigned char *) bf;
-        return CheckBloom(&bloom_, term);
-      }
-    } else {
-      return BLM_MAY_PRESENT;
-    }
+  int HasNextTerm(const std::string &term) {
+    return HasTerm(&bloom_end_reader_, term);
   }
 
   void AssignPositionBegin(InBagPositionIterator *in_bag_iter) {
@@ -1045,6 +1036,28 @@ class VacuumPostingListIterator {
   }
 
  private:
+  int HasTerm(BloomFilterColumnReader *reader, const std::string &term) {
+    if (header_->has_bloom_filters == true) {
+      if (is_bloom_skip_list_loaded_ == false) {
+        is_bloom_skip_list_loaded_ = true;
+        reader->LoadSkipList();
+      }
+
+      reader->SkipTo(doc_id_iter_.PostingIndex());
+      const uint8_t *bf = reader->BitArray();
+      if (bf == nullptr) {
+        return BLM_NOT_PRESENT;
+      } else {
+        // WARNING: casting from const to non-const
+        bloom_.bf = (unsigned char *) bf;
+        return CheckBloom(&bloom_, term);
+      }
+    } else {
+      return BLM_MAY_PRESENT;
+    }
+  }
+
+
   const uint8_t *file_data_;
   TermIndexResult term_index_result_;
   const VacuumHeader *header_;
@@ -1057,7 +1070,8 @@ class VacuumPostingListIterator {
   TermFreqIterator tf_iter_;
   PositionPostingBagIterator pos_bag_iter_;
   OffsetPostingBagIterator off_bag_iter_;
-  BloomFilterColumnReader bloom_reader_;
+  BloomFilterColumnReader bloom_begin_reader_;
+  BloomFilterColumnReader bloom_end_reader_;
 
   Bloom bloom_;
 

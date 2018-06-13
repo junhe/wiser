@@ -211,6 +211,10 @@ class PostingListDeltaIterator: public PostingListIteratorService {
     term_ = term;
   }
 
+  int HasPriorTerm(const std::string &term) {
+    return BLM_MAY_PRESENT;
+  }
+
   int HasNextTerm(const std::string &term) {
     return BLM_MAY_PRESENT;
   }

@@ -763,6 +763,37 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
  private:
+  bool CheckByFirstPostingList() {
+    if (this->pl_iterators_[0].HasNextTerm(
+          this->pl_iterators_[1].Term()) == BLM_NOT_PRESENT) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  bool CheckBySecondPostingList() {
+    if (this->pl_iterators_[1].HasPriorTerm(
+          this->pl_iterators_[0].Term()) == BLM_NOT_PRESENT) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  bool CheckBloomFallBack() {
+    // Can be further improve by starting with the smallest posting list
+    for (std::size_t i = 0; i < this->pl_iterators_.size() - 1; i++) {
+      if (this->pl_iterators_[i].HasNextTerm(
+            this->pl_iterators_[i + 1].Term()) == BLM_NOT_PRESENT)
+      {
+        return false;
+      }
+    }
+    return true;
+
+  }
+
   // return true: end reached
   bool FindMax(DocIdType * max_doc_id) {
     for (int list_i = 0; list_i < this->n_lists_; list_i++) {
@@ -825,14 +856,20 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
 
   // Return false if it is impossible to have a match
   bool CheckBloom() {
-    for (std::size_t i = 0; i < this->pl_iterators_.size() - 1; i++) {
-      if (this->pl_iterators_[i].HasNextTerm(
-            this->pl_iterators_[i + 1].Term()) == BLM_NOT_PRESENT)
-      {
-        return false;
-      }
+    if (this->pl_iterators_.size() != 2) {
+      return CheckBloomFallBack();
     }
-    return true;
+
+    std::size_t size1 = this->pl_iterators_[0].Size();
+    std::size_t size2 = this->pl_iterators_[1].Size();
+
+    if (bloom_enable_factor_ * size1 < size2) {
+      return CheckByFirstPostingList();
+    } else if (bloom_enable_factor_ * size2 < size1) {
+      return CheckBySecondPostingList();
+    } else {
+      return true;
+    }
   }
 
   bool UseBloomFilters() {
