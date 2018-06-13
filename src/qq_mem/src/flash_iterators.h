@@ -922,15 +922,22 @@ class VacuumPostingListIterator {
 
     // third item is the location of bloom skip list
     uint32_t bloom_offset;
+    const uint8_t *sec_buf = buf;
     if (header_->has_bloom_filters == true) {
-      utils::varint_decode_uint32((const char *)buf, 0, &bloom_offset);
+      // for bloom begin
+      len = utils::varint_decode_uint32((const char *)buf, 0, &bloom_offset);
+      buf += len;
+
+      // for bloom end
+      len = utils::varint_decode_uint32((const char *)buf, 0, &bloom_offset);
+      buf += len;
       bloom_reader_.Reset(file_data_ + offset, 
                           file_data_ + offset + bloom_offset, 
                           header->bit_array_bytes);
       bloom_set(&bloom_, header->expected_entries, header->bloom_ratio, 
           nullptr);
     }
-    buf += 8; // we reserved 4 bytes for this value
+    buf = sec_buf + 8; // we reserved 4 bytes for this value
 
     // fourth item is the start of skip list
     skip_list_ = std::shared_ptr<SkipList>(new SkipList()); 
