@@ -23,7 +23,12 @@ std::vector<Positions> DocInfo::GetPositions() const {
     // example group: 1;3;8
     std::vector<std::string> pos_strs = utils::explode(groups[i], ';');
     for (auto & pos_str : pos_strs) {
-      table[i].push_back(std::stoi(pos_str));
+      try {
+        table[i].push_back(std::stoi(pos_str));
+      } catch (...) {
+        std::cout << "'" << pos_str << "',";
+        throw;
+      }
     }
   }
 
