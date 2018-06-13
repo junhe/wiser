@@ -835,7 +835,7 @@ struct VacuumHeader {
   
     // Bloom begin
     len = utils::varint_decode_uint32((const char *)buf, 0, &val);
-    use_bloom_filters_begin = val;
+    has_bloom_filters_begin = val;
     buf += len;
 
     len = utils::varint_decode_uint32((const char *)buf, 0, 
@@ -851,7 +851,7 @@ struct VacuumHeader {
 
     // Bloom end
     len = utils::varint_decode_uint32((const char *)buf, 0, &val);
-    use_bloom_filters_end = val;
+    has_bloom_filters_end = val;
     buf += len;
 
     len = utils::varint_decode_uint32((const char *)buf, 0, 
@@ -866,23 +866,23 @@ struct VacuumHeader {
     buf += sizeof(float);
 
     // Just not to break the current tests
-    use_bloom_filters = use_bloom_filters_end;
+    has_bloom_filters = has_bloom_filters_end;
     bit_array_bytes = bit_array_bytes_end;
     expected_entries = expected_entries_end;
     bloom_ratio = bloom_ratio_end;
   }
 
-  bool use_bloom_filters_begin;
+  bool has_bloom_filters_begin;
   uint32_t bit_array_bytes_begin;
   uint32_t expected_entries_begin;
   float bloom_ratio_begin;
 
-  bool use_bloom_filters_end;
+  bool has_bloom_filters_end;
   uint32_t bit_array_bytes_end;
   uint32_t expected_entries_end;
   float bloom_ratio_end;
 
-  bool use_bloom_filters;
+  bool has_bloom_filters;
   uint32_t bit_array_bytes;
   uint32_t expected_entries;
   float bloom_ratio;
@@ -922,7 +922,7 @@ class VacuumPostingListIterator {
 
     // third item is the location of bloom skip list
     uint32_t bloom_offset;
-    if (header_->use_bloom_filters == true) {
+    if (header_->has_bloom_filters == true) {
       utils::varint_decode_uint32((const char *)buf, 0, &bloom_offset);
       bloom_reader_.Reset(file_data_ + offset, 
                           file_data_ + offset + bloom_offset, 
@@ -981,7 +981,7 @@ class VacuumPostingListIterator {
   }
 
   int HasNextTerm(const std::string &term) {
-    if (header_->use_bloom_filters == true) {
+    if (header_->has_bloom_filters == true) {
       if (is_bloom_skip_list_loaded_ == false) {
         is_bloom_skip_list_loaded_ = true;
         bloom_reader_.LoadSkipList();
