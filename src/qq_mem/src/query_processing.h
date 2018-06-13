@@ -688,7 +688,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
     const int n_total_docs_in_index,
     const int k = 5,
     const bool is_phrase = false,
-    const int bloom_enable_factor = BLOOM_ALWAYS_USE
+    const int bloom_enable_factor = 1
     )
    :ProcessorBase<PLIter_T>(similarity,            pl_iterators, doc_lengths, 
                   n_total_docs_in_index, k),
@@ -791,7 +791,19 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
       }
     }
     return true;
+  }
 
+  bool CheckBloomWithEnableFactor() {
+    const std::size_t size1 = this->pl_iterators_[0].Size();
+    const std::size_t size2 = this->pl_iterators_[1].Size();
+
+    if (bloom_enable_factor_ * size1 <= size2) {
+      return CheckByFirstPostingList();
+    } else if (bloom_enable_factor_ * size2 < size1) {
+      return CheckBySecondPostingList();
+    } else {
+      return true;
+    }
   }
 
   // return true: end reached
@@ -840,7 +852,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
   int FindPhrase() {
-    if (UseBloomFilters() == true && CheckBloom() == false)
+    if (IsPossibleToPresent() == false)
       return 0;
 
     for (std::size_t i = 0; i < this->pl_iterators_.size(); i++) {
@@ -855,32 +867,20 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
   // Return false if it is impossible to have a match
-  bool CheckBloom() {
-    if (this->pl_iterators_.size() != 2) {
+  // Return true if:
+  //  1. possible to match
+  //  2. bloom filter is disabled
+  bool IsPossibleToPresent() {
+    if (bloom_enable_factor_ == BLOOM_NEVER_USE) {
+      return true;
+    }
+
+    if (this->pl_iterators_.size() != 2) 
+    {
       return CheckBloomFallBack();
     }
 
-    std::size_t size1 = this->pl_iterators_[0].Size();
-    std::size_t size2 = this->pl_iterators_[1].Size();
-
-    if (bloom_enable_factor_ * size1 < size2) {
-      return CheckByFirstPostingList();
-    } else if (bloom_enable_factor_ * size2 < size1) {
-      return CheckBySecondPostingList();
-    } else {
-      return true;
-    }
-  }
-
-  bool UseBloomFilters() {
-    if (bloom_enable_factor_ == BLOOM_NEVER_USE) {
-      return false;
-    } else if (bloom_enable_factor_ == BLOOM_ALWAYS_USE) {
-      return true;
-    } else {
-      return this->pl_iterators_[0].Size() * bloom_enable_factor_
-        < this->pl_iterators_[1].Size();
-    }
+    return CheckBloomWithEnableFactor();
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
@@ -961,7 +961,7 @@ std::vector<ResultDocEntry<PLIter_T>> ProcessQueryDelta(
      const int n_total_docs_in_index,
      const int k,
      const bool is_phase,
-     const int bloom_enable_factor = BLOOM_ALWAYS_USE
+     const int bloom_enable_factor = 1
      ) {
   if (pl_iterators->size() == 1) {
     SingleTermQueryProcessor<PLIter_T> qp(similarity, pl_iterators, doc_lengths, 
@@ -973,7 +973,7 @@ std::vector<ResultDocEntry<PLIter_T>> ProcessQueryDelta(
     return qp.Process();
   } else {
     QueryProcessor<PLIter_T, PosIter_T> qp(similarity, pl_iterators, doc_lengths, 
-        n_total_docs_in_index, k, is_phase);
+        n_total_docs_in_index, k, is_phase, bloom_enable_factor);
     return qp.Process();
   }
 }

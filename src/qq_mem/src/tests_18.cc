@@ -300,7 +300,7 @@ TEST_CASE( "Loading Engine with bi-bloom (3 docs)", "[blmxx]" ) {
 
     SECTION("Load to Vacuum") {
       auto vac_engine = CreateSearchEngine(
-          "vacuum:vacuum_dump:/tmp/bloom-vacuum-engine-tmp", BLOOM_ALWAYS_USE);
+          "vacuum:vacuum_dump:/tmp/bloom-vacuum-engine-tmp", 1);
       vac_engine->Load();
       {
         SearchQuery query({"a"});

@@ -50,7 +50,6 @@
 
 
 #define BLOOM_NEVER_USE 0
-#define BLOOM_ALWAYS_USE -1
 
 const int BLM_NOT_PRESENT = 0;
 const int BLM_MAY_PRESENT = 1;

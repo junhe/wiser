@@ -235,7 +235,7 @@ template <typename DocStore_T>
 class VacuumEngine : public SearchEngineServiceNew {
  public:
   VacuumEngine(const std::string engine_dir_path, 
-      int bloom_enable_factor = BLOOM_ALWAYS_USE)
+      int bloom_enable_factor = 1)
     :engine_dir_path_(engine_dir_path),
      bloom_enable_factor_(bloom_enable_factor)
   {}
