@@ -357,7 +357,7 @@ TEST_CASE( "Loading Engine with bi-bloom (3 docs)", "[blm]" ) {
 
     // Dump to vacuum format
     utils::PrepareDir("/tmp/bloom-vacuum-engine-tmp");
-    FlashEngineDumper engine_dumper("/tmp/bloom-vacuum-engine-tmp", true);
+    FlashEngineDumper engine_dumper("/tmp/bloom-vacuum-engine-tmp", true, true);
     engine_dumper.LoadQqMemDump("/tmp/bloom-qq-engine-tmp");
     engine_dumper.Dump();
 

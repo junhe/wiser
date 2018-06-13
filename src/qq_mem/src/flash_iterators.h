@@ -930,7 +930,7 @@ class VacuumPostingListIterator {
       bloom_set(&bloom_, header->expected_entries, header->bloom_ratio, 
           nullptr);
     }
-    buf += 4; // we reserved 4 bytes for this value
+    buf += 8; // we reserved 4 bytes for this value
 
     // fourth item is the start of skip list
     skip_list_ = std::shared_ptr<SkipList>(new SkipList()); 

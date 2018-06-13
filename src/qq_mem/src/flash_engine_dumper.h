@@ -140,16 +140,17 @@ struct ResultOfDumpingTermEntrySet {
 
 struct ResultOfDumpingTermEntrySetWithBloom {
   ResultOfDumpingTermEntrySetWithBloom(SkipListWriter writer, off_t offset, 
-      off_t bloom_off)
+      off_t bloom_off1, off_t bloom_off2)
     :skip_list_writer(writer), pos_start_offset(offset),
-     bloom_section_offset(bloom_off)
+     bloom_begin_section_offset(bloom_off1),
+     bloom_end_section_offset(bloom_off2)
   {}
 
   SkipListWriter skip_list_writer;
   off_t pos_start_offset;
-  off_t bloom_section_offset;
+  off_t bloom_begin_section_offset;
+  off_t bloom_end_section_offset;
 };
-
 
 
 
@@ -380,7 +381,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     // Bloom skip list
     off_t bloom_pointer_location = index_dumper_.CurrentOffset();
     DumpVarint(0); 
-    index_dumper_.Seek(bloom_pointer_location + 4);
+    DumpVarint(0); 
+    index_dumper_.Seek(bloom_pointer_location + 8);
 
     // Dump skip list
     off_t skip_list_start = index_dumper_.CurrentOffset();
@@ -419,17 +421,24 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     LOG(INFO) << "Dumping Posting List of " << term << std::endl;
     LOG(INFO) << "Number of postings: " << posting_it.Size() << std::endl;
 
-    const BloomFilterCases &bloom_cases = bloom_store_end_->Lookup(term);
-    auto bloom_iter = bloom_cases.Begin();
+    const BloomFilterCases &bloom_end_cases = bloom_store_end_->Lookup(term);
+    auto bloom_end_iter = bloom_end_cases.Begin();
 
-    BloomFilterColumnWriter bloom_col_writer(bloom_store_end_->BitArrayBytes());
+    BloomFilterColumnWriter bloom_end_writer(bloom_store_end_->BitArrayBytes());
+
+    const BloomFilterCases &bloom_begin_cases = bloom_store_begin_->Lookup(term);
+    auto bloom_begin_iter = bloom_begin_cases.Begin();
+
+    BloomFilterColumnWriter bloom_begin_writer(bloom_store_begin_->BitArrayBytes());
 
     TermEntrySet entry_set;
 
     while (posting_it.IsEnd() == false) {
       LOG(INFO) << "DocId: " << posting_it.DocId() << std::endl;
 
-      LOG_IF(FATAL, posting_it.DocId() != bloom_iter->doc_id)
+      LOG_IF(FATAL, posting_it.DocId() != bloom_end_iter->doc_id)
+        << "doc IDs do not match";
+      LOG_IF(FATAL, posting_it.DocId() != bloom_begin_iter->doc_id)
         << "doc IDs do not match";
 
       //doc id
@@ -441,7 +450,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
           std::vector<uint32_t>{(uint32_t)posting_it.TermFreq()});
 
       //Bloom filters
-      bloom_col_writer.AddPostingBag(bloom_iter->blm.BitArray());
+      bloom_begin_writer.AddPostingBag(bloom_begin_iter->blm.BitArray());
+      bloom_end_writer.AddPostingBag(bloom_end_iter->blm.BitArray());
 
       // Position
       entry_set.position.AddPostingBag(
@@ -452,9 +462,13 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
           utils::EncodeDelta<uint32_t>(ExtractOffsets(posting_it.OffsetPairsBegin().get())));
 
       posting_it.Advance();
-      bloom_iter++;
+      bloom_begin_iter++;
+      bloom_end_iter++;
     }
-    LOG_IF(FATAL, bloom_iter != bloom_cases.End())
+    LOG_IF(FATAL, bloom_begin_iter != bloom_begin_cases.End())
+      << "bloom begin iter is not at the end";
+
+    LOG_IF(FATAL, bloom_end_iter != bloom_end_cases.End())
       << "bloom iter is not at the end";
 
     off_t posting_list_start = index_dumper_.CurrentOffset();
@@ -467,7 +481,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
 
     // Reserve space for the location of bloom skip list
     off_t bloom_pointer_location = index_dumper_.CurrentOffset();
-    index_dumper_.Seek(bloom_pointer_location + 4);
+    index_dumper_.Seek(bloom_pointer_location + 8);
 
     // Estimate skip list size
     off_t skip_list_start = index_dumper_.CurrentOffset();
@@ -480,7 +494,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
         &index_dumper_, 
         skip_list_start + skip_list_est_size,
         entry_set,
-        bloom_col_writer);
+        bloom_begin_writer,
+        bloom_end_writer);
 
     std::string skip_list_data = real_result.skip_list_writer.Serialize();
 
@@ -493,7 +508,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     index_dumper_.Dump(skip_list_data); 
 
     index_dumper_.Seek(bloom_pointer_location);
-    DumpVarint(real_result.bloom_section_offset - posting_list_start);
+    DumpVarint(real_result.bloom_begin_section_offset - posting_list_start);
+    DumpVarint(real_result.bloom_end_section_offset - posting_list_start);
 
     index_dumper_.SeekToEnd();
 
@@ -550,7 +566,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     FileDumper *file_dumper,
     off_t file_offset,
     const TermEntrySet &entry_set,
-    const BloomFilterColumnWriter &bloom_writer)
+    const BloomFilterColumnWriter &bloom_begin_writer,
+    const BloomFilterColumnWriter &bloom_end_writer)
   {
     file_dumper->Seek(file_offset);
 
@@ -559,8 +576,11 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     FileOffsetOfSkipPostingBags tf_skip_offs = 
       DumpTermEntry(entry_set.termfreq, file_dumper, false);
 
-    off_t bloom_start_offset = file_dumper->CurrentOffset();
-    DumpBloom(posting_list_start, file_dumper, bloom_writer);
+    off_t bloom_begin_start_offset = file_dumper->CurrentOffset();
+    DumpBloomSection(posting_list_start, file_dumper, bloom_begin_writer);
+
+    off_t bloom_end_start_offset = file_dumper->CurrentOffset();
+    DumpBloomSection(posting_list_start, file_dumper, bloom_end_writer);
 
     off_t pos_start_offset = file_dumper->CurrentOffset();
 
@@ -574,11 +594,12 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
                        pos_skip_offs,   off_skip_offs, 
                        entry_set.docid.Values()),
         pos_start_offset, 
-        bloom_start_offset
+        bloom_begin_start_offset,
+        bloom_end_start_offset
         );
   }
 
-  void DumpBloom(off_t posting_list_start, FileDumper *file_dumper, 
+  void DumpBloomSection(off_t posting_list_start, FileDumper *file_dumper, 
       const BloomFilterColumnWriter &writer) 
   {
     off_t start_off = file_dumper->CurrentOffset();
