@@ -276,7 +276,7 @@ class CompressedDocStore :public DocStoreBase {
       LZ4_compress_default(document.c_str(), buffer_, document.size(), buffer_size_);
 
     if (compressed_data_size <= 0)
-      LOG(FATAL) << "Failed to compresse: '" << document << "'";
+      LOG(FATAL) << "Failed to compresse: doc size = " << document.size();
 
     store_[id] = std::string(buffer_, compressed_data_size);
 	}
@@ -372,7 +372,7 @@ class CompressedDocStore :public DocStoreBase {
 
  protected:
   char *buffer_;
-  static const int buffer_size_ = 1024*1024;
+  static const int buffer_size_ = 100*1024*1024;
 
 	void AddRaw(const int id, const std::string document) {
     store_[id] = document;
