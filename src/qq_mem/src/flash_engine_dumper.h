@@ -421,15 +421,19 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     LOG(INFO) << "Dumping Posting List of " << term << std::endl;
     LOG(INFO) << "Number of postings: " << posting_it.Size() << std::endl;
 
+    const BloomFilterCases &bloom_begin_cases = bloom_store_begin_->Lookup(term);
+    auto bloom_begin_iter = bloom_begin_cases.Begin();
+
+    BloomFilterColumnWriter bloom_begin_writer(bloom_store_begin_->BitArrayBytes());
+
+
     const BloomFilterCases &bloom_end_cases = bloom_store_end_->Lookup(term);
     auto bloom_end_iter = bloom_end_cases.Begin();
 
     BloomFilterColumnWriter bloom_end_writer(bloom_store_end_->BitArrayBytes());
 
-    const BloomFilterCases &bloom_begin_cases = bloom_store_begin_->Lookup(term);
-    auto bloom_begin_iter = bloom_begin_cases.Begin();
-
-    BloomFilterColumnWriter bloom_begin_writer(bloom_store_begin_->BitArrayBytes());
+    LOG_IF(FATAL, bloom_begin_cases.Size() != bloom_end_cases.Size())
+      << "Currently, you must have both begin and end bloom!";
 
     TermEntrySet entry_set;
 
@@ -736,6 +740,10 @@ class FlashEngineDumper {
       use_bloom_filters_begin_? &bloom_store_begin_ : nullptr;
     BloomFilterStore *p_end = 
       use_bloom_filters_end_? &bloom_store_end_ : nullptr;
+
+    LOG_IF(FATAL, (p_begin == nullptr) != (p_end == nullptr))
+      << "Currently, you must either not use bloom filter or "
+      << "use bloom begine+end.";
 
     inverted_index_.SetBloomStore(p_begin, p_end);
     inverted_index_.Dump();

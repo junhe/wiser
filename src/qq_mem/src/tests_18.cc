@@ -71,15 +71,6 @@ TEST_CASE( "Varint large number", "[varint]" ) {
 }
 
 
-TEST_CASE( "Blooom filter column Reader", "[bloomfilter]" ) {
-  // Construct bloom filter column 
-    
-
-
-  // Construct bloom skip list
-  // Read
-}
-
 std::string GenBitarray(int i, int array_bytes) {
   if (i % 5 == 0) 
     return "";
