@@ -271,6 +271,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     :index_dumper_(dump_dir_path + "/my.vacuum"),
      fake_index_dumper_(dump_dir_path + "/fake.vacuum"),
      term_index_dumper_(dump_dir_path + "/my.tip"),
+     bloom_store_begin_(nullptr),
      bloom_store_end_(nullptr)
   {}
 
@@ -291,18 +292,30 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
   void DumpHeader() {
     index_dumper_.Dump(utils::MakeString(VACUUM_FIRST_BYTE));
 
+    if (bloom_store_begin_ == nullptr) {
+      DumpVarint(0);
+      DumpVarint(0);
+      DumpVarint(0);
+      index_dumper_.Dump(utils::SerializeFloat(0));
+    } else {
+      DumpVarint(1); // use bloom filter
+      DumpVarint(bloom_store_begin_->BitArrayBytes());
+      DumpVarint(bloom_store_begin_->ExpectedEntries());
+      index_dumper_.Dump(utils::SerializeFloat(bloom_store_begin_->Ratio()));
+    }
+
     if (bloom_store_end_ == nullptr) {
       DumpVarint(0);
       DumpVarint(0);
       DumpVarint(0);
       index_dumper_.Dump(utils::SerializeFloat(0));
     } else {
-      DumpVarint(1);
+      DumpVarint(1); // use bloom filter
       DumpVarint(bloom_store_end_->BitArrayBytes());
       DumpVarint(bloom_store_end_->ExpectedEntries());
       index_dumper_.Dump(utils::SerializeFloat(bloom_store_end_->Ratio()));
     }
-      
+
     index_dumper_.Seek(100);
   }
 
@@ -603,6 +616,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
   bool use_bloom_filters_;
 
   TermIndexDumper term_index_dumper_;
+  BloomFilterStore *bloom_store_begin_;
   BloomFilterStore *bloom_store_end_;
 };
 

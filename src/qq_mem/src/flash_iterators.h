@@ -833,19 +833,54 @@ struct VacuumHeader {
       << "Vacuum's first byte is wrong";
     buf++;
   
+    // Bloom begin
     len = utils::varint_decode_uint32((const char *)buf, 0, &val);
-    use_bloom_filters = val;
+    use_bloom_filters_begin = val;
     buf += len;
 
-    len = utils::varint_decode_uint32((const char *)buf, 0, &bit_array_bytes);
+    len = utils::varint_decode_uint32((const char *)buf, 0, 
+        &bit_array_bytes_begin);
     buf += len;
 
-    len = utils::varint_decode_uint32((const char *)buf, 0, &expected_entries);
+    len = utils::varint_decode_uint32((const char *)buf, 0,
+        &expected_entries_begin);
     buf += len;
 
-    bloom_ratio = utils::DeserializeFloat((const char *)buf);
+    bloom_ratio_begin = utils::DeserializeFloat((const char *)buf);
     buf += sizeof(float);
+
+    // Bloom end
+    len = utils::varint_decode_uint32((const char *)buf, 0, &val);
+    use_bloom_filters_end = val;
+    buf += len;
+
+    len = utils::varint_decode_uint32((const char *)buf, 0, 
+        &bit_array_bytes_end);
+    buf += len;
+
+    len = utils::varint_decode_uint32((const char *)buf, 0,
+        &expected_entries_end);
+    buf += len;
+
+    bloom_ratio_end = utils::DeserializeFloat((const char *)buf);
+    buf += sizeof(float);
+
+    // Just not to break the current tests
+    use_bloom_filters = use_bloom_filters_end;
+    bit_array_bytes = bit_array_bytes_end;
+    expected_entries = expected_entries_end;
+    bloom_ratio = bloom_ratio_end;
   }
+
+  bool use_bloom_filters_begin;
+  uint32_t bit_array_bytes_begin;
+  uint32_t expected_entries_begin;
+  float bloom_ratio_begin;
+
+  bool use_bloom_filters_end;
+  uint32_t bit_array_bytes_end;
+  uint32_t expected_entries_end;
+  float bloom_ratio_end;
 
   bool use_bloom_filters;
   uint32_t bit_array_bytes;
