@@ -448,13 +448,13 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
 
-    std::string bloom_end_path = dir_path + "/bloom_filter_end.dump";
-    if (utils::PathExists(bloom_end_path)) 
-      bloom_store_end_.Deserialize(bloom_end_path);
-
     std::string bloom_begin_path = dir_path + "/bloom_filter_begin.dump";
     if (utils::PathExists(bloom_begin_path)) 
       bloom_store_begin_.Deserialize(bloom_begin_path);
+
+    std::string bloom_end_path = dir_path + "/bloom_filter_end.dump";
+    if (utils::PathExists(bloom_end_path)) 
+      bloom_store_end_.Deserialize(bloom_end_path);
 
     similarity_.Reset(doc_lengths_.GetAvgLength());
 

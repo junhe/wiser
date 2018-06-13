@@ -325,13 +325,16 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     fake_index_dumper_.Seek(pos);
   }
 
-  void SetBloomStore(BloomFilterStore *bloom_store) {
-    bloom_store_end_ = bloom_store;
+  void SetBloomStore(
+      BloomFilterStore *bloom_store_begin, BloomFilterStore *bloom_store_end) 
+  {
+    bloom_store_begin_ = bloom_store_begin;
+    bloom_store_end_ = bloom_store_end;
   }
 
   void DumpPostingList(const Term &term, 
       const PostingListDelta &posting_list) {
-    if (bloom_store_end_ == nullptr) 
+    if (bloom_store_begin_ == nullptr && bloom_store_end_ == nullptr) 
       DumpPostingListNoBloom(term, posting_list);
     else
       DumpPostingListWithBloom(term, posting_list);
@@ -613,7 +616,6 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
 
   FileDumper index_dumper_;
   FakeFileDumper fake_index_dumper_;
-  bool use_bloom_filters_;
 
   TermIndexDumper term_index_dumper_;
   BloomFilterStore *bloom_store_begin_;
@@ -631,10 +633,20 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
 class FlashEngineDumper {
  public:
   FlashEngineDumper(const std::string dump_dir_path, 
-      const bool use_bloom_filters = false)
+      const bool use_bloom_filters_end = false)
     :inverted_index_(dump_dir_path),
      dump_dir_path_(dump_dir_path),
-     use_bloom_filters_(use_bloom_filters)
+     use_bloom_filters_begin_(false),
+     use_bloom_filters_end_(use_bloom_filters_end)
+  {}
+
+  FlashEngineDumper(const std::string dump_dir_path, 
+      const bool use_bloom_filters_begin,
+      const bool use_bloom_filters_end)
+    :inverted_index_(dump_dir_path),
+     dump_dir_path_(dump_dir_path),
+     use_bloom_filters_begin_(use_bloom_filters_begin),
+     use_bloom_filters_end_(use_bloom_filters_end)
   {}
 
   // colum 2 should be tokens
@@ -699,12 +711,12 @@ class FlashEngineDumper {
  }
 
   void DumpInvertedIndex() {
-    if (use_bloom_filters_ == true) {
-      inverted_index_.SetBloomStore(&bloom_store_end_);
-    } else {
-      inverted_index_.SetBloomStore(nullptr);
-    }
+    BloomFilterStore *p_begin = 
+      use_bloom_filters_begin_? &bloom_store_begin_ : nullptr;
+    BloomFilterStore *p_end = 
+      use_bloom_filters_end_? &bloom_store_end_ : nullptr;
 
+    inverted_index_.SetBloomStore(p_begin, p_end);
     inverted_index_.Dump();
   }
 
@@ -741,7 +753,12 @@ class FlashEngineDumper {
     std::cout << "Reset similarity...\n";
     similarity_.Reset(doc_lengths_.GetAvgLength()); //good
 
-    if (use_bloom_filters_ == true) {
+    if (use_bloom_filters_begin_ == true) {
+      std::cout << "Loading bloom filter..." << std::endl;
+      bloom_store_begin_.Deserialize(dir_path + "/bloom_filter_begin.dump");
+    }
+
+    if (use_bloom_filters_end_ == true) {
       std::cout << "Loading bloom filter..." << std::endl;
       bloom_store_end_.Deserialize(dir_path + "/bloom_filter_end.dump");
     }
@@ -754,11 +771,13 @@ class FlashEngineDumper {
   DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
+  BloomFilterStore bloom_store_begin_;
   BloomFilterStore bloom_store_end_;
 
   int next_doc_id_ = 0;
   std::string dump_dir_path_;
-  bool use_bloom_filters_;
+  bool use_bloom_filters_begin_;
+  bool use_bloom_filters_end_;
 
   int NextDocId() {
     return next_doc_id_++;
