@@ -39,13 +39,23 @@ const int DocInfo::BodyLength() const {
   return utils::count_terms(body_);
 }
 
-std::vector<Term> DocInfo::GetPhraseEnds() const {
-  std::vector<Term> ret = utils::explode_strict(phrase_ends_, '!');
+std::vector<Term> DocInfo::ParsePhraseElems(const std::string &s) const {
+  std::vector<Term> ret = utils::explode_strict(s, '!');
   if (ret.size() > 0) {
     // the last item is an empty one
     ret.pop_back();
   }
   return ret;
 }
+
+
+std::vector<Term> DocInfo::GetPhraseEnds() const {
+  return ParsePhraseElems(phrase_ends_);
+}
+
+std::vector<Term> DocInfo::GetPhraseBegins() const {
+  return ParsePhraseElems(phrase_begins_);
+}
+
 
 

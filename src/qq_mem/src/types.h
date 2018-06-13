@@ -105,6 +105,16 @@ class DocInfo {
      token_positions_(token_positions), phrase_ends_(phrase_ends), 
      format_(format) {}
 
+  DocInfo(const std::string &body, const std::string &tokens, 
+      const std::string &token_offsets, const std::string &token_positions, 
+      const std::string &phrase_begins, const std::string &phrase_ends, 
+      const std::string &format) 
+    :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
+     token_positions_(token_positions), phrase_begins_(phrase_begins),
+     phrase_ends_(phrase_ends), 
+     format_(format) {}
+
+
   TermList GetTokens() const;
 
   // return a table of offset pairs
@@ -115,6 +125,9 @@ class DocInfo {
   // Each row is for a term
   std::vector<Positions> GetPositions() const;
 
+  std::vector<Term> ParsePhraseElems(const std::string &s) const;
+  std::vector<Term> GetPhraseBegins() const;
+
   std::vector<Term> GetPhraseEnds() const;
 
   const std::string &Body() const {return body_;}
@@ -124,6 +137,8 @@ class DocInfo {
   const std::string &TokenOffsets() const {return token_offsets_;}
 
   const std::string &TokenPositions() const {return token_positions_;}
+
+  const std::string &PhraseBegins() const {return phrase_begins_;}
 
   const std::string &PhraseEnds() const {return phrase_ends_;}
   
@@ -176,6 +191,7 @@ class DocInfo {
   std::string tokens_;
   std::string token_offsets_;
   std::string token_positions_;
+  std::string phrase_begins_;
   std::string phrase_ends_;
   std::string format_;
 };
