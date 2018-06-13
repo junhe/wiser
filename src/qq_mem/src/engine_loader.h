@@ -96,7 +96,6 @@ class LineDocParserPosition : public LineDocParserService {
 };
 
 
-// body, token, offset, position
 class LineDocParserPhraseEnd : public LineDocParserService {
  public:
   LineDocParserPhraseEnd(const std::string line_doc_path) 
@@ -111,6 +110,24 @@ class LineDocParserPhraseEnd : public LineDocParserService {
         "WITH_PHRASE_END");
   }
 };
+
+
+class LineDocParserBiBloom : public LineDocParserService {
+ public:
+  LineDocParserBiBloom(const std::string line_doc_path) 
+    :LineDocParserService(line_doc_path) {}
+
+  LineDocParserBiBloom(const std::string line_doc_path, const int n_rows) 
+    :LineDocParserService(line_doc_path, n_rows) {}
+
+ protected:
+  DocInfo ParseLine(std::vector<std::string> items) {
+    return DocInfo(items[1], items[2], items[3], items[4], items[6], items[5], 
+        "WITH_BI_BLOOM");
+  }
+};
+
+
 
 
 #endif 

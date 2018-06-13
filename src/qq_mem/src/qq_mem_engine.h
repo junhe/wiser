@@ -268,7 +268,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
 class QqMemEngineDelta: public SearchEngineServiceNew {
  public:
-  QqMemEngineDelta() :bloom_store_(0.01, 2) {}
+  QqMemEngineDelta() :bloom_store_end_(0.01, 2) {}
 
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
@@ -284,6 +284,8 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
       parser.reset(new LineDocParserPosition(line_doc_path, n_rows));
     } else if (format == "WITH_PHRASE_END") {
       parser.reset(new LineDocParserPhraseEnd(line_doc_path, n_rows));
+    } else if (format == "WITH_BI_BLOOM") {
+      parser.reset(new LineDocParserBiBloom(line_doc_path, n_rows));
     } else {
       throw std::runtime_error("Format " + format + " is not supported");
     }
@@ -308,7 +310,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); 
     similarity_.Reset(doc_lengths_.GetAvgLength());
     if (doc_info.Format() == "WITH_PHRASE_END")
-      bloom_store_.Add(doc_id, doc_info.GetTokens(), 
+      bloom_store_end_.Add(doc_id, doc_info.GetTokens(), 
           doc_info.GetPhraseEnds());
   }
 
@@ -427,7 +429,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     doc_store_.Serialize(dir_path + "/doc_store.dump");
     inverted_index_.Serialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Serialize(dir_path + "/doc_lengths.dump");
-    bloom_store_.Serialize(dir_path + "/bloom_filter.dump");
+    bloom_store_end_.Serialize(dir_path + "/bloom_filter_end.dump");
   }
 
   void Deserialize(std::string dir_path) {
@@ -436,9 +438,9 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
 
-    std::string bloom_path = dir_path + "/bloom_filter.dump";
+    std::string bloom_path = dir_path + "/bloom_filter_end.dump";
     if (utils::PathExists(bloom_path)) 
-      bloom_store_.Deserialize(bloom_path);
+      bloom_store_end_.Deserialize(bloom_path);
     similarity_.Reset(doc_lengths_.GetAvgLength());
 
     std::cout << "Doc lengths _______________________________________________________\n";
@@ -452,7 +454,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
   DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
-  BloomFilterStore bloom_store_;
+  BloomFilterStore bloom_store_end_;
 
   int NextDocId() {
     return next_doc_id_++;

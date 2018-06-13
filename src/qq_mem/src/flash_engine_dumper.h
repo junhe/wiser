@@ -271,7 +271,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     :index_dumper_(dump_dir_path + "/my.vacuum"),
      fake_index_dumper_(dump_dir_path + "/fake.vacuum"),
      term_index_dumper_(dump_dir_path + "/my.tip"),
-     bloom_store_(nullptr)
+     bloom_store_end_(nullptr)
   {}
 
   void Dump() {
@@ -291,16 +291,16 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
   void DumpHeader() {
     index_dumper_.Dump(utils::MakeString(VACUUM_FIRST_BYTE));
 
-    if (bloom_store_ == nullptr) {
+    if (bloom_store_end_ == nullptr) {
       DumpVarint(0);
       DumpVarint(0);
       DumpVarint(0);
       index_dumper_.Dump(utils::SerializeFloat(0));
     } else {
       DumpVarint(1);
-      DumpVarint(bloom_store_->BitArrayBytes());
-      DumpVarint(bloom_store_->ExpectedEntries());
-      index_dumper_.Dump(utils::SerializeFloat(bloom_store_->Ratio()));
+      DumpVarint(bloom_store_end_->BitArrayBytes());
+      DumpVarint(bloom_store_end_->ExpectedEntries());
+      index_dumper_.Dump(utils::SerializeFloat(bloom_store_end_->Ratio()));
     }
       
     index_dumper_.Seek(100);
@@ -313,12 +313,12 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
   }
 
   void SetBloomStore(BloomFilterStore *bloom_store) {
-    bloom_store_ = bloom_store;
+    bloom_store_end_ = bloom_store;
   }
 
   void DumpPostingList(const Term &term, 
       const PostingListDelta &posting_list) {
-    if (bloom_store_ == nullptr) 
+    if (bloom_store_end_ == nullptr) 
       DumpPostingListNoBloom(term, posting_list);
     else
       DumpPostingListWithBloom(term, posting_list);
@@ -403,10 +403,10 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     LOG(INFO) << "Dumping Posting List of " << term << std::endl;
     LOG(INFO) << "Number of postings: " << posting_it.Size() << std::endl;
 
-    const BloomFilterCases &bloom_cases = bloom_store_->Lookup(term);
+    const BloomFilterCases &bloom_cases = bloom_store_end_->Lookup(term);
     auto bloom_iter = bloom_cases.Begin();
 
-    BloomFilterColumnWriter bloom_col_writer(bloom_store_->BitArrayBytes());
+    BloomFilterColumnWriter bloom_col_writer(bloom_store_end_->BitArrayBytes());
 
     TermEntrySet entry_set;
 
@@ -603,7 +603,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
   bool use_bloom_filters_;
 
   TermIndexDumper term_index_dumper_;
-  BloomFilterStore *bloom_store_;
+  BloomFilterStore *bloom_store_end_;
 };
 
 
@@ -686,7 +686,7 @@ class FlashEngineDumper {
 
   void DumpInvertedIndex() {
     if (use_bloom_filters_ == true) {
-      inverted_index_.SetBloomStore(&bloom_store_);
+      inverted_index_.SetBloomStore(&bloom_store_end_);
     } else {
       inverted_index_.SetBloomStore(nullptr);
     }
@@ -729,7 +729,7 @@ class FlashEngineDumper {
 
     if (use_bloom_filters_ == true) {
       std::cout << "Loading bloom filter..." << std::endl;
-      bloom_store_.Deserialize(dir_path + "/bloom_filter.dump");
+      bloom_store_end_.Deserialize(dir_path + "/bloom_filter_end.dump");
     }
   }
 
@@ -740,7 +740,7 @@ class FlashEngineDumper {
   DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
-  BloomFilterStore bloom_store_;
+  BloomFilterStore bloom_store_end_;
 
   int next_doc_id_ = 0;
   std::string dump_dir_path_;
