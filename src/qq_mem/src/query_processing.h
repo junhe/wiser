@@ -687,11 +687,14 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
     const DocLengthCharStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5,
-    const bool is_phrase = false)
+    const bool is_phrase = false,
+    const int bloom_enable_factor = BLOOM_ALWAYS_USE
+    )
    :ProcessorBase<PLIter_T>(similarity,            pl_iterators, doc_lengths, 
                   n_total_docs_in_index, k),
     phrase_qp_(8),
-    is_phrase_(is_phrase)
+    is_phrase_(is_phrase),
+    bloom_enable_factor_(bloom_enable_factor)
   {}
 
   std::vector<ResultDocEntry<PLIter_T>> Process() {
@@ -833,7 +836,14 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
   bool UseBloomFilters() {
-    return this->pl_iterators_[0].Size() * 10 < this->pl_iterators_[1].Size();
+    if (bloom_enable_factor_ == BLOOM_NEVER_USE) {
+      return false;
+    } else if (bloom_enable_factor_ == BLOOM_ALWAYS_USE) {
+      return true;
+    } else {
+      return this->pl_iterators_[0].Size() * bloom_enable_factor_
+        < this->pl_iterators_[1].Size();
+    }
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
@@ -899,6 +909,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
 
   PhraseQueryProcessor2<PosIter_T> phrase_qp_;
   bool is_phrase_;
+  int bloom_enable_factor_;
 };
 
 
@@ -912,7 +923,9 @@ std::vector<ResultDocEntry<PLIter_T>> ProcessQueryDelta(
      const DocLengthCharStore &doc_lengths,
      const int n_total_docs_in_index,
      const int k,
-     const bool is_phase) {
+     const bool is_phase,
+     const int bloom_enable_factor = BLOOM_ALWAYS_USE
+     ) {
   if (pl_iterators->size() == 1) {
     SingleTermQueryProcessor<PLIter_T> qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k);

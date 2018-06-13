@@ -234,8 +234,10 @@ DECLARE_string(lock_memory);
 template <typename DocStore_T>
 class VacuumEngine : public SearchEngineServiceNew {
  public:
-  VacuumEngine(const std::string engine_dir_path)
-    :engine_dir_path_(engine_dir_path)
+  VacuumEngine(const std::string engine_dir_path, 
+      int bloom_enable_factor = BLOOM_ALWAYS_USE)
+    :engine_dir_path_(engine_dir_path),
+     bloom_enable_factor_(bloom_enable_factor)
   {}
 
 	~VacuumEngine() {
@@ -358,8 +360,8 @@ class VacuumEngine : public SearchEngineServiceNew {
 
     auto top_k = qq_search::ProcessQueryDelta
       <VacuumPostingListIterator, InBagPositionIterator>(
-        similarity_,      &iterators,     doc_lengths_, doc_lengths_.Size(), 
-        query.n_results,  query.is_phrase);  
+        similarity_,      &iterators,      doc_lengths_, doc_lengths_.Size(), 
+        query.n_results,  query.is_phrase, bloom_enable_factor_);  
 
     for (auto & top_doc_entry : top_k) {
       SearchResultEntry result_entry;
@@ -427,6 +429,8 @@ class VacuumEngine : public SearchEngineServiceNew {
   std::string engine_dir_path_;
   bool is_loaded_ = false;
   bool profiler_started = false;
+
+  int bloom_enable_factor_;
 };
 
 
