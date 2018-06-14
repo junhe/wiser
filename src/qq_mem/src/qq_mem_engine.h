@@ -270,8 +270,9 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
 class QqMemEngineDelta: public SearchEngineServiceNew {
  public:
-  QqMemEngineDelta() 
-    :bloom_store_begin_(0.001, 5), bloom_store_end_(0.001, 5) {}
+  QqMemEngineDelta(const int bloom_entries, const float bloom_ratio) 
+    :bloom_store_begin_(bloom_ratio, bloom_entries), 
+     bloom_store_end_(bloom_ratio, bloom_entries) {}
 
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 

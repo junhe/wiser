@@ -34,7 +34,8 @@ inline std::unique_ptr<SearchEngineServiceNew> CreateSearchEngine(
     std::string engine_type, int bloom_enable_factor = 1, 
     int bloom_entries = 5, float bloom_ratio = 0.001) {
   if (engine_type == "qq_mem_compressed") {
-    return std::unique_ptr<SearchEngineServiceNew>(new QqMemEngineDelta());
+    return std::unique_ptr<SearchEngineServiceNew>(
+        new QqMemEngineDelta(bloom_entries, bloom_ratio));
   } else if (IsVacuumUrl(engine_type) == true) {
     VacuumConfig config = ParseUrl(engine_type);
     if (config.source_type == "vacuum_dump") {
