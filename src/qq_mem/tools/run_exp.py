@@ -81,11 +81,11 @@ lock_memory = ["disabled"] # must be string
 ######################
 # Vacuum only
 ######################
-search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-05-23-wiki-2018May"
-# search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_0501_prefetch_zone"
-# search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_delta_skiplist-04-30"
-# search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
-# search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
+vacuum_engines = ["vacuum:vacuum_dump:/mnt/ssd/vacuum-06-13-bi-bloom-1-0.00029"]
+# vacuum_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_0501_prefetch_zone"
+# vacuum_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_delta_skiplist-04-30"
+# vacuum_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
+# vacuum_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
 profile_qq_server = "false"
 engine_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
 bloom_factors = [10]
@@ -190,7 +190,7 @@ def load_mem_engine(conf):
     elif conf['engine'] == ELASTIC_PY:
         load_mem_elastic(conf)
     elif conf['engine'] == VACUUM:
-        load_mem_vacuum(conf['query_path'])
+        load_mem_vacuum(conf)
     else:
         raise RuntimeError
 
@@ -207,11 +207,11 @@ def load_mem_elastic(conf):
     shcmd("rm -f /tmp/client.out")
     time.sleep(1)
 
-def load_mem_vacuum(query_path):
+def load_mem_vacuum(conf):
     # p = start_vacuum_client(32, query_path)
     # p.wait()
 
-    engine_path = search_engine.split(":")[2]
+    engine_path = conf['vacuum_engine'].split(":")[2]
     shcmd("vmtouch -vt {}".format(engine_path))
 
     # shcmd("rm -f /tmp/client.out")
@@ -644,7 +644,7 @@ def start_vacuum_server(conf):
               "-lock_memory={lock_mem} -bloom_factor={bloom_factor}"\
               .format(server = server_addr,
                     n_threads = conf['n_server_threads'],
-                    engine = search_engine,
+                    engine = conf['vacuum_engine'],
                     enable_prefetch = conf['enable_prefetch'],
                     threshold = conf['prefetch_threshold_kb'] / 4,
                     profile = profile_qq_server,
@@ -716,7 +716,8 @@ class Exp(Experiment):
                 "enable_prefetch": enable_prefetch_list,
                 "elastic_data_path": elastic_data_paths,
                 "force_disable_es_readahead": force_disable_es_readahead,
-                "bloom_factor": bloom_factors
+                "bloom_factor": bloom_factors,
+                "vacuum_engine": vacuum_engines
                 })
         self.confs = self.organize_conf(confs)
 
