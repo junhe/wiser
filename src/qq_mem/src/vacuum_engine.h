@@ -238,7 +238,10 @@ class VacuumEngine : public SearchEngineServiceNew {
       int bloom_enable_factor = 1)
     :engine_dir_path_(engine_dir_path),
      bloom_enable_factor_(bloom_enable_factor)
-  {}
+  {
+    std::cout << "Index path: " << engine_dir_path << std::endl; 
+    std::cout << "Bloom factor: " << bloom_enable_factor << std::endl; 
+  }
 
 	~VacuumEngine() {
     std::cout << "--------------------------------------" << std::endl;

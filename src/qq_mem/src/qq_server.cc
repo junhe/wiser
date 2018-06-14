@@ -44,6 +44,7 @@ DEFINE_int32(n_secs, 0, "Server running time (seconds).");
 DEFINE_int32(n_threads, 1, "Number of async GRPC threads (it has no effect in SYNC mode.");
 DEFINE_int32(n_docs, 1000, "Number of documents to load");
 DEFINE_string(sync_type, "ASYNC", "Type of GPRC sync [ASYNC/SYNC]");
+DEFINE_int32(bloom_factor, 10, "bloom enable factor");
 
 
 
@@ -103,6 +104,8 @@ int main(int argc, char** argv) {
   // config.SetString("line_doc_format", "TOKEN_ONLY");
   // config.SetString("line_doc_path", 
       // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
+
+  config.SetInt("bloom_factor", FLAGS_bloom_factor);
 
   if (config.GetString("sync_type") == "ASYNC") {
     config.SetInt("n_server_threads", n_threads);
