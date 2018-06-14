@@ -88,6 +88,7 @@ search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-05-23-wiki-2018May"
 # search_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
 profile_qq_server = "false"
 engine_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
+bloom_factors = [10]
 
 
 
@@ -640,14 +641,16 @@ def start_vacuum_server(conf):
               "-sync_type=ASYNC -n_threads={n_threads} "\
               "-addr={server} -port=50051 -engine={engine} -profile_vacuum={profile} "\
               "-enable_prefetch={enable_prefetch} -prefetch_threshold={threshold} "\
-              "-lock_memory={lock_mem}"\
+              "-lock_memory={lock_mem} -bloom_factor={bloom_factor}"\
               .format(server = server_addr,
                     n_threads = conf['n_server_threads'],
                     engine = search_engine,
                     enable_prefetch = conf['enable_prefetch'],
                     threshold = conf['prefetch_threshold_kb'] / 4,
                     profile = profile_qq_server,
-                    lock_mem = conf['lock_memory'])
+                    lock_mem = conf['lock_memory'],
+                    bloom_factor = conf['bloom_factor']
+                    )
         print "-" * 20
         print "server cmd:", cmd
         print "-" * 20
@@ -712,7 +715,8 @@ class Exp(Experiment):
                 "prefetch_threshold_kb": prefetch_thresholds_kb,
                 "enable_prefetch": enable_prefetch_list,
                 "elastic_data_path": elastic_data_paths,
-                "force_disable_es_readahead": force_disable_es_readahead
+                "force_disable_es_readahead": force_disable_es_readahead,
+                "bloom_factor": bloom_factors
                 })
         self.confs = self.organize_conf(confs)
 
