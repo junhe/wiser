@@ -11,12 +11,18 @@
 
 DEFINE_string(line_doc_path, "", "path of the line doc");
 DEFINE_string(dump_dir_path, "", "path of the directory to dump to");
+DEFINE_int32(bloom_entries, 5, "number of entries in a bloom filter");
+DEFINE_double(bloom_ratio, 0.001, "false positive ratio in a bloom filter");
 
 std::unique_ptr<SearchEngineServiceNew> 
     CreateQqEngineFromFile(GeneralConfig config) 
 {
   std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
-      config.GetString("engine_type"));
+      config.GetString("engine_type"),
+      1,
+      FLAGS_bloom_entries,
+      FLAGS_bloom_ratio
+      );
 
   if (config.GetString("load_source") == "linedoc") {
     std::cout << "Loading line doc from "
