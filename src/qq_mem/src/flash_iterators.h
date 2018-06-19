@@ -4,6 +4,7 @@
 #include "packed_value.h"
 #include "file_dumper.h"
 #include "bloom_filter.h"
+#include "term_index.h"
 
 
 DECLARE_bool(enable_prefetch);
@@ -12,40 +13,6 @@ DECLARE_int32(prefetch_threshold);
 
 enum class BlobFormat {PACKED_INTS, VINTS, NONE};
 
-
-class TermIndexResult {
- public:
-  TermIndexResult() :is_empty_(true) {}
-  TermIndexResult(std::string key, off_t value, bool is_empty)
-    :key_(key), is_empty_(is_empty) {
-    DecodePrefetchZoneAndOffset(
-        value, &n_pages_of_prefetch_zone_, &posting_list_offset_);
-  }
-
-  const std::string &Key() const {
-    return key_;
-  }
-
-  off_t GetPostingListOffset() const {
-    return posting_list_offset_;
-  }
-
-  uint32_t GetNumPagesInPrefetchZone() const {
-    return n_pages_of_prefetch_zone_;
-  }
-
-  bool IsEmpty() const {
-    return is_empty_;
-  }
-
- private:
-  std::string key_;
-
-  uint32_t n_pages_of_prefetch_zone_;
-  off_t posting_list_offset_;
-
-  bool is_empty_;
-};
 
 
 inline std::string FormatString(const BlobFormat f) {

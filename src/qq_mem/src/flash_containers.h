@@ -4,6 +4,8 @@
 #include "types.h"
 #include "packed_value.h"
 
+#include "tsl/htrie_hash.h"
+#include "tsl/htrie_map.h"
 
 constexpr int SKIP_INTERVAL = PACK_ITEM_CNT;
 constexpr int PACK_SIZE = PACK_ITEM_CNT;
@@ -683,6 +685,8 @@ class BloomSkipList {
  private:
   std::vector<off_t> bloom_box_offs_;
 };
+
+
 
 
 
