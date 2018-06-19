@@ -14,33 +14,6 @@ DEFINE_string(dump_dir_path, "", "path of the directory to dump to");
 DEFINE_int32(bloom_entries, 5, "number of entries in a bloom filter");
 DEFINE_double(bloom_ratio, 0.001, "false positive ratio in a bloom filter");
 
-std::unique_ptr<SearchEngineServiceNew> 
-    CreateQqEngineFromFile(GeneralConfig config) 
-{
-  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
-      config.GetString("engine_type"),
-      1,
-      FLAGS_bloom_entries,
-      FLAGS_bloom_ratio
-      );
-
-  if (config.GetString("load_source") == "linedoc") {
-    std::cout << "Loading line doc from "
-      << config.GetString("line_doc_path")
-      << std::endl;
-
-    engine->LoadLocalDocuments(config.GetString("line_doc_path"), 
-                               config.GetInt("n_docs"),
-                               config.GetString("loader"));
-  } else {
-    std::cout << "You must speicify load_source" << std::endl;
-  }
-
-  std::cout << "Term Count: " << engine->TermCount() << std::endl;
-  return engine;
-}
-
-
 void CheckArgs() {
   if (FLAGS_line_doc_path == "") {
     LOG(FATAL) << "Arg line_doc_path is not set";
@@ -49,28 +22,6 @@ void CheckArgs() {
   if (FLAGS_dump_dir_path == "") {
     LOG(FATAL) << "Arg dump_dir_path is not set";
   }
-}
-
-
-GeneralConfig config_by_jun() {
-  GeneralConfig config;
-  config.SetString("engine_type", "qq_mem_compressed");
-
-  config.SetString("load_source", "linedoc");
-
-  config.SetInt("n_docs", 100000000);
-  config.SetString("line_doc_path", FLAGS_line_doc_path);
-  config.SetString("dump_dir_path", FLAGS_dump_dir_path);
-  config.SetString("loader", "WITH_BI_BLOOM");
-
-  config.SetInt("n_queries", 1000);
-  config.SetInt("n_passages", 3);
-  config.SetBool("enable_snippets", true);
-  
-  config.SetString("query_source", "hardcoded");
-  config.SetStringVec("terms", std::vector<std::string>{"hello"});
-
-  return config;
 }
 
 
@@ -83,10 +34,13 @@ int main(int argc, char **argv) {
 
   CheckArgs();
 
-  auto config = config_by_jun();
+  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
+      "qq_mem_compressed");
+  engine->LoadLocalDocuments(FLAGS_line_doc_path, 100000000, "WITH_POSITIONS");
+  engine->Serialize(FLAGS_dump_dir_path);
 
-  auto engine = CreateQqEngineFromFile(config); 
-  engine->Serialize(config.GetString("dump_dir_path"));
+  BloomDumper bloom_dumper(FLAGS_bloom_ratio, FLAGS_bloom_entries);
+  bloom_dumper.Load(FLAGS_line_doc_path);
+  bloom_dumper.Dump(FLAGS_dump_dir_path);
 }
-
 
