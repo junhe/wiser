@@ -86,7 +86,6 @@ int main(int argc, char **argv) {
   auto config = config_by_jun();
 
   auto engine = CreateQqEngineFromFile(config); 
-
   engine->Serialize(config.GetString("dump_dir_path"));
 }
 

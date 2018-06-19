@@ -561,6 +561,11 @@ class BloomFilterReader {
 
 class BloomDumper {
  public:
+  BloomDumper(const float &ratio = 0.0009, const int &expected_entries = 5) 
+    :bloom_store_begin_(ratio, expected_entries),
+     bloom_store_end_(ratio, expected_entries)
+  {}
+
   void Load(const std::string &line_doc_path) {
     LineDocParserBiBloom parser(line_doc_path, 100000000);
 
