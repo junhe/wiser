@@ -6,11 +6,19 @@
 
 #include <gperftools/profiler.h>
 
-#include "utils.h"
-#include "flash_iterators.h"
-
 #include "tsl/htrie_hash.h"
 #include "tsl/htrie_map.h"
+
+#include "utils.h"
+#include "flash_iterators.h"
+#include "doc_length_store.h"
+#include "highlighter.h"
+#include "bloom_filter.h"
+#include "doc_store.h"
+#include "engine_loader.h"
+#include "scoring.h"
+#include "query_processing.h"
+
 
 DECLARE_bool(enable_prefetch);
 

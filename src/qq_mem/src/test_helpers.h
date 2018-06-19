@@ -5,6 +5,7 @@
 #include "posting_list_delta.h"
 #include "posting_list_vec.h"
 #include "flash_iterators.h"
+#include "flash_engine_dumper.h"
 
 StandardPosting create_posting(DocIdType doc_id, 
                                int term_freq, 

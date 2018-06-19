@@ -3,6 +3,7 @@
 #include "test_helpers.h"
 #include "flash_iterators.h"
 #include "vacuum_engine.h"
+#include "flash_engine_dumper.h"
 #include "utils.h"
 
 

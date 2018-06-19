@@ -9,8 +9,15 @@ constexpr int SKIP_INTERVAL = PACK_ITEM_CNT;
 constexpr int PACK_SIZE = PACK_ITEM_CNT;
 
 
-inline std::vector<uint32_t> GetSkipPostingPreDocIds(const std::vector<uint32_t> &doc_ids) {
-  std::vector<uint32_t> skip_pre_doc_ids{0}; // the first is always 0
+inline void DecodePrefetchZoneAndOffset(
+    const off_t offset_from_term_index, uint32_t *n_pages_of_zone, off_t *posting_list_start) {
+  *n_pages_of_zone = ((uint64_t) offset_from_term_index) >> 48;
+  constexpr uint64_t mask = (((~(uint64_t) 0) << 16) >> 16); // 0b0000 111..111   48 1s
+  *posting_list_start = ((uint64_t)offset_from_term_index) & mask;
+}
+
+
+inline std::vector<uint32_t> GetSkipPostingPreDocIds(const std::vector<uint32_t> &doc_ids) { std::vector<uint32_t> skip_pre_doc_ids{0}; // the first is always 0
   for (std::size_t skip_posting_i = SKIP_INTERVAL; 
       skip_posting_i < doc_ids.size(); 
       skip_posting_i += SKIP_INTERVAL) 

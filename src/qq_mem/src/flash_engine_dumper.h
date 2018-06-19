@@ -47,13 +47,6 @@ inline off_t EncodePrefetchZoneAndOffset(
   return (((uint64_t) n_pages_of_zone) << 48) | posting_list_start;
 }
 
-inline void DecodePrefetchZoneAndOffset(
-    const off_t offset_from_term_index, uint32_t *n_pages_of_zone, off_t *posting_list_start) {
-  *n_pages_of_zone = ((uint64_t) offset_from_term_index) >> 48;
-  constexpr uint64_t mask = (((~(uint64_t) 0) << 16) >> 16); // 0b0000 111..111   48 1s
-  *posting_list_start = ((uint64_t)offset_from_term_index) & mask;
-}
-
 class GeneralTermEntry {
  public:
   // Values can be positions, offsets, term frequencies

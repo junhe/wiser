@@ -1,6 +1,15 @@
 #ifndef FILE_DUMPER_H
 #define FILE_DUMPER_H
 
+
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#include "flash_containers.h"
+
 class GeneralFileDumper {
  public:
   GeneralFileDumper(const std::string path) {

@@ -2,7 +2,8 @@
 #define FLASH_ITERATORS_H
 
 #include "packed_value.h"
-#include "flash_engine_dumper.h"
+#include "file_dumper.h"
+#include "bloom_filter.h"
 
 
 DECLARE_bool(enable_prefetch);
