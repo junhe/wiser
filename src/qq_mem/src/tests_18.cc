@@ -180,7 +180,7 @@ TEST_CASE( "Loading Engine with phrase begin and ends", "[engine]" ) {
   REQUIRE(engine->TermCount() == 0);
   engine->LoadLocalDocuments("src/testdata/wiki_linedoc.toy.pre-suf-bloom", 
       10000, 
-      "WITH_BI_BLOOM");
+      "WITH_POSITIONS");
   REQUIRE(engine->TermCount() > 0);
   auto result = engine->Search(SearchQuery({"prefix"}));
   std::cout << result.ToStr() << std::endl;
@@ -199,6 +199,11 @@ TEST_CASE( "Loading Engine with phrase begin and ends", "[engine]" ) {
 
     // Dump to qq mem format
     engine->Serialize("/tmp/bloom-qq-engine-tmp");
+
+    // Dump bloom filters
+    BloomDumper bloom_dumper;
+    bloom_dumper.Load("src/testdata/wiki_linedoc.toy.pre-suf-bloom");
+    bloom_dumper.Dump("/tmp/bloom-qq-engine-tmp");
 
     // Dump to vacuum format
     utils::PrepareDir("/tmp/bloom-vacuum-engine-tmp");
@@ -291,6 +296,12 @@ TEST_CASE( "Loading Engine with bi-bloom (3 docs)", "[blmxx]" ) {
 
     // Dump to qq mem format
     engine->Serialize("/tmp/bloom-qq-engine-tmp");
+
+    // Dump bloom filters
+    BloomDumper bloom_dumper;
+    bloom_dumper.Load("src/testdata/iter_test_3_docs_tf_bi-bloom");
+    bloom_dumper.Dump("/tmp/bloom-qq-engine-tmp");
+
 
     // Dump to vacuum format
     utils::PrepareDir("/tmp/bloom-vacuum-engine-tmp");
