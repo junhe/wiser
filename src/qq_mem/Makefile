@@ -102,6 +102,14 @@ create_qq_mem_dump:
 	./create_qq_mem_dump -line_doc_path=/mnt/ssd/wiki/wiki_full.linedoc_tokenized_preprocessed \
 	-dump_dir_path=/mnt/ssd/vacuum-june-wiki-bloom
 
+
+create_bloom_store:
+	cd build && cmake ../src/ && \
+	make create_bloom_store && \
+	./create_bloom_store -line_doc_path=/users/jhe/flashsearch/src/qq_mem/src/testdata/iter_test_3_docs_tf_bi-bloom \
+	-dump_dir_path=/mnt/ssd/vacuum-tmp
+
+
 vacuum_two_nodes:
 	cd build 
 	cmake ../src/

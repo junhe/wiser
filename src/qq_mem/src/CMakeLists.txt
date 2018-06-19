@@ -223,6 +223,24 @@ target_link_libraries(engine_bench
 )
 
 
+add_executable(create_bloom_store
+    create_bloom_store.cc
+    ${ENGINE_SRCS}
+    ${PROTO_SRCS}
+    ${GRPC_SRCS}
+)
+
+target_link_libraries(create_bloom_store
+    ${GRPC_LIBS}
+    protobuf::libprotobuf
+    ${QQ_LIBS}
+    pthread
+    ${GLOG_LIB}
+)
+
+
+
+
 add_executable(create_qq_mem_dump
     create_qq_mem_dump.cc
     ${ENGINE_SRCS}
