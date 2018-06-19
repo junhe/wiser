@@ -1,5 +1,5 @@
 #include "qq_mem_engine.h"
-#include "vacuum_engine.h"
+#include "flash_engine_dumper.h"
 
 
 DEFINE_string(qqdump_dir_path, "", "path of the qq dump dir to read from");
