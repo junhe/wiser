@@ -265,8 +265,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     :index_dumper_(dump_dir_path + "/my.vacuum"),
      fake_index_dumper_(dump_dir_path + "/fake.vacuum"),
      term_index_dumper_(dump_dir_path + "/my.tip"),
-     bloom_store_begin_(nullptr),
-     bloom_store_end_(nullptr)
+     bloom_reader_begin_(nullptr),
+     bloom_reader_end_(nullptr)
   {}
 
   void Dump() {
@@ -286,28 +286,28 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
   void DumpHeader() {
     index_dumper_.Dump(utils::MakeString(VACUUM_FIRST_BYTE));
 
-    if (bloom_store_begin_ == nullptr) {
+    if (bloom_reader_begin_ == nullptr) {
       DumpVarint(0);
       DumpVarint(0);
       DumpVarint(0);
       index_dumper_.Dump(utils::SerializeFloat(0));
     } else {
       DumpVarint(1); // use bloom filter
-      DumpVarint(bloom_store_begin_->BitArrayBytes());
-      DumpVarint(bloom_store_begin_->ExpectedEntries());
-      index_dumper_.Dump(utils::SerializeFloat(bloom_store_begin_->Ratio()));
+      DumpVarint(bloom_reader_begin_->BitArrayBytes());
+      DumpVarint(bloom_reader_begin_->ExpectedEntries());
+      index_dumper_.Dump(utils::SerializeFloat(bloom_reader_begin_->Ratio()));
     }
 
-    if (bloom_store_end_ == nullptr) {
+    if (bloom_reader_end_ == nullptr) {
       DumpVarint(0);
       DumpVarint(0);
       DumpVarint(0);
       index_dumper_.Dump(utils::SerializeFloat(0));
     } else {
       DumpVarint(1); // use bloom filter
-      DumpVarint(bloom_store_end_->BitArrayBytes());
-      DumpVarint(bloom_store_end_->ExpectedEntries());
-      index_dumper_.Dump(utils::SerializeFloat(bloom_store_end_->Ratio()));
+      DumpVarint(bloom_reader_end_->BitArrayBytes());
+      DumpVarint(bloom_reader_end_->ExpectedEntries());
+      index_dumper_.Dump(utils::SerializeFloat(bloom_reader_end_->Ratio()));
     }
 
     index_dumper_.Seek(100);
@@ -320,15 +320,15 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
   }
 
   void SetBloomStore(
-      BloomFilterStore *bloom_store_begin, BloomFilterStore *bloom_store_end) 
+      BloomFilterReader *bloom_reader_begin, BloomFilterReader *bloom_reader_end) 
   {
-    bloom_store_begin_ = bloom_store_begin;
-    bloom_store_end_ = bloom_store_end;
+    bloom_reader_begin_ = bloom_reader_begin;
+    bloom_reader_end_ = bloom_reader_end;
   }
 
   void DumpPostingList(const Term &term, 
       const PostingListDelta &posting_list) {
-    if (bloom_store_begin_ == nullptr && bloom_store_end_ == nullptr) 
+    if (bloom_reader_begin_ == nullptr && bloom_reader_end_ == nullptr) 
       DumpPostingListNoBloom(term, posting_list);
     else
       DumpPostingListWithBloom(term, posting_list);
@@ -414,16 +414,16 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     LOG(INFO) << "Dumping Posting List of " << term << std::endl;
     LOG(INFO) << "Number of postings: " << posting_it.Size() << std::endl;
 
-    const BloomFilterCases &bloom_begin_cases = bloom_store_begin_->Lookup(term);
+    const BloomFilterCases &bloom_begin_cases = bloom_reader_begin_->Lookup(term);
     auto bloom_begin_iter = bloom_begin_cases.Begin();
 
-    BloomFilterColumnWriter bloom_begin_writer(bloom_store_begin_->BitArrayBytes());
+    BloomFilterColumnWriter bloom_begin_writer(bloom_reader_begin_->BitArrayBytes());
 
 
-    const BloomFilterCases &bloom_end_cases = bloom_store_end_->Lookup(term);
+    const BloomFilterCases &bloom_end_cases = bloom_reader_end_->Lookup(term);
     auto bloom_end_iter = bloom_end_cases.Begin();
 
-    BloomFilterColumnWriter bloom_end_writer(bloom_store_end_->BitArrayBytes());
+    BloomFilterColumnWriter bloom_end_writer(bloom_reader_end_->BitArrayBytes());
 
     LOG_IF(FATAL, bloom_begin_cases.Size() != bloom_end_cases.Size())
       << "Currently, you must have both begin and end bloom!";
@@ -636,8 +636,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
   FakeFileDumper fake_index_dumper_;
 
   TermIndexDumper term_index_dumper_;
-  BloomFilterStore *bloom_store_begin_;
-  BloomFilterStore *bloom_store_end_;
+  BloomFilterReader *bloom_reader_begin_;
+  BloomFilterReader *bloom_reader_end_;
 };
 
 
@@ -729,10 +729,10 @@ class FlashEngineDumper {
  }
 
   void DumpInvertedIndex() {
-    BloomFilterStore *p_begin = 
-      use_bloom_filters_begin_? &bloom_store_begin_ : nullptr;
-    BloomFilterStore *p_end = 
-      use_bloom_filters_end_? &bloom_store_end_ : nullptr;
+    BloomFilterReader *p_begin = 
+      use_bloom_filters_begin_? &bloom_reader_begin_ : nullptr;
+    BloomFilterReader *p_end = 
+      use_bloom_filters_end_? &bloom_reader_end_ : nullptr;
 
     LOG_IF(FATAL, (p_begin == nullptr) != (p_end == nullptr))
       << "Currently, you must either not use bloom filter or "
@@ -777,12 +777,18 @@ class FlashEngineDumper {
 
     if (use_bloom_filters_begin_ == true) {
       std::cout << "Loading bloom filter..." << std::endl;
-      bloom_store_begin_.Deserialize(dir_path + "/bloom_filter_begin.dump");
+      bloom_reader_begin_.Load(
+          dir_path + "/bloom_begin.meta",
+          dir_path + "/bloom_begin.index",
+          dir_path + "/bloom_begin.store");
     }
 
     if (use_bloom_filters_end_ == true) {
       std::cout << "Loading bloom filter..." << std::endl;
-      bloom_store_end_.Deserialize(dir_path + "/bloom_filter_end.dump");
+      bloom_reader_end_.Load(
+          dir_path + "/bloom_end.meta",
+          dir_path + "/bloom_end.index",
+          dir_path + "/bloom_end.store");
     }
   }
 
@@ -793,8 +799,9 @@ class FlashEngineDumper {
   DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
-  BloomFilterStore bloom_store_begin_;
-  BloomFilterStore bloom_store_end_;
+
+  BloomFilterReader bloom_reader_begin_;
+  BloomFilterReader bloom_reader_end_;
 
   int next_doc_id_ = 0;
   std::string dump_dir_path_;

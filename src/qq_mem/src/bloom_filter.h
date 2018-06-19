@@ -473,7 +473,17 @@ class BloomFilterStore {
 
 class BloomFilterReader {
  public:
+  BloomFilterReader() {}
+
   BloomFilterReader(
+      const std::string &meta_path,
+      const std::string &index_path, 
+      const std::string &bloom_path) 
+  {
+    Load(meta_path, index_path, bloom_path);
+  }
+
+  void Load(
       const std::string &meta_path,
       const std::string &index_path, 
       const std::string &bloom_path) 
