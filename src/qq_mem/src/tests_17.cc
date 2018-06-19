@@ -301,6 +301,37 @@ TEST_CASE( "Bloom filter serialization", "[bloomfilter]" ) {
 
 }
 
+TEST_CASE( "Serialize blooom filter store with index", "[bloomfilter]" ) {
+  Table table;
+
+  for (int i = 0; i < 10; i++) {
+    string_pair pair = GetRandSetStr(i);
+    Row row(std::to_string(i), pair.first, pair.second); 
+    table.rows.push_back(row);
+  }
+
+  SECTION("All tokens belong to the same the doc") {
+    BloomFilterStore store(0.00001, 10);
+    
+    store.Add(888, table.ColTokens(), table.ColEnds());
+
+    CheckStore(store, table);
+
+    store.SerializeWithIndex(
+        "/tmp/bloom.meta",
+        "/tmp/bloom.index",
+        "/tmp/bloom.store");
+
+    // BloomFilterStore store2;
+    // store2.Deserialize("/tmp/tmp.store");
+    // REQUIRE(store2.Ratio() == store.Ratio());
+    // REQUIRE(store2.ExpectedEntries() == store.ExpectedEntries());
+
+    // CheckStore(store2, table);
+  }
+}
+
+
 
 TEST_CASE( "Set bits", "[utils]" ) {
   uint64_t val = 0;

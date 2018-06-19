@@ -10,6 +10,7 @@
 #include "types.h"
 #include "utils.h"
 #include "compression.h"
+#include "file_dumper.h"
 
 
 typedef struct bloom Bloom;
@@ -322,7 +323,25 @@ class BloomFilterStore {
     return filter_map_[term];
   }
 
-  const void Serialize(const std::string &path) const {
+  void SerializeWithIndex(
+      const std::string &meta_path,
+      const std::string &index_path, 
+      const std::string &bloom_path) 
+  {
+    WriteMeta(meta_path);
+
+    TermIndexDumper term_index(index_path);
+    std::ofstream f_bloom(bloom_path, std::ios::binary);
+
+    for (auto &it : filter_map_) {
+      term_index.DumpEntry(it.first, f_bloom.tellp());
+      WriteBloomCases(&f_bloom, it.second);
+    }
+
+    f_bloom.close();
+  }
+
+  void Serialize(const std::string &path) const {
     std::ofstream out(path, std::ios::binary);
     
     std::string ratio = utils::SerializeFloat(ratio_);
@@ -332,9 +351,12 @@ class BloomFilterStore {
 
     for (auto &it : filter_map_) {
       VarintBuffer buf;
+
+      // the term
       buf.Append(it.first.size());
       buf.Append(it.first);
 
+      // the bloom cases
       std::string cases_data = it.second.Serialize();
       buf.Append(cases_data.size());
       buf.Append(cases_data);
@@ -416,6 +438,29 @@ class BloomFilterStore {
   }
 
  private:
+  void WriteMeta(const std::string &meta_path) {
+    std::ofstream f_meta(meta_path, std::ios::binary);
+
+    std::string first_byte = utils::MakeString(BLOOM_META_FIRST_BYTE);
+    std::string ratio = utils::SerializeFloat(ratio_);
+
+    f_meta.write(first_byte.data(), first_byte.size());
+    f_meta.write(ratio.data(), ratio.size());
+    f_meta.write((const char*)&expected_entries_, sizeof(expected_entries_));
+    f_meta.close();
+  }
+  
+  void WriteBloomCases(std::ofstream *out, const BloomFilterCases &cases) {
+    VarintBuffer buf;
+
+    // the bloom cases
+    std::string cases_data = cases.Serialize();
+    buf.Append(utils::MakeString(BLOOM_CASES_FIRST_BYTE));
+    buf.Append(cases_data);
+
+    out->write(buf.DataPointer()->data(), buf.Size());
+  }
+
   std::unordered_map<std::string, BloomFilterCases> filter_map_;
   float ratio_;
   int expected_entries_;
@@ -423,6 +468,87 @@ class BloomFilterStore {
   std::vector<int> end_cnt_hist_;
   int n = 0;
 };
+
+
+class BloomFilterReader {
+ public:
+  BloomFilterReader(
+      const std::string &meta_path,
+      const std::string &index_path, 
+      const std::string &bloom_path) 
+  {
+    LoadMeta(meta_path);
+    term_index_.Load(index_path);
+    store_file_.Open(bloom_path);
+  }
+
+  ~BloomFilterReader() {
+    store_file_.Close();
+  }
+
+  const BloomFilterCases Lookup(const Term &term) {
+    TermIndexResult result = term_index_.Find(term);
+    LOG_IF(FATAL, result.IsEmpty() == true)
+      << "Bloom index must contain all terms";
+
+    off_t offset = result.GetPostingListOffset();
+    const char *buf = store_file_.Addr() + offset;
+
+    LOG_IF(FATAL, buf[0] != BLOOM_CASES_FIRST_BYTE)
+      << "First byte of bloom cases is wrong";
+
+    buf += 1;
+
+    BloomFilterCases cases;
+    cases.Deserialize(buf);
+
+    return cases;
+  }
+
+  float Ratio() const {
+    return ratio_;
+  }
+
+  int ExpectedEntries() const {
+    return expected_entries_;
+  }
+
+  int BitArrayBytes() const {
+    return bit_array_bytes_;
+  }
+
+
+ private:
+  void LoadMeta(const std::string &path) {
+    utils::FileMap file_map;
+    file_map.Open(path);
+  
+    const char *buf = file_map.Addr();
+
+    LOG_IF(FATAL, buf[0] != BLOOM_META_FIRST_BYTE)
+      << "Wrong first byte of bloom meta"; 
+    buf += 1;
+
+    ratio_ = utils::DeserializeFloat(buf);
+    buf += sizeof(float);
+
+    expected_entries_ = *((int *)buf);
+    buf += sizeof(int);
+
+    bit_array_bytes_ = bloom_bytes(expected_entries_, ratio_);   
+  }
+
+  float ratio_;
+  int expected_entries_;
+  int bit_array_bytes_;
+
+  TermTrieIndex term_index_;
+  FileMap store_file_;
+};
+
+
+
+
 
 
 #endif
