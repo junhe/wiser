@@ -229,7 +229,8 @@ struct Table {
   }
 };
 
-void CheckStore(BloomFilterStore &store, Table &table) {
+template <typename StoreT = BloomFilterStore>
+void CheckStore(StoreT &store, Table &table) {
   for (auto &row : table.rows) {
     BloomFilterCases cases = store.Lookup(row.token); 
     REQUIRE(cases[0].doc_id == 888);
@@ -301,7 +302,7 @@ TEST_CASE( "Bloom filter serialization", "[bloomfilter]" ) {
 
 }
 
-TEST_CASE( "Serialize blooom filter store with index", "[bloomfilter]" ) {
+TEST_CASE( "Serialize blooom filter store with index", "[xx]" ) {
   Table table;
 
   for (int i = 0; i < 10; i++) {
@@ -322,12 +323,13 @@ TEST_CASE( "Serialize blooom filter store with index", "[bloomfilter]" ) {
         "/tmp/bloom.index",
         "/tmp/bloom.store");
 
-    // BloomFilterStore store2;
-    // store2.Deserialize("/tmp/tmp.store");
-    // REQUIRE(store2.Ratio() == store.Ratio());
-    // REQUIRE(store2.ExpectedEntries() == store.ExpectedEntries());
+    BloomFilterReader reader("/tmp/bloom.meta", "/tmp/bloom.index", 
+        "/tmp/bloom.store");
 
-    // CheckStore(store2, table);
+    REQUIRE(reader.Ratio() == store.Ratio());
+    REQUIRE(reader.ExpectedEntries() == store.ExpectedEntries());
+
+    CheckStore<BloomFilterReader>(reader, table);
   }
 }
 

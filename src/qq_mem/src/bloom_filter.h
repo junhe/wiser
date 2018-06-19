@@ -495,7 +495,7 @@ class BloomFilterReader {
     off_t offset = result.GetPostingListOffset();
     const char *buf = store_file_.Addr() + offset;
 
-    LOG_IF(FATAL, buf[0] != BLOOM_CASES_FIRST_BYTE)
+    LOG_IF(FATAL, (buf[0] & 0xFF) != BLOOM_CASES_FIRST_BYTE)
       << "First byte of bloom cases is wrong";
 
     buf += 1;
@@ -526,7 +526,7 @@ class BloomFilterReader {
   
     const char *buf = file_map.Addr();
 
-    LOG_IF(FATAL, buf[0] != BLOOM_META_FIRST_BYTE)
+    LOG_IF(FATAL, (buf[0] & 0xFF) != BLOOM_META_FIRST_BYTE)
       << "Wrong first byte of bloom meta"; 
     buf += 1;
 
