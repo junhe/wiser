@@ -1,7 +1,6 @@
 #ifndef FILE_DUMPER_H
 #define FILE_DUMPER_H
 
-
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <stdio.h>
@@ -9,6 +8,8 @@
 #include <unistd.h>
 
 #include "flash_containers.h"
+#include "utils.h"
+
 
 class GeneralFileDumper {
  public:
@@ -78,7 +79,7 @@ class TermIndexDumper : public GeneralFileDumper {
   TermIndexDumper(const std::string &path) : GeneralFileDumper(path) {}
 
   // length of term, term, offset of entry in .tim
-  void DumpEntry(Term term, off_t offset) {
+  void DumpEntry(const Term &term, off_t offset) {
     DumpUint32(term.size());
     Dump(term);
     DumpLong(offset);
