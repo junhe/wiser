@@ -270,7 +270,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
 class QqMemEngineDelta: public SearchEngineServiceNew {
  public:
-  QqMemEngineDelta(const int bloom_entries, const float bloom_ratio) 
+  QqMemEngineDelta(const int bloom_entries = 5, const float bloom_ratio = 0.0009) 
     :bloom_store_begin_(bloom_ratio, bloom_entries), 
      bloom_store_end_(bloom_ratio, bloom_entries) {}
 
