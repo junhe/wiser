@@ -67,25 +67,22 @@ inline void FreeBloom(Bloom *blm) {
 class BloomFilter {
  public:
   BloomFilter() {}
-  BloomFilter(const Bloom *blm, const float ratio) {
-    n_entries_ = blm->entries;
-    ratio_ = ratio;
+
+  BloomFilter(const std::string &bit_array) 
+    :bit_array_(bit_array) {}
+
+  BloomFilter(const Bloom *blm) {
     bit_array_ = ExtractBitArray(blm);
   }
 
-  BloomFilter(const int n_entries, const float ratio, 
-      const std::string &bit_array) 
-    :n_entries_(n_entries), ratio_(ratio), bit_array_(bit_array)
-  {}
-
-  int Check(const std::string &elem) const {
+  int Check(const std::string &elem, const float &ratio, const int &n_entries) const {
     if (bit_array_.size() == 0)
       return BLM_NOT_PRESENT;
 
     Bloom blm;
     unsigned char *buf = (unsigned char *) malloc(bit_array_.size());
     memcpy(buf, bit_array_.data(), bit_array_.size());
-    bloom_set(&blm, n_entries_, ratio_, buf);
+    bloom_set(&blm, n_entries, ratio, buf);
 
     int ret = CheckBloom(&blm, elem);
 
@@ -104,8 +101,6 @@ class BloomFilter {
 
   std::string Serialize() const {
     VarintBuffer buf;   
-    buf.Append(n_entries_);
-    buf.Append(utils::SerializeFloat(ratio_));
     buf.Append(bit_array_.size());
     buf.Append(bit_array_);
 
@@ -113,14 +108,8 @@ class BloomFilter {
   }
 
   const char *Deserialize(const char *buf) {
-    int len = utils::varint_decode_uint32((const char *)buf, 0, &n_entries_);
-    buf += len;
-
-    ratio_ = utils::DeserializeFloat(buf);
-    buf += sizeof(ratio_);
-    
     uint32_t array_size;
-    len = utils::varint_decode_uint32((const char *)buf, 0, &array_size);
+    int len = utils::varint_decode_uint32((const char *)buf, 0, &array_size);
     buf += len; 
 
     bit_array_ = std::string(buf, array_size);
@@ -130,8 +119,6 @@ class BloomFilter {
   }
 
  private:
-  uint32_t n_entries_;
-  float ratio_;
   std::string bit_array_;
 };
 
@@ -305,13 +292,13 @@ class BloomFilterStore {
         LOG_IF(FATAL, bit_array_bytes_ != blm.bytes) 
           << "Bytes do not match!";
 
-        BloomFilter blm_filter(&blm, ratio_);
+        BloomFilter blm_filter(&blm);
         FreeBloom(&blm);
 
         BloomFilterCase blm_case(blm_filter, doc_id);
         filter_map_[token].PushBack(blm_case);
       } else {
-        BloomFilter blm_filter(expected_entries_, ratio_, "");
+        BloomFilter blm_filter("");
         BloomFilterCase blm_case(blm_filter, doc_id);
         filter_map_[token].PushBack(blm_case);
       }

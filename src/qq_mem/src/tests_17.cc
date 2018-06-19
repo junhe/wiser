@@ -111,10 +111,10 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
     REQUIRE(cases.Size() == 1);
     REQUIRE(cases[0].doc_id == 33);
 
-    REQUIRE(cases[0].blm.Check("world") == BLM_MAY_PRESENT);
-    REQUIRE(cases[0].blm.Check("you") == BLM_MAY_PRESENT);
-    REQUIRE(cases[0].blm.Check("yeu") == BLM_NOT_PRESENT);
-    REQUIRE(cases[0].blm.Check("yew") == BLM_NOT_PRESENT);
+    REQUIRE(cases[0].blm.Check("world", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+    REQUIRE(cases[0].blm.Check("you", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+    REQUIRE(cases[0].blm.Check("yeu", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
+    REQUIRE(cases[0].blm.Check("yew", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
 
     BloomFilterCase f_case = cases[0];
 
@@ -126,10 +126,10 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
 
       REQUIRE(f_case.blm.BitArray() == blm.BitArray());
 
-      REQUIRE(blm.Check("world") == BLM_MAY_PRESENT);
-      REQUIRE(blm.Check("you") == BLM_MAY_PRESENT);
-      REQUIRE(blm.Check("yeu") == BLM_NOT_PRESENT);
-      REQUIRE(blm.Check("yew") == BLM_NOT_PRESENT);
+      REQUIRE(blm.Check("world", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("you", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("yeu", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
+      REQUIRE(blm.Check("yew", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
     }
 
     SECTION("Serialize and Deserialize _case_") {
@@ -142,10 +142,10 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
 
       REQUIRE(blm.BitArray() == f_case.blm.BitArray());
 
-      REQUIRE(blm.Check("world") == BLM_MAY_PRESENT);
-      REQUIRE(blm.Check("you") == BLM_MAY_PRESENT);
-      REQUIRE(blm.Check("yeu") == BLM_NOT_PRESENT);
-      REQUIRE(blm.Check("yew") == BLM_NOT_PRESENT);
+      REQUIRE(blm.Check("world", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("you", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("yeu", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
+      REQUIRE(blm.Check("yew", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
     }
 
     SECTION("Serialize/Deserialize cases") {
@@ -158,10 +158,10 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
 
       REQUIRE(blm.BitArray() == f_case.blm.BitArray());
 
-      REQUIRE(blm.Check("world") == BLM_MAY_PRESENT);
-      REQUIRE(blm.Check("you") == BLM_MAY_PRESENT);
-      REQUIRE(blm.Check("yeu") == BLM_NOT_PRESENT);
-      REQUIRE(blm.Check("yew") == BLM_NOT_PRESENT);
+      REQUIRE(blm.Check("world", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("you", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+      REQUIRE(blm.Check("yeu", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
+      REQUIRE(blm.Check("yew", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
     }
 
     SECTION("Serialize/Deserialize store") {
@@ -174,10 +174,10 @@ TEST_CASE( "Bloom filter store", "[bloomfilter]" ) {
       REQUIRE(cases.Size() == 1);
       REQUIRE(cases[0].doc_id == 33);
 
-      REQUIRE(cases[0].blm.Check("world") == BLM_MAY_PRESENT);
-      REQUIRE(cases[0].blm.Check("you") == BLM_MAY_PRESENT);
-      REQUIRE(cases[0].blm.Check("yeu") == BLM_NOT_PRESENT);
-      REQUIRE(cases[0].blm.Check("yew") == BLM_NOT_PRESENT);
+      REQUIRE(cases[0].blm.Check("world", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+      REQUIRE(cases[0].blm.Check("you", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+      REQUIRE(cases[0].blm.Check("yeu", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
+      REQUIRE(cases[0].blm.Check("yew", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
     }
   }
 }
@@ -242,14 +242,14 @@ void CheckStore(BloomFilterStore &store, Table &table) {
       std::vector<std::string> real_ends = utils::explode(
           row.phrase_ends, ' ');
       for (auto &real_end : real_ends) {
-        REQUIRE(cases[i].blm.Check(real_end) == BLM_MAY_PRESENT);
+        REQUIRE(cases[i].blm.Check(real_end, store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
       }
 
       // check terms that are not in filter
       std::vector<std::string> outs = utils::explode(
           row.outs, ' ');
       for (auto &out : outs) {
-        REQUIRE(cases[i].blm.Check(out) == BLM_NOT_PRESENT);
+        REQUIRE(cases[i].blm.Check(out, store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
       }
     }
   }
