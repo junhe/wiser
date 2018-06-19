@@ -14,7 +14,6 @@
 #include "engine_loader.h"
 #include "posting_list_delta.h"
 #include "general_config.h"
-#include "bloom_filter.h"
 
 
 class InvertedIndexImpl: public InvertedIndexService {
@@ -27,9 +26,7 @@ class InvertedIndexImpl: public InvertedIndexService {
     } else if (format == "WITH_OFFSETS") {
       AddDocumentWithOffsets(doc_id, doc_info.Body(), doc_info.Tokens(),
           doc_info.TokenOffsets());
-    } else if (format == "WITH_POSITIONS" || 
-               format == "WITH_PHRASE_END" || 
-               format == "WITH_BI_BLOOM") {
+    } else if (format == "WITH_POSITIONS") {
 			AddDocumentWithPositions(doc_id, doc_info);
     } else {
       LOG(FATAL) << "Format " << format << " is not supported.\n";
@@ -270,10 +267,6 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
 class QqMemEngineDelta: public SearchEngineServiceNew {
  public:
-  QqMemEngineDelta(const int bloom_entries = 5, const float bloom_ratio = 0.0009) 
-    :bloom_store_begin_(bloom_ratio, bloom_entries), 
-     bloom_store_end_(bloom_ratio, bloom_entries) {}
-
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
       int n_rows, const std::string format) {
@@ -286,10 +279,6 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
       parser.reset(new LineDocParserOffset(line_doc_path, n_rows));
     } else if (format == "WITH_POSITIONS") {
       parser.reset(new LineDocParserPosition(line_doc_path, n_rows));
-    } else if (format == "WITH_PHRASE_END") {
-      parser.reset(new LineDocParserPhraseEnd(line_doc_path, n_rows));
-    } else if (format == "WITH_BI_BLOOM") {
-      parser.reset(new LineDocParserBiBloom(line_doc_path, n_rows));
     } else {
       throw std::runtime_error("Format " + format + " is not supported");
     }
@@ -313,16 +302,6 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     inverted_index_.AddDocument(doc_id, doc_info);
     doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); 
     similarity_.Reset(doc_lengths_.GetAvgLength());
-
-    if (doc_info.Format() == "WITH_PHRASE_END") {
-      bloom_store_end_.Add(doc_id, doc_info.GetTokens(), 
-          doc_info.GetPhraseEnds());
-    } else if (doc_info.Format() == "WITH_BI_BLOOM") {
-      bloom_store_begin_.Add(doc_id, doc_info.GetTokens(), 
-          doc_info.GetPhraseBegins());
-      bloom_store_end_.Add(doc_id, doc_info.GetTokens(), 
-          doc_info.GetPhraseEnds());
-    }
   }
 
   std::string GetDocument(const DocIdType &doc_id) {
@@ -440,8 +419,6 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     doc_store_.Serialize(dir_path + "/doc_store.dump");
     inverted_index_.Serialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Serialize(dir_path + "/doc_lengths.dump");
-    bloom_store_begin_.Serialize(dir_path + "/bloom_filter_begin.dump");
-    bloom_store_end_.Serialize(dir_path + "/bloom_filter_end.dump");
   }
 
   void Deserialize(std::string dir_path) {
@@ -449,14 +426,6 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     doc_store_.Deserialize(dir_path + "/doc_store.dump"); //good
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
-
-    std::string bloom_begin_path = dir_path + "/bloom_filter_begin.dump";
-    if (utils::PathExists(bloom_begin_path)) 
-      bloom_store_begin_.Deserialize(bloom_begin_path);
-
-    std::string bloom_end_path = dir_path + "/bloom_filter_end.dump";
-    if (utils::PathExists(bloom_end_path)) 
-      bloom_store_end_.Deserialize(bloom_end_path);
 
     similarity_.Reset(doc_lengths_.GetAvgLength());
 
@@ -471,8 +440,6 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
   DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
-  BloomFilterStore bloom_store_begin_;
-  BloomFilterStore bloom_store_end_;
 
   int NextDocId() {
     return next_doc_id_++;

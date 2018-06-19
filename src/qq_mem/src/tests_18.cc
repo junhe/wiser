@@ -284,7 +284,7 @@ TEST_CASE( "Loading Engine with bi-bloom (3 docs)", "[blmxx]" ) {
   auto engine = CreateSearchEngine("qq_mem_compressed");
   REQUIRE(engine->TermCount() == 0);
   engine->LoadLocalDocuments("src/testdata/iter_test_3_docs_tf_bi-bloom",
-      10000, "WITH_BI_BLOOM");
+      10000, "WITH_POSITIONS");
   REQUIRE(engine->TermCount() > 0);
   auto result = engine->Search(SearchQuery({"a"}));
   std::cout << result.ToStr() << std::endl;

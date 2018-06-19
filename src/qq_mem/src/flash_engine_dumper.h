@@ -14,6 +14,7 @@
 #include "compression.h"
 #include "flash_containers.h"
 #include "file_dumper.h"
+#include "bloom_filter.h"
 
 
 inline std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
