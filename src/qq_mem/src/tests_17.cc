@@ -331,7 +331,57 @@ TEST_CASE( "Serialize blooom filter store with index", "[xx]" ) {
 
     CheckStore<BloomFilterReader>(reader, table);
   }
+
+  SECTION("Each token has two documents") {
+    BloomFilterStore store(0.00001, 10);
+    
+    store.Add(888, table.ColTokens(), table.ColEnds());
+    store.Add(889, table.ColTokens(), table.ColEnds());
+
+    CheckStore(store, table);
+
+
+    store.SerializeWithIndex(
+        "/tmp/bloom.meta",
+        "/tmp/bloom.index",
+        "/tmp/bloom.store");
+    
+    BloomFilterReader reader("/tmp/bloom.meta", "/tmp/bloom.index", 
+        "/tmp/bloom.store");
+
+    REQUIRE(reader.Ratio() == store.Ratio());
+    REQUIRE(reader.ExpectedEntries() == store.ExpectedEntries());
+
+    CheckStore<BloomFilterReader>(reader, table);
+  }
 }
+
+
+TEST_CASE( "Bloom filter reader", "[bloomfilter]" ) {
+  SECTION("Bloom filter check") {
+    BloomFilterStore store(0.00001, 5);
+    store.Add(33, {"hello"}, {"world you"});
+
+    store.SerializeWithIndex(
+        "/tmp/bloom.meta",
+        "/tmp/bloom.index",
+        "/tmp/bloom.store");
+
+    BloomFilterReader reader("/tmp/bloom.meta", "/tmp/bloom.index", 
+        "/tmp/bloom.store");
+
+    BloomFilterCases cases = reader.Lookup("hello");
+    
+    REQUIRE(cases.Size() == 1);
+    REQUIRE(cases[0].doc_id == 33);
+
+    REQUIRE(cases[0].blm.Check("world", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+    REQUIRE(cases[0].blm.Check("you", store.Ratio(), store.ExpectedEntries()) == BLM_MAY_PRESENT);
+    REQUIRE(cases[0].blm.Check("yeu", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
+    REQUIRE(cases[0].blm.Check("yew", store.Ratio(), store.ExpectedEntries()) == BLM_NOT_PRESENT);
+  }
+}
+
 
 
 
