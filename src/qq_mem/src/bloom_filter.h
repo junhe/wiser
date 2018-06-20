@@ -566,8 +566,8 @@ class BloomDumper {
      bloom_store_end_(ratio, expected_entries)
   {}
 
-  void Load(const std::string &line_doc_path) {
-    LineDocParserBiBloom parser(line_doc_path, 100000000);
+  void Load(const std::string &line_doc_path, const int &n_rows = 100000000) {
+    LineDocParserBiBloom parser(line_doc_path, n_rows);
 
     DocInfo doc_info;
     while (parser.Pop(&doc_info)) {
