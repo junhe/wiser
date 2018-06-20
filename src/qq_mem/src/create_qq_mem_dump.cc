@@ -35,13 +35,24 @@ int main(int argc, char **argv) {
 
   CheckArgs();
 
-  std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
-      "qq_mem_compressed");
-  engine->LoadLocalDocuments(FLAGS_line_doc_path, FLAGS_n_lines, "WITH_POSITIONS");
-  engine->Serialize(FLAGS_dump_dir_path);
+  {
+    std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
+        "qq_mem_compressed");
+    engine->LoadLocalDocuments(FLAGS_line_doc_path, FLAGS_n_lines, "WITH_POSITIONS");
+    engine->Serialize(FLAGS_dump_dir_path);
+    engine.release();
+  }
 
-  BloomDumper bloom_dumper(FLAGS_bloom_ratio, FLAGS_bloom_entries);
-  bloom_dumper.Load(FLAGS_line_doc_path, FLAGS_n_lines);
-  bloom_dumper.Dump(FLAGS_dump_dir_path);
+  {
+    BloomBeginDumper bloom_dumper(FLAGS_bloom_ratio, FLAGS_bloom_entries);
+    bloom_dumper.Load(FLAGS_line_doc_path, FLAGS_n_lines);
+    bloom_dumper.Dump(FLAGS_dump_dir_path);
+  }
+
+  {
+    BloomEndDumper bloom_dumper(FLAGS_bloom_ratio, FLAGS_bloom_entries);
+    bloom_dumper.Load(FLAGS_line_doc_path, FLAGS_n_lines);
+    bloom_dumper.Dump(FLAGS_dump_dir_path);
+  }
 }
 
