@@ -559,11 +559,10 @@ class BloomFilterReader {
 };
 
 
-class BloomDumper {
+class BloomDumperBase {
  public:
-  BloomDumper(const float &ratio = 0.0009, const int &expected_entries = 5) 
-    :bloom_store_begin_(ratio, expected_entries),
-     bloom_store_end_(ratio, expected_entries)
+  BloomDumperBase(const float &ratio = 0.0009, const int &expected_entries = 5) 
+    :bloom_store_(ratio, expected_entries)
   {}
 
   void Load(const std::string &line_doc_path, const int &n_rows = 100000000) {
@@ -578,41 +577,96 @@ class BloomDumper {
     }
   }
 
-  void Dump(const std::string &dir_path) {
+  virtual void Dump(const std::string &dir_path) = 0;
+
+ protected:
+  int NextDocId() {
+    return next_doc_id_++;
+  }
+
+  virtual void AddDocument(const DocInfo doc_info) = 0;
+
+  BloomFilterStore bloom_store_;
+
+  int next_doc_id_ = 0;
+};
+
+
+class BloomBeginDumper :public BloomDumperBase {
+ public:
+  BloomBeginDumper(const float &ratio = 0.0009, const int &expected_entries = 5) 
+    :BloomDumperBase(ratio, expected_entries)
+  {}
+
+  void Dump(const std::string &dir_path) override {
     std::cout << "Dumping bloom filters with index to " 
       << dir_path << " ..." << std::endl;
 
     utils::PrepareDir(dir_path);
 
-    bloom_store_begin_.SerializeWithIndex(
+    bloom_store_.SerializeWithIndex(
         dir_path + "/bloom_begin.meta",
         dir_path + "/bloom_begin.index",
         dir_path + "/bloom_begin.store");
-    bloom_store_end_.SerializeWithIndex(
+  }
+
+ private:
+  void AddDocument(const DocInfo doc_info) override {
+    int doc_id = NextDocId();
+
+    bloom_store_.Add(doc_id, doc_info.GetTokens(), doc_info.GetPhraseBegins());
+  }
+};
+
+
+class BloomEndDumper :public BloomDumperBase {
+ public:
+  BloomEndDumper(const float &ratio = 0.0009, const int &expected_entries = 5) 
+    :BloomDumperBase(ratio, expected_entries)
+  {}
+
+  void Dump(const std::string &dir_path) override {
+    std::cout << "Dumping bloom filters with index to " 
+      << dir_path << " ..." << std::endl;
+
+    utils::PrepareDir(dir_path);
+
+    bloom_store_.SerializeWithIndex(
         dir_path + "/bloom_end.meta",
         dir_path + "/bloom_end.index",
         dir_path + "/bloom_end.store");
   }
 
  private:
-  int NextDocId() {
-    return next_doc_id_++;
-  }
-
-  void AddDocument(const DocInfo doc_info) {
+  void AddDocument(const DocInfo doc_info) override {
     int doc_id = NextDocId();
 
-    bloom_store_begin_.Add(doc_id, doc_info.GetTokens(), 
-        doc_info.GetPhraseBegins());
-    bloom_store_end_.Add(doc_id, doc_info.GetTokens(), 
-        doc_info.GetPhraseEnds());
+    bloom_store_.Add(doc_id, doc_info.GetTokens(), doc_info.GetPhraseEnds());
+  }
+};
+
+
+
+class BloomDumper {
+ public:
+  BloomDumper(const float &ratio = 0.0009, const int &expected_entries = 5) 
+    :begin_dumper_(ratio, expected_entries),
+     end_dumper_(ratio, expected_entries)
+  {}
+
+  void Load(const std::string &line_doc_path, const int &n_rows = 100000000) {
+    begin_dumper_.Load(line_doc_path, n_rows);
+    end_dumper_.Load(line_doc_path, n_rows);
   }
 
+  void Dump(const std::string &dir_path) {
+    begin_dumper_.Dump(dir_path);
+    end_dumper_.Dump(dir_path);
+  }
 
-  BloomFilterStore bloom_store_begin_;
-  BloomFilterStore bloom_store_end_;
-
-  int next_doc_id_ = 0;
+ private:
+  BloomBeginDumper begin_dumper_;
+  BloomEndDumper end_dumper_;
 };
 
 
