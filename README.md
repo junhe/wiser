@@ -35,6 +35,14 @@ cd ~/flashsearch/src/qq_mem
 ./setup.sh
 ```
 
+4. setup redisearch python env
+
+```
+git checkout es-client-runner
+cd ~/flashsearch/src/qq_mem
+./setup_env.sh
+```
+
 # How to Install Redis
 
 ```

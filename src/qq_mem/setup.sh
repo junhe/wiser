@@ -45,6 +45,19 @@ make
 sudo make install
 
 
+# get elasticsearch
+cd $HOME
+wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.3.tar.gz
+tar xf elasticsearch-5.6.3.tar.gz
+cd $HOME/elasticsearch-5.6.3/config/
+cp $HOME/flashsearch/src/qq_mem/misc/elasticsearch.yml.template ./
+cp $HOME/flashsearch/src/qq_mem/misc/jvm.options.template ./
+
+# install java
+cd $HOME/flashsearch/scripts/
+./install-java.sh
+
+
 # boost
 sudo apt-get install -y libboost-all-dev
 
@@ -71,6 +84,8 @@ sudo apt-get install -y blktrace
 # For elastic search
 # https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html
 sudo sysctl -w vm.max_map_count=262144
+
+
 
 echo "*            hard   memlock           unlimited" | sudo tee -a /etc/security/limits.conf
 echo "*            soft    memlock           unlimited" | sudo tee -a /etc/security/limits.conf
