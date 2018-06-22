@@ -47,11 +47,7 @@ sudo make install
 
 # get elasticsearch
 cd $HOME
-wget https://artifacts.elastic.co/downloads/elasticsearch/elasticsearch-5.6.3.tar.gz
-tar xf elasticsearch-5.6.3.tar.gz
-cd $HOME/elasticsearch-5.6.3/config/
-cp $HOME/flashsearch/src/qq_mem/misc/elasticsearch.yml.template ./
-cp $HOME/flashsearch/src/qq_mem/misc/jvm.options.template ./
+git clone git@github.com:junhe/elasticsearch-5.6.3.git
 
 # install java
 cd $HOME/flashsearch/scripts/

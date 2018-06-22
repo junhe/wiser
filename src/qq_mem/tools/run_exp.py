@@ -466,17 +466,27 @@ def convert_es_lock_mem_string(s):
             }
     return d[s]
 
+
+
 def set_es_yml(conf):
     with open(os.path.join(
         ELASTIC_DIR, "config/elasticsearch.yml.template"), "r") as f:
         lines = f.readlines()
 
-    new_lines = lines
-    new_lines.append("thread_pool.search.size: {}\n".format(conf['n_server_threads']))
-    new_lines.append("bootstrap.memory_lock: {}\n".format(
-            convert_es_lock_mem_string(conf['lock_memory'])))
-    new_lines.append("path.data: {}\n".format(conf['elastic_data_path']))
-    new_lines.append("network.host: 0.0.0.0")
+    new_lines = []
+    for line in lines:
+        if "thread_pool.search.size" in line:
+            new_lines.append(
+                "thread_pool.search.size: {}\n".format(conf['n_server_threads']))
+        elif "bootstrap.memory_lock" in line:
+            new_lines.append(
+                "bootstrap.memory_lock: {}\n".format(
+                    convert_es_lock_mem_string(conf['lock_memory'])))
+        elif line.startswith("path.data"):
+            new_lines.append("path.data: {}\n".format(
+                conf['elastic_data_path']))
+        else:
+            new_lines.append(line)
 
     with open(os.path.join(ELASTIC_DIR, "config/elasticsearch.yml"), "w") as f:
         f.write("".join(new_lines))
