@@ -28,6 +28,22 @@ do_drop_cache = True
 do_block_tracing = False
 qq_mem_folder = "/users/jhe/flashsearch/src/qq_mem"
 user_name = "jhe"
+mem_swappiness = 60
+
+
+######################
+# Vacuum only
+######################
+profile_qq_server = "false"
+engine_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
+
+
+######################
+# Elastic only
+######################
+ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
+rs_bench_go_path = "/users/jhe/flashsearch/src/pysrc"
+
 
 
 ######################
@@ -56,8 +72,6 @@ mem_size_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB] # good one
 # mem_size_list = [256*MB]
 # mem_size_list = ['in-mem']
 
-
-mem_swappiness = 60
 # query_paths = ["/mnt/ssd/querylog_no_repeated"]
 # query_paths = ["/mnt/ssd/realistic_querylog"]
 # query_paths = ["/mnt/ssd/by-doc-freq/unique_terms_1e2"]
@@ -86,26 +100,97 @@ vacuum_engines = ["vacuum:vacuum_dump:/mnt/ssd/vacuum-06-13-bi-bloom-1-0.00029"]
 # vacuum_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum_delta_skiplist-04-30"
 # vacuum_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-aligned-fdt"
 # vacuum_engine = "vacuum:vacuum_dump:/mnt/ssd/vacuum-files-misaligned-fdt"
-profile_qq_server = "false"
-engine_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
 bloom_factors = [10]
-
 
 
 ######################
 # Elastic only
 ######################
-ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
 init_heap_size = [300*MB]
-rs_bench_go_path = "/users/jhe/flashsearch/src/pysrc"
 # elastic_data_paths = ['/mnt/ssd/elasticsearch/data', '/mnt/hdd/elasticsearch/data']
 elastic_data_paths = ['/mnt/ssd/elasticsearch/data']
 
 
 
+class ConfFactory(object):
+    def get_confs(self):
+        confs = []
+
+        # confs += self.predefined_sample()
+        confs += self.predefined_es()
+
+        return confs
+
+    def predefined_es(self):
+        """
+        Wikipedia 128KB prefetch and 0KB prefetch
+        """
+        confs = parameter_combinations({
+                "server_mem_size": mem_size_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": query_paths,
+                "engine": [ELASTIC],
+                "init_heap_size": init_heap_size,
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0, 128],
+                "prefetch_threshold_kb": [None], # not used
+                "enable_prefetch": [None], # not used
+                "elastic_data_path": elastic_data_paths,
+                "force_disable_es_readahead": [False],
+                "bloom_factor": [None],
+                "vacuum_engine": [None]
+                })
+        confs = organize_conf(confs)
+
+        return confs
+
+    def predefined_sample(self):
+        """
+        You override parameter settings here
+        """
+        confs = parameter_combinations({
+                "server_mem_size": mem_size_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": query_paths,
+                "engine": engines,
+                "init_heap_size": init_heap_size,
+                "lock_memory": lock_memory,
+                "read_ahead_kb": read_ahead_kb_list,
+                "prefetch_threshold_kb": prefetch_thresholds_kb,
+                "enable_prefetch": enable_prefetch_list,
+                "elastic_data_path": elastic_data_paths,
+                "force_disable_es_readahead": force_disable_es_readahead,
+                "bloom_factor": bloom_factors,
+                "vacuum_engine": vacuum_engines
+                })
+        confs = organize_conf(confs)
+
+        return confs
 
 
+def organize_conf(confs):
+    new_confs = []
+    for conf in confs:
+        if conf['engine'] in (ELASTIC, ELASTIC_PY) and \
+                conf['lock_memory'] == 'lock_large':
+            # ES does not support locking all memory
+            continue
 
+        conf['cgroup_mem_size'] = conf['server_mem_size']
+        if conf['server_mem_size'] == 'in-mem':
+            conf['cgroup_mem_size'] = 32*GB
+
+        conf['max_heap_size'] = conf['init_heap_size']
+
+        if conf['force_disable_es_readahead'] is True and \
+                conf['engine'] in (ELASTIC, ELASTIC_PY):
+            conf['read_ahead_kb'] = 0
+
+        new_confs.append(conf)
+
+    return new_confs
 
 
 
@@ -700,26 +785,10 @@ def parse_filename(path):
     return d
 
 class Exp(Experiment):
-    def __init__(self):
+    def __init__(self, confs):
         self._exp_name = "exp-" + now()
 
-        confs = parameter_combinations({
-                "server_mem_size": mem_size_list,
-                "n_server_threads": n_server_threads,
-                "n_client_threads": n_client_threads,
-                "query_path": query_paths,
-                "engine": engines,
-                "init_heap_size": init_heap_size,
-                "lock_memory": lock_memory,
-                "read_ahead_kb": read_ahead_kb_list,
-                "prefetch_threshold_kb": prefetch_thresholds_kb,
-                "enable_prefetch": enable_prefetch_list,
-                "elastic_data_path": elastic_data_paths,
-                "force_disable_es_readahead": force_disable_es_readahead,
-                "bloom_factor": bloom_factors,
-                "vacuum_engine": vacuum_engines
-                })
-        self.confs = self.organize_conf(confs)
+        self.confs = confs
 
         self._n_treatments = len(self.confs)
         pprint.pprint(self.confs)
@@ -727,28 +796,6 @@ class Exp(Experiment):
         raw_input("This is your config. Enter to continue")
 
         self.result = []
-
-    def organize_conf(self, confs):
-        new_confs = []
-        for conf in confs:
-            if conf['engine'] in (ELASTIC, ELASTIC_PY) and \
-                    conf['lock_memory'] == 'lock_large':
-                # ES does not support locking all memory
-                continue
-
-            conf['cgroup_mem_size'] = conf['server_mem_size']
-            if conf['server_mem_size'] == 'in-mem':
-                conf['cgroup_mem_size'] = 32*GB
-
-            conf['max_heap_size'] = conf['init_heap_size']
-
-            if conf['force_disable_es_readahead'] is True and \
-                    conf['engine'] in (ELASTIC, ELASTIC_PY):
-                conf['read_ahead_kb'] = 0
-
-            new_confs.append(conf)
-
-        return new_confs
 
     def conf(self, i):
         return self.confs[i]
@@ -919,6 +966,7 @@ class Exp(Experiment):
         dump_json(conf, os.path.join(self._subexpdir, "config.json"))
 
 if __name__ == "__main__":
-    exp = Exp()
+    confs = ConfFactory().get_confs()
+    exp = Exp(confs)
     exp.main()
 
