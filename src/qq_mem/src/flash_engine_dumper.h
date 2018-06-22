@@ -483,8 +483,11 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
 
     // Estimate skip list size
     off_t skip_list_start = index_dumper_.CurrentOffset();
-    std::size_t skip_list_est_size = EstimateSkipListBytes(
-        skip_list_start, entry_set);
+    std::size_t skip_list_est_size = EstimateSkipListBytesWithBloom(
+        posting_list_start,
+        entry_set,
+        bloom_begin_writer,
+        bloom_end_writer);
 
     // Dump doc id, term freq, ...
     ResultOfDumpingTermEntrySetWithBloom real_result = DumpTermEntrySetWithBloom( 
@@ -528,6 +531,24 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
         skip_list_start + 512*1024,
         entry_set,
         entry_set.docid.Values());
+
+    return fake_result.skip_list_writer.Serialize().size();
+  }
+
+  int EstimateSkipListBytesWithBloom(
+      off_t posting_list_start, 
+      const TermEntrySet &entry_set,
+      const BloomFilterColumnWriter &bloom_begin_writer,
+      const BloomFilterColumnWriter &bloom_end_writer)
+  {
+    LOG(INFO) << "Dumping fake skiplist...........................\n";
+    ResultOfDumpingTermEntrySetWithBloom fake_result = DumpTermEntrySetWithBloom( 
+        posting_list_start,
+        &fake_index_dumper_, 
+        posting_list_start + 512*1024,
+        entry_set,
+        bloom_begin_writer,
+        bloom_end_writer);
 
     return fake_result.skip_list_writer.Serialize().size();
   }
