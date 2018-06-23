@@ -127,15 +127,15 @@ class ConfFactory(object):
         confs = []
 
         # confs += self.predefined_sample()
-        # confs += self.predefined_es()
-        confs += self.predefined_tmp()
+        confs += self.predefined_es()
+        # confs += self.predefined_tmp()
 
         confs = organize_conf(confs)
         return confs
 
     def predefined_tmp(self):
         confs = parameter_combinations({
-                "server_mem_size": [256*MB],
+                "server_mem_size": [8*GB],
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
                 "query_path": ['/mnt/ssd/query_workload/single_term/type_single.docfreq_low'],
@@ -158,12 +158,12 @@ class ConfFactory(object):
         Wikipedia 128KB prefetch and 0KB prefetch
         """
         confs = parameter_combinations({
-                "server_mem_size": mem_size_list,
+                "server_mem_size": full_mem_list,
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
-                "query_path": query_paths,
+                "query_path": full_query_paths,
                 "engine": [ELASTIC],
-                "init_heap_size": init_heap_size,
+                "init_heap_size": [500*MB],
                 "lock_memory": lock_memory,
                 "read_ahead_kb": [0, 128],
                 "prefetch_threshold_kb": [None], # not used
