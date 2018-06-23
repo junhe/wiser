@@ -415,7 +415,9 @@ class FlashDocStoreDumper : public CompressedDocStore {
 // Doc may be aligned
 class ChunkedDocStoreDumper : public CompressedDocStore {
  public:
-  ChunkedDocStoreDumper() : CompressedDocStore() {
+  ChunkedDocStoreDumper(bool align = true) 
+    : CompressedDocStore(), align_(align) 
+  {
     dump_buf_ = (char *)malloc(dump_buf_size_); 
   }
 
@@ -455,6 +457,14 @@ class ChunkedDocStoreDumper : public CompressedDocStore {
   }
 
   void DumpDoc(std::ofstream &fdt, std::ofstream &fdx, uint32_t doc_id) {
+    if (align_) {
+      DumpDocAligned(fdt, fdx, doc_id);
+    } else {
+      DumpDocUnaligned(fdt, fdx, doc_id);
+    }
+  }
+
+  void DumpDocAligned(std::ofstream &fdt, std::ofstream &fdx, uint32_t doc_id) {
     off_t offset = fdt.tellp();
     std::string chunk_compressed = CompressText(
         Get(doc_id), dump_buf_, dump_buf_size_);
@@ -471,8 +481,21 @@ class ChunkedDocStoreDumper : public CompressedDocStore {
         reinterpret_cast<const char *>(&encoded_off), sizeof(encoded_off));
   }
 
+  void DumpDocUnaligned(std::ofstream &fdt, std::ofstream &fdx, uint32_t doc_id) {
+    off_t offset = fdt.tellp();
+    std::string chunk_compressed = CompressText(
+        Get(doc_id), dump_buf_, dump_buf_size_);
+
+    fdt.write(chunk_compressed.data(), chunk_compressed.size());
+
+    off_t encoded_off = offset << 1;
+    fdx.write(
+        reinterpret_cast<const char *>(&encoded_off), sizeof(encoded_off));
+  }
+
   const std::size_t dump_buf_size_ = 16 * KB;
   char *dump_buf_; 
+  bool align_;
 };
 
 
@@ -674,6 +697,10 @@ class ChunkedDocStoreReader {
     buffer_size_ = iter.Pop();
     InitializeBufferPool(buffer_size_);
 
+    std::cout << "Loading fdx..." << std::endl;
+    std::cout << "Number of doc ids: " << n_doc_ids_ << std::endl;
+    std::cout << "Buffer size: " << buffer_size_ << std::endl;
+
     off_t offset = iter.CurOffset();
     for (int i = 0; i < n_doc_ids_; i++) {
       offset_store_.push_back(*(off_t *)(addr + offset));
@@ -725,10 +752,6 @@ class ChunkedDocStoreReader {
 
   int Size() const {
     return offset_store_.size() - 1; // minus the laste item (the guard)
-  }
-
-  bool IsAligned() const {
-    return true;
   }
 
  private:

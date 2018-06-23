@@ -246,7 +246,7 @@ TEST_CASE( "Compress and decompress using small buffer", "[doc_store]" ) {
 }
 
 
-TEST_CASE( "Chunked store", "[doc_store0]" ) {
+TEST_CASE( "Chunked store aligned", "[doc_store0]" ) {
   SECTION("Should align") {
     REQUIRE(ShouldAlign(0, 1) == false);
     REQUIRE(ShouldAlign(0, 4096) == false);
@@ -267,6 +267,42 @@ TEST_CASE( "Chunked store", "[doc_store0]" ) {
 
   SECTION("Chunked doc store, many docs") {
     ChunkedDocStoreDumper store;
+    int n_docs = 100;
+    std::map<int, std::string> origins;
+
+    for (int i = 0; i < n_docs; i++) {
+      std::string text = GetRandomText(i + 50 * KB);
+      store.Add(i, text);
+      origins[i] = text;
+    }
+
+    store.Dump("/tmp/tmp.fdx", "/tmp/tmp.fdt");
+
+    ChunkedDocStoreReader reader;
+    reader.Load("/tmp/tmp.fdx", "/tmp/tmp.fdt");
+
+    for (int i = 0; i < n_docs; i++) {
+      std::string text = reader.Get(i);
+      REQUIRE(text == origins[i]);
+    }
+  }
+}
+
+
+TEST_CASE( "Chunked store unaligned", "[doc_store0]" ) {
+  SECTION("Chunked doc store, one doc") {
+    ChunkedDocStoreDumper store(false);
+    store.Add(0, "hello");
+    store.Dump("/tmp/tmp.fdx", "/tmp/tmp.fdt");
+
+    ChunkedDocStoreReader reader;
+    reader.Load("/tmp/tmp.fdx", "/tmp/tmp.fdt");
+    std::string text = reader.Get(0);
+    REQUIRE(text == "hello");
+  }
+
+  SECTION("Chunked doc store, many docs") {
+    ChunkedDocStoreDumper store(false);
     int n_docs = 100;
     std::map<int, std::string> origins;
 
