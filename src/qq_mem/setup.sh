@@ -45,6 +45,15 @@ make
 sudo make install
 
 
+# get elasticsearch
+cd $HOME
+git clone git@github.com:junhe/elasticsearch-5.6.3.git
+
+# install java
+cd $HOME/flashsearch/scripts/
+./install-java.sh
+
+
 # boost
 sudo apt-get install -y libboost-all-dev
 
@@ -71,6 +80,8 @@ sudo apt-get install -y blktrace
 # For elastic search
 # https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html
 sudo sysctl -w vm.max_map_count=262144
+
+
 
 echo "*            hard   memlock           unlimited" | sudo tee -a /etc/security/limits.conf
 echo "*            soft    memlock           unlimited" | sudo tee -a /etc/security/limits.conf

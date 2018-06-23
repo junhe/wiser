@@ -112,12 +112,44 @@ elastic_data_paths = ['/mnt/ssd/elasticsearch/data']
 
 
 
+full_query_paths = [
+        "/mnt/ssd/query_workload/single_term/type_single.docfreq_high",
+        "/mnt/ssd/query_workload/single_term/type_single.docfreq_low",
+        "/mnt/ssd/query_workload/two_term/type_twoterm",
+        "/mnt/ssd/query_workload/two_term_phrases/type_phrase"
+        ]
+full_mem_list = ["in-mem", 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB]
+
+
+
 class ConfFactory(object):
     def get_confs(self):
         confs = []
 
         # confs += self.predefined_sample()
-        confs += self.predefined_es()
+        # confs += self.predefined_es()
+        confs += self.predefined_tmp()
+
+        confs = organize_conf(confs)
+        return confs
+
+    def predefined_tmp(self):
+        confs = parameter_combinations({
+                "server_mem_size": [256*MB],
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": ['/mnt/ssd/query_workload/single_term/type_single.docfreq_low'],
+                "engine": [ELASTIC],
+                "init_heap_size": init_heap_size,
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0, 128],
+                "prefetch_threshold_kb": [None], # not used
+                "enable_prefetch": [None], # not used
+                "elastic_data_path": elastic_data_paths,
+                "force_disable_es_readahead": [False],
+                "bloom_factor": [None],
+                "vacuum_engine": [None]
+                })
 
         return confs
 
@@ -141,7 +173,6 @@ class ConfFactory(object):
                 "bloom_factor": [None],
                 "vacuum_engine": [None]
                 })
-        confs = organize_conf(confs)
 
         return confs
 
@@ -165,7 +196,6 @@ class ConfFactory(object):
                 "bloom_factor": bloom_factors,
                 "vacuum_engine": vacuum_engines
                 })
-        confs = organize_conf(confs)
 
         return confs
 
@@ -435,6 +465,8 @@ def convert_es_lock_mem_string(s):
             'lock_large': 'true'
             }
     return d[s]
+
+
 
 def set_es_yml(conf):
     with open(os.path.join(
