@@ -6,6 +6,10 @@ NUM_CORES=8
 all:
 	./build.sh 2>&1 | tee build.log
 
+
+indexer:
+	python ./tools/indexer.py
+
 hash_benchmark:
 	./build.sh
 	./build/hash_benchmark
@@ -56,7 +60,6 @@ heap_check:
 		HEAPCHECK=normal ./engine_bench -exp_mode=locallog -use_profiler=false
 
 
-
 engine_bench_build:
 	cd build && cmake ../src/ && make -j${NUM_CORES} engine_bench &&
 	make -j${NUM_CORES} qq_server
@@ -72,6 +75,15 @@ convert_qq_to_vacuum:
 		./convert_qq_to_vacuum \
 		-qqdump_dir_path=/mnt/ssd/wiki-May-qq-dump/ \
 		-vacuum_dir_path=/mnt/ssd/vacuum-05-23-wiki-2018May
+
+convert_qq_to_vacuum_baseline:
+	cd build && cmake ../src/ && \
+		make -j${NUM_CORES} convert_qq_to_vacuum && \
+		./convert_qq_to_vacuum \
+		-use_bloom_filters=false \
+		-align_doc_store=false \
+		-qqdump_dir_path=/mnt/ssd/wiki/wiki_full.linedoc_tokenized_preprocessed_pre_after \
+		-vacuum_dir_path=/mnt/ssd/vacuum-wiki-06-24-baseline
 
 check_posting_list:
 	cd build && cmake ../src/ && \
