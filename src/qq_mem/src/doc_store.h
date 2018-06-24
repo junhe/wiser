@@ -419,6 +419,8 @@ class ChunkedDocStoreDumper : public CompressedDocStore {
     : CompressedDocStore(), align_(align) 
   {
     dump_buf_ = (char *)malloc(dump_buf_size_); 
+
+    std::cout << "ChunkedDocStoreDumper::align_: " << align_ << std::endl;
   }
 
   // This will dump to two files, .fdx and .fdt

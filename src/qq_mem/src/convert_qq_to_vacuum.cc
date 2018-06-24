@@ -4,6 +4,8 @@
 
 DEFINE_string(qqdump_dir_path, "", "path of the qq dump dir to read from");
 DEFINE_string(vacuum_dir_path, "", "path of the vacuum to write to");
+DEFINE_bool(use_bloom_filters, false, "whether to use bloom filter");
+DEFINE_bool(align_doc_store, false, "whether to align doc store");
 
 
 void CheckArgs() {
@@ -21,7 +23,10 @@ void Convert() {
   std::string vacuum_to_path = FLAGS_vacuum_dir_path;
   utils::PrepareDir(vacuum_to_path);
 
-  FlashEngineDumper engine_dumper(vacuum_to_path, true);
+  FlashEngineDumper engine_dumper(vacuum_to_path, 
+                                  FLAGS_use_bloom_filters,
+                                  FLAGS_align_doc_store
+                                  );
   assert(engine_dumper.TermCount() == 0);
 
   engine_dumper.LoadQqMemDump(FLAGS_qqdump_dir_path);
