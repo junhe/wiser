@@ -437,38 +437,6 @@ TEST_CASE( "Term Trie Index works", "[qqflash]" ) {
 
 
 
-
-TEST_CASE( "QQFlash Compressed Doc Store", "[qqflash]" ) {
-  SECTION("Index Then Search") {
-    // index
-    FlashDocStoreDumper store;
-    int doc_id = 0;
-    std::string doc = "it is a doc";
-    store.Add(doc_id, doc);
-    REQUIRE(store.Get(doc_id) == doc);
-
-    store.Add(1, "doc1");
-    REQUIRE(store.Size() == 2);
-    REQUIRE(store.Has(doc_id) == true);
-
-    store.Dump("/tmp/my.fdx", "/tmp/my.fdt");
-    store.Clear();
-
-    // search
-    FlashDocStore search_store;
-    search_store.Load("/tmp/my.fdx", "/tmp/my.fdt");
-
-    REQUIRE(search_store.Size() == 2);
-    REQUIRE(search_store.Has(0));
-    REQUIRE(search_store.Has(1));
-    REQUIRE(search_store.Has(2) == false);
-
-    REQUIRE(search_store.Get(0) == doc);
-    REQUIRE(search_store.Get(1) == "doc1");
-  }
-}
-
-
 TEST_CASE( "General file dumper", "[qqflash]" ) {
   GeneralFileDumper dumper("/tmp/dumper.test");
   REQUIRE(dumper.CurrentOffset() == 0);

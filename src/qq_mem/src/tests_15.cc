@@ -210,17 +210,6 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
 }
 
 
-// TEST_CASE( "Load qq mem dump and dump to vacuum format", "[vac]" ) {
-  // VacuumEngine<FlashDocStore> engine("/mnt/ssd/vacuum_engine_dump");
-  // engine.Load();
-  // REQUIRE(engine.TermCount() == 10000);
-
-  // SearchQuery query({"mesolih"}, true);
-  // auto result = engine.Search(query);
-
-// }
-
-
 TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
   std::string dir_path = "/tmp/large-file";
   utils::PrepareDir(dir_path);
@@ -307,17 +296,6 @@ TEST_CASE( "Test fake file dumper", "[fake]" ) {
   REQUIRE(real.End() == fake.End());
 
 }
-
-//// vacuum dump files may not exist on this machine
-// TEST_CASE( "Full wiki", "[qqflash][full]" ) {
-  // VacuumEngine<FlashDocStore> engine("/mnt/ssd/vacuum_engine_dump-04-19");
-
-  // auto a = utils::now();
-  // auto result = engine.Search(SearchQuery({"from"}, true));
-  // auto b = utils::now();
-
-  // auto duration = utils::duration(a, b);
-// }
 
 
 TEST_CASE( "URL parsing", "[parse]" ) {
