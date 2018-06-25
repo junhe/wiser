@@ -127,8 +127,12 @@ class ConfFactory(object):
         confs = []
 
         # confs += self.predefined_sample()
-        confs += self.predefined_es()
+        # confs += self.predefined_es()
         # confs += self.predefined_tmp()
+        confs += self.predefined_vacuum_baseline()
+        confs += self.predefined_vacuum_trade()
+        confs += self.predefined_vacuum_prefetch()
+        confs += self.predefined_vacuum_bloom()
 
         confs = organize_conf(confs)
         return confs
@@ -149,6 +153,102 @@ class ConfFactory(object):
                 "force_disable_es_readahead": [False],
                 "bloom_factor": [None],
                 "vacuum_engine": [None]
+                })
+
+        return confs
+
+    def predefined_vacuum_baseline(self):
+        """
+        vacuum layout, no align, no bloom
+        """
+        confs = parameter_combinations({
+                "server_mem_size": full_mem_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": full_query_paths,
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0],
+                "prefetch_threshold_kb": [128], # not used
+                "enable_prefetch": [False], # not used
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [1],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline"],
+                "note": ["baseline"],
+                })
+
+        return confs
+
+    def predefined_vacuum_trade(self):
+        """
+        vacuum layout, align, no prefetch, no bloom
+        """
+        confs = parameter_combinations({
+                "server_mem_size": full_mem_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": full_query_paths,
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0],
+                "prefetch_threshold_kb": [128], # not used
+                "enable_prefetch": [False], # not used
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [1],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align"],
+                "note": ["baseline+align"],
+                })
+
+        return confs
+
+    def predefined_vacuum_prefetch(self):
+        """
+        vacuum layout, align, prefetch, no bloom
+        """
+        confs = parameter_combinations({
+                "server_mem_size": full_mem_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": full_query_paths,
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [32],
+                "prefetch_threshold_kb": [128],
+                "enable_prefetch": [True],
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [1],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align"],
+                "note": ["baseline+align+prefetch"],
+                })
+
+        return confs
+
+    def predefined_vacuum_bloom(self):
+        """
+        vacuum layout, align, prefetch, no bloom
+        """
+        confs = parameter_combinations({
+                "server_mem_size": full_mem_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": full_query_paths,
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [32],
+                "prefetch_threshold_kb": [128],
+                "enable_prefetch": [True],
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [5],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align.bloom"],
+                "note": ["baseline+align+prefetch+bloom"],
                 })
 
         return confs
