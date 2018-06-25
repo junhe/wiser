@@ -54,6 +54,14 @@ cd $HOME/flashsearch/scripts/
 ./install-java.sh
 
 
+# install vmtouch
+cd $HOME
+git clone https://github.com/hoytech/vmtouch.git
+cd vmtouch
+make
+sudo make install
+
+
 # boost
 sudo apt-get install -y libboost-all-dev
 
