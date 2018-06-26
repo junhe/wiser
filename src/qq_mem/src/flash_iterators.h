@@ -412,44 +412,6 @@ class CozyBoxIterator {
 };
 
 
-class InBagPositionIterator {
- public:
-  InBagPositionIterator() {};
-  InBagPositionIterator(const CozyBoxIterator cozy_iter, const int term_freq) {
-    Reset(cozy_iter, term_freq);
-  }
-
-  void Reset(const CozyBoxIterator &cozy_iter, const int term_freq) {
-    cozy_box_iter_ = cozy_iter;
-    n_poss_to_go_ = term_freq;
-    prev_pos_ = 0;
-  }
-
-  uint32_t Pop() {
-    uint32_t pos = prev_pos_ + cozy_box_iter_.Value();
-    prev_pos_ = pos;
-    n_poss_to_go_--; 
-
-    // Cozy box does not know its end, but we do know how many 
-    // positions we need to pop in this class, so we use this 
-    // info in this higher-level class to make the decision.
-    if (n_poss_to_go_ > 0)
-      cozy_box_iter_.Advance();
-
-    return pos;
-  }
-
-  bool IsEnd() const {
-    return n_poss_to_go_ == 0;
-  }
-
- private:
-  CozyBoxIterator cozy_box_iter_;
-  uint32_t prev_pos_;
-  int n_poss_to_go_;
-};
-
-
 class InBagOffsetPairIterator: public OffsetPairsIteratorService {
  public:
   InBagOffsetPairIterator() {};
@@ -601,10 +563,6 @@ class PositionPostingBagIterator :public PosAndOffPostingBagIteratorBase {
     Reset(buf, skip_list, tf_iter);
   }
 
-  InBagPositionIterator InBagPositionBegin() {
-    return InBagPositionIterator(cozy_box_iter_, TermFreq());
-  }
-
   const CozyBoxIterator &GetCozyBoxIterator() const {
     return cozy_box_iter_;
   }
@@ -640,7 +598,6 @@ class PositionPostingBagIterator :public PosAndOffPostingBagIteratorBase {
     if (n_popped_in_bag_ < cur_term_freq_) {
       cozy_box_iter_.Advance();
       n_advanced_in_bag_++;
-      std::cout << "Advanced.. \n";
     }
 
     return pos;
