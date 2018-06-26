@@ -124,24 +124,24 @@ class GeneralTermEntry {
 
 struct ResultOfDumpingTermEntrySet {
   ResultOfDumpingTermEntrySet(SkipListWriter writer, off_t offset)
-    :skip_list_writer(writer), pos_start_offset(offset)
+    :skip_list_writer(writer), tf_end_offset(offset)
   {}
 
   SkipListWriter skip_list_writer;
-  off_t pos_start_offset;
+  off_t tf_end_offset;
 };
 
 
 struct ResultOfDumpingTermEntrySetWithBloom {
   ResultOfDumpingTermEntrySetWithBloom(SkipListWriter writer, off_t offset, 
       off_t bloom_off1, off_t bloom_off2)
-    :skip_list_writer(writer), pos_start_offset(offset),
+    :skip_list_writer(writer), tf_end_offset(offset),
      bloom_begin_section_offset(bloom_off1),
      bloom_end_section_offset(bloom_off2)
   {}
 
   SkipListWriter skip_list_writer;
-  off_t pos_start_offset;
+  off_t tf_end_offset;
   off_t bloom_begin_section_offset;
   off_t bloom_end_section_offset;
 };
@@ -403,7 +403,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     // Dump to .tip
     // Calculate the prefetch zone size!
     uint32_t n_pages_of_prefetch_zone = 
-      (real_result.pos_start_offset - posting_list_start) / 4096;
+      (real_result.tf_end_offset - posting_list_start) / 4096;
 
     term_index_dumper_.DumpEntry(term, 
         EncodePrefetchZoneAndOffset(n_pages_of_prefetch_zone, posting_list_start));
@@ -517,7 +517,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     // Dump to .tip
     // Calculate the prefetch zone size!
     uint32_t n_pages_of_prefetch_zone = 
-      (real_result.pos_start_offset - posting_list_start) / 4096;
+      (real_result.tf_end_offset - posting_list_start) / 4096;
 
     term_index_dumper_.DumpEntry(term, 
         EncodePrefetchZoneAndOffset(n_pages_of_prefetch_zone, posting_list_start));
@@ -566,7 +566,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     FileOffsetOfSkipPostingBags tf_skip_offs = 
       DumpTermEntry(entry_set.termfreq, file_dumper, false);
 
-    off_t pos_start_offset = file_dumper->CurrentOffset();
+    off_t tf_end_offset = file_dumper->CurrentOffset();
 
     FileOffsetOfSkipPostingBags pos_skip_offs = 
       DumpTermEntry(entry_set.position, file_dumper, false);
@@ -577,7 +577,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
         SkipListWriter(docid_skip_offs, tf_skip_offs, 
                        pos_skip_offs,   off_skip_offs, 
                        entry_set.docid.Values()),
-        pos_start_offset);
+        tf_end_offset);
   }
 
   ResultOfDumpingTermEntrySetWithBloom DumpTermEntrySetWithBloom(
@@ -595,13 +595,13 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
     FileOffsetOfSkipPostingBags tf_skip_offs = 
       DumpTermEntry(entry_set.termfreq, file_dumper, false);
 
+    off_t tf_end_offset = file_dumper->CurrentOffset();
+
     off_t bloom_begin_start_offset = file_dumper->CurrentOffset();
     DumpBloomSection(posting_list_start, file_dumper, bloom_begin_writer);
 
     off_t bloom_end_start_offset = file_dumper->CurrentOffset();
     DumpBloomSection(posting_list_start, file_dumper, bloom_end_writer);
-
-    off_t pos_start_offset = file_dumper->CurrentOffset();
 
     FileOffsetOfSkipPostingBags pos_skip_offs = 
       DumpTermEntry(entry_set.position, file_dumper, false);
@@ -612,7 +612,7 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
         SkipListWriter(docid_skip_offs, tf_skip_offs, 
                        pos_skip_offs,   off_skip_offs, 
                        entry_set.docid.Values()),
-        pos_start_offset, 
+        tf_end_offset, 
         bloom_begin_start_offset,
         bloom_end_start_offset
         );
