@@ -247,8 +247,8 @@ class ConfFactory(object):
                 "elastic_data_path": [None],
                 "force_disable_es_readahead": [None],
                 "bloom_factor": [5],
-                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align.bloom"],
-                "note": ["baseline+align+prefetch+bloom"],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom"],
+                "note": ["baseline+align+prefetch+bloom+goodzone"],
                 })
 
         return confs
