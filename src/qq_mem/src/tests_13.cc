@@ -237,7 +237,7 @@ TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
     SECTION("Very simple") {
       pos_iter.SkipTo(0);
 
-      InBagPositionIterator2 in_bag_iter(&pos_iter);
+      InBagPositionIterator in_bag_iter(&pos_iter);
 
       uint32_t prev = 0;
       for (int i = 0; i < 3; i++) {
@@ -254,7 +254,7 @@ TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
       pos_iter.SkipTo(0);
 
       {
-        InBagPositionIterator2 in_bag_iter(&pos_iter);
+        InBagPositionIterator in_bag_iter(&pos_iter);
 
         uint32_t prev = 0;
         for (int i = 0; i < 2; i++) {
@@ -273,7 +273,7 @@ TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
 
         auto good_positions = GoodPositions(posting_bag);
 
-        InBagPositionIterator2 in_bag_iter(&pos_iter);
+        InBagPositionIterator in_bag_iter(&pos_iter);
 
         for (int i = 0; i < 3; i++) {
           REQUIRE(in_bag_iter.IsEnd() == false);
@@ -290,7 +290,7 @@ TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
 
       auto good_positions = GoodPositions(posting_bag);
 
-      InBagPositionIterator2 in_bag_iter(&pos_iter);
+      InBagPositionIterator in_bag_iter(&pos_iter);
 
       for (int i = 0; i < 3; i++) {
         REQUIRE(in_bag_iter.IsEnd() == false);
@@ -306,7 +306,7 @@ TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
 
       auto good_positions = GoodPositions(posting_bag);
 
-      InBagPositionIterator2 in_bag_iter(&pos_iter);
+      InBagPositionIterator in_bag_iter(&pos_iter);
 
       for (int i = 0; i < 3; i++) {
         REQUIRE(in_bag_iter.IsEnd() == false);
@@ -320,7 +320,7 @@ TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
       int posting_bag = n_postings / 2;
       pos_iter.SkipTo(posting_bag);
 
-      InBagPositionIterator2 in_bag_iter(&pos_iter);
+      InBagPositionIterator in_bag_iter(&pos_iter);
 
       auto good_positions = GoodPositions(posting_bag);
 
@@ -337,7 +337,7 @@ TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
         std::cout << "`````````````````" << i << std::endl;
         pos_iter.SkipTo(i);
 
-        InBagPositionIterator2 in_bag_iter(&pos_iter);
+        InBagPositionIterator in_bag_iter(&pos_iter);
 
         auto good_positions = GoodPositions(i);
         utils::PrintVec<uint32_t>(good_positions);
@@ -355,7 +355,7 @@ TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
       for (uint32_t i = 0; i < n_postings; i+=7) {
         pos_iter.SkipTo(i);
 
-        InBagPositionIterator2 in_bag_iter(&pos_iter);
+        InBagPositionIterator in_bag_iter(&pos_iter);
 
         auto good_positions = GoodPositions(i);
 
@@ -372,7 +372,7 @@ TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
       for (uint32_t i = 0; i < n_postings; i+=100) {
         pos_iter.SkipTo(i);
 
-        InBagPositionIterator2 in_bag_iter(&pos_iter);
+        InBagPositionIterator in_bag_iter(&pos_iter);
 
         auto good_positions = GoodPositions(i);
 

@@ -636,11 +636,11 @@ class PositionPostingBagIterator :public PosAndOffPostingBagIteratorBase {
 
 // A simple wrapper of Positionpostingbagiterator for 
 // clear interfaces
-class InBagPositionIterator2 {
+class InBagPositionIterator {
  public:
-  InBagPositionIterator2() {}
+  InBagPositionIterator() {}
 
-  InBagPositionIterator2(PositionPostingBagIterator *it) {
+  InBagPositionIterator(PositionPostingBagIterator *it) {
     Reset(it);
   }
 
@@ -999,7 +999,7 @@ class VacuumPostingListIterator {
     return HasTerm(&bloom_end_reader_, term);
   }
 
-  void AssignPositionBegin(InBagPositionIterator2 *in_bag_iter) {
+  void AssignPositionBegin(InBagPositionIterator *in_bag_iter) {
     pos_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
     in_bag_iter->Reset(&pos_bag_iter_); 
   }

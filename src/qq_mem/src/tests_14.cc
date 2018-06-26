@@ -94,7 +94,7 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
         REQUIRE(it.TermFreq() == 1);
         REQUIRE(it.PostingIndex() == i);
 
-        InBagPositionIterator2 pos_iter;
+        InBagPositionIterator pos_iter;
         it.AssignPositionBegin(&pos_iter);
 
         REQUIRE(pos_iter.Pop() == 0); 
@@ -121,7 +121,7 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
         REQUIRE(it.TermFreq() == 1);
         REQUIRE(it.PostingIndex() == i);
 
-        InBagPositionIterator2 pos_iter;
+        InBagPositionIterator pos_iter;
         it.AssignPositionBegin(&pos_iter);
         REQUIRE(pos_iter.Pop() == 1); 
         REQUIRE(pos_iter.IsEnd() == true); 
@@ -147,7 +147,7 @@ TEST_CASE( "Dumping 3-word Engine", "[qqflash][dump3]" ) {
         REQUIRE(it.TermFreq() == 1);
         REQUIRE(it.PostingIndex() == i);
 
-        InBagPositionIterator2 pos_iter;
+        InBagPositionIterator pos_iter;
         it.AssignPositionBegin(&pos_iter);
         REQUIRE(pos_iter.Pop() == 2); 
         REQUIRE(pos_iter.IsEnd() == true); 
@@ -197,7 +197,7 @@ TEST_CASE( "3 word engine with different tfs", "[qqflash][tf]" ) {
       REQUIRE(it.PostingIndex() == 1);
 
       // iter positions of the second document
-      InBagPositionIterator2 pos_iter;
+      InBagPositionIterator pos_iter;
       it.AssignPositionBegin(&pos_iter);
       REQUIRE(pos_iter.IsEnd() == false); 
       REQUIRE(pos_iter.Pop() == 0); 
