@@ -179,6 +179,217 @@ std::vector<uint32_t> GoodOffsets(uint32_t posting_bag) {
 }
 
 
+TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
+  // Build term frequency iterator
+  std::vector<uint32_t> vec;
+  uint32_t n_postings = 300;
+  for (uint32_t i = 0; i < n_postings; i++) {
+    vec.push_back(3);
+  }
+
+  std::string path = "/tmp/tmp.tf";
+  FileOffsetsOfBlobs file_offsets = DumpCozyBox(vec, path, false);
+  SkipList tf_skip_list = CreateSkipList("TF", file_offsets.BlobOffsets());
+
+  // Open the file
+  utils::FileMap file_map;
+  file_map.Open(path);
+
+  // Read data by TermFreqIterator
+  TermFreqIterator tf_iter((const uint8_t *)file_map.Addr(), &tf_skip_list);
+
+  SECTION("Check if the TF iterator works") {
+    for (uint32_t i = 0; i < n_postings; i++) {
+      tf_iter.SkipTo(i);
+      REQUIRE(tf_iter.Value() == 3);
+    }
+  }
+
+  SECTION("Position iterator") {
+    std::vector<uint32_t> positions;
+    for (uint32_t i = 0; i < n_postings * 3; i++) {
+      positions.push_back(i);
+    }
+
+    std::string path = "/tmp/tmp.pos";
+    FileOffsetsOfBlobs file_offsets = DumpCozyBox(positions, path, false);
+    std::vector<off_t> blob_offs = file_offsets.BlobOffsets();
+    int n_intervals = (n_postings + PACK_SIZE - 1) / PACK_SIZE;
+    
+    std::vector<off_t> blob_offs_of_pos_bags; // for skip postings only
+    std::vector<int> in_blob_indexes;
+    for (int i = 0; i < n_intervals; i++) {
+      blob_offs_of_pos_bags.push_back(blob_offs[i*3]);
+      in_blob_indexes.push_back(0);
+    }
+
+    SkipList skip_list = CreateSkipListForPosition(
+        blob_offs_of_pos_bags, in_blob_indexes);
+
+    // Open the file
+    utils::FileMap file_map;
+    file_map.Open(path);
+
+    // Initialize pos iterator
+    PositionPostingBagIterator 
+      pos_iter((const uint8_t*)file_map.Addr(), &skip_list, tf_iter);
+
+    SECTION("Very simple") {
+      pos_iter.SkipTo(0);
+
+      InBagPositionIterator2 in_bag_iter(&pos_iter);
+
+      uint32_t prev = 0;
+      for (int i = 0; i < 3; i++) {
+        REQUIRE(in_bag_iter.IsEnd() == false);
+        uint32_t pos = in_bag_iter.Pop();
+        uint32_t good_pos = prev + i;
+        REQUIRE(pos == good_pos);
+        prev = good_pos;
+      }
+      REQUIRE(in_bag_iter.IsEnd() == true);
+    }
+
+    SECTION("Very simple, partial popping") {
+      pos_iter.SkipTo(0);
+
+      {
+        InBagPositionIterator2 in_bag_iter(&pos_iter);
+
+        uint32_t prev = 0;
+        for (int i = 0; i < 2; i++) {
+          REQUIRE(in_bag_iter.IsEnd() == false);
+          uint32_t pos = in_bag_iter.Pop();
+          uint32_t good_pos = prev + i;
+          REQUIRE(pos == good_pos);
+          prev = good_pos;
+        }
+        REQUIRE(in_bag_iter.IsEnd() == false);
+      }
+
+      {
+        int posting_bag = 1;
+        pos_iter.SkipTo(posting_bag);
+
+        auto good_positions = GoodPositions(posting_bag);
+
+        InBagPositionIterator2 in_bag_iter(&pos_iter);
+
+        for (int i = 0; i < 3; i++) {
+          REQUIRE(in_bag_iter.IsEnd() == false);
+          uint32_t pos = in_bag_iter.Pop();
+          REQUIRE(pos == good_positions[i]);
+        }
+        REQUIRE(in_bag_iter.IsEnd() == true);
+      }
+    }
+
+    SECTION("Very simple 2") {
+      int posting_bag = 1;
+      pos_iter.SkipTo(posting_bag);
+
+      auto good_positions = GoodPositions(posting_bag);
+
+      InBagPositionIterator2 in_bag_iter(&pos_iter);
+
+      for (int i = 0; i < 3; i++) {
+        REQUIRE(in_bag_iter.IsEnd() == false);
+        uint32_t pos = in_bag_iter.Pop();
+        REQUIRE(pos == good_positions[i]);
+      }
+      REQUIRE(in_bag_iter.IsEnd() == true);
+    }
+
+    SECTION("Go to the last bag") {
+      int posting_bag = n_postings - 1;
+      pos_iter.SkipTo(posting_bag);
+
+      auto good_positions = GoodPositions(posting_bag);
+
+      InBagPositionIterator2 in_bag_iter(&pos_iter);
+
+      for (int i = 0; i < 3; i++) {
+        REQUIRE(in_bag_iter.IsEnd() == false);
+        uint32_t pos = in_bag_iter.Pop();
+        REQUIRE(pos == good_positions[i]);
+      }
+      REQUIRE(in_bag_iter.IsEnd() == true);
+    }
+
+    SECTION("Go to bag in the middle") {
+      int posting_bag = n_postings / 2;
+      pos_iter.SkipTo(posting_bag);
+
+      InBagPositionIterator2 in_bag_iter(&pos_iter);
+
+      auto good_positions = GoodPositions(posting_bag);
+
+      for (int i = 0; i < 3; i++) {
+        REQUIRE(in_bag_iter.IsEnd() == false);
+        uint32_t pos = in_bag_iter.Pop();
+        REQUIRE(pos == good_positions[i]);
+      }
+      REQUIRE(in_bag_iter.IsEnd() == true);
+    }
+
+    SECTION("Skip multiple times") {
+      for (uint32_t i = 0; i < n_postings; i++) {
+        std::cout << "`````````````````" << i << std::endl;
+        pos_iter.SkipTo(i);
+
+        InBagPositionIterator2 in_bag_iter(&pos_iter);
+
+        auto good_positions = GoodPositions(i);
+        utils::PrintVec<uint32_t>(good_positions);
+
+        for (int j = 0; j < 3; j++) {
+          REQUIRE(in_bag_iter.IsEnd() == false);
+          uint32_t pos = in_bag_iter.Pop();
+          REQUIRE(pos == good_positions[j]);
+        }
+        REQUIRE(in_bag_iter.IsEnd() == true);
+      }
+    }
+
+    SECTION("Skip multiple times with strides") {
+      for (uint32_t i = 0; i < n_postings; i+=7) {
+        pos_iter.SkipTo(i);
+
+        InBagPositionIterator2 in_bag_iter(&pos_iter);
+
+        auto good_positions = GoodPositions(i);
+
+        for (int i = 0; i < 3; i++) {
+          REQUIRE(in_bag_iter.IsEnd() == false);
+          uint32_t pos = in_bag_iter.Pop();
+          REQUIRE(pos == good_positions[i]);
+        }
+        REQUIRE(in_bag_iter.IsEnd() == true);
+      }
+    }
+
+    SECTION("Skip multiple times with large strides") {
+      for (uint32_t i = 0; i < n_postings; i+=100) {
+        pos_iter.SkipTo(i);
+
+        InBagPositionIterator2 in_bag_iter(&pos_iter);
+
+        auto good_positions = GoodPositions(i);
+
+        for (int i = 0; i < 3; i++) {
+          REQUIRE(in_bag_iter.IsEnd() == false);
+          uint32_t pos = in_bag_iter.Pop();
+          REQUIRE(pos == good_positions[i]);
+        }
+        REQUIRE(in_bag_iter.IsEnd() == true);
+      }
+    }
+  }
+}
+
+
+
+
 TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
   // Build term frequency iterator
   std::vector<uint32_t> vec;

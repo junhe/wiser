@@ -236,7 +236,7 @@ class VacuumEngine : public SearchEngineServiceNew {
     }
 
     auto top_k = qq_search::ProcessQueryDelta
-      <VacuumPostingListIterator, InBagPositionIterator>(
+      <VacuumPostingListIterator, InBagPositionIterator2>(
         similarity_,      &iterators,      doc_lengths_, doc_lengths_.Size(), 
         query.n_results,  query.is_phrase, bloom_enable_factor_);  
 
