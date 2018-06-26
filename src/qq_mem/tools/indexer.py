@@ -44,7 +44,6 @@ class VacuumWikiBaseline(object):
             "n_lines": 20000000,
             "line_doc_path": "/mnt/ssd/wiki/wiki_full.linedoc_tokenized_preprocessed_pre_after",
             "qqdump_dir_path": "/mnt/ssd/qq-wiki-06-24.bloom.5-0.0009",
-            "vacuum_dir_path": "/mnt/ssd/vacuum-wiki-06-24.baseline",
             }
 
     def create_qq(self):
@@ -73,7 +72,7 @@ class VacuumWikiBaseline(object):
         convert(use_bloom_filters = False,
                 align_doc_store = False,
                 qqdump_dir_path = self.conf["qqdump_dir_path"],
-                vacuum_dir_path = self.conf["vacuum_dir_path"])
+                vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-24.baseline")
 
         convert(use_bloom_filters = False,
                 align_doc_store = True,
