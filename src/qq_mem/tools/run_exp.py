@@ -248,7 +248,7 @@ class ConfFactory(object):
                 "force_disable_es_readahead": [None],
                 "bloom_factor": [5],
                 "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom"],
-                "note": ["baseline+align+prefetch+bloom+goodzone"],
+                "note": ["baseline+align+prefetch+bloomGoodZone"],
                 })
 
         return confs
