@@ -412,45 +412,6 @@ class CozyBoxIterator {
 };
 
 
-
-class InBagPositionIterator {
- public:
-  InBagPositionIterator() {};
-  InBagPositionIterator(const CozyBoxIterator cozy_iter, const int term_freq) {
-    Reset(cozy_iter, term_freq);
-  }
-
-  void Reset(const CozyBoxIterator &cozy_iter, const int term_freq) {
-    cozy_box_iter_ = cozy_iter;
-    n_poss_to_go_ = term_freq;
-    prev_pos_ = 0;
-  }
-
-  uint32_t Pop() {
-    uint32_t pos = prev_pos_ + cozy_box_iter_.Value();
-    prev_pos_ = pos;
-    n_poss_to_go_--; 
-
-    // Cozy box does not know its end, but we do know how many 
-    // positions we need to pop in this class, so we use this 
-    // info in this higher-level class to make the decision.
-    if (n_poss_to_go_ > 0)
-      cozy_box_iter_.Advance();
-
-    return pos;
-  }
-
-  bool IsEnd() const {
-    return n_poss_to_go_ == 0;
-  }
-
- private:
-  CozyBoxIterator cozy_box_iter_;
-  uint32_t prev_pos_;
-  int n_poss_to_go_;
-};
-
-
 class InBagOffsetPairIterator: public OffsetPairsIteratorService {
  public:
   InBagOffsetPairIterator() {};
@@ -555,6 +516,7 @@ class PosAndOffPostingBagIteratorBase {
     return cur_posting_bag_ / PACK_SIZE;
   }
 
+  // TODO: why not just do posting_bag / PACK_SIZE ?
   int FindSkipInterval(const int posting_bag) {
     int i = CurSkipInterval();
     while (i + 1 < skip_list_->NumEntries() && 
@@ -582,8 +544,8 @@ class PosAndOffPostingBagIteratorBase {
   const SkipList *skip_list_;
 
   int cur_posting_bag_ = 0;
+  int cur_term_freq_;
 };
-
 
 
 
@@ -601,12 +563,48 @@ class PositionPostingBagIterator :public PosAndOffPostingBagIteratorBase {
     Reset(buf, skip_list, tf_iter);
   }
 
-  InBagPositionIterator InBagPositionBegin() {
-    return InBagPositionIterator(cozy_box_iter_, TermFreq());
-  }
-
   const CozyBoxIterator &GetCozyBoxIterator() const {
     return cozy_box_iter_;
+  }
+
+  void SkipTo(int posting_bag) {
+    DLOG_IF(FATAL, posting_bag < cur_posting_bag_) << "posting bag " << posting_bag 
+        << " is smaller than cur_posting_bag_ " << cur_posting_bag_;
+
+    if (cozy_box_iter_.CurBlobType() == BlobFormat::NONE || 
+        posting_bag / SKIP_INTERVAL > CurSkipInterval()) {
+      // brand new position iterator, init the cozy iter
+      JumpToPostingBag(posting_bag);
+    } else {
+      // just advance cozy iterator from last place, not jumpping
+      int n_entries = NumCozyEntriesBetween(cur_posting_bag_, posting_bag);
+      n_entries -= n_advanced_in_bag_;
+      AdvanceByCozyEntries(n_entries);
+    }
+
+    cur_posting_bag_ = posting_bag;
+
+    prev_pos_in_bag_ = 0;
+    cur_term_freq_ = TermFreq();
+    n_popped_in_bag_ = 0;
+    n_advanced_in_bag_ = 0;
+  }
+
+  uint32_t PopInBag() {
+    uint32_t pos = prev_pos_in_bag_ + cozy_box_iter_.Value();
+    prev_pos_in_bag_ = pos;
+    n_popped_in_bag_++;
+
+    if (n_popped_in_bag_ < cur_term_freq_) {
+      cozy_box_iter_.Advance();
+      n_advanced_in_bag_++;
+    }
+
+    return pos;
+  }
+
+  bool IsEndInBag() {
+    return n_popped_in_bag_ >= cur_term_freq_;
   }
 
  private:
@@ -618,7 +616,6 @@ class PositionPostingBagIterator :public PosAndOffPostingBagIteratorBase {
     return ent.in_blob_index_of_pos_bag;
   }
 
-
   int NumCozyEntriesBetween(int bag_a, int bag_b) {
     int n = 0;
 
@@ -629,7 +626,42 @@ class PositionPostingBagIterator :public PosAndOffPostingBagIteratorBase {
 
     return n;
   }
+
+  int n_popped_in_bag_; 
+  int n_advanced_in_bag_;
+  uint32_t prev_pos_in_bag_ = 0;
+  int cur_term_freq_;
 };
+
+
+// A simple wrapper of Positionpostingbagiterator for 
+// clear interfaces
+class InBagPositionIterator {
+ public:
+  InBagPositionIterator() {}
+
+  InBagPositionIterator(PositionPostingBagIterator *it) {
+    Reset(it);
+  }
+
+  void Reset(PositionPostingBagIterator *it) {
+    pos_bag_iter_ = it;
+  }
+
+  uint32_t Pop() {
+    return pos_bag_iter_->PopInBag();
+  }
+
+  bool IsEnd() const {
+    return pos_bag_iter_->IsEndInBag();
+  }
+
+ private:
+  PositionPostingBagIterator *pos_bag_iter_;
+};
+
+
+
 
 
 class OffsetPostingBagIterator :public PosAndOffPostingBagIteratorBase {
@@ -969,7 +1001,7 @@ class VacuumPostingListIterator {
 
   void AssignPositionBegin(InBagPositionIterator *in_bag_iter) {
     pos_bag_iter_.SkipTo(doc_id_iter_.PostingIndex());
-    in_bag_iter->Reset(pos_bag_iter_.GetCozyBoxIterator(), pos_bag_iter_.TermFreq());
+    in_bag_iter->Reset(&pos_bag_iter_); 
   }
 
   std::unique_ptr<OffsetPairsIteratorService> OffsetPairsBegin() {

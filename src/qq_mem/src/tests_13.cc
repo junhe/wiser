@@ -179,7 +179,7 @@ std::vector<uint32_t> GoodOffsets(uint32_t posting_bag) {
 }
 
 
-TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
+TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
   // Build term frequency iterator
   std::vector<uint32_t> vec;
   uint32_t n_postings = 300;
@@ -237,7 +237,7 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
     SECTION("Very simple") {
       pos_iter.SkipTo(0);
 
-      InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
+      InBagPositionIterator in_bag_iter(&pos_iter);
 
       uint32_t prev = 0;
       for (int i = 0; i < 3; i++) {
@@ -250,13 +250,47 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
       REQUIRE(in_bag_iter.IsEnd() == true);
     }
 
+    SECTION("Very simple, partial popping") {
+      pos_iter.SkipTo(0);
+
+      {
+        InBagPositionIterator in_bag_iter(&pos_iter);
+
+        uint32_t prev = 0;
+        for (int i = 0; i < 2; i++) {
+          REQUIRE(in_bag_iter.IsEnd() == false);
+          uint32_t pos = in_bag_iter.Pop();
+          uint32_t good_pos = prev + i;
+          REQUIRE(pos == good_pos);
+          prev = good_pos;
+        }
+        REQUIRE(in_bag_iter.IsEnd() == false);
+      }
+
+      {
+        int posting_bag = 1;
+        pos_iter.SkipTo(posting_bag);
+
+        auto good_positions = GoodPositions(posting_bag);
+
+        InBagPositionIterator in_bag_iter(&pos_iter);
+
+        for (int i = 0; i < 3; i++) {
+          REQUIRE(in_bag_iter.IsEnd() == false);
+          uint32_t pos = in_bag_iter.Pop();
+          REQUIRE(pos == good_positions[i]);
+        }
+        REQUIRE(in_bag_iter.IsEnd() == true);
+      }
+    }
+
     SECTION("Very simple 2") {
       int posting_bag = 1;
       pos_iter.SkipTo(posting_bag);
 
       auto good_positions = GoodPositions(posting_bag);
 
-      InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
+      InBagPositionIterator in_bag_iter(&pos_iter);
 
       for (int i = 0; i < 3; i++) {
         REQUIRE(in_bag_iter.IsEnd() == false);
@@ -272,7 +306,7 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
 
       auto good_positions = GoodPositions(posting_bag);
 
-      InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
+      InBagPositionIterator in_bag_iter(&pos_iter);
 
       for (int i = 0; i < 3; i++) {
         REQUIRE(in_bag_iter.IsEnd() == false);
@@ -286,7 +320,8 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
       int posting_bag = n_postings / 2;
       pos_iter.SkipTo(posting_bag);
 
-      InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
+      InBagPositionIterator in_bag_iter(&pos_iter);
+
       auto good_positions = GoodPositions(posting_bag);
 
       for (int i = 0; i < 3; i++) {
@@ -299,15 +334,18 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
 
     SECTION("Skip multiple times") {
       for (uint32_t i = 0; i < n_postings; i++) {
+        std::cout << "`````````````````" << i << std::endl;
         pos_iter.SkipTo(i);
 
-        InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
-        auto good_positions = GoodPositions(i);
+        InBagPositionIterator in_bag_iter(&pos_iter);
 
-        for (int i = 0; i < 3; i++) {
+        auto good_positions = GoodPositions(i);
+        utils::PrintVec<uint32_t>(good_positions);
+
+        for (int j = 0; j < 3; j++) {
           REQUIRE(in_bag_iter.IsEnd() == false);
           uint32_t pos = in_bag_iter.Pop();
-          REQUIRE(pos == good_positions[i]);
+          REQUIRE(pos == good_positions[j]);
         }
         REQUIRE(in_bag_iter.IsEnd() == true);
       }
@@ -317,7 +355,8 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
       for (uint32_t i = 0; i < n_postings; i+=7) {
         pos_iter.SkipTo(i);
 
-        InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
+        InBagPositionIterator in_bag_iter(&pos_iter);
+
         auto good_positions = GoodPositions(i);
 
         for (int i = 0; i < 3; i++) {
@@ -333,7 +372,8 @@ TEST_CASE( "Position Bag iterator", "[qqflash][pos]" ) {
       for (uint32_t i = 0; i < n_postings; i+=100) {
         pos_iter.SkipTo(i);
 
-        InBagPositionIterator in_bag_iter = pos_iter.InBagPositionBegin();
+        InBagPositionIterator in_bag_iter(&pos_iter);
+
         auto good_positions = GoodPositions(i);
 
         for (int i = 0; i < 3; i++) {
