@@ -279,7 +279,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
       DumpPostingList(it->first, it->second);
       cnt++;
       if (cnt % 10000 == 0) {
-        std::cout << "Posting list dumpped: " << cnt << std::endl;
+        std::cout << "Posting list dumpped: " << utils::FormatThousands(cnt) 
+          << std::endl;
       }
     }
   }
