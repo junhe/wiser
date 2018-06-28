@@ -827,7 +827,11 @@ def kill_client():
 
 def kill_server():
     shcmd("sudo pkill qq_server", ignore_error=True)
-    shcmd("sudo pkill java", ignore_error=True)
+
+    while is_cmd_running_by_grep("org.elasticsearch"):
+        print "KILLING JAVA"
+        shcmd("sudo pkill java", ignore_error=True)
+        time.sleep(2)
 
 def copy_client_out():
     prepare_dir("/tmp/results")
