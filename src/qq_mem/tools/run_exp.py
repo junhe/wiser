@@ -312,11 +312,19 @@ def organize_conf(confs):
         if conf['server_mem_size'] == 'in-mem':
             conf['cgroup_mem_size'] = 32*GB
 
-        conf['max_heap_size'] = conf['init_heap_size']
 
         if conf['force_disable_es_readahead'] is True and \
                 conf['engine'] in (ELASTIC, ELASTIC_PY):
             conf['read_ahead_kb'] = 0
+
+        if conf['init_heap_size'] == 'auto' and \
+                conf['engine'] in (ELASTIC, ELASTIC_PY):
+            if conf['cgroup_mem_size'] > 512*MB:
+                conf['init_heap_size'] = conf['cgroup_mem_size'] / 2
+            else:
+                conf['init_heap_size'] = 500*MB
+
+        conf['max_heap_size'] = conf['init_heap_size']
 
         new_confs.append(conf)
 
