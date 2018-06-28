@@ -583,6 +583,15 @@ inline std::vector<T> EncodeDelta(const std::vector<T> &values) {
   return vals;
 }
 
+std::string FormatThousands(long long val) {
+	std::stringstream ss;
+	ss.imbue(std::locale("en_US.UTF-8"));
+	ss << val;
+	return ss.str();
+}
+
+
+
 } // namespace util
 #endif
 
