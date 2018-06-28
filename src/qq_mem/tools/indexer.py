@@ -36,7 +36,7 @@ def convert(use_bloom_filters, align_doc_store, qqdump_dir_path, vacuum_dir_path
                      qqdump_dir_path = qqdump_dir_path,
                      vacuum_dir_path = vacuum_dir_path))
 
-class VacuumWikiBaseline(object):
+class VacuumWiki(object):
     def __init__(self):
         self.conf = {
             "bloom_entries": 5,
@@ -69,20 +69,20 @@ class VacuumWikiBaseline(object):
                dump_dir_path = self.conf["qqdump_dir_path"])
 
     def convert_to_vacuum(self):
-        convert(use_bloom_filters = False,
-                align_doc_store = False,
-                qqdump_dir_path = self.conf["qqdump_dir_path"],
-                vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-24.baseline")
+        # convert(use_bloom_filters = False,
+                # align_doc_store = False,
+                # qqdump_dir_path = self.conf["qqdump_dir_path"],
+                # vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-24.baseline")
 
-        convert(use_bloom_filters = False,
-                align_doc_store = True,
-                qqdump_dir_path = self.conf["qqdump_dir_path"],
-                vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-24.plus.align")
+        # convert(use_bloom_filters = False,
+                # align_doc_store = True,
+                # qqdump_dir_path = self.conf["qqdump_dir_path"],
+                # vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-24.plus.align")
 
         convert(use_bloom_filters = True,
                 align_doc_store = True,
                 qqdump_dir_path = self.conf["qqdump_dir_path"],
-                vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-24.plus.align.bloom")
+                vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom")
 
 
 
@@ -92,8 +92,8 @@ def main():
     build_creator()
     build_convertor()
 
-    index = VacuumWikiBaseline()
-    index.create_qq()
+    index = VacuumWiki()
+    # index.create_qq()
     index.convert_to_vacuum()
 
 
