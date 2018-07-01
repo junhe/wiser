@@ -2,6 +2,7 @@ from pyreuse.helpers import *
 import os
 import copy
 
+MILLION = 1000000
 
 def build_creator():
     shcmd("make -j32 create_qq_mem_dump")
@@ -85,6 +86,54 @@ class VacuumWiki(object):
                 vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom")
 
 
+class VacuumReddit(object):
+    def __init__(self):
+        self.conf = {
+            "bloom_entries": 5,
+            "bloom_ratio": 0.0009,
+            "n_lines": 2 * MILLION,
+            "line_doc_path": "/mnt/hdd/reddit/redditoverall_tokenized_preprocessed_pre_after",
+            "qqdump_dir_path": "/mnt/ssd/qq-reddit-06-20-bi-bloom-5-0.0009/",
+            }
+
+    def create_qq(self):
+        create(dump_type = "inverted",
+               bloom_entries = self.conf["bloom_entries"],
+               bloom_ratio = self.conf["bloom_ratio"],
+               n_lines = self.conf["n_lines"],
+               line_doc_path = self.conf["line_doc_path"],
+               dump_dir_path = self.conf["qqdump_dir_path"])
+
+        create(dump_type = "bloom_begin",
+               bloom_entries = self.conf["bloom_entries"],
+               bloom_ratio = self.conf["bloom_ratio"],
+               n_lines = self.conf["n_lines"],
+               line_doc_path = self.conf["line_doc_path"],
+               dump_dir_path = self.conf["qqdump_dir_path"])
+
+        create(dump_type = "bloom_end",
+               bloom_entries = self.conf["bloom_entries"],
+               bloom_ratio = self.conf["bloom_ratio"],
+               n_lines = self.conf["n_lines"],
+               line_doc_path = self.conf["line_doc_path"],
+               dump_dir_path = self.conf["qqdump_dir_path"])
+
+    def convert_to_vacuum(self):
+        # convert(use_bloom_filters = False,
+                # align_doc_store = False,
+                # qqdump_dir_path = self.conf["qqdump_dir_path"],
+                # vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-24.baseline")
+
+        # convert(use_bloom_filters = False,
+                # align_doc_store = True,
+                # qqdump_dir_path = self.conf["qqdump_dir_path"],
+                # vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-24.plus.align")
+
+        convert(use_bloom_filters = True,
+                align_doc_store = True,
+                qqdump_dir_path = self.conf["qqdump_dir_path"],
+                vacuum_dir_path = "/mnt/ssd/vacuum-reddit-06-28-bloom-5-0.0009")
+
 
 def main():
     os.chdir("build")
@@ -92,7 +141,7 @@ def main():
     build_creator()
     build_convertor()
 
-    index = VacuumWiki()
+    index = VacuumReddit()
     # index.create_qq()
     index.convert_to_vacuum()
 
