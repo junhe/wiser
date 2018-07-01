@@ -434,7 +434,7 @@ def load_mem_engine(conf):
 def load_mem_elastic(conf):
     # p = start_elastic_pyclient(conf['query_path'])
     # p.wait()
-    p = start_elastic_client(conf['n_server_threads'], conf['query_path'])
+    p = start_elastic_client(conf['n_client_threads'], conf['query_path'])
     p.wait()
 
     shcmd("rm -f /tmp/client.out")
