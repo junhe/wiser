@@ -849,7 +849,7 @@ def kill_server():
     while is_cmd_running_by_grep("org.elasticsearch"):
         print "KILLING JAVA"
         shcmd("sudo pkill java", ignore_error=True)
-        time.sleep(2)
+        time.sleep(5)
 
 def copy_client_out():
     prepare_dir("/tmp/results")
