@@ -112,12 +112,22 @@ elastic_data_paths = ['/mnt/ssd/elasticsearch/data']
 
 
 
-full_query_paths = [
-        "/mnt/ssd/query_workload/single_term/type_single.docfreq_high",
-        "/mnt/ssd/query_workload/single_term/type_single.docfreq_low",
-        "/mnt/ssd/query_workload/two_term/type_twoterm",
-        "/mnt/ssd/query_workload/two_term_phrases/type_phrase"
+full_query_paths_wiki = [
+        "/mnt/ssd/query_workload/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki",
+        "/mnt/ssd/query_workload/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki",
+        "/mnt/ssd/query_workload/wiki/two_term/type_twoterm.workloadOrig_wiki",
+        "/mnt/ssd/query_workload/wiki/two_term_phrases/type_phrase.workloadOrig_wiki",
+        "/mnt/ssd/query_workload/type_realistic"
         ]
+
+full_query_paths_reddit = [
+        "/mnt/ssd/query_workload/reddit/single_term/type_single.docfreq_high.workloadOrig_reddit",
+        "/mnt/ssd/query_workload/reddit/single_term/type_single.docfreq_low.workloadOrig_reddit",
+        "/mnt/ssd/query_workload/reddit/two_term/type_twoterm.workloadOrig_reddit",
+        "/mnt/ssd/query_workload/wiki/two_term_phrases/type_phrase.workloadOrig_wiki",
+        "/mnt/ssd/query_workload/type_realistic"
+        ]
+
 full_mem_list = ["in-mem", 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB]
 
 
@@ -165,7 +175,7 @@ class ConfFactory(object):
                 "server_mem_size": full_mem_list,
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
-                "query_path": full_query_paths,
+                "query_path": full_query_paths_wiki,
                 "engine": [VACUUM],
                 "init_heap_size": [None],
                 "lock_memory": lock_memory,
@@ -189,7 +199,7 @@ class ConfFactory(object):
                 "server_mem_size": full_mem_list,
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
-                "query_path": full_query_paths,
+                "query_path": full_query_paths_wiki,
                 "engine": [VACUUM],
                 "init_heap_size": [None],
                 "lock_memory": lock_memory,
@@ -213,7 +223,7 @@ class ConfFactory(object):
                 "server_mem_size": full_mem_list,
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
-                "query_path": full_query_paths,
+                "query_path": full_query_paths_wiki,
                 "engine": [VACUUM],
                 "init_heap_size": [None],
                 "lock_memory": lock_memory,
@@ -237,7 +247,7 @@ class ConfFactory(object):
                 "server_mem_size": full_mem_list,
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
-                "query_path": full_query_paths,
+                "query_path": full_query_paths_wiki,
                 "engine": [VACUUM],
                 "init_heap_size": [None],
                 "lock_memory": lock_memory,
@@ -261,7 +271,7 @@ class ConfFactory(object):
                 "server_mem_size": full_mem_list,
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
-                "query_path": full_query_paths,
+                "query_path": full_query_paths_wiki,
                 "engine": [ELASTIC],
                 "init_heap_size": [500*MB],
                 "lock_memory": lock_memory,
