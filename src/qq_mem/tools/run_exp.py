@@ -129,7 +129,7 @@ full_query_paths_reddit = [
         ]
 
 full_mem_list = ["in-mem", 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB]
-
+full_non_inmem_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB]
 
 
 class ConfFactory(object):
@@ -139,12 +139,38 @@ class ConfFactory(object):
         # confs += self.predefined_sample()
         # confs += self.predefined_es()
         # confs += self.predefined_tmp()
-        confs += self.predefined_vacuum_baseline()
-        confs += self.predefined_vacuum_trade()
-        confs += self.predefined_vacuum_prefetch()
-        confs += self.predefined_vacuum_bloom()
+
+        # confs += self.predefined_vacuum_baseline()
+        # confs += self.predefined_vacuum_trade()
+        # confs += self.predefined_vacuum_prefetch()
+        # confs += self.predefined_vacuum_bloom()
+
+        confs += self.predefined_es_reddit()
+        # confs += self.predefined_es_reddit_popular()
+
+        # confs += self.predefined_es_reddit_heap()
 
         confs = organize_conf(confs)
+        return confs
+
+    def predefined_es_reddit_popular(self):
+        confs = parameter_combinations({
+                "server_mem_size": [8*GB],
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": ["/mnt/ssd/query_workload/reddit/two_term/type_twoterm.workloadOrig_reddit"],
+                "engine": [ELASTIC],
+                "init_heap_size": [500*MB],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0],
+                "prefetch_threshold_kb": [None], # not used
+                "enable_prefetch": [None], # not used
+                "elastic_data_path": ['/mnt/ssd/elasticsearch-reddit-2m-lines/data/'],
+                "force_disable_es_readahead": [False],
+                "bloom_factor": [None],
+                "vacuum_engine": [None]
+                })
+
         return confs
 
     def predefined_tmp(self):
@@ -160,6 +186,26 @@ class ConfFactory(object):
                 "prefetch_threshold_kb": [None], # not used
                 "enable_prefetch": [None], # not used
                 "elastic_data_path": elastic_data_paths,
+                "force_disable_es_readahead": [False],
+                "bloom_factor": [None],
+                "vacuum_engine": [None]
+                })
+
+        return confs
+
+    def predefined_es_reddit(self):
+        confs = parameter_combinations({
+                "server_mem_size": full_non_inmem_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": full_query_paths_reddit,
+                "engine": [ELASTIC],
+                "init_heap_size": [500*MB],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0, 128],
+                "prefetch_threshold_kb": [None], # not used
+                "enable_prefetch": [None], # not used
+                "elastic_data_path": ['/mnt/ssd/elasticsearch-reddit-2m-lines/data/'],
                 "force_disable_es_readahead": [False],
                 "bloom_factor": [None],
                 "vacuum_engine": [None]
