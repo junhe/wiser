@@ -58,7 +58,8 @@ class TermIndex {
       buf = LoadEntry(buf);
       cnt++;
       if (cnt % 1000000 == 0) {
-        std::cout << "Term index entries loaded: " << cnt << std::endl;
+        std::cout << "Term index entries loaded: " 
+          << utils::format_with_commas<int>(cnt) << std::endl;
       }
     }
 
@@ -116,7 +117,8 @@ class TermTrieIndex {
       buf = LoadEntry(buf);
       cnt++;
       if (cnt % 1000000 == 0) {
-        std::cout << "Term index entries loaded: " << cnt << std::endl;
+        std::cout << "Term index entries loaded: " 
+          << utils::format_with_commas<int>(cnt) << std::endl;
       }
     }
 
