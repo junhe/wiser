@@ -145,12 +145,58 @@ class ConfFactory(object):
         # confs += self.predefined_vacuum_prefetch()
         # confs += self.predefined_vacuum_bloom()
 
-        confs += self.predefined_es_reddit()
+        # confs += self.predefined_es_reddit()
         # confs += self.predefined_es_reddit_popular()
 
         # confs += self.predefined_es_reddit_heap()
 
+        # confs += self.predefined_vacuum_reddit_bloom()
+        confs += self.predefined_vacuum_reddit_tmp()
+
         confs = organize_conf(confs)
+        return confs
+
+    def predefined_vacuum_reddit_tmp(self):
+        confs = parameter_combinations({
+                "server_mem_size": [8*GB],
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": ['/mnt/ssd/query_workload/reddit/single_term/type_single.docfreq_high.workloadOrig_reddit'],
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [32],
+                "prefetch_threshold_kb": [128],
+                "enable_prefetch": [True],
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [5],
+                # "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-06-28-bloom-5-0.0009"],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-07-02-bloom-5-0.0009-full"],
+                "note": ["baseline+align+prefetch+bloom"],
+                })
+
+        return confs
+
+    def predefined_vacuum_reddit_bloom(self):
+        confs = parameter_combinations({
+                "server_mem_size": full_non_inmem_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": full_query_paths_reddit,
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [32],
+                "prefetch_threshold_kb": [128],
+                "enable_prefetch": [True],
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [5],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-06-28-bloom-5-0.0009"],
+                "note": ["baseline+align+prefetch+bloom"],
+                })
+
         return confs
 
     def predefined_es_reddit_popular(self):
