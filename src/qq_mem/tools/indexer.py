@@ -91,9 +91,10 @@ class VacuumReddit(object):
         self.conf = {
             "bloom_entries": 5,
             "bloom_ratio": 0.0009,
-            "n_lines": 2 * MILLION,
+            "n_lines": 20 * MILLION,
+            # "n_lines": 2 * 1000,
             "line_doc_path": "/mnt/hdd/reddit/redditoverall_tokenized_preprocessed_pre_after",
-            "qqdump_dir_path": "/mnt/ssd/qq-reddit-06-20-bi-bloom-5-0.0009/",
+            "qqdump_dir_path": "/mnt/ssd/qq-reddit-07-02-bloom-5-0.0009-20m/",
             }
 
     def create_qq(self):
@@ -132,7 +133,7 @@ class VacuumReddit(object):
         convert(use_bloom_filters = True,
                 align_doc_store = True,
                 qqdump_dir_path = self.conf["qqdump_dir_path"],
-                vacuum_dir_path = "/mnt/ssd/vacuum-reddit-06-28-bloom-5-0.0009")
+                vacuum_dir_path = "/mnt/ssd/vacuum-reddit-07-02-bloom-5-0.0009-full")
 
 
 def main():
@@ -142,7 +143,7 @@ def main():
     build_convertor()
 
     index = VacuumReddit()
-    # index.create_qq()
+    index.create_qq()
     index.convert_to_vacuum()
 
 
