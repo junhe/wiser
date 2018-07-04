@@ -78,6 +78,8 @@ void CheckDocFreq() {
     if (cnt % 100000 == 0) 
       std::cout << "Finished " << cnt << std::endl;
   }
+
+  std::cout << "All finished" << std::endl;
 }
 
 
