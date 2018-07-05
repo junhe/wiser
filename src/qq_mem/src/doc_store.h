@@ -48,7 +48,6 @@ inline std::string EncodeHeader(std::vector<std::size_t> chunk_sizes) {
   return header.Data();
 }
 
-#define MAX_N_CHUNKS 512
 using chunk_sizes_t = std::vector<std::size_t>;
 
 inline std::size_t DecodeHeader(
@@ -61,8 +60,6 @@ inline std::size_t DecodeHeader(
   VarintIteratorUnbounded it(buf); // we actually do not know the end, just use 
   *n_chunks = it.Pop();  
 
-  LOG_IF(FATAL, *n_chunks > MAX_N_CHUNKS) << "n_chunks > MAX_N_CHUNKS";
-  
   for (std::size_t i = 0; i < *n_chunks; i++) {
     chunk_sizes->push_back(it.Pop());
   }
