@@ -49,6 +49,14 @@ engine_bench:
 		CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=locallog -use_profiler=true
 		#HEAPPROFILE=/tmp/heapprof ./engine_bench -exp_mode=locallog -use_profiler=true
 
+remote_engine_bench:
+	cd build && cmake ../src/ && \
+		make -j${NUM_CORES} engine_bench && \
+		rsync -avh --progress ./engine_bench node2:/tmp/
+		#HEAPPROFILE=/tmp/heapprof ./engine_bench -exp_mode=locallog -use_profiler=true
+
+
+
 packing_bench:
 	cd build && cmake ../src/ && \
 		make -j${NUM_CORES} packing_bench && \
@@ -63,6 +71,9 @@ heap_check:
 engine_bench_build:
 	cd build && cmake ../src/ && make -j${NUM_CORES} engine_bench &&
 	make -j${NUM_CORES} qq_server
+
+qq_server:
+	cd build && cmake ../src/ && make -j${NUM_CORES} qq_server
 
 engine_bench_debug:
 	cd build && cmake ../src/ && \
