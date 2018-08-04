@@ -130,6 +130,7 @@ full_query_paths_reddit = [
 
 full_mem_list = ["in-mem", 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB]
 full_non_inmem_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB, 128*MB]
+full_high_mem_list = [8*GB, 4*GB, 2*GB, 1*GB, 512*MB]
 
 
 class ConfFactory(object):
@@ -137,7 +138,7 @@ class ConfFactory(object):
         confs = []
 
         # confs += self.predefined_sample()
-        # confs += self.predefined_es()
+        confs += self.predefined_es()
         # confs += self.predefined_tmp()
 
         # confs += self.predefined_vacuum_baseline()
@@ -151,17 +152,65 @@ class ConfFactory(object):
         # confs += self.predefined_es_reddit_heap()
 
         # confs += self.predefined_vacuum_reddit_bloom()
-        confs += self.predefined_vacuum_reddit_tmp()
+        # confs += self.predefined_vacuum_reddit_tmp()
+        # confs += self.predefined_vacuum_reddit_readahead()
+
+        # confs += self.predefined_vacuum_docfreq1()
 
         confs = organize_conf(confs)
         return confs
 
-    def predefined_vacuum_reddit_tmp(self):
+    def predefined_vacuum_docfreq1(self):
         confs = parameter_combinations({
+                # "server_mem_size": full_mem_list,
+                # "server_mem_size": full_non_inmem_list,
                 "server_mem_size": [8*GB],
+                # "server_mem_size": ['in-mem'],
+                "n_server_threads": [16],
+                "n_client_threads": n_client_threads,
+                "query_path": ["/mnt/ssd/query_workload/type_wikiDocfreq01"],
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0],
+                "prefetch_threshold_kb": [128], # not used
+                "enable_prefetch": [False], # not used
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [1],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align"],
+                "note": ["baseline+align"],
+                })
+
+        return confs
+
+    def predefined_vacuum_reddit_readahead(self):
+        confs = parameter_combinations({
+                "server_mem_size": [1*GB],
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
                 "query_path": ['/mnt/ssd/query_workload/reddit/single_term/type_single.docfreq_high.workloadOrig_reddit'],
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [128, 256],
+                "prefetch_threshold_kb": [128],
+                "enable_prefetch": [True],
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [5],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-07-03-bloom-5-0.0009-20m"],
+                "note": ["readahead-study"],
+                })
+
+        return confs
+
+    def predefined_vacuum_reddit_tmp(self):
+        confs = parameter_combinations({
+                "server_mem_size": [512*MB],
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": ['/mnt/ssd/query_workload/reddit/single_term/type_single.docfreq_low.workloadOrig_reddit'],
                 "engine": [VACUUM],
                 "init_heap_size": [None],
                 "lock_memory": lock_memory,
@@ -171,8 +220,7 @@ class ConfFactory(object):
                 "elastic_data_path": [None],
                 "force_disable_es_readahead": [None],
                 "bloom_factor": [5],
-                # "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-06-28-bloom-5-0.0009"],
-                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-07-02-bloom-5-0.0009-full"],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-07-03-bloom-5-0.0009-20m"],
                 "note": ["baseline+align+prefetch+bloom"],
                 })
 
@@ -180,7 +228,7 @@ class ConfFactory(object):
 
     def predefined_vacuum_reddit_bloom(self):
         confs = parameter_combinations({
-                "server_mem_size": full_non_inmem_list,
+                "server_mem_size": full_high_mem_list,
                 "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
                 "query_path": full_query_paths_reddit,
@@ -193,7 +241,7 @@ class ConfFactory(object):
                 "elastic_data_path": [None],
                 "force_disable_es_readahead": [None],
                 "bloom_factor": [5],
-                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-06-28-bloom-5-0.0009"],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-07-03-bloom-5-0.0009-20m"],
                 "note": ["baseline+align+prefetch+bloom"],
                 })
 
@@ -288,8 +336,8 @@ class ConfFactory(object):
         vacuum layout, align, no prefetch, no bloom
         """
         confs = parameter_combinations({
-                "server_mem_size": full_mem_list,
-                "n_server_threads": n_server_threads,
+                "server_mem_size": [512*MB],
+                "n_server_threads": [8, 16, 32, 64],
                 "n_client_threads": n_client_threads,
                 "query_path": full_query_paths_wiki,
                 "engine": [VACUUM],
@@ -312,8 +360,8 @@ class ConfFactory(object):
         vacuum layout, align, prefetch, no bloom
         """
         confs = parameter_combinations({
-                "server_mem_size": full_mem_list,
-                "n_server_threads": n_server_threads,
+                "server_mem_size": [512*MB],
+                "n_server_threads": [8, 16, 32, 64],
                 "n_client_threads": n_client_threads,
                 "query_path": full_query_paths_wiki,
                 "engine": [VACUUM],
@@ -360,17 +408,20 @@ class ConfFactory(object):
         Wikipedia 128KB prefetch and 0KB prefetch
         """
         confs = parameter_combinations({
-                "server_mem_size": full_mem_list,
-                "n_server_threads": n_server_threads,
+                "server_mem_size": [512*MB],
+                "n_server_threads": [128, 256],
                 "n_client_threads": n_client_threads,
-                "query_path": full_query_paths_wiki,
+                # "query_path": full_query_paths_wiki,
+                "query_path": [
+                    "/mnt/ssd/query_workload/type_wikiDocfreq01"
+                    ],
                 "engine": [ELASTIC],
                 "init_heap_size": [500*MB],
                 "lock_memory": lock_memory,
-                "read_ahead_kb": [0, 128],
+                "read_ahead_kb": [0],
                 "prefetch_threshold_kb": [None], # not used
                 "enable_prefetch": [None], # not used
-                "elastic_data_path": elastic_data_paths,
+                "elastic_data_path": ["/mnt/ssd/elasticsearch-wiki-may/data"],
                 "force_disable_es_readahead": [False],
                 "bloom_factor": [None],
                 "vacuum_engine": [None]
@@ -1095,6 +1146,7 @@ class Exp(Experiment):
         print "Wating for some time util the server starts...."
         print "Wait for server to load index, ..."
         time.sleep(15)
+        # raw_input("waiting here (Enter)")
 
         wait_engine_port(conf)
 
