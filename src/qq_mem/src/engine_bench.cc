@@ -431,6 +431,7 @@ class EngineExperiment: public Experiment {
   std::unique_ptr<SearchEngineServiceNew> CreateEngineFromFile() {
     std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
         config_.GetString("engine_type"));
+    engine->Load();
 
     std::cout << "IsVacuumUrl:" << IsVacuumUrl(config_.GetString("engine_type"))  << std::endl;
     if (IsVacuumUrl(config_.GetString("engine_type")) == false) {
@@ -518,33 +519,21 @@ GeneralConfig config_by_jun() {
 
   GeneralConfig config;
   // config.SetString("engine_type", "qq_mem_compressed");
-  config.SetString("engine_type", "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic");
-
-  // config.SetString("load_source", "linedoc");
-  // config.SetString("load_source", "dump");
+  config.SetString("engine_type", "vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline/");
 
   config.SetInt("n_docs", 100);
   config.SetString("linedoc_path", 
       "/mnt/ssd/downloads/enwiki.linedoc_tokenized.1");
   config.SetString("loader", "WITH_POSITIONS");
 
-  // config.SetString("linedoc_path", 
-      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  // config.SetString("loader", "TOKEN_ONLY");
-  
-  config.SetString("dump_path", "/mnt/ssd/big-engine-char-length-04-19");
 
   config.SetInt("n_queries", 1000);
   config.SetInt("n_passages", 3);
-  // config.SetBool("enable_snippets", true);
   config.SetBool("enable_snippets", false);
   
   
   config.SetString("query_source", "hardcoded");
   config.SetStringVec("terms", std::vector<std::string>{"hello"});
-
-  // config.SetString("query_source", "querylog");
-  // config.SetString("querylog_path", "/mnt/ssd/downloads/wiki_QueryLog_tokenized");
 
   CheckConfig(config);
   return config;

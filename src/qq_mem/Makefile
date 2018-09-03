@@ -46,7 +46,8 @@ grpc_benchmark:
 engine_bench:
 	cd build && cmake ../src/ && \
 		make -j${NUM_CORES} engine_bench && \
-		CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=locallog -use_profiler=true
+		#CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=locallog -use_profiler=true
+		./engine_bench -exp_mode=locallog -query_path=/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki
 		#HEAPPROFILE=/tmp/heapprof ./engine_bench -exp_mode=locallog -use_profiler=true
 
 remote_engine_bench:
