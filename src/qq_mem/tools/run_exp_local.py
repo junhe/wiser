@@ -166,7 +166,8 @@ class ConfFactory(object):
         """
         confs = parameter_combinations({
                 "server_mem_size": [512*MB],
-                "n_server_threads": [16, 32],
+                "n_cores": [4, 16],
+                "n_server_threads": [16],
                 "n_client_threads": n_client_threads,
                 #"query_path": full_query_paths_wiki,
                 "query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
@@ -836,6 +837,7 @@ class Exp(Experiment):
     def beforeEach(self, conf):
         print "\n========================================================================================"
         print 'mem:       ', conf['server_mem_size']
+        print '#cores:    ', conf['n_cores']
         print '#threads:  ', conf['n_server_threads']
         print 'query:     ', conf['query_path']
         print 'read_ahead:', conf['read_ahead_kb']
@@ -885,9 +887,14 @@ class Exp(Experiment):
 
 
         # start to run
-        cg = Cgroup(name='charlie', subs='memory')
+        cg = Cgroup(name='charlie', subs='memory,cpuset')
         cg.set_item('memory', 'memory.limit_in_bytes', conf['cgroup_mem_size'])
         cg.set_item('memory', 'memory.swappiness', mem_swappiness)
+        cg.set_item('cpuset', 'cpuset.cpus', '0-'+str(conf['n_cores']-1))
+        print '0-' + str(conf['n_cores']-1)
+        cg.set_item('cpuset', 'cpuset.mems', '0')
+
+
         cmd = './build/engine_bench -exp_mode=locallog -n_threads=' + str(conf['n_server_threads']) + ' -query_path=' + conf['query_path']
         print cmd
         p = cg.execute(shlex.split(cmd))
