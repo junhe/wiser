@@ -221,8 +221,12 @@ class QueryPoolNoLoop :public QueryPoolBase {
   const SearchQuery &Next() {
     std::size_t next = access_cnt_;
     access_cnt_++;
-    DLOG_IF(FATAL, access_cnt_ > pool_.size());
-    return pool_[next];
+    //DLOG_IF(FATAL, access_cnt_ > pool_.size());
+    return pool_[next % pool_.size()];
+  }
+
+  bool IsEnd() {
+    return access_cnt_ >= pool_.size();
   }
 };
 

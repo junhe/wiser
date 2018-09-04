@@ -45,9 +45,9 @@ grpc_benchmark:
 
 engine_bench:
 	cd build && cmake ../src/ && \
-		make -j${NUM_CORES} engine_bench && \
+		make -j${NUM_CORES} engine_bench #&& \
 		#CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=locallog -use_profiler=true
-		./engine_bench -exp_mode=locallog -query_path=/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki
+		#./engine_bench -exp_mode=locallog -n_threads=4 -query_path=/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki
 		#HEAPPROFILE=/tmp/heapprof ./engine_bench -exp_mode=locallog -use_profiler=true
 
 remote_engine_bench:
@@ -147,6 +147,9 @@ elastic_two_nodes:
 
 exp:
 	python ./tools/run_exp.py
+
+exp_local:
+	python ./tools/run_exp_local.py
 
 profile:
 	google-pprof --text ./build/engine_bench ./build/my.profile.new

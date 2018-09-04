@@ -43,7 +43,7 @@ class VacuumWiki(object):
             "bloom_entries": 5,
             "bloom_ratio": 0.0009,
             "n_lines": 20000000,
-            "line_doc_path": "/mnt/ssd/wiki/wiki_full.linedoc_tokenized_preprocessed_pre_after",
+            "line_doc_path": "/mnt/ssd/wiki_full.linedoc_tokenized_preprocessed_pre_after",
             "qqdump_dir_path": "/mnt/ssd/qq-wiki-06-24.bloom.5-0.0009",
             }
 
@@ -70,20 +70,20 @@ class VacuumWiki(object):
                dump_dir_path = self.conf["qqdump_dir_path"])
 
     def convert_to_vacuum(self):
-        # convert(use_bloom_filters = False,
-                # align_doc_store = False,
-                # qqdump_dir_path = self.conf["qqdump_dir_path"],
-                # vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-24.baseline")
+        convert(use_bloom_filters = False,
+                align_doc_store = False,
+                qqdump_dir_path = self.conf["qqdump_dir_path"],
+                vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-24.baseline")
 
         # convert(use_bloom_filters = False,
                 # align_doc_store = True,
                 # qqdump_dir_path = self.conf["qqdump_dir_path"],
                 # vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-24.plus.align")
 
-        convert(use_bloom_filters = True,
-                align_doc_store = True,
-                qqdump_dir_path = self.conf["qqdump_dir_path"],
-                vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom")
+        # convert(use_bloom_filters = True,
+                # align_doc_store = True,
+                # qqdump_dir_path = self.conf["qqdump_dir_path"],
+                # vacuum_dir_path = "/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom")
 
 
 class VacuumReddit(object):
@@ -142,7 +142,7 @@ def main():
     build_creator()
     build_convertor()
 
-    index = VacuumReddit()
+    index = VacuumWiki()
     index.create_qq()
     index.convert_to_vacuum()
 

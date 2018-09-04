@@ -17,13 +17,11 @@
 #include "query_pool.h"
 #include "engine_factory.h"
 
-
 DEFINE_int32(n_threads, 1, "Number of client threads");
 DEFINE_string(exp_mode, "local", "local/grpc/grpclog/localquerylog");
 DEFINE_string(grpc_server, "localhost", "network address of the GRPC server, port not included");
 DEFINE_int32(run_duration, 15, "number of seconds to run the client");
 DEFINE_string(query_path, "/mnt/ssd/realistic_querylog", "path of the query log");
-
 
 const int K = 1000;
 const int M = 1000 * K;
@@ -81,6 +79,7 @@ struct Treatment {
   bool return_snippets;
   int n_passages = 3;
   int n_results = 5;
+  int n_threads = 1;
 
   std::string tag; //"" / "querylog"
   std::string query_log_path; //"" / "querylog"
@@ -249,29 +248,59 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
       LOG(FATAL) << "Tag must be set right";
 
     return std::unique_ptr<QueryProducerService>(
-        new QueryProducerByLog(treatment.query_log_path, NumberOfThreads()));
+        //new QueryProducerByLog(treatment.query_log_path, NumberOfThreads()));
+        //new QueryProducerByLog(treatment.query_log_path, NumberOfThreads()));
+        new QueryProducerNoLoop(treatment.query_log_path));
   }
 
-  utils::ResultRow Execute(Treatment treatment) {
-    const int n_queries = treatment.n_queries;
-    utils::ResultRow row;
-    auto query_producer = MakeProducer(treatment);
 
-    auto start = utils::now();
-    for (int i = 0; query_producer->IsEnd() == false; i++) {
+  void each_thread(int id) {
+    for (int i = 0; query_producer->IsEnd() == false; i++) {   //TODO IsEnd
       auto query = query_producer->NextNativeQuery(0);
-      // std::cout << query.ToStr() << std::endl;
+      //std::cout << query.ToStr() << std::endl;
+
+      //disable highlighting here
+      //query.return_snippets = false;
       auto result = engine_->Search(query);
 
-      // std::cout << result.ToStr() << std::endl;
-      if (i % 1000 == 0) {
-        std::cout << "Finished " << i << std::endl;
+      //std::cout << result.ToStr() << std::endl;
+      if (i > 0 && i % 100000 == 0) {
+        std::cout << "Thread " << id << " finished " << i << std::endl;
       }
     }
+
+
+
+      return;
+  }
+
+
+  utils::ResultRow Execute(Treatment treatment) {
+    //const int n_queries = treatment.n_queries;
+    utils::ResultRow row;
+    query_producer = MakeProducer(treatment);
+    const int n_queries = query_producer->Size();
+
+    auto start = utils::now();
+    
+    int NUM_THREADS = treatment.n_threads;
+    std::cout << "======= Using " <<  NUM_THREADS << " threads working.... " << std::endl;
+    // TODO change to multi threads
+    // start threads
+    std::vector<std::thread> thread_pool(NUM_THREADS);
+
+    for (int i = 0; i < NUM_THREADS; i++) {
+        thread_pool.at(i) = std::thread(&LocalLogTreatmentExecutor::each_thread, this, i);
+    }
+
+    // join here
+    for (int i = 0; i < NUM_THREADS; i++)
+        thread_pool.at(i).join();
+
     auto end = utils::now();
     auto dur = utils::duration(start, end);
 
-    row["latency"] = std::to_string(dur / n_queries); 
+    //row["latency"] = std::to_string(dur / n_queries); 
     row["duration"] = std::to_string(dur); 
     row["n_queries"] = std::to_string(n_queries); 
     row["QPS"] = std::to_string(round(100 * n_queries / dur) / 100.0);
@@ -280,6 +309,7 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
 
  private:
   SearchEngineServiceNew *engine_;
+  std::unique_ptr<QueryProducerService> query_producer;
 };
 
 
@@ -376,6 +406,9 @@ class EngineExperiment: public Experiment {
     // t.query_log_path = "/mnt/ssd/short_log";
     // t.query_log_path = "/mnt/ssd/hello_log";
     t.query_log_path = FLAGS_query_path;
+    t.n_threads = FLAGS_n_threads;
+    std::cout << t.query_log_path << std::endl;
+    std::cout << t.n_threads << std::endl;
     treatments.push_back(t);
 
     // for (auto &t : treatments) {
@@ -416,9 +449,9 @@ class EngineExperiment: public Experiment {
     // auto row = Search(query_producers_[run_id].get(), run_id);
     auto row = treatment_executor_->Execute(treatments_[run_id]);
 
-    row["n_docs"] = std::to_string(config_.GetInt("n_docs"));
-    row["terms"] = Concat(treatments_[run_id].terms);
-    row["is_phrase"] = std::to_string(treatments_[run_id].is_phrase);
+    //row["n_docs"] = std::to_string(config_.GetInt("n_docs"));
+    //row["terms"] = Concat(treatments_[run_id].terms);
+    //row["is_phrase"] = std::to_string(treatments_[run_id].is_phrase);
     table_.Append(row);
   }
 
