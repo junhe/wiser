@@ -145,6 +145,7 @@ class VacuumEngine : public SearchEngineServiceNew {
     LOG_IF(FATAL, is_loaded_ == true) << "Engine is already loaded.";
     ValidateLockMemConfig();
 
+    std::cout << "================================GET here" << std::endl;
     doc_store_.LoadFdx(utils::JoinPath(engine_dir_path_, "my.fdx"));
 
     doc_lengths_.Deserialize(utils::JoinPath(engine_dir_path_, "my.doc_length"));
@@ -155,13 +156,14 @@ class VacuumEngine : public SearchEngineServiceNew {
 
     if (FLAGS_lock_memory == "lock_small")
       utils::LockAllMemory(); // <<<<<<< Lock memory
-
+    
     inverted_index_.MapPostingLists(
         utils::JoinPath(engine_dir_path_, "my.vacuum"));
     if (FLAGS_enable_prefetch)
       inverted_index_.AdviseRandPostingLists();
 
     doc_store_.MapFdt(utils::JoinPath(engine_dir_path_, "my.fdt"));
+    std::cout << FLAGS_enable_prefetch << " Prefetch  !!!!!!!!!!!!!!!!!!!!! Threshold: " << FLAGS_prefetch_threshold << std::endl; 
     if (FLAGS_enable_prefetch)
       doc_store_.AdviseFdtRandom();
 
@@ -227,8 +229,9 @@ class VacuumEngine : public SearchEngineServiceNew {
           break;
         } 
       }
-
+      
       if (prefetch_flag) {
+        //std::cout << "Do Prefetch here" << std::endl;
         for (auto & it : iterators) {
           it.Prefetch();
         }

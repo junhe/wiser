@@ -264,7 +264,7 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
       auto result = engine_->Search(query);
 
       //std::cout << result.ToStr() << std::endl;
-      if (i > 0 && i % 100000 == 0) {
+      if (i > 0 && i % 50000 == 0) {
         std::cout << "Thread " << id << " finished " << i << std::endl;
       }
     }
@@ -281,7 +281,6 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
     query_producer = MakeProducer(treatment);
     const int n_queries = query_producer->Size();
 
-    auto start = utils::now();
     
     int NUM_THREADS = treatment.n_threads;
     std::cout << "======= Using " <<  NUM_THREADS << " threads working.... " << std::endl;
@@ -289,9 +288,11 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
     // start threads
     std::vector<std::thread> thread_pool(NUM_THREADS);
 
+    auto start = utils::now();
     for (int i = 0; i < NUM_THREADS; i++) {
         thread_pool.at(i) = std::thread(&LocalLogTreatmentExecutor::each_thread, this, i);
     }
+    auto started_threads = utils::now();
 
     // join here
     for (int i = 0; i < NUM_THREADS; i++)
@@ -299,8 +300,10 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
 
     auto end = utils::now();
     auto dur = utils::duration(start, end);
+    auto dur_start = utils::duration(start, started_threads);
 
     //row["latency"] = std::to_string(dur / n_queries); 
+    row["start_duration"] = std::to_string(dur_start);
     row["duration"] = std::to_string(dur); 
     row["n_queries"] = std::to_string(n_queries); 
     row["QPS"] = std::to_string(round(100 * n_queries / dur) / 100.0);

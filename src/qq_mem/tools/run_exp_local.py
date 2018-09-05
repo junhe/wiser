@@ -24,12 +24,12 @@ remote_addr = "node2"
 os_swap = True
 device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
-do_drop_cache = True
-do_block_tracing = False
 qq_mem_folder = "/users/jhe/flashsearch/src/qq_mem"
 user_name = "jhe"
 mem_swappiness = 60
-
+do_drop_cache = True
+do_block_tracing = False
+do_sar = True
 
 ######################
 # Vacuum only
@@ -165,18 +165,27 @@ class ConfFactory(object):
         vacuum layout, no align, no bloom
         """
         confs = parameter_combinations({
+                # hardware
                 "server_mem_size": [512*MB],
-                "n_cores": [4, 16],
-                "n_server_threads": [16],
+                "n_cores": [16],
+                # search engine
+                #"n_server_threads": [24],
+                "n_server_threads": [24],
+                "query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/type_twoterm.workloadOrig_wiki"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/type_phrase.workloadOrig_wiki"],
+                "read_ahead_kb": [12],
+                #"read_ahead_kb": [0, 16, 32, 64, 128, 256],
+                #"read_ahead_kb": [20, 24, 28],
+                
                 "n_client_threads": n_client_threads,
                 #"query_path": full_query_paths_wiki,
-                "query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
                 "engine": [VACUUM],
                 "init_heap_size": [None],
                 "lock_memory": lock_memory,
-                "read_ahead_kb": [0],
                 "prefetch_threshold_kb": [128], # not used
-                "enable_prefetch": [False], # not used
+                "enable_prefetch": [True], # not used
                 "elastic_data_path": [None],
                 "force_disable_es_readahead": [None],
                 "bloom_factor": [1],
@@ -822,7 +831,7 @@ class Exp(Experiment):
         self._n_treatments = len(self.confs)
         pprint.pprint(self.confs)
         print "Number of treatments: ", self._n_treatments
-        raw_input("This is your config. Enter to continue")
+        #raw_input("This is your config. Enter to continue")
 
         self.result = []
 
@@ -883,7 +892,9 @@ class Exp(Experiment):
 
         # start sar to trace page faults
         shcmd('pkill sar', ignore_error = True)
-        shcmd('sar -B 1 > ' + self._subexpdir + '/sar.out &')
+        if do_sar is True:
+            shcmd('sar -B 1 > ' + self._subexpdir + '/sar.out &')
+
 
 
         # start to run
@@ -891,17 +902,16 @@ class Exp(Experiment):
         cg.set_item('memory', 'memory.limit_in_bytes', conf['cgroup_mem_size'])
         cg.set_item('memory', 'memory.swappiness', mem_swappiness)
         cg.set_item('cpuset', 'cpuset.cpus', '0-'+str(conf['n_cores']-1))
-        print '0-' + str(conf['n_cores']-1)
         cg.set_item('cpuset', 'cpuset.mems', '0')
 
 
-        cmd = './build/engine_bench -exp_mode=locallog -n_threads=' + str(conf['n_server_threads']) + ' -query_path=' + conf['query_path']
+        cmd = './build/engine_bench -exp_mode=locallog -n_threads=' + str(conf['n_server_threads']) + ' -query_path=' + conf['query_path'] + ' -enable_prefetch=' + str(conf['enable_prefetch']) + ' -prefetch_threshold=' + str(conf['prefetch_threshold_kb'])
         print cmd
         p = cg.execute(shlex.split(cmd))
         p.wait()
 
-        # TODO parse iostat output
 
+        
         kb_read_b = get_iostat_kb_read()
         kb_read = int(kb_read_b) - int(kb_read_a)
         print kb_read_a, kb_read_b
@@ -910,7 +920,9 @@ class Exp(Experiment):
         print '-' * 30
 
     def afterEach(self, conf):
-        shcmd('pkill sar')
+        if do_sar is True:
+            shcmd('pkill sar')
+
         shcmd('pkill iostat')
         print '-' * 30
         with open(self._subexpdir + '/iostat.out') as iostat_output:
