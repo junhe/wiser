@@ -167,16 +167,17 @@ class ConfFactory(object):
         confs = parameter_combinations({
                 # hardware
                 "server_mem_size": [512*MB],
+                #"server_mem_size": ['in-mem', 'in-mem'],
                 "n_cores": [16],
                 # search engine
                 #"n_server_threads": [24],
-                "n_server_threads": [24],
-                "query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
+                "n_server_threads": [64],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
-                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/type_twoterm.workloadOrig_wiki"],
+                "query_path": ["/mnt/ssd/query_log/wiki/two_term/type_twoterm.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/type_phrase.workloadOrig_wiki"],
-                "read_ahead_kb": [12],
-                #"read_ahead_kb": [0, 16, 32, 64, 128, 256],
+                "read_ahead_kb": [0, 4, 8, 12],
+                #"read_ahead_kb": [0, 16, 32, 48, 64, 128, 256],
                 #"read_ahead_kb": [20, 24, 28],
                 
                 "n_client_threads": n_client_threads,
@@ -184,8 +185,8 @@ class ConfFactory(object):
                 "engine": [VACUUM],
                 "init_heap_size": [None],
                 "lock_memory": lock_memory,
-                "prefetch_threshold_kb": [128], # not used
-                "enable_prefetch": [True], # not used
+                "prefetch_threshold_kb": [0], # not used
+                "enable_prefetch": [False], # not used
                 "elastic_data_path": [None],
                 "force_disable_es_readahead": [None],
                 "bloom_factor": [1],
@@ -850,6 +851,7 @@ class Exp(Experiment):
         print '#threads:  ', conf['n_server_threads']
         print 'query:     ', conf['query_path']
         print 'read_ahead:', conf['read_ahead_kb']
+        print 'prefetch_threshold:', conf['prefetch_threshold_kb']
         print "===============================================\n\n"
         
         shcmd('sudo pkill engine_bench', ignore_error = True)
@@ -916,7 +918,7 @@ class Exp(Experiment):
         kb_read = int(kb_read_b) - int(kb_read_a)
         print kb_read_a, kb_read_b
         print '-' * 30
-        print "KB read: ", kb_read
+        print "GB read: ", float(kb_read)/1024/1024
         print '-' * 30
 
     def afterEach(self, conf):
@@ -950,7 +952,7 @@ class Exp(Experiment):
                 item_len = average_rbw = average_wbw = 0
                 for item in stats['io']:
                     parsed_iostat.write(item['r/s'] + ' ' + item['rMB/s'] + ' ' + item['w/s'] + ' ' + item['wMB/s'] + ' ' + str(float(item['avgrq-sz'])*512/1024) + ' '+ item['avgqu-sz'] +'\n')
-                    if float(item['rMB/s']) + float(item['wMB/s']) < 20:
+                    if float(item['rMB/s']) + float(item['wMB/s']) < 200:
                         continue
                     item_len += 1
                     average_rbw += float(item['rMB/s'])
@@ -959,9 +961,10 @@ class Exp(Experiment):
                     print str(average_rbw/item_len), str(average_wbw/item_len)
                 else:
                     print 'seems too idle of Disk'
+
+        print '\n page faults: '
+        shcmd('python /users/kanwu/flashsearch/src/qq_mem/tools/count_pagefaults.py ' + self._subexpdir+'/sar.out')
         print '-' * 30
-
-
         if do_block_tracing is True:
             shcmd("sync")
             self.blocktracer.stop_tracing_and_collecting()
