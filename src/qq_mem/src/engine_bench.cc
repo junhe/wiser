@@ -22,6 +22,9 @@ DEFINE_string(exp_mode, "local", "local/grpc/grpclog/localquerylog");
 DEFINE_string(grpc_server, "localhost", "network address of the GRPC server, port not included");
 DEFINE_int32(run_duration, 15, "number of seconds to run the client");
 DEFINE_string(query_path, "/mnt/ssd/realistic_querylog", "path of the query log");
+DEFINE_int32(bloom_factor, 10, "bloom enable factor");
+DEFINE_string(engine, "missing", 
+    "[qq_mem_compressed / vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic");
 
 const int K = 1000;
 const int M = 1000 * K;
@@ -257,10 +260,10 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
   void each_thread(int id) {
     for (int i = 0; query_producer->IsEnd() == false; i++) {   //TODO IsEnd
       auto query = query_producer->NextNativeQuery(0);
-      //std::cout << query.ToStr() << std::endl;
+      //std::cout << "\n " << query.ToStr() << ": " ;//<< std::endl;
 
       //disable highlighting here
-      //query.return_snippets = false;
+      query.return_snippets = false;
       auto result = engine_->Search(query);
 
       //std::cout << result.ToStr() << std::endl;
@@ -466,7 +469,7 @@ class EngineExperiment: public Experiment {
 
   std::unique_ptr<SearchEngineServiceNew> CreateEngineFromFile() {
     std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
-        config_.GetString("engine_type"));
+        config_.GetString("engine_type"), FLAGS_bloom_factor);
     engine->Load();
 
     std::cout << "IsVacuumUrl:" << IsVacuumUrl(config_.GetString("engine_type"))  << std::endl;
@@ -555,7 +558,8 @@ GeneralConfig config_by_jun() {
 
   GeneralConfig config;
   // config.SetString("engine_type", "qq_mem_compressed");
-  config.SetString("engine_type", "vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline/");
+  //config.SetString("engine_type", "vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline/");
+  config.SetString("engine_type", FLAGS_engine);
 
   config.SetInt("n_docs", 100);
   config.SetString("linedoc_path", 

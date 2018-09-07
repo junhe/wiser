@@ -752,6 +752,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
       } else if (doc0 < doc1) {
         it_0.SkipForward(doc1);
       } else {
+        //std::cout << ".";
         HandleTheFoundDoc(doc0); 
 
         it_0.Advance();
@@ -796,7 +797,9 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   bool CheckBloomWithEnableFactor() {
     const std::size_t size1 = this->pl_iterators_[0].Size();
     const std::size_t size2 = this->pl_iterators_[1].Size();
-
+    //std::cout << size1 << " : " << size2 ;
+    // TODO
+    //return CheckByFirstPostingList() && CheckBySecondPostingList();
     if (bloom_enable_factor_ * size1 <= size2) {
       return CheckByFirstPostingList();
     } else if (bloom_enable_factor_ * size2 < size1) {
@@ -852,9 +855,9 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
   int FindPhrase() {
-    if (IsPossibleToPresent() == false)
+    if (IsPossibleToPresent() == false) {
       return 0;
-
+    }
     for (std::size_t i = 0; i < this->pl_iterators_.size(); i++) {
       PosIter_T *p = phrase_qp_.Iterator(i);
       this->pl_iterators_[i].AssignPositionBegin(p);
@@ -862,6 +865,9 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
     phrase_qp_.SetNumTerms(this->pl_iterators_.size());
 
     phrase_qp_.Process();
+
+    //if (phrase_qp_.NumOfMatches() == 0)
+    //  std::cout << ".";
 
     return phrase_qp_.NumOfMatches();
   }
@@ -887,6 +893,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
     if (this->is_phrase_ == true && this->pl_iterators_.size() > 1 ) {
       int n_matches = FindPhrase();
       if (n_matches > 0) {
+        //std::cout << "+";
         RankDocForPhrase(max_doc_id);
       }
     } else {

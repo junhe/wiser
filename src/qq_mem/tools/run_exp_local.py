@@ -170,14 +170,18 @@ class ConfFactory(object):
                 #"server_mem_size": ['in-mem', 'in-mem'],
                 "n_cores": [16],
                 # search engine
-                #"n_server_threads": [24],
-                "n_server_threads": [64],
+                "n_server_threads": [16],
+                #"n_server_threads": [48, 56],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
-                "query_path": ["/mnt/ssd/query_log/wiki/two_term/type_twoterm.workloadOrig_wiki"],
-                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/type_phrase.workloadOrig_wiki"],
-                "read_ahead_kb": [0, 4, 8, 12],
-                #"read_ahead_kb": [0, 16, 32, 48, 64, 128, 256],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/type_twoterm.workloadOrig_wiki"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/popular_two_terms"],
+                "query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/type_phrase.workloadOrig_wiki"],
+                #"query_path": ["/mnt/ssd/query_log/type_realistic"],
+                #"read_ahead_kb": [0],
+                "read_ahead_kb": [0],
+                #"read_ahead_kb": [0, 16, 32, 64],
+                #"read_ahead_kb": [0],
                 #"read_ahead_kb": [20, 24, 28],
                 
                 "n_client_threads": n_client_threads,
@@ -189,8 +193,11 @@ class ConfFactory(object):
                 "enable_prefetch": [False], # not used
                 "elastic_data_path": [None],
                 "force_disable_es_readahead": [None],
-                "bloom_factor": [1],
-                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline"],
+                #"bloom_factor": [1],
+                #"vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline"],
+                # for enabling Bloom Filter
+                "bloom_factor": [5],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom"],
                 "note": ["baseline"],
                 })
 
@@ -907,7 +914,11 @@ class Exp(Experiment):
         cg.set_item('cpuset', 'cpuset.mems', '0')
 
 
-        cmd = './build/engine_bench -exp_mode=locallog -n_threads=' + str(conf['n_server_threads']) + ' -query_path=' + conf['query_path'] + ' -enable_prefetch=' + str(conf['enable_prefetch']) + ' -prefetch_threshold=' + str(conf['prefetch_threshold_kb'])
+        cmd = './build/engine_bench -exp_mode=locallog -n_threads=' + str(conf['n_server_threads']) \
+              + ' -engine=' + conf['vacuum_engine'] \
+              + ' -query_path=' + conf['query_path'] \
+              + ' -enable_prefetch=' + str(conf['enable_prefetch']) + ' -prefetch_threshold=' + str(conf['prefetch_threshold_kb']) \
+              + ' -bloom_factor=' + str(conf['bloom_factor'])
         print cmd
         p = cg.execute(shlex.split(cmd))
         p.wait()
