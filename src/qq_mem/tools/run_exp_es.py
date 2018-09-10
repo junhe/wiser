@@ -23,26 +23,27 @@ server_addr = "node1"
 remote_addr = "node2"
 os_swap = True
 device_name = "nvme0n1"
-partition_name = "nvme0n1p4"
-qq_mem_folder = "/users/jhe/flashsearch/src/qq_mem"
-user_name = "jhe"
-mem_swappiness = 60
+partition_name = "nvme0n1p3"
 do_drop_cache = True
 do_block_tracing = False
 do_sar = True
+qq_mem_folder = "/users/kanwu/flashsearch/src/qq_mem"
+user_name = "kanwu"
+mem_swappiness = 60
+
 
 ######################
 # Vacuum only
 ######################
 profile_qq_server = "false"
-engine_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
+engine_path = "/users/kanwu/flashsearch/src/qq_mem/build/engine_bench"
 
 
 ######################
 # Elastic only
 ######################
-ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
-rs_bench_go_path = "/users/jhe/flashsearch/src/pysrc"
+ELASTIC_DIR = "/users/kanwu/elasticsearch-5.6.3-clean"
+rs_bench_go_path = "/users/kanwu/flashsearch/src/pysrc"
 
 
 
@@ -141,12 +142,13 @@ class ConfFactory(object):
         #confs += self.predefined_es()
         # confs += self.predefined_tmp()
 
-        confs += self.predefined_vacuum_baseline()
+        # confs += self.predefined_vacuum_baseline()
         # confs += self.predefined_vacuum_trade()
         # confs += self.predefined_vacuum_prefetch()
         # confs += self.predefined_vacuum_bloom()
 
         # confs += self.predefined_es_reddit()
+        confs += self.predefined_es_wiki()
         # confs += self.predefined_es_reddit_popular()
 
         # confs += self.predefined_es_reddit_heap()
@@ -160,52 +162,327 @@ class ConfFactory(object):
         confs = organize_conf(confs)
         return confs
 
+    def predefined_vacuum_docfreq1(self):
+        confs = parameter_combinations({
+                # "server_mem_size": full_mem_list,
+                # "server_mem_size": full_non_inmem_list,
+                "server_mem_size": [8*GB],
+                # "server_mem_size": ['in-mem'],
+                "n_server_threads": [16],
+                "n_client_threads": n_client_threads,
+                "query_path": ["/mnt/ssd/query_workload/type_wikiDocfreq01"],
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0],
+                "prefetch_threshold_kb": [128], # not used
+                "enable_prefetch": [False], # not used
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [1],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align"],
+                "note": ["baseline+align"],
+                })
+
+        return confs
+
+    def predefined_vacuum_reddit_readahead(self):
+        confs = parameter_combinations({
+                "server_mem_size": [1*GB],
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": ['/mnt/ssd/query_workload/reddit/single_term/type_single.docfreq_high.workloadOrig_reddit'],
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [128, 256],
+                "prefetch_threshold_kb": [128],
+                "enable_prefetch": [True],
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [5],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-07-03-bloom-5-0.0009-20m"],
+                "note": ["readahead-study"],
+                })
+
+        return confs
+
+    def predefined_vacuum_reddit_tmp(self):
+        confs = parameter_combinations({
+                "server_mem_size": [512*MB],
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": ['/mnt/ssd/query_workload/reddit/single_term/type_single.docfreq_low.workloadOrig_reddit'],
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [32],
+                "prefetch_threshold_kb": [128],
+                "enable_prefetch": [True],
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [5],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-07-03-bloom-5-0.0009-20m"],
+                "note": ["baseline+align+prefetch+bloom"],
+                })
+
+        return confs
+
+    def predefined_vacuum_reddit_bloom(self):
+        confs = parameter_combinations({
+                "server_mem_size": full_high_mem_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": full_query_paths_reddit,
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [32],
+                "prefetch_threshold_kb": [128],
+                "enable_prefetch": [True],
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [5],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-reddit-07-03-bloom-5-0.0009-20m"],
+                "note": ["baseline+align+prefetch+bloom"],
+                })
+
+        return confs
+
+    def predefined_es_reddit_popular(self):
+        confs = parameter_combinations({
+                "server_mem_size": [8*GB],
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": ["/mnt/ssd/query_workload/reddit/two_term/type_twoterm.workloadOrig_reddit"],
+                "engine": [ELASTIC],
+                "init_heap_size": [500*MB],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0],
+                "prefetch_threshold_kb": [None], # not used
+                "enable_prefetch": [None], # not used
+                "elastic_data_path": ['/mnt/ssd/elasticsearch-reddit-2m-lines/data/'],
+                "force_disable_es_readahead": [False],
+                "bloom_factor": [None],
+                "vacuum_engine": [None]
+                })
+
+        return confs
+
+    def predefined_tmp(self):
+        confs = parameter_combinations({
+                "server_mem_size": [8*GB],
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": ['/mnt/ssd/query_workload/single_term/type_single.docfreq_low'],
+                "engine": [ELASTIC],
+                "init_heap_size": init_heap_size,
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0, 128],
+                "prefetch_threshold_kb": [None], # not used
+                "enable_prefetch": [None], # not used
+                "elastic_data_path": elastic_data_paths,
+                "force_disable_es_readahead": [False],
+                "bloom_factor": [None],
+                "vacuum_engine": [None]
+                })
+
+        return confs
+
+    def predefined_es_reddit(self):
+        confs = parameter_combinations({
+                "server_mem_size": full_non_inmem_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": full_query_paths_reddit,
+                "engine": [ELASTIC],
+                "init_heap_size": [500*MB],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0, 128],
+                "prefetch_threshold_kb": [None], # not used
+                "enable_prefetch": [None], # not used
+                "elastic_data_path": ['/mnt/ssd/elasticsearch-reddit-2m-lines/data/'],
+                "force_disable_es_readahead": [False],
+                "bloom_factor": [None],
+                "vacuum_engine": [None]
+                })
+
+        return confs
+    
+    def predefined_es_wiki(self):
+        confs = parameter_combinations({
+                #"server_mem_size": [512*MB],
+                #"server_mem_size": [32*GB],
+                "server_mem_size": ['in-mem'],
+                "n_server_threads": [16],
+                "read_ahead_kb": [0],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_10000"],
+                "query_path": ["/mnt/ssd/query_log/wiki/single_term/single_1000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_100"],
+                
+                "engine": [ELASTIC],
+                "init_heap_size": [500*MB],
+                "n_client_threads": n_client_threads,
+                "lock_memory": lock_memory,
+                "elastic_data_path": ['/mnt/ssd/elasticsearch/data/'],
+                
+                # not related
+                "prefetch_threshold_kb": [None], # not used
+                "enable_prefetch": [None], # not used
+                "force_disable_es_readahead": [False],
+                "bloom_factor": [None],
+                "vacuum_engine": [None]
+                })
+
+        return confs
+
     def predefined_vacuum_baseline(self):
         """
         vacuum layout, no align, no bloom
         """
         confs = parameter_combinations({
-                # hardware
-                #"server_mem_size": [512*MB],
-                #"server_mem_size": [32*GB],
-                "server_mem_size": ['in-mem', 'in-mem'],
-                "n_cores": [16],
-                # search engine
-                "n_server_threads": [16],
-                #"n_server_threads": [48, 56],
-                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
-                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
-                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_10000"],
-                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_100"],
-                "query_path": ["/mnt/ssd/query_log/wiki/single_term/single_1000"],
-                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/type_twoterm.workloadOrig_wiki"],
-                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/popular_two_terms"],
-                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/type_phrase.workloadOrig_wiki"],
-                #"query_path": ["/mnt/ssd/query_log/type_realistic"],
-                "read_ahead_kb": [0],
-                #"read_ahead_kb": [96, 128, 160],
-                #"read_ahead_kb": [16, 32, 64, 128],
-                #"read_ahead_kb": [0],
-                #"read_ahead_kb": [20, 24, 28],
-                
+                "server_mem_size": full_mem_list,
+                "n_server_threads": n_server_threads,
                 "n_client_threads": n_client_threads,
-                #"query_path": full_query_paths_wiki,
+                "query_path": full_query_paths_wiki,
                 "engine": [VACUUM],
                 "init_heap_size": [None],
                 "lock_memory": lock_memory,
-                "prefetch_threshold_kb": [256],
-                "enable_prefetch": [False], 
+                "read_ahead_kb": [0],
+                "prefetch_threshold_kb": [128], # not used
+                "enable_prefetch": [False], # not used
                 "elastic_data_path": [None],
                 "force_disable_es_readahead": [None],
-                #"bloom_factor": [1],
-                #"vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline"],
-                # for enabling Bloom Filter
-                "bloom_factor": [5],
-                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom"],
+                "bloom_factor": [1],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline"],
                 "note": ["baseline"],
                 })
 
         return confs
+
+    def predefined_vacuum_trade(self):
+        """
+        vacuum layout, align, no prefetch, no bloom
+        """
+        confs = parameter_combinations({
+                "server_mem_size": [512*MB],
+                "n_server_threads": [8, 16, 32, 64],
+                "n_client_threads": n_client_threads,
+                "query_path": full_query_paths_wiki,
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0],
+                "prefetch_threshold_kb": [128], # not used
+                "enable_prefetch": [False], # not used
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [1],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align"],
+                "note": ["baseline+align"],
+                })
+
+        return confs
+
+    def predefined_vacuum_prefetch(self):
+        """
+        vacuum layout, align, prefetch, no bloom
+        """
+        confs = parameter_combinations({
+                "server_mem_size": [512*MB],
+                "n_server_threads": [8, 16, 32, 64],
+                "n_client_threads": n_client_threads,
+                "query_path": full_query_paths_wiki,
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [32],
+                "prefetch_threshold_kb": [128],
+                "enable_prefetch": [True],
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [1],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align"],
+                "note": ["baseline+align+prefetch"],
+                })
+
+        return confs
+
+    def predefined_vacuum_bloom(self):
+        """
+        vacuum layout, align, prefetch, no bloom
+        """
+        confs = parameter_combinations({
+                "server_mem_size": full_mem_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": full_query_paths_wiki,
+                "engine": [VACUUM],
+                "init_heap_size": [None],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [32],
+                "prefetch_threshold_kb": [128],
+                "enable_prefetch": [True],
+                "elastic_data_path": [None],
+                "force_disable_es_readahead": [None],
+                "bloom_factor": [5],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom"],
+                "note": ["baseline+align+prefetch+bloomGoodZone"],
+                })
+
+        return confs
+
+    def predefined_es(self):
+        """
+        Wikipedia 128KB prefetch and 0KB prefetch
+        """
+        confs = parameter_combinations({
+                "server_mem_size": [512*MB],
+                "n_server_threads": [128, 256],
+                "n_client_threads": n_client_threads,
+                # "query_path": full_query_paths_wiki,
+                "query_path": [
+                    "/mnt/ssd/query_workload/type_wikiDocfreq01"
+                    ],
+                "engine": [ELASTIC],
+                "init_heap_size": [500*MB],
+                "lock_memory": lock_memory,
+                "read_ahead_kb": [0],
+                "prefetch_threshold_kb": [None], # not used
+                "enable_prefetch": [None], # not used
+                "elastic_data_path": ["/mnt/ssd/elasticsearch-wiki-may/data"],
+                "force_disable_es_readahead": [False],
+                "bloom_factor": [None],
+                "vacuum_engine": [None]
+                })
+
+        return confs
+
+    def predefined_sample(self):
+        """
+        You override parameter settings here
+        """
+        confs = parameter_combinations({
+                "server_mem_size": mem_size_list,
+                "n_server_threads": n_server_threads,
+                "n_client_threads": n_client_threads,
+                "query_path": query_paths,
+                "engine": engines,
+                "init_heap_size": init_heap_size,
+                "lock_memory": lock_memory,
+                "read_ahead_kb": read_ahead_kb_list,
+                "prefetch_threshold_kb": prefetch_thresholds_kb,
+                "enable_prefetch": enable_prefetch_list,
+                "elastic_data_path": elastic_data_paths,
+                "force_disable_es_readahead": force_disable_es_readahead,
+                "bloom_factor": bloom_factors,
+                "vacuum_engine": vacuum_engines
+                })
+
+        return confs
+
 
 def organize_conf(confs):
     new_confs = []
@@ -217,7 +494,7 @@ def organize_conf(confs):
 
         conf['cgroup_mem_size'] = conf['server_mem_size']
         if conf['server_mem_size'] == 'in-mem':
-            conf['cgroup_mem_size'] = 64*GB
+            conf['cgroup_mem_size'] = 32*GB
 
 
         if conf['force_disable_es_readahead'] is True and \
@@ -543,6 +820,7 @@ def send_sigint(pid):
 
 def get_iostat_kb_read():
     out = subprocess.check_output("iostat -k {}".format(partition_name), shell=True)
+    print out
     return parse_iostat(out)['io']['kB_read']
 
 def create_blktrace_manager(subexpdir):
@@ -602,11 +880,12 @@ def remote_cmd_chwd(dir_path, cmd, fd = None):
     return remote_cmd("cd {}; {}".format(dir_path, cmd), fd)
 
 def remote_cmd(cmd, fd = None):
-    print "Starting command on remote node.... ", cmd
+    #print "Starting command on remote node.... ", cmd
     if fd is None:
         p = subprocess.Popen(["ssh", remote_addr, cmd])
     else:
         p = subprocess.Popen(["ssh", remote_addr, cmd], stdout = fd, stderr = fd)
+        #p = subprocess.Popen(["ssh", remote_addr, cmd])
 
     return p
 
@@ -655,7 +934,7 @@ def start_elastic_client(n_threads, query_path):
     print "-" * 20
     cmd = "sudo python -m benchmarks.rs_bench_go {path} {n} {server}"\
             .format(path=query_path, n=n_threads, server=server_addr)
-
+    print cmd
     return remote_cmd_chwd(
         rs_bench_go_path,
         cmd,
@@ -711,7 +990,7 @@ def is_elastic_pyclient_running():
 
 def is_client_finished():
     out = subprocess.check_output("tail -n 1 /tmp/client.out", shell=True)
-    print "------> Contents of client.out: ", out
+    #print "------> Contents of client.out: ", out
     if "ExperimentFinished!!!" in out:
         return True
     else:
@@ -851,25 +1130,37 @@ class Exp(Experiment):
         return self.confs[i]
 
     def before(self):
-        # TODO compile
-        shcmd('make engine_bench')
         clean_dmesg()
+
+        engines = [conf['engine'] for conf in self.confs]
+        if VACUUM in engines:
+            compile_engine_bench()
+
+        forces = [conf['force_disable_es_readahead']
+                    for conf in self.confs]
+        if (ELASTIC in engines or ELASTIC_PY in engines ) and \
+                True in forces:
+            raw_input("WARNING! forcing all ES to have read_ahead_kb=0")
+
+        kill_client()
+        sync_build_dir()
 
     def beforeEach(self, conf):
         print "\n========================================================================================"
         print 'mem:       ', conf['server_mem_size']
-        print '#cores:    ', conf['n_cores']
+        #print '#cores:    ', conf['n_cores']
         print '#threads:  ', conf['n_server_threads']
         print 'query:     ', conf['query_path']
         print 'read_ahead:', conf['read_ahead_kb']
-        print 'prefetch_threshold:', conf['prefetch_threshold_kb']
         print "===============================================\n\n"
         
         shcmd('sudo pkill engine_bench', ignore_error = True)
-
+        kill_server()
         kill_blktrace()
         shcmd("pkill iostat", ignore_error = True)
 
+        kill_client()
+        time.sleep(1)
         shcmd("rm -f /tmp/client.out")
 
         if conf['engine'] == ELASTIC:
@@ -887,60 +1178,134 @@ class Exp(Experiment):
         if do_drop_cache == True and conf['server_mem_size'] != 'in-mem':
             drop_cache()
 
+        sync_query_log(conf['query_path'])
 
     def treatment(self, conf):
-        
+        #print conf
+        server_p = start_engine_server(conf)
+
+        print "Wating for some time util the server starts...."
+        print "Wait for server to load index, ..."
+        time.sleep(15)
+        # raw_input("waiting here (Enter)")
+
+        wait_engine_port(conf)
+
+        if conf['server_mem_size'] == 'in-mem':
+            load_mem_engine(conf)
 
         kb_read_a = get_iostat_kb_read()
 
-        # start iostat 
         p_iostat = start_iostat_watch(partition_name,
                 out_path = os.path.join(self._subexpdir, "iostat.out"))
 
-        # Start blktrace
+        # Start block tracing after the server is fully loaded
         if do_block_tracing is True:
             self.blocktracer = create_blktrace_manager(self._subexpdir)
             self.blocktracer.start_tracing_and_collecting(['issue'])
+        print "Wait for client to fully start (1 sec)..."
         time.sleep(1)
-
+        
         # start sar to trace page faults
         shcmd('pkill sar', ignore_error = True)
         if do_sar is True:
             shcmd('sar -B 1 > ' + self._subexpdir + '/sar.out &')
 
+        client_p = start_engine_client(
+                conf['engine'], conf['n_client_threads'], conf['query_path'])
 
+        if conf['engine'] == ELASTIC:
+            print "Waiting for client to start...."
+            time.sleep(5)
 
-        # start to run
-        cg = Cgroup(name='charlie', subs='memory,cpuset')
-        cg.set_item('memory', 'memory.limit_in_bytes', conf['cgroup_mem_size'])
-        cg.set_item('memory', 'memory.swappiness', mem_swappiness)
-        cg.set_item('cpuset', 'cpuset.cpus', '0-'+str(conf['n_cores']-1))
-        cg.set_item('cpuset', 'cpuset.mems', '0')
+        seconds = 0
+	cache_size_log = []
+        while True:
+            # print_client_output_tail()
+            # print conf
 
+            is_server_running = is_engine_server_running(conf)
+            if is_server_running is False:
+                # raise RuntimeError("Server just crashed!!!")
+                print "!" * 40
+                print "Server crashed. See server.log and dmesg for details"
+                print "!" * 40
+                log_crashed_server(conf)
+                return
 
-        cmd = './build/engine_bench -exp_mode=locallog -n_threads=' + str(conf['n_server_threads']) \
-              + ' -engine=' + conf['vacuum_engine'] \
-              + ' -query_path=' + conf['query_path'] \
-              + ' -enable_prefetch=' + str(conf['enable_prefetch']) + ' -prefetch_threshold=' + str(conf['prefetch_threshold_kb']) \
-              + ' -bloom_factor=' + str(conf['bloom_factor'])
-        print cmd
-        p = cg.execute(shlex.split(cmd))
-        p.wait()
+            is_running = is_client_running(conf)
+            if is_running is False:
+                sys.stdout.flush()
+                kill_client() # hoping the client output will be flushed
+                print "Wait for the client to flush stdout........"
+                stop_iostat_watch(p_iostat)
+                time.sleep(30)
 
+            finished = is_client_finished()
+            #print "is_client_finished()", finished
+            if finished:
+                kill_client()
+                if conf['engine'] == 'vacuum':
+                    send_sigint(server_p.pid)
+                print "Waiting for server to exit gracefuly"
+                time.sleep(8)
+                copy_client_out()
+                break
 
-        
+            # client is not finished, and not running
+            if is_running is False:
+                print "!" * 40
+                print "Client is not running!"
+                print "!" * 40
+                log_crashed_client(conf)
+                return
+            '''
+            cache_size = get_cgroup_page_cache_size()/MB
+            print "*" * 20
+            print "page cache size (MB): ", cache_size
+            print "*" * 20
+            cache_size_log.append(cache_size)
+            '''
+            time.sleep(1)
+            seconds += 1
+            '''
+            print ">>>>> It has been", seconds, "seconds <<<<<<"
+            print "cache_size_log:", cache_size_log
+            '''
+        #d_iostat = extract_cols_from_file(
+        #        os.path.join(self._subexpdir, "iostat.out"))
+
         kb_read_b = get_iostat_kb_read()
         kb_read = int(kb_read_b) - int(kb_read_a)
-        print kb_read_a, kb_read_b
         print '-' * 30
         print "GB read: ", float(kb_read)/1024/1024
         print '-' * 30
 
+        d = parse_client_output(conf)
+        if len(cache_size_log) == 0:
+            d["cache_mb_obs_median"] = "NA"
+        else:
+            d["cache_mb_obs_median"] = median(cache_size_log)
+        d["cache_mb_max"] = max(cache_size_log + [0])
+        d['KB_read'] = kb_read
+
+        filename_dict = parse_filename(conf['query_path'])
+
+        d.update(filename_dict)
+        d.update(conf)
+        #d.update(d_iostat)
+
+        self.result.append(d)
+    
     def afterEach(self, conf):
         if do_sar is True:
             shcmd('pkill sar')
-
-        shcmd('pkill iostat')
+        
+        path = os.path.join(self._resultdir, "result.txt")
+        table_to_file(fill_na(self.result), path, width = 20)
+        #shcmd("cat " + path)
+        
+        shcmd('pkill iostat', ignore_error = True)
         print '-' * 30
         with open(self._subexpdir + '/iostat.out') as iostat_output:
             stats = parse_batch(iostat_output.read())
@@ -967,7 +1332,7 @@ class Exp(Experiment):
                 item_len = average_rbw = average_wbw = 0
                 for item in stats['io']:
                     parsed_iostat.write(item['r/s'] + ' ' + item['rMB/s'] + ' ' + item['w/s'] + ' ' + item['wMB/s'] + ' ' + str(float(item['avgrq-sz'])*512/1024) + ' '+ item['avgqu-sz'] +'\n')
-                    if float(item['rMB/s']) + float(item['wMB/s']) < 200:
+                    if float(item['rMB/s']) + float(item['wMB/s']) < 300:
                         continue
                     item_len += 1
                     average_rbw += float(item['rMB/s'])
@@ -980,12 +1345,14 @@ class Exp(Experiment):
         print '\n page faults: '
         shcmd('python /users/kanwu/flashsearch/src/qq_mem/tools/count_pagefaults.py ' + self._subexpdir+'/sar.out')
         print '-' * 30
+ 
         if do_block_tracing is True:
             shcmd("sync")
             self.blocktracer.stop_tracing_and_collecting()
             time.sleep(2)
             self.blocktracer.create_event_file_from_blkparse()
         dump_json(conf, os.path.join(self._subexpdir, "config.json"))
+        kill_server()
 
 if __name__ == "__main__":
     confs = ConfFactory().get_confs()

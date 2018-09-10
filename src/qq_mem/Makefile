@@ -148,6 +148,9 @@ elastic_two_nodes:
 exp:
 	python ./tools/run_exp.py
 
+exp_es:
+	python ./tools/run_exp_es.py
+
 exp_local:
 	python ./tools/run_exp_local.py
 

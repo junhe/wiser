@@ -798,8 +798,10 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
     const std::size_t size1 = this->pl_iterators_[0].Size();
     const std::size_t size2 = this->pl_iterators_[1].Size();
     //std::cout << size1 << " : " << size2 ;
-    // TODO
-    //return CheckByFirstPostingList() && CheckBySecondPostingList();
+    // TODO  Kan
+    //return true;
+    //return CheckByFirstPostingList() & CheckBySecondPostingList();
+    
     if (bloom_enable_factor_ * size1 <= size2) {
       return CheckByFirstPostingList();
     } else if (bloom_enable_factor_ * size2 < size1) {
