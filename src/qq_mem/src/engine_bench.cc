@@ -258,7 +258,7 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
 
 
   void each_thread(int id) {
-    for (int i = 0; query_producer->IsEnd() == false; i++) {   //TODO IsEnd
+    for (int i = 0; query_producer->IsEnd() == false; i++) {
       auto query = query_producer->NextNativeQuery(0);
       //std::cout << "\n " << query.ToStr() << ": " ;//<< std::endl;
 
@@ -266,6 +266,10 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
       query.return_snippets = false;
       auto result = engine_->Search(query);
 
+      //for (int j = 0; j < 10; j++)
+      //  std::this_thread::yield();
+      //  usleep(1);
+ 
       //std::cout << result.ToStr() << std::endl;
       if (i > 0 && i % 50000 == 0) {
         std::cout << "Thread " << id << " finished " << i << std::endl;

@@ -166,27 +166,44 @@ class ConfFactory(object):
         """
         confs = parameter_combinations({
                 # hardware
-                #"server_mem_size": [512*MB],
-                #"server_mem_size": [32*GB],
-                "server_mem_size": ['in-mem', 'in-mem'],
+                "server_mem_size": [512*MB],
+                #"server_mem_size": ['in-mem'],
+                #"server_mem_size": ['in-mem', 'in-mem', 32*GB],
                 "n_cores": [16],
                 # search engine
-                "n_server_threads": [16],
+                #"n_server_threads": [128, 144],
+                "n_server_threads": [56, 60, 68, 72],
                 #"n_server_threads": [48, 56],
+                
+
+                #"read_ahead_kb": [4, 8, 12, 16],
+                #"read_ahead_kb": [96, 128, 160],
+                #"read_ahead_kb": [16, 32, 64, 128],
+                "read_ahead_kb": [4, 8],
+                #"read_ahead_kb": [256],
+                
+                # ===================SINGLE================
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_10000"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_100"],
-                "query_path": ["/mnt/ssd/query_log/wiki/single_term/single_1000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_5000"],
+                
+                # ===================TWO===================
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term/type_twoterm.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term/popular_two_terms"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_1000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_10000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_100000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_500000"],
+
+
+                # ===================Phrase===============
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/type_phrase.workloadOrig_wiki"],
+                "query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/phrase_1000000"],
+                
+                # ===================Realistic============
                 #"query_path": ["/mnt/ssd/query_log/type_realistic"],
-                "read_ahead_kb": [0],
-                #"read_ahead_kb": [96, 128, 160],
-                #"read_ahead_kb": [16, 32, 64, 128],
-                #"read_ahead_kb": [0],
-                #"read_ahead_kb": [20, 24, 28],
                 
                 "n_client_threads": n_client_threads,
                 #"query_path": full_query_paths_wiki,
@@ -200,6 +217,7 @@ class ConfFactory(object):
                 #"bloom_factor": [1],
                 #"vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline"],
                 # for enabling Bloom Filter
+                #"bloom_factor": [2, 10, 20],
                 "bloom_factor": [5],
                 "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom"],
                 "note": ["baseline"],

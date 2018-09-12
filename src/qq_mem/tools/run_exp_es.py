@@ -23,7 +23,7 @@ server_addr = "node1"
 remote_addr = "node2"
 os_swap = True
 device_name = "nvme0n1"
-partition_name = "nvme0n1p3"
+partition_name = "nvme0n1p4"
 do_drop_cache = True
 do_block_tracing = False
 do_sar = True
@@ -311,20 +311,39 @@ class ConfFactory(object):
     
     def predefined_es_wiki(self):
         confs = parameter_combinations({
+                "server_mem_size": ['in-mem', 32*GB],
                 #"server_mem_size": [512*MB],
                 #"server_mem_size": [32*GB],
-                "server_mem_size": ['in-mem'],
+                #"server_mem_size": ['in-mem'],
+                #"n_server_threads": [64, 96, 128],
                 "n_server_threads": [16],
                 "read_ahead_kb": [0],
+                # ===================SINGLE================
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_10000"],
-                "query_path": ["/mnt/ssd/query_log/wiki/single_term/single_1000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_5000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_4000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_1000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_500"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_100"],
+                
+
+                # ===================TWO===================
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/type_twoterm.workloadOrig_wiki"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/popular_two_terms"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_1000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_10000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_100000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_500000"],
+                
+
+                # ===================Phrase===============
+                "query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/type_phrase.workloadOrig_wiki"],
                 
                 "engine": [ELASTIC],
                 "init_heap_size": [500*MB],
-                "n_client_threads": n_client_threads,
+                "n_client_threads": [300], #n_client_threads,
                 "lock_memory": lock_memory,
                 "elastic_data_path": ['/mnt/ssd/elasticsearch/data/'],
                 
