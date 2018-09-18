@@ -263,7 +263,8 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
       //std::cout << "\n " << query.ToStr() << ": " ;//<< std::endl;
 
       //disable highlighting here
-      query.return_snippets = false;
+      //query.return_snippets = false;
+      query.n_results = 1;
       auto result = engine_->Search(query);
 
       //for (int j = 0; j < 10; j++)
