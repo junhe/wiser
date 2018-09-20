@@ -42,7 +42,8 @@ engine_path = "/users/kanwu/flashsearch/src/qq_mem/build/engine_bench"
 ######################
 # Elastic only
 ######################
-ELASTIC_DIR = "/users/kanwu/elasticsearch-5.6.3-clean"
+#ELASTIC_DIR = "/users/kanwu/elasticsearch-5.6.3-clean"
+ELASTIC_DIR = "/users/kanwu/test/elasticsearch-5.6.3-SNAPSHOT"
 rs_bench_go_path = "/users/kanwu/flashsearch/src/pysrc"
 
 
@@ -311,41 +312,75 @@ class ConfFactory(object):
     
     def predefined_es_wiki(self):
         confs = parameter_combinations({
-                "server_mem_size": ['in-mem', 32*GB],
-                #"server_mem_size": [512*MB],
                 #"server_mem_size": [32*GB],
+                "server_mem_size": [512*MB],
+                #"server_mem_size": [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB],
+                #"server_mem_size": [256*MB],
                 #"server_mem_size": ['in-mem'],
-                #"n_server_threads": [64, 96, 128],
-                "n_server_threads": [16],
-                "read_ahead_kb": [0],
+                #"server_mem_size": ['in-mem'],
+                #"n_server_threads": [24, 32, 48, 64, 96],
+                "n_server_threads": [25],
+                #"n_server_threads": [72],
+                #"read_ahead_kb": [0, 16, 32, 64, 128],
+                #"read_ahead_kb": [0],
+                "read_ahead_kb": [128],
                 # ===================SINGLE================
-                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_10000"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_5000"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_4000"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_1000"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_500"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/single_100"],
-                
+
+
+               
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_1"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_100_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_1000_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10000_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_100000_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_popular"],
 
                 # ===================TWO===================
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term/type_twoterm.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term/popular_two_terms"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_1000"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_100"],
+                #"query_path": ["/mnt/ssd/query_log/two_1000"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_10000"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_100000"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_500000"],
                 
 
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_10"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_100"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_1000_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_10000_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_100000_repeated"],
+                
+
                 # ===================Phrase===============
-                "query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/type_phrase.workloadOrig_wiki"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/type_phrase.workloadOrig_wiki"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/phrase_100"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/100_diff"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/100_diff"],     # from * <5000
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_1000_phrases"],    # from * <1000
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_10000_phrases"],    # from * 10000
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_100000_phrases"],    # from * 100000
+                "query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_500000_phrases"],    # from * 500000
+                
+                # realistic
+                #"query_path": ["/mnt/ssd/query_log/type_realistic"],
+                #"query_path": ["/mnt/ssd/query_log/uniq_realistic_querylog"],
                 
                 "engine": [ELASTIC],
                 "init_heap_size": [500*MB],
                 "n_client_threads": [300], #n_client_threads,
                 "lock_memory": lock_memory,
-                "elastic_data_path": ['/mnt/ssd/elasticsearch/data/'],
+                "elastic_data_path": ['/mnt/ssd/elasticsearch_single/data/'],
                 
                 # not related
                 "prefetch_threshold_kb": [None], # not used
@@ -627,7 +662,10 @@ def load_mem_engine(conf):
 def load_mem_elastic(conf):
     # p = start_elastic_pyclient(conf['query_path'])
     # p.wait()
-    p = start_elastic_client(conf['n_client_threads'], conf['query_path'])
+
+    # NEED TO SET FOR SINGLE AND MULTI
+    #p = start_elastic_client(conf['n_client_threads'], conf['query_path'])
+    p = start_elastic_client(1, '/mnt/ssd/query_log/es_local_querylog')
     p.wait()
 
     shcmd("rm -f /tmp/client.out")
@@ -1198,6 +1236,9 @@ class Exp(Experiment):
             drop_cache()
 
         sync_query_log(conf['query_path'])
+        # set query log for single node test
+        shcmd('cp ' + conf['query_path'] + ' /mnt/ssd/query_log/es_local_querylog')
+        
 
     def treatment(self, conf):
         #print conf
@@ -1210,8 +1251,8 @@ class Exp(Experiment):
 
         wait_engine_port(conf)
 
-        if conf['server_mem_size'] == 'in-mem':
-            load_mem_engine(conf)
+        #if conf['server_mem_size'] == 'in-mem':
+        #    load_mem_engine(conf)
 
         kb_read_a = get_iostat_kb_read()
 
@@ -1230,8 +1271,11 @@ class Exp(Experiment):
         if do_sar is True:
             shcmd('sar -B 1 > ' + self._subexpdir + '/sar.out &')
 
+        # Edit HERE FOR SINGLE NODE OR MULTI NODE
+        #client_p = start_engine_client(
+        #        conf['engine'], conf['n_client_threads'], conf['query_path'])
         client_p = start_engine_client(
-                conf['engine'], conf['n_client_threads'], conf['query_path'])
+                conf['engine'], 1, '/users/kanwu/flashsearch/src/pysrc/test_querylog')
 
         if conf['engine'] == ELASTIC:
             print "Waiting for client to start...."
@@ -1363,8 +1407,12 @@ class Exp(Experiment):
 
         print '\n page faults: '
         shcmd('python /users/kanwu/flashsearch/src/qq_mem/tools/count_pagefaults.py ' + self._subexpdir+'/sar.out')
+        #print overall number of queries
+        print 'Number of Queries: ', sum(1 for line in open(conf['query_path']))
         print '-' * 30
  
+
+
         if do_block_tracing is True:
             shcmd("sync")
             self.blocktracer.stop_tracing_and_collecting()

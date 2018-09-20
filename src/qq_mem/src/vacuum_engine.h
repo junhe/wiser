@@ -165,7 +165,7 @@ class VacuumEngine : public SearchEngineServiceNew {
     doc_store_.MapFdt(utils::JoinPath(engine_dir_path_, "my.fdt"));
     std::cout << FLAGS_enable_prefetch << " Prefetch  !!!!!!!!!!!!!!!!!!!!! Threshold: " << FLAGS_prefetch_threshold << std::endl; 
     // TODO check this?
-    if (!FLAGS_enable_prefetch)
+    if (FLAGS_enable_prefetch)
     //if (FLAGS_enable_prefetch)
       doc_store_.AdviseFdtRandom();
 
