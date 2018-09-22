@@ -322,8 +322,8 @@ class ConfFactory(object):
                 "n_server_threads": [25],
                 #"n_server_threads": [72],
                 #"read_ahead_kb": [0, 16, 32, 64, 128],
-                #"read_ahead_kb": [0],
-                "read_ahead_kb": [128],
+                "read_ahead_kb": [0],
+                #"read_ahead_kb": [0, 128],
                 # ===================SINGLE================
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
@@ -370,11 +370,15 @@ class ConfFactory(object):
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_1000_phrases"],    # from * <1000
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_10000_phrases"],    # from * 10000
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_100000_phrases"],    # from * 100000
-                "query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_500000_phrases"],    # from * 500000
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_500000_phrases"],    # from * 500000
                 
                 # realistic
                 #"query_path": ["/mnt/ssd/query_log/type_realistic"],
                 #"query_path": ["/mnt/ssd/query_log/uniq_realistic_querylog"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/single"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/multi"],
+                "query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/phrases"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/cleaned_querylog"],
                 
                 "engine": [ELASTIC],
                 "init_heap_size": [500*MB],

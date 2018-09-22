@@ -5,6 +5,8 @@
 #include <thread>
 #include <vector>
 #include <climits>
+#include <chrono>
+#include <atomic>
 
 #include <gperftools/profiler.h>
 #include <glog/logging.h>
@@ -263,10 +265,18 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
       //std::cout << "\n " << query.ToStr() << ": " ;//<< std::endl;
 
       //disable highlighting here
-      query.return_snippets = false;
-      //query.n_results = 1;
+      //query.return_snippets = false;
+      query.n_results = 5;
+      
+      auto t1 = std::chrono::high_resolution_clock::now();
       auto result = engine_->Search(query);
+      auto t2 = std::chrono::high_resolution_clock::now();
 
+      //latency_pool[(int)(std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count())]++;
+      latency_pool[(int)(std::chrono::duration_cast<std::chrono::microseconds>(t2-t1).count())/100]++;
+      //std::cout << "execute took "
+      //        << std::chrono::duration_cast<std::chrono::milliseconds>(t2-t1).count()
+      //        << " milliseconds\n";
       //for (int j = 0; j < 10; j++)
       //  std::this_thread::yield();
       //  usleep(1);
@@ -285,11 +295,15 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
 
   utils::ResultRow Execute(Treatment treatment) {
     //const int n_queries = treatment.n_queries;
+    // init latency_pool
+    for (int i = 0; i < 10000; i++)
+        latency_pool[i] = 0; 
+
     utils::ResultRow row;
     query_producer = MakeProducer(treatment);
     const int n_queries = query_producer->Size();
 
-    
+ 
     int NUM_THREADS = treatment.n_threads;
     std::cout << "======= Using " <<  NUM_THREADS << " threads working.... " << std::endl;
     // TODO change to multi threads
@@ -310,6 +324,17 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
     auto dur = utils::duration(start, end);
     auto dur_start = utils::duration(start, started_threads);
 
+    // dump latency pool
+    int counted = 0;
+    for (int i = 0; i < 10000; i++) {
+        int next_count = counted + latency_pool[i];
+        if (counted < n_queries/2 && next_count >= n_queries/2)
+            std::cout << "median: " << (float)i/10 << " ms"<< std::endl;
+        if (counted < n_queries*0.95 && next_count >= n_queries*0.95)
+            std::cout << "0.95: " << (float)i/10 << " ms" << std::endl;
+        counted = next_count;
+    }
+    std::cout << "overall: " << counted << std::endl;
     //row["latency"] = std::to_string(dur / n_queries); 
     row["start_duration"] = std::to_string(dur_start);
     row["duration"] = std::to_string(dur); 
@@ -321,6 +346,7 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
  private:
   SearchEngineServiceNew *engine_;
   std::unique_ptr<QueryProducerService> query_producer;
+  std::atomic_int latency_pool[10000];     // 0.1 millisecond
 };
 
 
