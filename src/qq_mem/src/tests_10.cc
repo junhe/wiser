@@ -232,6 +232,11 @@ TEST_CASE( "SkipListWriter", "[qqflash]" ) {
       REQUIRE(skip_list[0].file_offset_of_pos_blob == 12);
       REQUIRE(skip_list[0].in_blob_index_of_pos_bag == 3);
       REQUIRE(skip_list[0].file_offset_of_offset_blob == 13);
+      
+      REQUIRE(skip_list.GetDocIdBytes() == 1);
+      REQUIRE(skip_list.GetTfBytes() == 1);
+      REQUIRE(skip_list.GetPosBytes() == 1);
+      REQUIRE(skip_list.GetOffsetBytes() == 1);
     }
 
     SECTION("Term dict file dumping and loading") {
