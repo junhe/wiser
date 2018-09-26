@@ -198,6 +198,18 @@ class VacuumEngine : public SearchEngineServiceNew {
     return ret;
   }
 
+  utils::ResultTable GetTrafficStats() {
+    utils::ResultTable ret;
+    utils::ResultRow row;
+
+    for (auto &pr : accum_bytes_) {
+      row[pr.first] = std::to_string(pr.second);
+    }
+
+    ret.Append(row);
+    return ret;
+  }
+
   SearchResult Search(const SearchQuery &query) override {
     DLOG_IF(FATAL, is_loaded_ == false) << "Engine is not yet loaded";
 
