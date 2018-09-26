@@ -388,6 +388,38 @@ class SkipList {
       pre_row.pos_blob_off = file_offset_of_pos_blob;
       pre_row.off_blob_off = file_offset_of_offset_blob;
     }
+
+    skip_list_bytes_ = 1 + len + it.PoppedLength();
+  }
+
+  std::size_t GetSkipListSize() {
+    return skip_list_bytes_;
+  }
+
+  std::size_t GetDocIdBytes() {
+    const SkipEntry &e = skip_table_[0];
+    return e.file_offset_of_tf_bag - e.file_offset_of_docid_bag;
+  }
+
+  std::size_t GetTfBytes() {
+    const SkipEntry &e = skip_table_[0];
+    return e.file_offset_of_pos_blob - e.file_offset_of_tf_bag;
+  }
+
+  std::size_t GetPosBytes() {
+    const SkipEntry &e = skip_table_[0];
+    return e.file_offset_of_offset_blob - e.file_offset_of_pos_blob;
+  }
+
+  std::size_t GetOffsetBytes() {
+    int n = skip_table_.size();
+    if (n == 1) {
+      return GetPosBytes(); //an estimate
+    } else {
+      std::size_t blob_size = skip_table_[1].file_offset_of_offset_blob 
+        - skip_table_[0].file_offset_of_offset_blob;
+      return blob_size * n;
+    }
   }
 
   int NumEntries() const {
@@ -455,6 +487,7 @@ class SkipList {
   }
 
  private:
+  std::size_t skip_list_bytes_;
   std::vector<SkipEntry> skip_table_;
 };
 
