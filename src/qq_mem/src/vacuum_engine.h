@@ -216,6 +216,10 @@ class VacuumEngine : public SearchEngineServiceNew {
 
     for (auto &it : iterators) {
       result.doc_freqs.push_back(it.Size());
+      auto count = it.GetSizeStats();
+      for (auto &pr : count) {
+        accum_bytes_[pr.first] += pr.second;
+      }
     }
 
     if (query.is_phrase == false)  {
@@ -244,6 +248,8 @@ class VacuumEngine : public SearchEngineServiceNew {
       SearchResultEntry result_entry;
       result_entry.doc_id = top_doc_entry.doc_id;
       result_entry.doc_score = top_doc_entry.score;
+      accum_bytes_["docstore"] += doc_store_.GetCompressedDocBytes(
+          top_doc_entry.doc_id);
 
       if (query.return_snippets == true) {
         auto offset_table = top_doc_entry.OffsetsForHighliting();
@@ -308,6 +314,8 @@ class VacuumEngine : public SearchEngineServiceNew {
   bool profiler_started = false;
 
   int bloom_enable_factor_;
+
+  std::unordered_map<std::string, std::size_t> accum_bytes_;
 };
 
 
