@@ -417,6 +417,30 @@ class ChunkedDocStoreReader {
     return id < n_doc_ids_;
   }
 
+  const std::size_t GetCompressedDocBytes(int id) {
+    off_t start_off = offset_store_[id];
+    if ((start_off & 0x01) == 0x01) {  
+      // was aligned
+      start_off = start_off >> 1;
+      start_off = start_off + 4096 - start_off % 4096;
+    } else {
+      start_off = start_off >> 1;
+    }
+
+    chunk_sizes_t chunk_sizes; 
+    std::size_t n_chunks;
+    const char *compressed = fdt_map_.Addr() + start_off;
+    int chunk_start = DecodeHeader(&n_chunks, &chunk_sizes, compressed);
+
+    int header_bytes = chunk_start;
+    int data_bytes = 0;
+    for (auto &x : chunk_sizes) {
+      data_bytes += x;
+    }
+    
+    return header_bytes + data_bytes;
+  }
+
   const std::string Get(int id) { 
     off_t start_off = offset_store_[id];
     if ((start_off & 0x01) == 0x01) {  

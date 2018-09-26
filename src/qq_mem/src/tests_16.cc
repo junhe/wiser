@@ -283,6 +283,7 @@ TEST_CASE( "Chunked store aligned", "[doc_store0]" ) {
 
     for (int i = 0; i < n_docs; i++) {
       std::string text = reader.Get(i);
+      REQUIRE(reader.GetCompressedDocBytes(i) < 60 * KB);
       REQUIRE(text == origins[i]);
     }
   }
