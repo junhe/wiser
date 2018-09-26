@@ -392,7 +392,7 @@ class SkipList {
     skip_list_bytes_ = 1 + len + it.PoppedLength();
   }
 
-  std::size_t GetSkipListSize() {
+  std::size_t GetSkipListBytes() {
     return skip_list_bytes_;
   }
 

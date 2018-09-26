@@ -1035,6 +1035,18 @@ class VacuumPostingListIterator {
     return term_index_result_.Key();
   }
 
+  std::unordered_map<std::string, std::size_t> GetSizeStats() {
+    std::unordered_map<std::string, std::size_t> ret;
+
+    ret["skiplist"] = skip_list_->GetSkipListBytes();
+    ret["docid"] = skip_list_->GetDocIdBytes();
+    ret["tf"] = skip_list_->GetTfBytes();
+    ret["pos"] = skip_list_->GetPosBytes();
+    ret["off"] = skip_list_->GetOffsetBytes();
+
+    return ret;
+  }
+
  private:
   int HasTerm(BloomFilterColumnReader *reader, const std::string &term) {
     if (header_->has_bloom_filters == true) {
@@ -1056,7 +1068,6 @@ class VacuumPostingListIterator {
       return BLM_MAY_PRESENT;
     }
   }
-
 
   const uint8_t *file_data_;
   TermIndexResult term_index_result_;
