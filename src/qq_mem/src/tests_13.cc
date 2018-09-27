@@ -31,6 +31,9 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
         iter.Advance();
         REQUIRE(iter.Value() == i);
       }
+      // sanity check
+      REQUIRE(iter.AccessedBytes() > 8); // 8 numbers, so at least 8
+      REQUIRE(iter.AccessedBytes() < 20);
     }
 
     SECTION("AdvanceBy()") {
@@ -84,6 +87,9 @@ TEST_CASE( "CozyBoxIterator", "[qqflash][cozy]" ) {
         iter.Advance();
         REQUIRE(iter.Value() == i);
       }
+      
+      REQUIRE(iter.AccessedBytes() > 300); // at least 300 bits
+      REQUIRE(iter.AccessedBytes() < 600); 
     }
 
     SECTION("Start from the last part of pack") {

@@ -397,6 +397,14 @@ class CozyBoxIterator {
     return FormatString(cur_iter_type_);
   }
 
+  std::size_t AccessedBytes() const {
+    std::size_t from_pack = 0;
+    for (auto &pr : accessed_blobs_) {
+      from_pack += pr.second;
+    }
+    return from_pack + vints_iter_.AccessedBytes();
+  }
+
  private:
   off_t CurBlobBytes() const {
     if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
@@ -416,6 +424,7 @@ class CozyBoxIterator {
 
     if (cur_iter_type_ == BlobFormat::PACKED_INTS) {
       pack_ints_iter_.Reset(blob_buf);
+      accessed_blobs_[blob_off] = pack_ints_iter_.NumTotalBytes();
     } else {
       vints_iter_.Reset(blob_buf);
     }
@@ -428,6 +437,8 @@ class CozyBoxIterator {
   BlobFormat cur_iter_type_ = BlobFormat::NONE;
   off_t cur_blob_off_ = 0;
   int cur_in_blob_index_ = 0;
+
+  std::unordered_map<off_t, int> accessed_blobs_; // blob index -> blob size
   
   PackedIntsIterator pack_ints_iter_;
   VIntsIterator vints_iter_;

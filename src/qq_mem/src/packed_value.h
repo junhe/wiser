@@ -434,6 +434,8 @@ class VIntsIterator {
 
     next_index_ = 0;
     header_bytes_ = 1 + len; // 1 is the magic number
+
+    initialized_ = true;
   }
 
   int SerializationSize() const {
@@ -466,10 +468,14 @@ class VIntsIterator {
   }
 
   int AccessedBytes() const {
-    return varint_iter_.PoppedBytes() + header_bytes_;
+    if (initialized_ == false)
+      return 0;
+    else 
+      return varint_iter_.PoppedBytes() + header_bytes_;
   }
 
  private:
+  bool initialized_ = false;
   int next_index_ = -1;
   uint32_t magic_ = 0; 
   uint32_t varint_bytes_ = 0;
