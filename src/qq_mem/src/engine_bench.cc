@@ -521,7 +521,7 @@ GeneralConfig config_by_jun() {
 
   GeneralConfig config;
   // config.SetString("engine_type", "qq_mem_compressed");
-  config.SetString("engine_type", "vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline/");
+  config.SetString("engine_type", "vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom/");
 
   config.SetInt("n_docs", 100);
   config.SetString("linedoc_path", 
