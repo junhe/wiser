@@ -271,6 +271,8 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
     auto end = utils::now();
     auto dur = utils::duration(start, end);
 
+    engine_->ShowTrafficStats();
+
     row["latency"] = std::to_string(dur / n_queries); 
     row["duration"] = std::to_string(dur); 
     row["n_queries"] = std::to_string(n_queries); 

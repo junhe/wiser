@@ -19,6 +19,9 @@ class SearchEngineServiceNew {
   virtual void Load() {
     LOG(FATAL) << "Load() is not implemented.";
   }
+  virtual void ShowTrafficStats () {
+    LOG(FATAL) << "ShowTrafficStats() is not implemented.";
+  }
   virtual int TermCount() const = 0;
   virtual std::map<std::string, int> PostinglistSizes(const TermList &terms) = 0;
   virtual SearchResult Search(const SearchQuery &query) = 0; 

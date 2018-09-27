@@ -198,7 +198,7 @@ class VacuumEngine : public SearchEngineServiceNew {
     return ret;
   }
 
-  utils::ResultTable GetTrafficStats() {
+  void ShowTrafficStats() {
     utils::ResultTable ret;
     utils::ResultRow row;
 
@@ -207,7 +207,7 @@ class VacuumEngine : public SearchEngineServiceNew {
     }
 
     ret.Append(row);
-    return ret;
+    std::cout << ret.ToStr() << std::endl;
   }
 
   SearchResult Search(const SearchQuery &query) override {
