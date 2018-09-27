@@ -213,6 +213,14 @@ class DocIdIterator {
     }
   }
 
+  std::size_t AccessedBytes() const {
+    std::size_t from_pack = 0;
+    for (auto &pr : accessed_blobs_) {
+      from_pack += pr.second;
+    }
+    return from_pack + vints_iter_.AccessedBytes();
+  }
+
  private:
   // Get index of the blob whose prev_doc_id >= val
   int GetBlobIndexToGo(const uint32_t val) {
@@ -240,6 +248,7 @@ class DocIdIterator {
 
     if (format == BlobFormat::PACKED_INTS) {
       pack_ints_iter_.Reset(blob_buf, prev_doc_id);
+      accessed_blobs_[blob_index] = pack_ints_iter_.NumTotalBytes();
     } else {
       vints_iter_.Reset(blob_buf, prev_doc_id);
     }
@@ -256,6 +265,8 @@ class DocIdIterator {
   int cur_posting_index_ = 0;
   BlobFormat cur_iter_type_;
   int num_postings_;
+
+  std::unordered_map<int, int> accessed_blobs_; // blob index -> blob size
   
   DeltaEncodedPackedIntsIterator pack_ints_iter_;
   DeltaEncodedVIntsIterator vints_iter_;

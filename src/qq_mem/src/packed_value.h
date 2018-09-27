@@ -484,6 +484,7 @@ class DeltaEncodedVIntsIterator {
   void Reset(const uint8_t *buf, const uint32_t pre_int) {
     raw_iter_.Reset(buf);
     prev_value_ = pre_int;
+    initialized_ = true;
   }
 
   bool IsEnd() const {
@@ -505,8 +506,11 @@ class DeltaEncodedVIntsIterator {
     return prev_value_;
   }
 
-  int AccessedBytes() {
-    return raw_iter_.AccessedBytes();
+  int AccessedBytes() const {
+    if (initialized_ == false)
+      return 0;
+    else 
+      return raw_iter_.AccessedBytes();
   }
 
   uint64_t Peek() const {
@@ -520,6 +524,7 @@ class DeltaEncodedVIntsIterator {
   }
 
  private:
+  bool initialized_ = false;
   VIntsIterator raw_iter_; 
   long prev_value_;
 };

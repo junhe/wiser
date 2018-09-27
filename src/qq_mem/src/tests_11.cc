@@ -219,7 +219,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
 }
 
 
-TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
+TEST_CASE( "Doc id iterator", "[qqflash][docid999]" ) {
   SECTION("Simple") {
     std::vector<uint32_t> doc_ids;
     uint32_t num_docids = 200;
@@ -246,6 +246,9 @@ TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
         // std::cout << "i: " << iter.Value() << std::endl;
         REQUIRE(iter.Value() == i);
       }
+      // well, each doc id at least need 1 bit, so 200 bits is the min
+      // This is just sanity check
+      REQUIRE(iter.AccessedBytes() > 200 / 8); 
 
       file_map.Close();
     }
@@ -258,6 +261,9 @@ TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
         iter.Advance();
       }
       REQUIRE(iter.IsEnd() == true);
+      // well, each doc id at least need 1 bit, so 200 bits is the min
+      // This is just sanity check
+      REQUIRE(iter.AccessedBytes() > 200 / 8); 
 
       file_map.Close();
     }
