@@ -123,6 +123,9 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
       iter.SkipTo(i);
       REQUIRE(iter.Value() == i);
     }
+    // Just a sanity check
+    REQUIRE(iter.AccessedBytes() > 300);
+    REQUIRE(iter.AccessedBytes() < 300 * 3);
 
     file_map.Close();
   }

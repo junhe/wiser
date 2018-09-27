@@ -87,6 +87,14 @@ class TermFreqIterator {
     }
   }
 
+  std::size_t AccessedBytes() const {
+    std::size_t from_pack = 0;
+    for (auto &pr : accessed_blobs_) {
+      from_pack += pr.second;
+    }
+    return from_pack + vints_iter_.AccessedBytes();
+  }
+
  private:
   void SetupBlob(int blob_index) {
     off_t blob_off = (*skip_list_)[blob_index].file_offset_of_tf_bag;
@@ -97,6 +105,7 @@ class TermFreqIterator {
 
     if (format == BlobFormat::PACKED_INTS) {
       pack_ints_iter_.Reset(blob_buf);
+      accessed_blobs_[blob_index] = pack_ints_iter_.NumTotalBytes();
     } else {
       vints_iter_.Reset(blob_buf);
     }
@@ -112,6 +121,8 @@ class TermFreqIterator {
 
   int cur_posting_index_ = 0;
   BlobFormat cur_iter_type_;
+
+  std::unordered_map<int, int> accessed_blobs_; // blob index -> blob size
   
   PackedIntsIterator pack_ints_iter_;
   VIntsIterator vints_iter_;

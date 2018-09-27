@@ -315,6 +315,10 @@ class PackedIntsIterator {
     return index_;
   }
 
+  int NumTotalBytes() const {
+    return reader_.NumTotalBytes();
+  }
+
  private:
   int index_;
   LittlePackedIntsReader reader_;
