@@ -109,6 +109,7 @@ TEST_CASE( "Little packed ints", "[pack]" ) {
 
     LittlePackedIntsReader reader((uint8_t *)data.data());
     REQUIRE(reader.NumBits() == 1);
+    REQUIRE(reader.NumTotalBytes() == data.size());
     reader.DecodeToCache();
     
     for (int i = 0; i < PACK_ITEM_CNT; i++) {
@@ -127,6 +128,7 @@ TEST_CASE( "Little packed ints", "[pack]" ) {
 
     LittlePackedIntsReader reader((uint8_t *)data.data());
     REQUIRE(reader.NumBits() == 1);
+    REQUIRE(reader.NumTotalBytes() == data.size());
     reader.DecodeToCache();
     
     for (int i = 0; i < PACK_ITEM_CNT; i++) {
@@ -146,6 +148,7 @@ TEST_CASE( "Little packed ints", "[pack]" ) {
 
     LittlePackedIntsReader reader((uint8_t *)data.data());
     REQUIRE(reader.NumBits() == 7);
+    REQUIRE(reader.NumTotalBytes() == data.size());
     reader.DecodeToCache();
     
     for (int i = 0; i < PACK_ITEM_CNT; i++) {
@@ -164,6 +167,7 @@ TEST_CASE( "Little packed ints", "[pack]" ) {
     std::string data = writer.Serialize();
 
     LittlePackedIntsReader reader((uint8_t *)data.data());
+    REQUIRE(reader.NumTotalBytes() == data.size());
     reader.DecodeToCache();
     
     srand(0);

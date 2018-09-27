@@ -221,6 +221,10 @@ class LittlePackedIntsReader {
     return n_bits_per_value_;
   }
 
+  int NumTotalBytes() const {
+    return 2 + (n_bits_per_value_ * PACK_ITEM_CNT + 7) / 8;
+  }
+
   int SerializationSize() const {
     return LittlePackedIntsWriter::HEADER_BYTES + 
              NumDataBytesInPack(n_bits_per_value_); 
@@ -360,6 +364,10 @@ class DeltaEncodedPackedIntsIterator {
 
   int Index() const {
     return index_;
+  }
+
+  int NumTotalBytes() const {
+    return reader_.NumTotalBytes();
   }
 
  private:
