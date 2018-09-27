@@ -173,6 +173,7 @@ TEST_CASE( "Delta Encoded VInts Iterator", "[qqflash][deltavints]" ) {
       for (int i = 0; i < CNT; i++) {
         REQUIRE(it.Index() == i);
         REQUIRE(it.Pop() == i);
+        REQUIRE(it.AccessedBytes() == i + 1 + 2);
       }
       REQUIRE(it.IsEnd() == true);
     }
@@ -182,6 +183,7 @@ TEST_CASE( "Delta Encoded VInts Iterator", "[qqflash][deltavints]" ) {
         it.SkipTo(i);
         REQUIRE(it.Index() == i);
         REQUIRE(it.Peek() == i);
+        REQUIRE(it.AccessedBytes() == i + 2); // if i=0, there will be no pop
       }
       it.Pop();
       REQUIRE(it.IsEnd() == true);
@@ -192,6 +194,7 @@ TEST_CASE( "Delta Encoded VInts Iterator", "[qqflash][deltavints]" ) {
         it.SkipTo(i);
         REQUIRE(it.Index() == i);
         REQUIRE(it.Peek() == i);
+        REQUIRE(it.AccessedBytes() == i + 2);
       }
       it.SkipTo(CNT);
       REQUIRE(it.IsEnd() == true);
@@ -201,6 +204,7 @@ TEST_CASE( "Delta Encoded VInts Iterator", "[qqflash][deltavints]" ) {
       it.SkipForward(19);
       REQUIRE(it.Index() == 19);
       REQUIRE(it.Peek() == 19);
+      REQUIRE(it.AccessedBytes() == 19 + 2);
 
       it.SkipForward(1);
       REQUIRE(it.Index() == 19);

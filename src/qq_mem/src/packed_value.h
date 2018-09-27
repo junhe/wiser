@@ -421,6 +421,7 @@ class VIntsIterator {
     varint_iter_.Reset((char *)buf, 0, varint_bytes_);
 
     next_index_ = 0;
+    header_bytes_ = 1 + len; // 1 is the magic number
   }
 
   int SerializationSize() const {
@@ -452,14 +453,15 @@ class VIntsIterator {
     }
   }
 
-  int PoppedBytes() const {
-    return varint_iter_.PoppedBytes();
+  int AccessedBytes() const {
+    return varint_iter_.PoppedBytes() + header_bytes_;
   }
 
  private:
   int next_index_ = -1;
   uint32_t magic_ = 0; 
   uint32_t varint_bytes_ = 0;
+  int header_bytes_ = 0;
   VarintIteratorEndBound varint_iter_;
 };
 
@@ -495,8 +497,8 @@ class DeltaEncodedVIntsIterator {
     return prev_value_;
   }
 
-  int PoppedBytes() {
-    return raw_iter_.PoppedBytes();
+  int AccessedBytes() {
+    return raw_iter_.AccessedBytes();
   }
 
   uint64_t Peek() const {

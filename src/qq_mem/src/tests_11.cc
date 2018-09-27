@@ -13,7 +13,7 @@ TEST_CASE( "VInts writing and reading", "[qqflash][vints]" ) {
 
     VIntsIterator iter((const uint8_t *)buf.data());
     REQUIRE(iter.IsEnd() == true);
-    REQUIRE(iter.PoppedBytes() == 0);
+    REQUIRE(iter.AccessedBytes() == 2); // accessed header
     REQUIRE(iter.SerializationSize() == 2);
   }
 
@@ -25,9 +25,9 @@ TEST_CASE( "VInts writing and reading", "[qqflash][vints]" ) {
     REQUIRE(iter.SerializationSize() == 3);
     REQUIRE(iter.IsEnd() == false);
 
-    REQUIRE(iter.PoppedBytes() == 0);
+    REQUIRE(iter.AccessedBytes() == 2);
     REQUIRE(iter.Pop() == 5);
-    REQUIRE(iter.PoppedBytes() == 1);
+    REQUIRE(iter.AccessedBytes() == 3);
     REQUIRE(iter.IsEnd() == true);
   }
 
@@ -45,7 +45,7 @@ TEST_CASE( "VInts writing and reading", "[qqflash][vints]" ) {
       REQUIRE(iter.Pop() == 1000);
       REQUIRE(iter.Pop() == 2);
       REQUIRE(iter.Pop() == 13377200);
-      REQUIRE(iter.PoppedBytes() + 2 == buf.size()); // there are headers
+      REQUIRE(iter.AccessedBytes() == buf.size()); // there are headers
       REQUIRE(iter.IsEnd() == true);
     }
     
