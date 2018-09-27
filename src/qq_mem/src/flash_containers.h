@@ -389,7 +389,7 @@ class SkipList {
       pre_row.off_blob_off = file_offset_of_offset_blob;
     }
 
-    skip_list_bytes_ = 1 + len + it.PoppedLength();
+    skip_list_bytes_ = 1 + len + it.PoppedBytes();
   }
 
   std::size_t GetSkipListBytes() {
@@ -687,12 +687,15 @@ class BloomSkipListWriter {
   std::vector<off_t> bloom_box_offs_;
 };
 
+
 class BloomSkipList {
  public:
   void Load(const uint8_t *buf) {
     DLOG_IF(FATAL, buf[0] != BLOOM_SKIP_LIST_FIRST_BYTE)
       << "First byte of bloom skip list not not right" << std::endl;
     buf++;
+
+    num_of_bytes_ = 0;
 
     uint32_t n_entries;
     int len = utils::varint_decode_uint32((const char *)buf, 0, &n_entries);
@@ -705,10 +708,17 @@ class BloomSkipList {
       bloom_box_offs_.push_back(offset);
       prev = offset;
     }
+
+    num_of_bytes_ += 1 + len; // 1 is for the magic byte
+    num_of_bytes_ += it.PoppedBytes();
   }
 
   off_t operator [](int index) {
     return bloom_box_offs_[index];
+  }
+
+  std::size_t NumOfBytes() const {
+    return num_of_bytes_;
   }
 
   std::size_t Size() const {
@@ -716,6 +726,7 @@ class BloomSkipList {
   }
 
  private:
+  std::size_t num_of_bytes_ = 0;
   std::vector<off_t> bloom_box_offs_;
 };
 

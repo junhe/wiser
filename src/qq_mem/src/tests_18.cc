@@ -26,6 +26,8 @@ void CheckSkipList(int n) {
   for (int i = 0; i < n; i++) {
     REQUIRE(skiplist[i] == offs[i]);
   }
+
+  REQUIRE(skiplist.NumOfBytes() == data.size());
 }
 
 

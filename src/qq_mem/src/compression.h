@@ -119,7 +119,7 @@ class VarintIterator: public PopIteratorService {
     return n;
   }
 
-  std::size_t PoppedLength() const {
+  std::size_t PoppedBytes() const {
     return cur_offset_ - start_offset_;
   }
 
