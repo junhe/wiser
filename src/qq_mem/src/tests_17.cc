@@ -524,6 +524,10 @@ TEST_CASE( "Bloom box writer (test bitmap)", "[flash]" ) {
     REQUIRE(it.HasItem(1) == false);
     REQUIRE(std::string((char *)it.GetBitArray(0), 2) == "xy");
     REQUIRE(it.GetBitArray(1) == nullptr);
+
+    // sanity check
+    REQUIRE(it.AccessedBytes() > 2 + 2); // 2 is for header, 2 is for "xy"
+    REQUIRE(it.AccessedBytes() < 100); // 2 is for header, 2 is for "xy"
   }
 
   SECTION("Set every 5") {
@@ -553,6 +557,8 @@ TEST_CASE( "Bloom box writer (test bitmap)", "[flash]" ) {
         REQUIRE(it.GetBitArray(i) == nullptr);
       }
     }
+    REQUIRE(it.AccessedBytes() > (128 / 5) * 2); // all "xy" are accessed
+    REQUIRE(it.AccessedBytes() < 128 * 2); 
   }
 }
 

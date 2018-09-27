@@ -836,11 +836,26 @@ class BloomFilterColumnReader {
 
   const uint8_t *BitArray() {
     int box_offset =  cur_posting_index_ % PACK_SIZE;
-    return box_iter_.GetBitArray(box_offset); 
+    int box_index = cur_posting_index_ / PACK_SIZE;
+
+    const uint8_t *ret = box_iter_.GetBitArray(box_offset);
+    accessed_boxes_[box_index] = box_iter_.AccessedBytes(); 
+
+    return ret;
   }
 
   void LoadSkipList() {
     skip_list_.Load(skip_list_buf_); 
+  }
+  
+  std::size_t AccessedBytes() {
+    // skip_list_.NumOfBytes() + box_iter_.AccessedBytes();
+    std::size_t from_box = 0;
+    for (auto &pr : accessed_boxes_) {
+      from_box += pr.second;
+    }
+
+    return skip_list_.NumOfBytes() + from_box;
   }
 
  private:
@@ -859,6 +874,9 @@ class BloomFilterColumnReader {
   int cur_posting_index_;
   int bit_array_bytes_;
   
+  // box index -> accessed bytes
+  std::unordered_map<int, std::size_t> accessed_boxes_;
+
   BloomSkipList skip_list_;
   BloomBoxIterator box_iter_;
 };

@@ -122,6 +122,9 @@ void CheckBloomColumn(const int n_items) {
     REQUIRE(GenBitarray(i, array_bytes) == array_in_file);
   }
 
+  REQUIRE(reader.AccessedBytes() > (n_items / 5) * 4); // number of bytes to access
+  REQUIRE(reader.AccessedBytes() < std::max(n_items  * 4, 16)); // number of bytes to access
+
   file_map.Close();
 }
 

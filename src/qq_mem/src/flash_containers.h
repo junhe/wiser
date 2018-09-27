@@ -598,9 +598,12 @@ class BloomBoxWriter {
 class BloomBoxIterator {
  public:
   void Reset(const uint8_t *buf, const int item_bytes) {
+    header_bytes_ = 0;
+    accessed_indices_.clear();
     buf_ = buf;
     item_bytes_ = item_bytes;
     Fill(buf_);
+    initialized_ = true;
   }
 
   bool HasItem(std::size_t i) {
@@ -610,8 +613,17 @@ class BloomBoxIterator {
   const uint8_t *GetBitArray(int i) {
     if (HasItem(i) == false)
       return nullptr;
-    else
+    else {
+      accessed_indices_.insert(i);
       return item_buf_ + map_[i] * item_bytes_;
+    }
+  }
+
+  int AccessedBytes() const {
+    if (initialized_ == false) 
+      return 0;
+    else 
+      return header_bytes_ + accessed_indices_.size() * item_bytes_;
   }
 
  private:
@@ -621,6 +633,7 @@ class BloomBoxIterator {
       << std::hex << (char) buf[0] << "!=" << BLOOM_BOX_FIRST_BYTE;
     buf += 1;
 
+    // n_items_ is the total number of bloom filters, including empty ones
     int len = utils::varint_decode_uint32((char *)buf, 0, &n_items_);
     buf += len;
 
@@ -630,6 +643,8 @@ class BloomBoxIterator {
 
     BuildMap();
     item_buf_ = buf;
+    
+    header_bytes_ = 1 + len + n_bitmap_bytes;
   }
 
   void BuildMap() {
@@ -653,12 +668,15 @@ class BloomBoxIterator {
     }
   }
 
+  bool initialized_ = false;
+  std::size_t header_bytes_ = 0;
   uint32_t n_items_;
   const uint8_t *buf_;
   bool bitmap_[PACK_ITEM_CNT];
   const uint8_t *item_buf_;
   int item_bytes_;
   int map_[PACK_ITEM_CNT]; // logical index to physical index;
+  std::unordered_set<int> accessed_indices_;
 };
 
 
