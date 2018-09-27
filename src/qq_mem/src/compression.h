@@ -186,6 +186,10 @@ class VarintIteratorEndBound: public PopIteratorService {
     utils::varint_decode_64bit(data_, cur_offset_, &n);
     return n;
   }
+  
+  int PoppedBytes() const {
+    return cur_offset_ - start_offset_;
+  }
 
   // it points to the first UN-popped byte.
   int CurOffset() const {

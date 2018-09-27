@@ -401,13 +401,17 @@ TEST_CASE( "VarintIterator", "[compression]" ) {
     VarintIteratorEndBound it(buf);
 
     REQUIRE(it.IsEnd() == false);
+    REQUIRE(it.PoppedBytes() == 0);
     REQUIRE(it.Pop() == 1);
+    REQUIRE(it.PoppedBytes() == 1);
 
     REQUIRE(it.IsEnd() == false);
     REQUIRE(it.Pop() == 5);
+    REQUIRE(it.PoppedBytes() == 2);
 
     REQUIRE(it.IsEnd() == false);
     REQUIRE(it.Pop() == 9);
+    REQUIRE(it.PoppedBytes() == 3);
 
     REQUIRE(it.IsEnd() == false);
     REQUIRE(it.Pop() == large_val);

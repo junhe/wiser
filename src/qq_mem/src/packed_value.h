@@ -452,6 +452,10 @@ class VIntsIterator {
     }
   }
 
+  int PoppedBytes() const {
+    return varint_iter_.PoppedBytes();
+  }
+
  private:
   int next_index_ = -1;
   uint32_t magic_ = 0; 
@@ -489,6 +493,10 @@ class DeltaEncodedVIntsIterator {
   uint64_t Pop() {
     prev_value_ = prev_value_ + raw_iter_.Pop();    
     return prev_value_;
+  }
+
+  int PoppedBytes() {
+    return raw_iter_.PoppedBytes();
   }
 
   uint64_t Peek() const {
