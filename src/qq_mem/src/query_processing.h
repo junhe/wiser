@@ -470,7 +470,7 @@ struct ResultDocEntry {
     std::vector<OffsetPairs> offset_table(position_table.NumUsedRows());
 
     for (int row_i = 0; row_i < position_table.NumUsedRows(); row_i++) {
-      auto offset_iter = offset_iters[row_i];
+      auto &offset_iter = offset_iters[row_i];
       const auto &row = position_table[row_i];
 
       int offset_cur = -1;
@@ -611,8 +611,9 @@ class NonPhraseProcessorBase: public ProcessorBase<PLIter_T> {
       offset_iters.push_back(std::move(p));
     }
 
-    this->min_heap_.emplace(new ResultDocEntry<PLIter_T>(doc_id, score_of_this_doc, offset_iters, 
-        false));
+    this->min_heap_.emplace(
+        new ResultDocEntry<PLIter_T>(
+          doc_id, score_of_this_doc, offset_iters, false));
   }
 };
 

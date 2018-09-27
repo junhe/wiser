@@ -226,14 +226,6 @@ class VacuumEngine : public SearchEngineServiceNew {
       return result;
     }
 
-    for (auto &it : iterators) {
-      result.doc_freqs.push_back(it.Size());
-      auto count = it.GetSizeStats();
-      for (auto &pr : count) {
-        accum_bytes_[pr.first] += pr.second;
-      }
-    }
-
     if (query.is_phrase == false)  {
       // check prefetch
       bool prefetch_flag = true;
@@ -269,7 +261,21 @@ class VacuumEngine : public SearchEngineServiceNew {
             offset_table, query.n_snippet_passages);
       }
 
+      // stats for offset usage
+      for (std::size_t i = 0; i < top_doc_entry.offset_iters.size(); i++) {
+        auto &it = top_doc_entry.offset_iters[i];
+        accum_bytes_["off"] += it->AccessedBytes();
+      }
+
       result.entries.push_back(result_entry);
+    }
+
+    for (auto &it : iterators) {
+      result.doc_freqs.push_back(it.Size());
+      auto count = it.GetSizeStats();
+      for (auto &pr : count) {
+        accum_bytes_[pr.first] += pr.second;
+      }
     }
 
     return result;

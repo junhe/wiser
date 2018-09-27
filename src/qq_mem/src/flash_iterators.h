@@ -311,6 +311,7 @@ class CozyBoxIterator {
     cur_iter_type_ = BlobFormat::NONE;
     cur_blob_off_ = -1;
     cur_in_blob_index_ = 0;
+    accessed_blobs_.clear();
   }
 
   void GoToCozyEntry(off_t blob_off, int in_blob_index) {
@@ -529,11 +530,11 @@ class PosAndOffPostingBagIteratorBase {
     return tf_iter_.Value();
   }
 
-  std::size_t AccessedCozyBytes() {
+  std::size_t AccessedCozyBytes() const {
     return cozy_box_iter_.AccessedBytes();
   }
 
-  std::size_t AccessedTfBytes() {
+  std::size_t AccessedTfBytes() const {
     return tf_iter_.AccessedBytes();
   }
 
@@ -774,6 +775,10 @@ class LazyBoundedOffsetPairIterator: public OffsetPairsIteratorService {
 
     std::get<0>(*pair) = SinglePop();
     std::get<1>(*pair) = SinglePop();
+  }
+
+  std::size_t AccessedBytes() const {
+    return off_bag_iter_.AccessedCozyBytes();
   }
  
  private:
@@ -1094,14 +1099,22 @@ class VacuumPostingListIterator {
     return term_index_result_.Key();
   }
 
+  // off_bag_iter_ is copied to search result for future usage
+  // offset usage cannot be seen here.
   std::unordered_map<std::string, std::size_t> GetSizeStats() {
     std::unordered_map<std::string, std::size_t> ret;
 
     ret["skiplist"] = skip_list_->GetSkipListBytes();
-    ret["docid"] = skip_list_->GetDocIdBytes();
-    ret["tf"] = skip_list_->GetTfBytes();
-    ret["pos"] = skip_list_->GetPosBytes();
-    ret["off"] = skip_list_->GetOffsetBytes();
+    ret["docid"] = doc_id_iter_.AccessedBytes();
+    ret["pos"] = pos_bag_iter_.AccessedCozyBytes();
+
+    // TF is accessed in multiple places
+    ret["tf"] = std::max(tf_iter_.AccessedBytes(),
+                std::max(pos_bag_iter_.AccessedTfBytes(), 
+                         off_bag_iter_.AccessedTfBytes()));
+
+    ret["bloom_before"] = bloom_begin_reader_.AccessedBytes();
+    ret["bloom_after"] = bloom_end_reader_.AccessedBytes();
 
     return ret;
   }

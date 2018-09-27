@@ -63,6 +63,10 @@ class OffsetPairsIteratorService {
  public:
   virtual bool IsEnd() const = 0;
   virtual void Pop(OffsetPair *pair) = 0;
+  virtual std::size_t AccessedBytes() const {
+    LOG(FATAL) << "Not Implemented";
+    return 0;
+  };
 };
 
 
