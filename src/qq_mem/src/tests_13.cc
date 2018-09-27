@@ -253,6 +253,10 @@ TEST_CASE( "Position Bag iterator2", "[qqflash][pos2]" ) {
         REQUIRE(pos == good_pos);
         prev = good_pos;
       }
+      REQUIRE(pos_iter.AccessedCozyBytes() > 3);
+      REQUIRE(pos_iter.AccessedCozyBytes() < 200);
+      REQUIRE(pos_iter.AccessedTfBytes() > 10);
+      REQUIRE(pos_iter.AccessedTfBytes() < 300);
       REQUIRE(in_bag_iter.IsEnd() == true);
     }
 

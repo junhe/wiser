@@ -529,6 +529,14 @@ class PosAndOffPostingBagIteratorBase {
     return tf_iter_.Value();
   }
 
+  std::size_t AccessedCozyBytes() {
+    return cozy_box_iter_.AccessedBytes();
+  }
+
+  std::size_t AccessedTfBytes() {
+    return tf_iter_.AccessedBytes();
+  }
+
  protected:
   virtual int NumCozyEntriesBetween(int bag_a, int bag_b) = 0;
   virtual off_t GetEntryBlobOff(const SkipEntry &ent) = 0;
@@ -639,7 +647,7 @@ class PositionPostingBagIterator :public PosAndOffPostingBagIteratorBase {
   bool IsEndInBag() {
     return n_popped_in_bag_ >= cur_term_freq_;
   }
-
+  
  private:
   off_t GetEntryBlobOff(const SkipEntry &ent) override {
     return ent.file_offset_of_pos_blob;
