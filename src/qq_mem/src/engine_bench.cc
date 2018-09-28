@@ -248,23 +248,27 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
     if (treatment.tag != "querylog")
       LOG(FATAL) << "Tag must be set right";
 
+    // return std::unique_ptr<QueryProducerService>(
+        // new QueryProducerByLog(treatment.query_log_path, NumberOfThreads()));
     return std::unique_ptr<QueryProducerService>(
-        new QueryProducerByLog(treatment.query_log_path, NumberOfThreads()));
+        new QueryProducerNoLoop(treatment.query_log_path));
   }
 
   utils::ResultRow Execute(Treatment treatment) {
-    const int n_queries = treatment.n_queries;
+    int n_queries = 0;
     utils::ResultRow row;
     auto query_producer = MakeProducer(treatment);
 
     auto start = utils::now();
     for (int i = 0; query_producer->IsEnd() == false; i++) {
       auto query = query_producer->NextNativeQuery(0);
+      // query.return_snippets = true;
       // std::cout << query.ToStr() << std::endl;
       auto result = engine_->Search(query);
+      n_queries++;
 
       // std::cout << result.ToStr() << std::endl;
-      if (i % 1000 == 0) {
+      if (i % 10000 == 0) {
         std::cout << "Finished " << i << std::endl;
       }
     }
