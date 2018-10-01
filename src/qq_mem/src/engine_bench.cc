@@ -22,6 +22,7 @@ DEFINE_int32(n_threads, 1, "Number of client threads");
 DEFINE_string(exp_mode, "local", "local/grpc/grpclog/localquerylog");
 DEFINE_string(grpc_server, "localhost", "network address of the GRPC server, port not included");
 DEFINE_int32(run_duration, 15, "number of seconds to run the client");
+DEFINE_int32(bloom_factor, 0, "bloom factor");
 DEFINE_string(query_path, "/mnt/ssd/realistic_querylog", "path of the query log");
 
 
@@ -436,7 +437,7 @@ class EngineExperiment: public Experiment {
 
   std::unique_ptr<SearchEngineServiceNew> CreateEngineFromFile() {
     std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
-        config_.GetString("engine_type"));
+        config_.GetString("engine_type"), FLAGS_bloom_factor);
     engine->Load();
 
     std::cout << "IsVacuumUrl:" << IsVacuumUrl(config_.GetString("engine_type"))  << std::endl;
