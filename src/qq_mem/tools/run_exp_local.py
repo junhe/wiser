@@ -30,6 +30,7 @@ mem_swappiness = 60
 do_drop_cache = True
 do_block_tracing = False
 do_sar = True
+do_traffic_divide = False
 
 ######################
 # Vacuum only
@@ -167,8 +168,12 @@ class ConfFactory(object):
         confs = parameter_combinations({
                 # hardware
                 #"server_mem_size": [1536*MB, 1280*MB, 1024*MB, 768*MB],
-                "server_mem_size": [512*MB],
+                #"server_mem_size": [512*MB],
+                #"server_mem_size": [16*GB, 8*GB, 4*GB],# 2*GB, 1*GB, 512*MB],
+                #"server_mem_size": [512*MB],
+                #"server_mem_size": [512*MB],
                 #"server_mem_size": ['in-mem', 'in-mem'],
+                "server_mem_size": ['in-mem', 'in-mem'],
                 #"server_mem_size": ['in-mem', 'in-mem', 2*GB],
                 "n_cores": [16],
                 # search engine
@@ -178,14 +183,14 @@ class ConfFactory(object):
                 #"n_server_threads": [24, 48, 64, 96, 128],
                 #"n_server_threads": [24, 48, 64, 96, 128],
                 #"n_server_threads": [16, 24, 32],
-                "n_server_threads": [48],
+                "n_server_threads":[16],
                 
 
                 #"read_ahead_kb": [4, 8, 12, 16],
                 #"read_ahead_kb": [96, 128, 160],
                 #"read_ahead_kb": [0, 16, 32],
-                #"read_ahead_kb": [32],
                 "read_ahead_kb": [32],
+                #"read_ahead_kb": [8, 16, 24, 32],
                 #"read_ahead_kb": [0, 16, 32, 64, 128],
                 #"read_ahead_kb": [256],
                 
@@ -199,7 +204,11 @@ class ConfFactory(object):
 
 
                 #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_1"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10", "/mnt/ssd/query_log/WSBench/single_term/random_100_repeated", "/mnt/ssd/query_log/WSBench/single_term/random_1000_repeated", "/mnt/ssd/query_log/WSBench/single_term/random_10000_repeated", "/mnt/ssd/query_log/WSBench/single_term/random_100000_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_100"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_1000"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10", "/mnt/ssd/query_log/WSBench/single_term/random_100", "/mnt/ssd/query_log/WSBench/single_term/random_1000"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_100_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_1000_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10000_repeated"],
@@ -215,6 +224,7 @@ class ConfFactory(object):
                 #"query_path": ["/mnt/ssd/query_log/WSBench/mix_single_terms/mix_5_1_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/mix_single_terms/mix_1_1_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/mix_single_terms/mix_1_5_repeated"],
+                
                 #"query_path": ["/mnt/ssd/query_log/WSBench/mix_single_terms/mix_4_6_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/mix_single_terms/mix_6_4_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/mix_single_terms/mix_8_2_repeated"],
@@ -229,10 +239,10 @@ class ConfFactory(object):
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_100000"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_500000"],
 
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_10", "/mnt/ssd/query_log/WSBench/two_terms/random_100_repeated", "/mnt/ssd/query_log/WSBench/two_terms/random_1000_repeated", "/mnt/ssd/query_log/WSBench/two_terms/random_10000_repeated", "/mnt/ssd/query_log/WSBench/two_terms/random_100000_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_10"],
-                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_100"],
-                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_1000"],
-                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/two_10000"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_100_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_1000_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_10000_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_100000_repeated"],
 
@@ -242,32 +252,35 @@ class ConfFactory(object):
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/phrase_10000"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/phrase_100"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/100_many"],
-                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/100_diff"],     # from * <5000
+                
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_1000_phrases", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/100_diff", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_10000_phrases", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_100000_phrases", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_500000_phrases"],    # from * <1000
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_1000_phrases"],    # from * <1000
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/100_diff"],              # from * <5000
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_10000_phrases"],    # from * 10000
-                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_100000_phrases"],    # from * 100000
-                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_500000_phrases"],    # from * 500000
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_100000_phrases"],    # from * 50000
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_500000_phrases"],    # from * 1000000
                 
                 # ===================Realistic============
                 #"query_path": ["/mnt/ssd/query_log/type_realistic"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/single"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/multi"],
-                "query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/phrases"],
-                #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/cleaned_querylog"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/phrases"],
+                "query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/cleaned_querylog"],
                 
                 "n_client_threads": n_client_threads,
                 #"query_path": full_query_paths_wiki,
                 "engine": [VACUUM],
                 "init_heap_size": [None],
                 "lock_memory": lock_memory,
+                #"prefetch_threshold_kb": [128],
                 "prefetch_threshold_kb": [128],
                 "enable_prefetch": [True], 
                 #"enable_prefetch": [True], 
                 "elastic_data_path": [None],
                 "force_disable_es_readahead": [None],
                 "bloom_factor": [1],
-                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline"], #"vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align"],
-                #"vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align"],
+                #"vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline"], #"vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align"],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align"],
                 # for enabling Bloom Filter
                 #"bloom_factor": [2, 10, 20],
                 #"bloom_factor": [5],
@@ -288,6 +301,7 @@ def organize_conf(confs):
         conf['cgroup_mem_size'] = conf['server_mem_size']
         if conf['server_mem_size'] == 'in-mem':
             conf['cgroup_mem_size'] = 64*GB
+            conf['read_ahead_kb'] = 0
 
 
         if conf['force_disable_es_readahead'] is True and \
@@ -957,6 +971,11 @@ class Exp(Experiment):
         if do_drop_cache == True and conf['server_mem_size'] != 'in-mem':
             drop_cache()
 
+        # warm something to get traffic division
+        if do_traffic_divide: 
+            engine_path = conf['vacuum_engine'].split(":")[2]
+            print engine_path
+            shcmd("vmtouch -vt {}".format(engine_path))
 
     def treatment(self, conf):
         
@@ -1056,6 +1075,9 @@ class Exp(Experiment):
             time.sleep(2)
             self.blocktracer.create_event_file_from_blkparse()
         dump_json(conf, os.path.join(self._subexpdir, "config.json"))
+
+        if do_drop_cache == True and conf['server_mem_size'] != 'in-mem':
+            drop_cache()
 
 if __name__ == "__main__":
     confs = ConfFactory().get_confs()

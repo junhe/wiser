@@ -19,15 +19,17 @@ VACUUM = "vacuum"
 ######################
 # System wide
 ######################
-server_addr = "node1"
-remote_addr = "node2"
+#server_addr = "node1"
+#remote_addr = "node2"
+server_addr = "node1.twonodes.spark-pg0.utah.cloudlab.us"
+remote_addr = "node-1.data.spark-pg0.wisc.cloudlab.us"
 os_swap = True
 device_name = "nvme0n1"
 partition_name = "nvme0n1p4"
 do_drop_cache = True
 do_block_tracing = False
-qq_mem_folder = "/users/jhe/flashsearch/src/qq_mem"
-user_name = "jhe"
+qq_mem_folder = "/users/kanwu/flashsearch/src/qq_mem"
+user_name = "kanwu"
 mem_swappiness = 60
 
 
@@ -35,14 +37,15 @@ mem_swappiness = 60
 # Vacuum only
 ######################
 profile_qq_server = "false"
-engine_path = "/users/jhe/flashsearch/src/qq_mem/build/engine_bench"
+engine_path = "/users/kanwu/flashsearch/src/qq_mem/build/engine_bench"
 
 
 ######################
 # Elastic only
 ######################
-ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
-rs_bench_go_path = "/users/jhe/flashsearch/src/pysrc"
+#ELASTIC_DIR = "/users/jhe/elasticsearch-5.6.3"
+ELASTIC_DIR = "/users/kanwu/elasticsearch-5.6.3-clean"
+rs_bench_go_path = "/users/kanwu/flashsearch/src/pysrc"
 
 
 
@@ -138,10 +141,10 @@ class ConfFactory(object):
         confs = []
 
         # confs += self.predefined_sample()
-        confs += self.predefined_es()
+        #confs += self.predefined_es()
         # confs += self.predefined_tmp()
 
-        # confs += self.predefined_vacuum_baseline()
+        confs += self.predefined_vacuum_baseline()
         # confs += self.predefined_vacuum_trade()
         # confs += self.predefined_vacuum_prefetch()
         # confs += self.predefined_vacuum_bloom()
@@ -312,20 +315,43 @@ class ConfFactory(object):
         vacuum layout, no align, no bloom
         """
         confs = parameter_combinations({
-                "server_mem_size": full_mem_list,
-                "n_server_threads": n_server_threads,
-                "n_client_threads": n_client_threads,
-                "query_path": full_query_paths_wiki,
+                #"server_mem_size": ["in-mem"], #, 16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB],
+                #"server_mem_size": [4*GB, 2*GB, 1*GB, 512*MB],
+                #"server_mem_size": ["in-mem", 512*MB],
+                #"server_mem_size": ["in-mem"],
+                "server_mem_size": [512*MB],
+                "n_server_threads": [64],
+                #"n_server_threads": [16],
+                "n_client_threads": [512], #n_client_threads,
+                "query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/single"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/cleaned_querylog"],
+                # SINGLE TERM
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10"], 
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_100_repeated", "/mnt/ssd/query_log/WSBench/single_term/random_1000_repeated", "/mnt/ssd/query_log/WSBench/single_term/random_10000_repeated", "/mnt/ssd/query_log/WSBench/single_term/random_100000_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10", "/mnt/ssd/query_log/WSBench/single_term/random_100", "/mnt/ssd/query_log/WSBench/single_term/random_1000", "/mnt/ssd/query_log/WSBench/single_term/random_10000", "/mnt/ssd/query_log/WSBench/single_term/random_100000"],
+                #"query_path": ["/mnt/ssd/query_log/test"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_100_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10000_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_100000_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_10", "/mnt/ssd/query_log/WSBench/two_terms/random_100", "/mnt/ssd/query_log/WSBench/two_terms/random_1000", "/mnt/ssd/query_log/WSBench/two_terms/random_10000", "/mnt/ssd/query_log/WSBench/two_terms/random_100000"],
+                
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_1000_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_100000_repeated"],
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_1000_phrases", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/100_diff", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_10000_phrases", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_100000_phrases", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_500000_phrases"],
                 "engine": [VACUUM],
+                #"engine": [ELASTIC],
                 "init_heap_size": [None],
                 "lock_memory": lock_memory,
                 "read_ahead_kb": [0],
-                "prefetch_threshold_kb": [128], # not used
+                #"read_ahead_kb": [128],
+                "prefetch_threshold_kb": [8], # not used
                 "enable_prefetch": [False], # not used
                 "elastic_data_path": [None],
                 "force_disable_es_readahead": [None],
                 "bloom_factor": [1],
-                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline"],
+                #"vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline"],
+                "vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.plus.align"],
+                #"vacuum_engine": ["vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-25.plus.align.bloom"],
                 "note": ["baseline"],
                 })
 
@@ -915,7 +941,7 @@ def start_vacuum_client(n_threads, query_path):
     print "-" * 20
     return remote_cmd_chwd(
         "/tmp/",
-        "./engine_bench -exp_mode=grpclog -n_threads={n_threads} "
+        "/users/kanwu/flashsearch/src/qq_mem/build/engine_bench -exp_mode=grpclog -n_threads={n_threads} "
         "-grpc_server={server} -query_path={query_path}"
         .format(server = server_addr, n_threads = n_threads,
            query_path = query_path),
@@ -1018,7 +1044,10 @@ def start_vacuum_server(conf):
     cg.set_item('memory', 'memory.limit_in_bytes', conf['cgroup_mem_size'])
     cg.set_item('memory', 'memory.swappiness', mem_swappiness)
 
+
+
     with cd(qq_mem_folder):
+              #"-sync_type=SYNC -n_threads={n_threads} "\
         cmd = "./build/qq_server "\
               "-sync_type=ASYNC -n_threads={n_threads} "\
               "-addr={server} -port=50051 -engine={engine} -profile_vacuum={profile} "\
@@ -1028,11 +1057,12 @@ def start_vacuum_server(conf):
                     n_threads = conf['n_server_threads'],
                     engine = conf['vacuum_engine'],
                     enable_prefetch = conf['enable_prefetch'],
-                    threshold = conf['prefetch_threshold_kb'] / 4,
+                    threshold = conf['prefetch_threshold_kb'],
                     profile = profile_qq_server,
                     lock_mem = conf['lock_memory'],
                     bloom_factor = conf['bloom_factor']
                     )
+        print cmd
         print "-" * 20
         print "server cmd:", cmd
         print "-" * 20
@@ -1114,6 +1144,15 @@ class Exp(Experiment):
         sync_build_dir()
 
     def beforeEach(self, conf):
+        print "\n========================================================================================"
+        print 'mem:       ', conf['server_mem_size']
+        #print '#cores:    ', conf['n_cores']
+        print '#threads:  ', conf['n_server_threads']
+        print 'query:     ', conf['query_path']
+        print 'read_ahead:', conf['read_ahead_kb']
+        print "===============================================\n\n"
+        
+        shcmd('sudo pkill engine_bench', ignore_error = True)
         kill_server()
         kill_blktrace()
         shcmd("pkill iostat", ignore_error = True)
@@ -1134,13 +1173,12 @@ class Exp(Experiment):
 
         set_swap(os_swap)
         set_read_ahead_kb(conf['read_ahead_kb'])
-        if do_drop_cache == True:
+        if do_drop_cache == True and conf['server_mem_size'] != 'in-mem':
             drop_cache()
 
         sync_query_log(conf['query_path'])
 
     def treatment(self, conf):
-        print conf
         server_p = start_engine_server(conf)
 
         print "Wating for some time util the server starts...."
@@ -1175,8 +1213,8 @@ class Exp(Experiment):
         seconds = 0
 	cache_size_log = []
         while True:
-            print_client_output_tail()
-            print conf
+            #print_client_output_tail()
+            #print conf
 
             is_server_running = is_engine_server_running(conf)
             if is_server_running is False:

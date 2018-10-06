@@ -65,6 +65,9 @@ with open(blktrace_file_name, 'r') as blktrace_file:
         else:
             print block_offset, size, 'else'
 
-
+overall_size = 0
 for key in stats_file:
-    print key, ' : ', float(stats_file[key])/1024/1024, ' MB'
+    overall_size += stats_file[key]
+    print key, ' : ', float(stats_file[key])/1024/1024/1024, ' GB'
+
+print 'overall: ', float(overall_size)/1024/1024/1024, ' GB'

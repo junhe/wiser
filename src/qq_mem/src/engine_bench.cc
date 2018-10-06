@@ -163,6 +163,7 @@ class GrpcLogTreatmentExecutor: public TreatmentExecutor {
 
     client_config_.SetString("synchronization", "SYNC");
     client_config_.SetString("rpc_arity", "STREAMING");
+    //client_config_.SetString("rpc_arity", "UNARY");
     client_config_.SetString("target", GetTargetUrl(FLAGS_grpc_server));
     client_config_.SetInt("n_client_channels", 64);
     client_config_.SetInt("n_threads", n_threads); 
@@ -266,8 +267,8 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
 
       //disable highlighting here
       //query.return_snippets = false;
-      query.n_results = 5;
-      
+      query.n_results = 1;
+      //query.return_snippets = false;
       auto t1 = std::chrono::high_resolution_clock::now();
       auto result = engine_->Search(query);
       auto t2 = std::chrono::high_resolution_clock::now();
@@ -281,7 +282,8 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
       //  std::this_thread::yield();
       //  usleep(1);
  
-      //std::cout << result.ToStr() << std::endl;
+      //std::cout <<result.ToStr() << std::endl;
+      //std::cout << result.Size() << std::endl;
       if (i > 0 && i % 50000 == 0) {
         std::cout << "Thread " << id << " finished " << i << std::endl;
       }

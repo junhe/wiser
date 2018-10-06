@@ -30,7 +30,7 @@ do_sar = True
 qq_mem_folder = "/users/kanwu/flashsearch/src/qq_mem"
 user_name = "kanwu"
 mem_swappiness = 60
-
+do_traffic_divide = True
 
 ######################
 # Vacuum only
@@ -313,17 +313,17 @@ class ConfFactory(object):
     def predefined_es_wiki(self):
         confs = parameter_combinations({
                 #"server_mem_size": [32*GB],
-                "server_mem_size": [512*MB],
-                #"server_mem_size": [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB, 256*MB],
+                #"server_mem_size": [512*MB],
+                #"server_mem_size": [16*GB, 8*GB, 4*GB, 2*GB, 1*GB, 512*MB],
                 #"server_mem_size": [256*MB],
-                #"server_mem_size": ['in-mem'],
+                "server_mem_size": ['in-mem', 'in-mem'],
                 #"server_mem_size": ['in-mem'],
                 #"n_server_threads": [24, 32, 48, 64, 96],
-                "n_server_threads": [25],
+                "n_server_threads": [16],
                 #"n_server_threads": [72],
                 #"read_ahead_kb": [0, 16, 32, 64, 128],
+                #"read_ahead_kb": [16],
                 "read_ahead_kb": [0],
-                #"read_ahead_kb": [0, 128],
                 # ===================SINGLE================
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_low.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/single_term/type_single.docfreq_high.workloadOrig_wiki"],
@@ -338,6 +338,8 @@ class ConfFactory(object):
                
                 #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_1"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10"],
+                
+                #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10", "/mnt/ssd/query_log/WSBench/single_term/random_100_repeated", "/mnt/ssd/query_log/WSBench/single_term/random_1000_repeated", "/mnt/ssd/query_log/WSBench/single_term/random_10000_repeated", "/mnt/ssd/query_log/WSBench/single_term/random_100000_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_100_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_1000_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/single_term/random_10000_repeated"],
@@ -355,8 +357,9 @@ class ConfFactory(object):
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term/two_500000"],
                 
 
+                "query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_10", "/mnt/ssd/query_log/WSBench/two_terms/random_100_repeated", "/mnt/ssd/query_log/WSBench/two_terms/random_1000_repeated", "/mnt/ssd/query_log/WSBench/two_terms/random_10000_repeated", "/mnt/ssd/query_log/WSBench/two_terms/random_100000_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_10"],
-                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_100"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_100_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_1000_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_10000_repeated"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/two_terms/random_100000_repeated"],
@@ -366,8 +369,10 @@ class ConfFactory(object):
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/type_phrase.workloadOrig_wiki"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/phrase_100"],
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/100_diff"],
-                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/100_diff"],     # from * <5000
+                
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_1000_phrases", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/100_diff", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_10000_phrases", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_100000_phrases", "/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_500000_phrases"],    # from * <1000
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_1000_phrases"],    # from * <1000
+                #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/100_diff"],     # from * <5000
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_10000_phrases"],    # from * 10000
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_100000_phrases"],    # from * 100000
                 #"query_path": ["/mnt/ssd/query_log/wiki/two_term_phrases/microbenchmark/from_500000_phrases"],    # from * 500000
@@ -375,9 +380,10 @@ class ConfFactory(object):
                 # realistic
                 #"query_path": ["/mnt/ssd/query_log/type_realistic"],
                 #"query_path": ["/mnt/ssd/query_log/uniq_realistic_querylog"],
+                
                 #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/single"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/multi"],
-                "query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/phrases"],
+                #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/phrases"],
                 #"query_path": ["/mnt/ssd/query_log/WSBench/realistic_querylog/cleaned_querylog"],
                 
                 "engine": [ELASTIC],
@@ -1243,6 +1249,10 @@ class Exp(Experiment):
         # set query log for single node test
         shcmd('cp ' + conf['query_path'] + ' /mnt/ssd/query_log/es_local_querylog')
         
+        #if do_traffic_divide: 
+        #    engine_path = conf['vacuum_engine'].split(":")[2]
+        #    print engine_path
+        #    shcmd("vmtouch -vt {}".format(engine_path))
 
     def treatment(self, conf):
         #print conf
