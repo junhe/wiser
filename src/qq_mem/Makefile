@@ -6,7 +6,6 @@ NUM_CORES=8
 all:
 	./build.sh 2>&1 | tee build.log
 
-
 indexer:
 	python ./tools/indexer.py
 
@@ -43,11 +42,15 @@ grpc_benchmark:
 		20	
 		#./build/engine_bench '-exp_mode=grpclog -n_threads=16 -use_profiler=true -grpc_server=localhost:50051' \
 
+traffic:
+	python ./tools/traffic_analysis.py
+
 engine_bench:
 	cd build && cmake ../src/ && \
 		make -j${NUM_CORES} engine_bench && \
 		#CPUPROFILE_FREQUENCY=1000 ./engine_bench -exp_mode=locallog -use_profiler=true
-		./engine_bench -exp_mode=locallog -query_path=/mnt/ssd/simple-log -n_threads=1
+		#./engine_bench -exp_mode=locallog -query_path=/mnt/ssd/simple-log -n_threads=1
+		./engine_bench -exp_mode=locallog -query_path=/mnt/ssd/query_log/single-term/random_10 -n_threads=1
 		#HEAPPROFILE=/tmp/heapprof ./engine_bench -exp_mode=locallog -use_profiler=true
 
 remote_engine_bench:
@@ -70,8 +73,7 @@ heap_check:
 
 
 engine_bench_build:
-	cd build && cmake ../src/ && make -j${NUM_CORES} engine_bench &&
-	make -j${NUM_CORES} qq_server
+	cd build && cmake ../src/ && make -j${NUM_CORES} engine_bench
 
 qq_server:
 	cd build && cmake ../src/ && make -j${NUM_CORES} qq_server

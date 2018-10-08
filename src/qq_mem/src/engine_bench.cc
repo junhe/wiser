@@ -269,7 +269,7 @@ class LocalLogTreatmentExecutor: public TreatmentExecutor {
       n_queries++;
 
       // std::cout << result.ToStr() << std::endl;
-      if (i % 10000 == 0) {
+      if (i % 100000 == 0) {
         std::cout << "Finished " << i << std::endl;
       }
     }
