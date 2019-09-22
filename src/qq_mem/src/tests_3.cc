@@ -103,7 +103,7 @@ TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
       auto n_replies_in_this_pool = reply_pools->at(0).size();
       auto this_pool = reply_pools->at(0);
       REQUIRE(n_replies_in_this_pool > 0);
-      for (int i = 0; i < n_replies_in_this_pool; i++) {
+      for (std::size_t i = 0; i < n_replies_in_this_pool; i++) {
         REQUIRE(this_pool.at(i).entries_size() == 1);
         REQUIRE(this_pool.at(i).entries(0).doc_id() == 0);
       }
@@ -111,7 +111,7 @@ TEST_CASE( "GRPC Client and Server", "[grpc]" ) {
       n_replies_in_this_pool = reply_pools->at(1).size();
       this_pool = reply_pools->at(1);
       REQUIRE(n_replies_in_this_pool > 0);
-      for (int i = 0; i < n_replies_in_this_pool; i++) {
+      for (std::size_t i = 0; i < n_replies_in_this_pool; i++) {
         REQUIRE(this_pool.at(i).entries_size() == 1);
         REQUIRE(this_pool.at(i).entries(0).doc_id() == 0);
       }
@@ -333,7 +333,7 @@ TEST_CASE( "grpc SYNC client and server", "[grpc]" ) {
   }
 }
 
-TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
+TEST_CASE( "SyncStreamingClient", "[grpc][sync]" ) {
   GeneralConfig server_config;
   server_config.SetString("sync_type", "SYNC");
   server_config.SetString("engine_name", "qq_mem_compressed");
@@ -361,14 +361,14 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
     SyncStreamingClient client(client_config, 
                                std::move(query_producer));
 
-    client.Wait();
+    auto seconds = client.Wait();
     auto reply_pools = client.GetReplyPools();
     REQUIRE(reply_pools->at(0).size() > 0);
     REQUIRE(reply_pools->at(0)[0].entries(0).doc_id() == 0);
     REQUIRE(reply_pools->at(1).size() > 0);
     REQUIRE(reply_pools->at(1)[0].entries(0).doc_id() == 0);
 
-    client.ShowStats();
+    client.ShowStats(seconds);
 
     server->Shutdown();
     server->Wait();
@@ -388,14 +388,14 @@ TEST_CASE( "SyncStreamingClient", "[grpc]" ) {
     SyncUnaryClient client(client_config, 
                            std::move(query_producer));
 
-    client.Wait();
+    auto seconds = client.Wait();
     auto reply_pools = client.GetReplyPools();
     REQUIRE(reply_pools->at(0).size() > 0);
     REQUIRE(reply_pools->at(0)[0].entries(0).doc_id() == 0);
     REQUIRE(reply_pools->at(1).size() > 0);
     REQUIRE(reply_pools->at(1)[0].entries(0).doc_id() == 0);
 
-    client.ShowStats();
+    client.ShowStats(seconds);
 
     server->Shutdown();
     server->Wait();

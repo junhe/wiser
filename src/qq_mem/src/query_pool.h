@@ -84,7 +84,7 @@ class TermPoolArray {
   }
 
   void LoadTerms(const TermList &query) {
-    for (int i = 0; i < array_.size(); i++) {
+    for (std::size_t i = 0; i < array_.size(); i++) {
       Add(i, query);
     }
   }
@@ -201,7 +201,7 @@ class QueryPoolBase {
   }
 
  protected:
-  int access_cnt_ = 0;                // for iterating the query buffer
+  std::size_t access_cnt_ = 0;                // for iterating the query buffer
   std::vector<SearchQuery> pool_;
 };
 
@@ -219,7 +219,7 @@ class QueryPool :public QueryPoolBase {
 class QueryPoolNoLoop :public QueryPoolBase {
  public:
   const SearchQuery &Next() {
-    int next = access_cnt_;
+    std::size_t next = access_cnt_;
     access_cnt_++;
     DLOG_IF(FATAL, access_cnt_ > pool_.size());
     return pool_[next];
@@ -260,6 +260,9 @@ class QueryProducerNoLoop: public QueryProducerService {
       utils::trim(line);
 
       SearchQuery query(GetTerms(line));
+      query.n_results = 5;
+      query.return_snippets = true;
+      query.n_snippet_passages = 3;
       query.is_phrase = IsPhrase(line);
 
       pool_.Add(query);
@@ -308,7 +311,7 @@ class QueryProducerNoLoop: public QueryProducerService {
   }
  
   std::mutex mutex_;
-  QueryPool pool_;
+  QueryPoolNoLoop pool_;
 };
 
 

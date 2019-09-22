@@ -120,7 +120,7 @@ struct SkipIndex {
     if (a.vec.size() != b.vec.size()) 
       return false;
 
-    for (int i = 0; i < a.vec.size(); i++) {
+    for (std::size_t i = 0; i < a.vec.size(); i++) {
       if (a.vec[i] != b.vec[i]) 
         return false;
     }
@@ -143,7 +143,7 @@ struct SkipIndex {
     len = utils::varint_decode(data, offset, &size);
     offset += len;
 
-    for (int i = 0; i < size; i++) {
+    for (uint32_t i = 0; i < size; i++) {
       len = utils::varint_decode(data, offset, &meta_size);
       offset += len;
 
@@ -162,11 +162,11 @@ class PostingListDeltaIterator: public PostingListIteratorService {
  public:
   PostingListDeltaIterator() 
     :data_pointer_(nullptr), 
+     pl_addr_(nullptr),
      skip_index_(nullptr),
      skip_span_(-1),
      total_postings_(0),
-     cur_state_(nullptr, 0, 0),
-     pl_addr_(nullptr)
+     cur_state_(nullptr, 0, 0)
   {}
 
   PostingListDeltaIterator(const VarintBuffer *data, 
@@ -205,6 +205,22 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   bool HasSkip() const noexcept {
     return cur_state_.cur_posting_index_ % skip_span_ == 0 && 
       cur_state_.cur_posting_index_ + skip_span_ < total_postings_;
+  }
+
+  void SetTerm(const std::string &term) {
+    term_ = term;
+  }
+
+  int HasPriorTerm(const std::string &term) {
+    return BLM_MAY_PRESENT;
+  }
+
+  int HasNextTerm(const std::string &term) {
+    return BLM_MAY_PRESENT;
+  }
+
+  const std::string &Term() {
+    return term_;
   }
 
   // Only call this when the iterator HasSkip() == true
@@ -335,13 +351,13 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   const std::string *data_pointer_;
   const uint8_t *pl_addr_;
   const SkipIndex *skip_index_;
-  int total_postings_;
   int skip_span_;
+  int total_postings_;
 
   struct State {
+    const uint8_t *cur_addr_;
     int cur_posting_index_;
     DocIdType prev_doc_id_; // doc id of posting[cur_posting_index_ - 1]
-    const uint8_t *cur_addr_;
 
     State(const uint8_t *cur_addr, int index, DocIdType id)
       :cur_addr_(cur_addr), cur_posting_index_(index), 
@@ -374,6 +390,7 @@ class PostingListDeltaIterator: public PostingListIteratorService {
   };
   // Cached data of cur_posting_index_
   PostingCache cache_;
+  std::string term_;
 };
 
 

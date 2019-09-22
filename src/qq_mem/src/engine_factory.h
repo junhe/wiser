@@ -31,14 +31,17 @@ inline VacuumConfig ParseUrl(std::string url) {
 }
 
 inline std::unique_ptr<SearchEngineServiceNew> CreateSearchEngine(
-    std::string engine_type) {
+    std::string engine_type, int bloom_enable_factor = 1)
+{
   if (engine_type == "qq_mem_compressed") {
-    return std::unique_ptr<SearchEngineServiceNew>(new QqMemEngineDelta());
+    return std::unique_ptr<SearchEngineServiceNew>(new QqMemEngineDelta);
   } else if (IsVacuumUrl(engine_type) == true) {
     VacuumConfig config = ParseUrl(engine_type);
     if (config.source_type == "vacuum_dump") {
       // Engine is not loaded yet
-      return std::unique_ptr<SearchEngineServiceNew>(new VacuumEngine(config.path));
+      return std::unique_ptr<SearchEngineServiceNew>(
+          new VacuumEngine<ChunkedDocStoreReader>(
+            config.path, bloom_enable_factor));
     }
   } else {
     throw std::runtime_error("Wrong engine type: " + engine_type);
@@ -46,5 +49,5 @@ inline std::unique_ptr<SearchEngineServiceNew> CreateSearchEngine(
   return nullptr;
 }
 
-
 #endif
+

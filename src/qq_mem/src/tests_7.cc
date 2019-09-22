@@ -61,7 +61,7 @@ TEST_CASE( "Serialization", "[serial]" ) {
     index2.Deserialize(fake_padding + buf, fake_padding.size());
 
     REQUIRE(index.vec.size() == index2.vec.size());
-    for (int i = 0; i < index.vec.size(); i++) {
+    for (std::size_t i = 0; i < index.vec.size(); i++) {
       REQUIRE(index.vec[i].prev_doc_id == index2.vec[i].prev_doc_id);
       REQUIRE(index.vec[i].start_offset == index2.vec[i].start_offset);
     }
@@ -115,30 +115,6 @@ TEST_CASE( "Serialization", "[serial]" ) {
     index2.Deserialize("/tmp/inverted_index.dump");
     
     REQUIRE(index == index2);
-  }
-
-  SECTION("Simple Doc Store") {
-    SimpleDocStore store;
-    std::string buf = store.SerializeEntry(8, "xxx");
-
-    int next = store.DeserializeEntry(buf.c_str());
-    REQUIRE(next == buf.size());
-    REQUIRE(store.Get(8) == "xxx");
-    REQUIRE(store.Size() == 1);
-  }
-
-  SECTION("Simple Doc Store with files") {
-    SimpleDocStore store;
-    store.Add(8, "xxx");
-    store.Add(100, "yyyy");
-    store.Serialize("/tmp/simple.doc.dump");
-
-    SimpleDocStore store2;
-
-    store2.Deserialize("/tmp/simple.doc.dump");
-    REQUIRE(store2.Get(8) == "xxx");
-    REQUIRE(store2.Get(100) == "yyyy");
-    REQUIRE(store2.Size() == 2);
   }
 
   SECTION("Doc Length Store") {

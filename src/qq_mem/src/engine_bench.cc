@@ -20,9 +20,9 @@
 
 DEFINE_int32(n_threads, 1, "Number of client threads");
 DEFINE_string(exp_mode, "local", "local/grpc/grpclog/localquerylog");
-DEFINE_bool(use_profiler, true, "Use profiler");
 DEFINE_string(grpc_server, "localhost", "network address of the GRPC server, port not included");
 DEFINE_int32(run_duration, 15, "number of seconds to run the client");
+DEFINE_string(query_path, "/mnt/ssd/realistic_querylog", "path of the query log");
 
 
 const int K = 1000;
@@ -31,7 +31,7 @@ const int B = 1000 * M;
 
 std::string Concat(TermList terms) {
   std::string s;
-  for (int i = 0; i < terms.size(); i++) {
+  for (std::size_t i = 0; i < terms.size(); i++) {
     s += terms[i];
     if (i < terms.size() - 1) {
       // not the last term
@@ -146,15 +146,15 @@ class GrpcLogTreatmentExecutor: public TreatmentExecutor {
  public:
   GrpcLogTreatmentExecutor(int n_threads){
     // ASYNC Streaming
-    // client_config_.SetString("synchronization", "SYNC");
+    // client_config_.SetString("synchronization", "ASYNC");
     // client_config_.SetString("rpc_arity", "STREAMING");
-    // client_config_.SetString("target", "localhost:50051");
+    // client_config_.SetString("target", GetTargetUrl(FLAGS_grpc_server));
     // client_config_.SetInt("n_client_channels", 64);
     // client_config_.SetInt("n_rpcs_per_channel", 100);
-    // client_config_.SetInt("n_messages_per_call", 100000);
+    // client_config_.SetInt("n_messages_per_call", 1000000);
     // client_config_.SetInt("n_threads", n_threads); 
     // client_config_.SetInt("n_threads_per_cq", 1);
-    // client_config_.SetInt("benchmark_duration", 5);
+    // client_config_.SetInt("benchmark_duration", FLAGS_run_duration);
     // client_config_.SetBool("save_reply", false);
 
     client_config_.SetString("synchronization", "SYNC");
@@ -163,7 +163,6 @@ class GrpcLogTreatmentExecutor: public TreatmentExecutor {
     client_config_.SetInt("n_client_channels", 64);
     client_config_.SetInt("n_threads", n_threads); 
     client_config_.SetInt("benchmark_duration", FLAGS_run_duration);
-    // client_config_.SetBool("save_reply", true);
     client_config_.SetBool("save_reply", false);
   }
 
@@ -370,11 +369,13 @@ class EngineExperiment: public Experiment {
     };
 
     Treatment t;
+    t.terms = {"empty"};
     t.tag = "querylog";
     t.n_queries = -1;
-    // t.query_log_path = "/mnt/ssd/realistic_querylog";
     // t.query_log_path = "/mnt/ssd/medium_log";
-    t.query_log_path = "/mnt/ssd/short_log";
+    // t.query_log_path = "/mnt/ssd/short_log";
+    // t.query_log_path = "/mnt/ssd/hello_log";
+    t.query_log_path = FLAGS_query_path;
     treatments.push_back(t);
 
     // for (auto &t : treatments) {
@@ -407,11 +408,6 @@ class EngineExperiment: public Experiment {
     } else {
       LOG(FATAL) << "Mode not supported:mke engine_bench_build";
     }
-    
-    if (FLAGS_use_profiler == true) {
-      std::cout << "Using profiler..." << std::endl;
-      ProfilerStart("my.profile.new");
-    }
   }
 
   void RunTreatment(const int run_id) {
@@ -427,15 +423,15 @@ class EngineExperiment: public Experiment {
   }
 
   void After() {
-    if (FLAGS_use_profiler == true) {
-      ProfilerStop();
-    }
     std::cout << table_.ToStr();
+
+    std::cout << "ExperimentFinished!!!" << std::endl;
   }
 
   std::unique_ptr<SearchEngineServiceNew> CreateEngineFromFile() {
     std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
         config_.GetString("engine_type"));
+    engine->Load();
 
     std::cout << "IsVacuumUrl:" << IsVacuumUrl(config_.GetString("engine_type"))  << std::endl;
     if (IsVacuumUrl(config_.GetString("engine_type")) == false) {
@@ -523,33 +519,21 @@ GeneralConfig config_by_jun() {
 
   GeneralConfig config;
   // config.SetString("engine_type", "qq_mem_compressed");
-  config.SetString("engine_type", "vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic");
-
-  // config.SetString("load_source", "linedoc");
-  // config.SetString("load_source", "dump");
+  config.SetString("engine_type", "vacuum:vacuum_dump:/mnt/ssd/vacuum-wiki-06-24.baseline/");
 
   config.SetInt("n_docs", 100);
   config.SetString("linedoc_path", 
       "/mnt/ssd/downloads/enwiki.linedoc_tokenized.1");
   config.SetString("loader", "WITH_POSITIONS");
 
-  // config.SetString("linedoc_path", 
-      // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
-  // config.SetString("loader", "TOKEN_ONLY");
-  
-  config.SetString("dump_path", "/mnt/ssd/big-engine-char-length-04-19");
 
   config.SetInt("n_queries", 1000);
   config.SetInt("n_passages", 3);
-  // config.SetBool("enable_snippets", true);
   config.SetBool("enable_snippets", false);
   
   
   config.SetString("query_source", "hardcoded");
   config.SetStringVec("terms", std::vector<std::string>{"hello"});
-
-  // config.SetString("query_source", "querylog");
-  // config.SetString("querylog_path", "/mnt/ssd/downloads/wiki_QueryLog_tokenized");
 
   CheckConfig(config);
   return config;

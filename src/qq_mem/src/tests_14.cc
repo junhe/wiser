@@ -3,6 +3,7 @@
 #include "test_helpers.h"
 #include "flash_iterators.h"
 #include "vacuum_engine.h"
+#include "flash_engine_dumper.h"
 #include "utils.h"
 
 
@@ -21,7 +22,7 @@ TEST_CASE( "Dumping 1-word Engine", "[qqflash][dump0]" ) {
   SECTION("Load inverted index") {
     VacuumInvertedIndex index(
         "/tmp/1-word-engine/my.tip", "/tmp/1-word-engine/my.vacuum");
-    REQUIRE(index.FindPostingListOffset("a") == 0);
+    REQUIRE(index.FindPostingListOffset("a") == 100);
     REQUIRE(index.FindPostingListOffset("b") == -1);
     REQUIRE(index.NumTerms() == 1);
 

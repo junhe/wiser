@@ -54,7 +54,7 @@ class PositionInfoArray {
 
   PositionInfoArray CompactCopy() const {
     PositionInfoArray ret(next_);
-    for (int i = 0; i < next_; i++) {
+    for (std::size_t i = 0; i < next_; i++) {
       ret.Append(arr_[i].pos, arr_[i].term_appearance);
     }
     return ret;
@@ -75,7 +75,7 @@ class PositionInfoArray {
 
  private:
   std::vector<PositionInfo> arr_;
-  int next_ = 0;
+  std::size_t next_ = 0;
 };
 
 
@@ -140,14 +140,14 @@ class PositionInfoTable2 {
     }
   }
 
-  void Append(const int i, const int pos, const int term_appearance) {
+  void Append(const std::size_t i, const int pos, const int term_appearance) {
     if (i >= rows_.size()) {
       rows_.resize(i + 1);
     }
     rows_[i].Append(pos, term_appearance);
   }
 
-  const PositionInfoArray &operator[](const int i) const {
+  const PositionInfoArray &operator[](const std::size_t i) const {
     return rows_[i];
   }
 
@@ -374,10 +374,10 @@ class PhraseQueryProcessor2 {
   }
 
  private:
-  PositionInfoTable2 pos_table_;
   int n_terms_;
   std::vector<PosIter_T> solid_iterators_;
   std::vector<PositionInfo> last_orig_popped_;
+  PositionInfoTable2 pos_table_;
   bool list_exhausted_ = false;
 };
 
@@ -427,9 +427,10 @@ struct ResultDocEntry {
                  const bool is_phrase_in)
     :doc_id(doc_id_in), 
      score(score_in), 
+     position_table(0, 0),
      offset_iters(offset_iters_in),
-     is_phrase(is_phrase_in),
-     position_table(0, 0) {}
+     is_phrase(is_phrase_in)
+  {}
 
   ResultDocEntry(const DocIdType &doc_id_in, 
                  const qq_float &score_in, 
@@ -438,8 +439,8 @@ struct ResultDocEntry {
                  const bool is_phrase_in)
     :doc_id(doc_id_in), 
      score(score_in), 
-     offset_iters(offset_iters_in),
      position_table(position_table_in), 
+     offset_iters(offset_iters_in),
      is_phrase(is_phrase_in) {}
 
   std::vector<OffsetPairs> OffsetsForHighliting() {
@@ -452,7 +453,7 @@ struct ResultDocEntry {
 
   std::vector<OffsetPairs> ExpandOffsets() {
     std::vector<OffsetPairs> table(offset_iters.size());
-    for (int i = 0; i < offset_iters.size(); i++) {
+    for (std::size_t i = 0; i < offset_iters.size(); i++) {
       auto &it = offset_iters[i];
       while (it->IsEnd() == false) {
         OffsetPair pair;
@@ -540,7 +541,7 @@ class ProcessorBase {
      idfs_of_terms_(pl_iterators->size()),
      n_total_docs_in_index_(n_total_docs_in_index)
   {
-    for (int i = 0; i < pl_iterators_.size(); i++) {
+    for (std::size_t i = 0; i < pl_iterators_.size(); i++) {
       idfs_of_terms_[i] = calc_es_idf(n_total_docs_in_index_, 
                                       pl_iterators_[i].Size());
     }
@@ -561,13 +562,13 @@ class ProcessorBase {
   }
 
   const Bm25Similarity &similarity_;
-  std::vector<PLIter_T> &pl_iterators_;
-  const int k_;
-  const int n_lists_;
-  const int n_total_docs_in_index_;
-  std::vector<qq_float> idfs_of_terms_;
-  MinPointerHeap<PLIter_T> min_heap_;
   const DocLengthCharStore &doc_lengths_;
+  std::vector<PLIter_T> &pl_iterators_;
+  const int n_lists_;
+  const int k_;
+  std::vector<qq_float> idfs_of_terms_;
+  const int n_total_docs_in_index_;
+  MinPointerHeap<PLIter_T> min_heap_;
 };
 
 
@@ -591,7 +592,7 @@ class NonPhraseProcessorBase: public ProcessorBase<PLIter_T> {
         this->doc_lengths_.GetLength(max_doc_id),
         this->similarity_);
 
-    if (this->min_heap_.size() < this->k_) {
+    if (this->min_heap_.size() < (std::size_t) this->k_) {
       InsertToHeap(max_doc_id, score_of_this_doc);
     } else {
       if (score_of_this_doc > this->min_heap_.top()->score) {
@@ -686,11 +687,14 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
     const DocLengthCharStore &doc_lengths,
     const int n_total_docs_in_index,
     const int k = 5,
-    const bool is_phrase = false)
+    const bool is_phrase = false,
+    const int bloom_enable_factor = 1
+    )
    :ProcessorBase<PLIter_T>(similarity,            pl_iterators, doc_lengths, 
                   n_total_docs_in_index, k),
     phrase_qp_(8),
-    is_phrase_(is_phrase)
+    is_phrase_(is_phrase),
+    bloom_enable_factor_(bloom_enable_factor)
   {}
 
   std::vector<ResultDocEntry<PLIter_T>> Process() {
@@ -759,6 +763,49 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
  private:
+  bool CheckByFirstPostingList() {
+    if (this->pl_iterators_[0].HasNextTerm(
+          this->pl_iterators_[1].Term()) == BLM_NOT_PRESENT) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  bool CheckBySecondPostingList() {
+    if (this->pl_iterators_[1].HasPriorTerm(
+          this->pl_iterators_[0].Term()) == BLM_NOT_PRESENT) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  bool CheckBloomFallBack() {
+    // Can be further improve by starting with the smallest posting list
+    for (std::size_t i = 0; i < this->pl_iterators_.size() - 1; i++) {
+      if (this->pl_iterators_[i].HasNextTerm(
+            this->pl_iterators_[i + 1].Term()) == BLM_NOT_PRESENT)
+      {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  bool CheckBloomWithEnableFactor() {
+    const std::size_t size1 = this->pl_iterators_[0].Size();
+    const std::size_t size2 = this->pl_iterators_[1].Size();
+
+    if (bloom_enable_factor_ * size1 <= size2) {
+      return CheckByFirstPostingList();
+    } else if (bloom_enable_factor_ * size2 < size1) {
+      return CheckBySecondPostingList();
+    } else {
+      return true;
+    }
+  }
+
   // return true: end reached
   bool FindMax(DocIdType * max_doc_id) {
     for (int list_i = 0; list_i < this->n_lists_; list_i++) {
@@ -805,7 +852,10 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
   }
 
   int FindPhrase() {
-    for (int i = 0; i < this->pl_iterators_.size(); i++) {
+    if (IsPossibleToPresent() == false)
+      return 0;
+
+    for (std::size_t i = 0; i < this->pl_iterators_.size(); i++) {
       PosIter_T *p = phrase_qp_.Iterator(i);
       this->pl_iterators_[i].AssignPositionBegin(p);
     }
@@ -814,6 +864,23 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
     phrase_qp_.Process();
 
     return phrase_qp_.NumOfMatches();
+  }
+
+  // Return false if it is impossible to have a match
+  // Return true if:
+  //  1. possible to match
+  //  2. bloom filter is disabled
+  bool IsPossibleToPresent() {
+    if (bloom_enable_factor_ == BLOOM_NEVER_USE) {
+      return true;
+    }
+
+    if (this->pl_iterators_.size() != 2) 
+    {
+      return CheckBloomFallBack();
+    }
+
+    return CheckBloomWithEnableFactor();
   }
 
   void HandleTheFoundDoc(const DocIdType &max_doc_id) {
@@ -834,7 +901,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
         this->doc_lengths_.GetLength(max_doc_id),
         this->similarity_);
 
-    if (this->min_heap_.size() < this->k_) {
+    if (this->min_heap_.size() < (std::size_t) this->k_) {
       InsertToHeap(max_doc_id, score_of_this_doc, phrase_qp_.Table());
     } else {
       if (score_of_this_doc > this->min_heap_.top()->score) {
@@ -851,7 +918,7 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
         this->doc_lengths_.GetLength(max_doc_id),
         this->similarity_);
 
-    if (this->min_heap_.size() < this->k_) {
+    if (this->min_heap_.size() < (std::size_t)this->k_) {
       PositionInfoTable2 position_table(0, 0);
       InsertToHeap(max_doc_id, score_of_this_doc, position_table);
     } else {
@@ -877,8 +944,9 @@ class QueryProcessor: public ProcessorBase<PLIter_T> {
 			offset_iters, position_table, this->is_phrase_));
   }
 
-  bool is_phrase_;
   PhraseQueryProcessor2<PosIter_T> phrase_qp_;
+  bool is_phrase_;
+  int bloom_enable_factor_;
 };
 
 
@@ -892,7 +960,9 @@ std::vector<ResultDocEntry<PLIter_T>> ProcessQueryDelta(
      const DocLengthCharStore &doc_lengths,
      const int n_total_docs_in_index,
      const int k,
-     const bool is_phase) {
+     const bool is_phase,
+     const int bloom_enable_factor = 1
+     ) {
   if (pl_iterators->size() == 1) {
     SingleTermQueryProcessor<PLIter_T> qp(similarity, pl_iterators, doc_lengths, 
         n_total_docs_in_index, k);
@@ -903,7 +973,7 @@ std::vector<ResultDocEntry<PLIter_T>> ProcessQueryDelta(
     return qp.Process();
   } else {
     QueryProcessor<PLIter_T, PosIter_T> qp(similarity, pl_iterators, doc_lengths, 
-        n_total_docs_in_index, k, is_phase);
+        n_total_docs_in_index, k, is_phase, bloom_enable_factor);
     return qp.Process();
   }
 }

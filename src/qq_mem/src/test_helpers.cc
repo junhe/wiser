@@ -71,7 +71,7 @@ FileOffsetsOfBlobs DumpCozyBox(std::vector<uint32_t> vec,
 SkipList CreateSkipList(const std::string type, std::vector<off_t> offsets_of_bags) {
   SkipList skip_list; 
   
-  for (int i = 0; i < offsets_of_bags.size(); i++) {
+  for (std::size_t i = 0; i < offsets_of_bags.size(); i++) {
     if (type == "TF") {
       skip_list.AddEntry(10000 + i, 0, offsets_of_bags[i], 0, 0, 0, 0);
     } else {
@@ -87,7 +87,7 @@ SkipList CreateSkipListForDodId(
     std::vector<uint32_t> skip_doc_ids, std::vector<off_t> offsets_of_bags) {
   SkipList skip_list; 
   
-  for (int i = 0; i < offsets_of_bags.size(); i++) {
+  for (std::size_t i = 0; i < offsets_of_bags.size(); i++) {
     skip_list.AddEntry(skip_doc_ids[i], offsets_of_bags[i], 0, 0, 0, 0, 0);
   }
 
@@ -100,7 +100,7 @@ SkipList CreateSkipListForPosition( std::vector<off_t> blob_offsets,
 {
   SkipList skip_list; 
   
-  for (int i = 0; i < blob_offsets.size(); i++) {
+  for (std::size_t i = 0; i < blob_offsets.size(); i++) {
     skip_list.AddEntry(0, 0, 0, blob_offsets[i], in_blob_indexes[i], 0, 0);
   }
 
@@ -113,7 +113,7 @@ SkipList CreateSkipListForOffset( std::vector<off_t> blob_offsets,
 {
   SkipList skip_list; 
   
-  for (int i = 0; i < blob_offsets.size(); i++) {
+  for (std::size_t i = 0; i < blob_offsets.size(); i++) {
     skip_list.AddEntry(0, 0, 0, 0, 0, blob_offsets[i], in_blob_indexes[i]);
   }
 

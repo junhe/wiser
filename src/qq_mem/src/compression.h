@@ -89,8 +89,8 @@ class VarintIterator: public PopIteratorService {
      cur_offset_(0), count_(count) {}
 
   VarintIterator(const VarintIterator &rhs)
-    :data_(rhs.data_), cur_offset_(rhs.cur_offset_), index_(rhs.index_),
-     start_offset_(rhs.start_offset_), count_(rhs.count_)
+    :data_(rhs.data_), index_(rhs.index_),  
+     start_offset_(rhs.start_offset_), cur_offset_(rhs.cur_offset_), count_(rhs.count_)
   {}
 
   VarintIterator& operator=(const VarintIterator &rhs) {
@@ -121,9 +121,9 @@ class VarintIterator: public PopIteratorService {
 
  private:
   const char *data_;
-  int cur_offset_; 
   int index_ = 0;
   int start_offset_;
+  int cur_offset_; 
   int count_;
 };
 
@@ -133,9 +133,14 @@ class VarintIteratorEndBound: public PopIteratorService {
   VarintIteratorEndBound() 
     :data_(nullptr), cur_offset_(0), start_offset_(0), end_offset_(0) {}
 
-  VarintIteratorEndBound(const std::string *data, const int start_offset, 
-                 const int end_offset) {
+  VarintIteratorEndBound(
+      const std::string *data, const int start_offset, const int end_offset) {
     Reset(data->data(), start_offset, end_offset);
+  }
+
+  VarintIteratorEndBound(
+      const char *data, const int start_offset, const int end_offset) {
+    Reset(data, start_offset, end_offset);
   }
 
   VarintIteratorEndBound(const VarintBuffer &varint_buf, const int end_offset) {
@@ -178,11 +183,24 @@ class VarintIteratorEndBound: public PopIteratorService {
     return n;
   }
 
+  // it points to the first UN-popped byte.
+  int CurOffset() const {
+    return cur_offset_;
+  }
+
  private:
   const char *data_;
   int cur_offset_; 
   int start_offset_;
   int end_offset_;
+};
+
+
+class VarintIteratorUnbounded: public VarintIteratorEndBound {
+ public:
+  VarintIteratorUnbounded(const char *data) 
+    :VarintIteratorEndBound(data, 0, 1L*GB)
+  {}
 };
 
 

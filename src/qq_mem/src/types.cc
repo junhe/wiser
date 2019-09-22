@@ -1,4 +1,4 @@
-#include "types.h"
+#include "types.h" 
 #include "utils.h"
 
 
@@ -19,16 +19,43 @@ std::vector<Positions> DocInfo::GetPositions() const {
 
   std::vector<Positions> table(groups.size());
 
-  for (int i = 0; i < groups.size(); i++) {
+  for (std::size_t i = 0; i < groups.size(); i++) {
     // example group: 1;3;8
     std::vector<std::string> pos_strs = utils::explode(groups[i], ';');
     for (auto & pos_str : pos_strs) {
-      table[i].push_back(std::stoi(pos_str));
+      try {
+        table[i].push_back(std::stoi(pos_str));
+      } catch (...) {
+        std::cout << "'" << pos_str << "',";
+        throw;
+      }
     }
   }
 
   return table;
 }
 
-const int DocInfo::BodyLength() const {return utils::count_terms(body_);}
+const int DocInfo::BodyLength() const {
+  return utils::count_terms(body_);
+}
+
+std::vector<Term> DocInfo::ParsePhraseElems(const std::string &s) const {
+  std::vector<Term> ret = utils::explode_strict(s, '!');
+  if (ret.size() > 0) {
+    // the last item is an empty one
+    ret.pop_back();
+  }
+  return ret;
+}
+
+
+std::vector<Term> DocInfo::GetPhraseEnds() const {
+  return ParsePhraseElems(phrase_ends_);
+}
+
+std::vector<Term> DocInfo::GetPhraseBegins() const {
+  return ParsePhraseElems(phrase_begins_);
+}
+
+
 

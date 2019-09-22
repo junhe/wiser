@@ -79,6 +79,36 @@ class LineDoc {
   }
 };
 
+
+inline std::vector<std::string> ReadLines(const std::string &path) {
+  std::vector<std::string> lines;
+
+  std::ifstream infile;
+  infile.open(path);
+
+  if (infile.good() == false) {
+    throw std::runtime_error("File may not exist");
+  }
+
+  std::string line;
+  while (std::getline(infile, line)) {
+    lines.push_back(line);
+  }
+
+  return lines;
+}
+
+inline void AppendLines(const std::string &path, std::vector<std::string> lines) 
+{
+  std::ofstream myfile;
+  myfile.open (path, std::ios::app);
+  for (auto &line : lines) {
+    myfile << line << std::endl;
+  }
+  myfile.close();
+}
+
+
 class ResultTable {
  public:
   std::vector<ResultRow> table_;
@@ -131,8 +161,8 @@ class Staircase {
   const int step_height_;
   const int step_width_;
   const int n_steps_;
-  const int max_layer_;
   int cur_layer_;
+  const int max_layer_;
   std::string layer_string_;
  
  public:
@@ -146,7 +176,6 @@ class Staircase {
       return "";
 
     const int step = cur_layer_ / step_height_;
-    const int width = (step + 1) * step_width_;
 
     if (cur_layer_ % step_height_ == 0) {
       if (cur_layer_ != 0) {
@@ -170,6 +199,19 @@ class Staircase {
   }
 };
 
+inline void AdviseDoNotNeed(void *addr, size_t len) {
+  int ret = posix_madvise(addr, len, POSIX_MADV_DONTNEED);
+  if (ret != 0) {
+    perror("AdviseDoNotNeed()");
+    exit(1);
+  }
+}
+
+inline void AdviseRandom(void *addr, size_t len) {
+  if (madvise(addr, len, MADV_RANDOM) == -1) {
+    LOG(FATAL) << "Failed to advise RANDOM";
+  }
+}
 
 template<class T>
 std::string format_with_commas(T value)
@@ -331,6 +373,10 @@ class FileMap {
     MapFile(path, &addr_, &fd_, &file_length_);
   }
 
+  void MAdviseRand() {
+    AdviseRandom(addr_, file_length_);
+  }
+
   void Close() {
     UnmapFile(addr_, fd_, file_length_);
     addr_ = nullptr;
@@ -471,24 +517,79 @@ inline std::string MakeString(char ch) {
   return std::string(1, ch);
 }
 
+inline std::string SerializeFloat(const float &val) {
+  return std::string((char *)&val, sizeof(val));
+}
+
+inline float DeserializeFloat(const char *buf) {
+  float val; 
+  memcpy((char *)&val, buf, sizeof(val));
+  return val;
+}
+
 inline void LockAllMemory() {
     std::cout << "========================" << std::endl;
     std::cout << "Locking all memory (MCL_CURRENT) ...." << std::endl;
 
     int ret = mlockall(MCL_CURRENT);
-    LOG_IF(FATAL, ret == -1) << "Failed to lock memory!";
+    if (ret == -1) {
+      perror("Failed to lock memory!");
+      exit(-1);
+    }
 
     std::cout << "Successfully Locked." << std::endl;
     std::cout << "========================" << std::endl;
 }
 
-inline void AdviseDoNotNeed(void *addr, size_t len) {
-  int ret = posix_madvise(addr, len, POSIX_MADV_DONTNEED);
-  if (ret != 0) {
-    perror("AdviseDoNotNeed()");
-    exit(1);
-  }
+inline std::size_t DivideRoundUp(std::size_t val, std::size_t divider) {
+  return (val + divider - 1) / divider;
 }
+
+// return if a starts with b
+inline bool StartsWith(const std::string &a, const std::string &b) {
+  return a.compare(0, b.size(), b) == 0;
+}
+
+// index is from right to left
+// 63 62 ... 1 0
+inline void SetBit(uint64_t *val, int index) {
+  *val = *val | ((uint64_t) 1 << index);
+}
+
+// index is from left to right
+// 0 1 .. 62 63
+inline void SetBitReverse(uint64_t *val, int index) {
+  *val = *val | ((uint64_t) 1 << (63 - index));
+}
+
+bool PathExists(std::string path);
+
+inline std::ifstream::pos_type GetFileSize(const std::string &path)
+{
+  std::ifstream in(path, std::ifstream::ate | std::ifstream::binary);
+  return in.tellg(); 
+}
+
+template <typename T>
+inline std::vector<T> EncodeDelta(const std::vector<T> &values) {
+  T prev = 0;
+  std::vector<T> vals;
+
+  for (auto &v : values) {
+    vals.push_back(v - prev);
+    prev = v;
+  }
+
+  return vals;
+}
+
+inline std::string FormatThousands(long long val) {
+	std::stringstream ss;
+	ss.imbue(std::locale("en_US.UTF-8"));
+	ss << val;
+	return ss.str();
+}
+
 
 
 } // namespace util

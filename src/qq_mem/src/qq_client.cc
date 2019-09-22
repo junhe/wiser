@@ -24,8 +24,8 @@ void bench_async_client(const int n_threads) {
 
   auto async_client = CreateClient(config, 
                                    std::move(query_producer));
-  async_client->Wait();
-  async_client->ShowStats();
+  auto seconds = async_client->Wait();
+  async_client->ShowStats(seconds);
 }
 
 void bench_sync_client(const int n_threads, std::string arity) {
@@ -62,18 +62,17 @@ void bench_sync_client(const int n_threads, std::string arity) {
       new QueryProducer(std::move(array), query_config));
 
   auto async_client = CreateClient(config, std::move(query_producer));
-  async_client->Wait();
-  async_client->ShowStats();
+  auto seconds = async_client->Wait();
+  async_client->ShowStats(seconds);
 }
 
 void sanity_check() {
   // Search synchroniously, as a sanity check
   auto client = CreateSyncClient("localhost:50051");
   std::vector<int> doc_ids;
-  bool ret;
-  ret = client->Search("multicellular", doc_ids);
-  assert(ret == true);
-  assert(doc_ids.size() > 0);
+  auto ret = client->Search("multicellular", doc_ids);
+  LOG_IF(FATAL, ret != true) << "Should be true";
+  LOG_IF(FATAL, doc_ids.size() == 0) << "should not be 0";
 }
 
 int main(int argc, char** argv) {

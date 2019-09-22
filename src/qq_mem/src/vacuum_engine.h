@@ -4,70 +4,21 @@
 #include <iostream>
 #include <string>
 
+#include <gperftools/profiler.h>
+
+
 #include "utils.h"
 #include "flash_iterators.h"
+#include "doc_length_store.h"
+#include "highlighter.h"
+#include "bloom_filter.h"
+#include "doc_store.h"
+#include "engine_loader.h"
+#include "scoring.h"
+#include "query_processing.h"
 
 
-class TermIndex {
- public:
-  typedef std::unordered_map<Term, off_t> LocalMap;
-  typedef LocalMap::const_iterator ConstIterator;
-
-  void Load(const std::string &path) {
-    int fd;
-    char *addr;
-    size_t file_length;
-    utils::MapFile(path, &addr, &fd, &file_length);
-
-    const char *end = addr + file_length;
-    const char *buf = addr;
-
-    int cnt = 0;
-    while (buf < end) {
-      buf = LoadEntry(buf);
-      cnt++;
-      if (cnt % 1000000 == 0) {
-        std::cout << "Term index entries loaded: " << cnt << std::endl;
-      }
-    }
-
-    utils::UnmapFile(addr, fd, file_length);
-
-    for (auto &it : index_) {
-      LOG(INFO) << ".tip: " << it.first << ": " << it.second << std::endl;
-    }
-  }
-
-  const char *LoadEntry(const char *buf) {
-    uint32_t term_size = *((uint32_t *)buf);
-
-    buf += sizeof(uint32_t);
-    std::string term(buf , term_size);
-
-    buf += term_size;
-    off_t offset = *((off_t *)buf);
-
-    index_[term] = offset;
-
-    return buf + sizeof(off_t);
-  }
-
-  int NumTerms () const {
-    return index_.size();
-  }
-
-  ConstIterator Find(const Term &term) {
-    ConstIterator it = index_.find(term);
-    return it;
-  }
-
-  ConstIterator CEnd() {
-    return index_.cend();
-  }
-
- private:
-  LocalMap index_;
-};
+DECLARE_bool(enable_prefetch);
 
 
 // To use it, you must
@@ -110,17 +61,28 @@ class VacuumInvertedIndex {
   void MapPostingLists(const std::string inverted_index_path) {
     std::cout << "Open inverted_index_path: " << inverted_index_path << std::endl;
     file_map_.Open(inverted_index_path);
+
     file_data_ = (uint8_t *)file_map_.Addr();
 
-    // utils::AdviseDoNotNeed(file_map_.Addr(), file_map_.Length());
+    header_.Load(file_data_);
+  }
+
+  // You can only call this after MapPostingLists()
+  void AdviseRandPostingLists() {
+    file_map_.MAdviseRand();
+  }
+
+  TermIndexResult FindTermIndexResult(const Term &term) {
+    return term_index_.Find(term);
   }
 
   off_t FindPostingListOffset(const Term term) {
-    TermIndex::ConstIterator it = term_index_.Find(term);
-    if (it == term_index_.CEnd()) {
+    TermIndexResult result = term_index_.Find(term);
+
+    if (result.IsEmpty()) {
       return -1;
     } else {
-      return it->second;
+      return result.GetPostingListOffset();
     }
   }
 
@@ -128,9 +90,9 @@ class VacuumInvertedIndex {
     std::vector<VacuumPostingListIterator> iterators;
 
     for (auto &term : terms) {
-      off_t offset = FindPostingListOffset(term); 
-      if (offset != -1) {
-        iterators.emplace_back(file_data_, offset);
+      TermIndexResult result = FindTermIndexResult(term);
+      if (result.IsEmpty() == false) {
+        iterators.emplace_back(file_data_, &header_, result);
       }
     }
     return iterators;
@@ -140,28 +102,50 @@ class VacuumInvertedIndex {
     return term_index_.NumTerms();
   }
 
-
  private:
-  TermIndex term_index_;  
+  TermTrieIndex term_index_;  
   utils::FileMap file_map_;
   const uint8_t *file_data_; // = file_map_.Addr(), put it here for convenience
+  VacuumHeader header_;
 };
 
+
+DECLARE_bool(profile_vacuum);
+DECLARE_string(lock_memory);
 
 // To use
 // engine = VacuumEngine(path)
 // engine.Load()
+template <typename DocStore_T>
 class VacuumEngine : public SearchEngineServiceNew {
  public:
-  VacuumEngine(const std::string engine_dir_path)
-    :engine_dir_path_(engine_dir_path)
-  {}
+  VacuumEngine(const std::string engine_dir_path, 
+      int bloom_enable_factor = 1)
+    :engine_dir_path_(engine_dir_path),
+     bloom_enable_factor_(bloom_enable_factor)
+  {
+    std::cout << "Index path: " << engine_dir_path << std::endl; 
+    std::cout << "Bloom factor: " << bloom_enable_factor << std::endl; 
+  }
+
+	~VacuumEngine() {
+    std::cout << "--------------------------------------" << std::endl;
+    std::cout << "Destructing VacuumEngine!!!!" << std::endl;
+    std::cout << "--------------------------------------" << std::endl;
+
+    if (profiler_started == true) {
+      std::cout << "--------------------------------------" << std::endl;
+			std::cout << "Stopping google profiler..." << std::endl;
+      std::cout << "--------------------------------------" << std::endl;
+      ProfilerStop();
+    }
+  }
 
   void Load() override {
     LOG_IF(FATAL, is_loaded_ == true) << "Engine is already loaded.";
+    ValidateLockMemConfig();
 
-    doc_store_.LoadFdx(utils::JoinPath(engine_dir_path_, "my.fdx"),
-                    utils::JoinPath(engine_dir_path_, "my.fdt"));
+    doc_store_.LoadFdx(utils::JoinPath(engine_dir_path_, "my.fdx"));
 
     doc_lengths_.Deserialize(utils::JoinPath(engine_dir_path_, "my.doc_length"));
 
@@ -169,14 +153,30 @@ class VacuumEngine : public SearchEngineServiceNew {
 
     inverted_index_.LoadTermIndex(utils::JoinPath(engine_dir_path_, "my.tip"));
 
-    utils::LockAllMemory(); // <<<<<<< Lock memory
+    if (FLAGS_lock_memory == "lock_small")
+      utils::LockAllMemory(); // <<<<<<< Lock memory
 
     inverted_index_.MapPostingLists(
         utils::JoinPath(engine_dir_path_, "my.vacuum"));
+    if (FLAGS_enable_prefetch)
+      inverted_index_.AdviseRandPostingLists();
 
     doc_store_.MapFdt(utils::JoinPath(engine_dir_path_, "my.fdt"));
+    if (FLAGS_enable_prefetch)
+      doc_store_.AdviseFdtRandom();
+
+    if (FLAGS_lock_memory == "lock_large")
+      utils::LockAllMemory(); // <<<<<<< Lock memory
 
     is_loaded_ = true;
+
+    if (FLAGS_profile_vacuum == true && profiler_started == false) {
+      std::cout << "--------------------------------------" << std::endl;
+			std::cout << "Using profiler..." << std::endl;
+      std::cout << "--------------------------------------" << std::endl;
+			ProfilerStart("vacuum.profile");
+      profiler_started = true;
+    }
   }
 
   int TermCount() const override {
@@ -214,13 +214,31 @@ class VacuumEngine : public SearchEngineServiceNew {
       return result;
     }
 
-    // utils::PrintIter<VacuumPostingListIterator, InBagPositionIterator>(
-        // iterators[0]);
+    for (auto &it : iterators) {
+      result.doc_freqs.push_back(it.Size());
+    }
+
+    if (query.is_phrase == false)  {
+      // check prefetch
+      bool prefetch_flag = true;
+      for (auto & it : iterators) {
+        if (it.ShouldPrefetch() == false) {
+          prefetch_flag = false;
+          break;
+        } 
+      }
+
+      if (prefetch_flag) {
+        for (auto & it : iterators) {
+          it.Prefetch();
+        }
+      }
+    }
 
     auto top_k = qq_search::ProcessQueryDelta
       <VacuumPostingListIterator, InBagPositionIterator>(
-        similarity_,      &iterators,     doc_lengths_, doc_lengths_.Size(), 
-        query.n_results,  query.is_phrase);  
+        similarity_,      &iterators,      doc_lengths_, doc_lengths_.Size(), 
+        query.n_results,  query.is_phrase, bloom_enable_factor_);  
 
     for (auto & top_doc_entry : top_k) {
       SearchResultEntry result_entry;
@@ -258,12 +276,19 @@ class VacuumEngine : public SearchEngineServiceNew {
   }
 
  private:
+  void ValidateLockMemConfig() {
+    LOG_IF(FATAL, FLAGS_lock_memory != "disabled" && 
+                  FLAGS_lock_memory != "lock_small" &&
+                  FLAGS_lock_memory != "lock_all")
+      << "Wrong lock_memory config: " << FLAGS_lock_memory;
+  }
+
   std::string GenerateSnippet(const DocIdType &doc_id, 
       std::vector<OffsetPairs> &offset_table,
       const int n_passages) {
     OffsetsEnums res = {};
 
-    for (int i = 0; i < offset_table.size(); i++) {
+    for (std::size_t i = 0; i < offset_table.size(); i++) {
       res.push_back(Offset_Iterator(offset_table[i]));
     }
 
@@ -273,13 +298,16 @@ class VacuumEngine : public SearchEngineServiceNew {
 
   VacuumInvertedIndex inverted_index_;
   DocLengthCharStore doc_lengths_;
-  FlashDocStore doc_store_;
+  DocStore_T doc_store_;
 
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
 
   std::string engine_dir_path_;
   bool is_loaded_ = false;
+  bool profiler_started = false;
+
+  int bloom_enable_factor_;
 };
 
 

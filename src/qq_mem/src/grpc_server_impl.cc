@@ -17,8 +17,10 @@ Sync Server config musth provide:
     config.SetString("target", target);
 */
 std::unique_ptr<ServerService> CreateServer(const GeneralConfig config) {
+  int bloom_factor = config.HasKey("bloom_factor")? 
+    config.GetInt("bloom_factor") : 10;
   std::unique_ptr<SearchEngineServiceNew> engine = CreateSearchEngine(
-      config.GetString("engine_name"));
+      config.GetString("engine_name"), bloom_factor);
 
   if (config.GetString("sync_type") == "SYNC") {
     std::unique_ptr<ServerService> server(new SyncServer(config, std::move(engine)));

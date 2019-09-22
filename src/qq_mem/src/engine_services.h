@@ -55,19 +55,6 @@ class QqMemPostingService {
   virtual const OffsetPairs *GetOffsetPairs() const = 0;
 };
 
-class FlashReader {
-    public:
-        FlashReader(const std::string & based_file);
-        ~FlashReader();
-        std::string read(const Store_Segment & segment);
-        Store_Segment append(const std::string & value);
-
-    private:
-        std::string _file_name_;
-        int _fd_;
-        int _last_offset_; // append from it
-};
-
 
 class OffsetPairsIteratorService {
  public:

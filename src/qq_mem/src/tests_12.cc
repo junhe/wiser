@@ -2,11 +2,12 @@
 
 #include "flash_iterators.h"
 #include "utils.h"
+#include "test_helpers.h"
 
 std::string EncodeToDeltaEncodedPackedInts(const std::vector<uint32_t> &values) {
-  std::vector<uint32_t> deltas = EncodeDelta(values);
+  std::vector<uint32_t> deltas = utils::EncodeDelta<uint32_t>(values);
 
-  PackedIntsWriter writer;
+  LittlePackedIntsWriter writer;
   for (auto &delta : deltas) {
     writer.Add(delta);
   }
@@ -15,7 +16,7 @@ std::string EncodeToDeltaEncodedPackedInts(const std::vector<uint32_t> &values) 
 
 
 std::string EncodeToDeltaEncodedVInts(const std::vector<uint32_t> &values) {
-  std::vector<uint32_t> deltas = EncodeDelta(values);
+  std::vector<uint32_t> deltas = utils::EncodeDelta<uint32_t>(values);
 
   VIntsWriter writer;
   for (auto &delta : deltas) {
@@ -27,12 +28,6 @@ std::string EncodeToDeltaEncodedVInts(const std::vector<uint32_t> &values) {
   return writer.Serialize();
 }
 
-
-int PsudoIncreasingRandom(int i) {
-  int seed = 6263;
-  int rand = (i * seed + 12345) % 23;
-  return 1 + i * 30 + rand;
-}
 
 
 TEST_CASE( "Delta Encoded PackedIntsIterator", "[qqflash]" ) {

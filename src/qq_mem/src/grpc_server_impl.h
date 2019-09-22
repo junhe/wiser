@@ -187,7 +187,7 @@ class ServerService {
         if (line_doc_path.size() > 0) {
           int n_rows = config.GetInt("n_line_doc_rows");
           std::cout << "Loading documents from " << line_doc_path << std::endl;
-          int ret = engine->LoadLocalDocuments(line_doc_path, n_rows, 
+          engine->LoadLocalDocuments(line_doc_path, n_rows, 
               config.GetString("line_doc_format"));
         }
       } else {
@@ -253,7 +253,7 @@ class AsyncServer : public ServerService {
               &async_service_, srv_cqs_[j].get(), search_engine_.get()));
       }
     }
-    assert(contexts_.size() == 5000 * num_cqs);
+    assert(contexts_.size() == (std::size_t) 5000 * num_cqs);
     std::cout << "All RPC contexts are created " << factor * num_cqs << std::endl;
 
 
@@ -294,7 +294,8 @@ class AsyncServer : public ServerService {
     }
 
     shutdown_thread.join();
-    std::cout << "Server destructed" << std::endl;
+    std::cout << ">>>>>>>>>>> Server destructed" << std::endl;
+    search_engine_.release();
   }
 
   void Wait() {
@@ -425,14 +426,14 @@ class AsyncServer : public ServerService {
       FINISH_DONE
     };
 
-    State next_state_;
-    grpc::ServerCompletionQueue *cq_;
     AsyncQqGrpcEngineServiceImpl *async_service_;
+    grpc::ServerCompletionQueue *cq_;
     std::unique_ptr<grpc::ServerContext> srv_ctx_;
+    State next_state_;
+    grpc::ServerAsyncReaderWriter<SearchReply, SearchRequest> stream_;
     SearchRequest req_;
     SearchReply response_;
     // std::unique_ptr<grpc::ServerAsyncReaderWriter<SearchReply, SearchRequest>> stream_;
-    grpc::ServerAsyncReaderWriter<SearchReply, SearchRequest> stream_;
     std::mutex mu_;
     grpc::Status status_;
     SearchEngineServiceNew *search_engine_;

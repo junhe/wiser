@@ -99,10 +99,8 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
   void Deserialize(std::string path) {
     int fd;
-    int len;
     char *addr;
     size_t file_length;
-    uint32_t var;
     off_t offset = 0;
 
     index_.clear();
@@ -112,7 +110,6 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     int count = *((int *)addr);
     offset += sizeof(int);
     
-    int width = sizeof(int);
     for (int i = 0; i < count; i++) {
       int entry_len = DeserializeEntry(addr + offset);
       offset += entry_len;
@@ -136,9 +133,12 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
   std::vector<PostingListDeltaIterator> FindIteratorsSolid(const TermList &terms) const {
     std::vector<PostingListDeltaIterator> iterators;
     PlPointers pl_pointers = FindPostinglists(terms);
-    for (auto &pl : pl_pointers) {
+    for (std::size_t i = 0; i < pl_pointers.size(); i++) {
+      const PostingListType *pl = pl_pointers[i]; 
       if (pl != nullptr) {
-        iterators.push_back(pl->Begin2());
+        auto it = pl->Begin2();
+        it.SetTerm(terms[i]);
+        iterators.push_back(it);
       }
     }
 
@@ -164,7 +164,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     std::map<std::string, int> ret;
 
     auto pointers = FindPostinglists(terms);
-    for (int i = 0; i < terms.size(); i++) {
+    for (std::size_t i = 0; i < terms.size(); i++) {
       if (pointers[i] != nullptr) {
         ret[terms[i]] = pointers[i]->Size();
       } else {
@@ -198,7 +198,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
 		assert(token_vec.size() == offsets_parsed.size());
 
-		for (int i = 0; i < token_vec.size(); i++) {
+		for (std::size_t i = 0; i < token_vec.size(); i++) {
 			IndexStore::iterator it = index_.find(token_vec[i]);
 
 			if (it == index_.cend()) {
@@ -245,7 +245,7 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
     
     assert(token_vec.size() == offsets_parsed.size());
 
-    for (int i = 0; i < token_vec.size(); i++) {
+    for (std::size_t i = 0; i < token_vec.size(); i++) {
       IndexStore::iterator it = index_.find(token_vec[i]);
 
       if (it == index_.cend()) {
@@ -267,12 +267,10 @@ class InvertedIndexQqMemDelta: public InvertedIndexImpl {
 
 class QqMemEngineDelta: public SearchEngineServiceNew {
  public:
-  QqMemEngineDelta() {}
-
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
       int n_rows, const std::string format) {
-    int ret;
+    int ret = -1;
     std::unique_ptr<LineDocParserService> parser;
 
     if (format == "TOKEN_ONLY") {
@@ -302,7 +300,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
 
     doc_store_.Add(doc_id, doc_info.Body());
     inverted_index_.AddDocument(doc_id, doc_info);
-    doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); // TODO modify to count on offsets?
+    doc_lengths_.AddLength(doc_id, doc_info.BodyLength()); 
     similarity_.Reset(doc_lengths_.GetAvgLength());
   }
 
@@ -327,7 +325,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
       const int n_passages) {
     OffsetsEnums res = {};
 
-    for (int i = 0; i < offset_table.size(); i++) {
+    for (std::size_t i = 0; i < offset_table.size(); i++) {
       res.push_back(Offset_Iterator(offset_table[i]));
     }
 
@@ -399,10 +397,8 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
 
   void DeserializeMeta(std::string path) {
     int fd;
-    int len;
     char *addr;
     size_t file_length;
-    uint32_t var;
 
     utils::MapFile(path, &addr, &fd, &file_length);
 
@@ -430,6 +426,7 @@ class QqMemEngineDelta: public SearchEngineServiceNew {
     doc_store_.Deserialize(dir_path + "/doc_store.dump"); //good
     inverted_index_.Deserialize(dir_path + "/inverted_index.dump");
     doc_lengths_.Deserialize(dir_path + "/doc_lengths.dump");
+
     similarity_.Reset(doc_lengths_.GetAvgLength());
 
     std::cout << "Doc lengths _______________________________________________________\n";

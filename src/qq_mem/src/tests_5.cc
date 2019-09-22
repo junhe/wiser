@@ -427,7 +427,7 @@ VarintBuffer create_varint_buffer(std::vector<uint32_t> vec) {
 
 PositionIterators create_iterators(std::vector<VarintBuffer *> buffers, std::vector<int> sizes) {
   PositionIterators iterators;
-  for (int i = 0; i < buffers.size(); i++) {
+  for (std::size_t i = 0; i < buffers.size(); i++) {
     iterators.emplace_back(new VarintIterator(*buffers[i], sizes[i]));
   }
   return iterators;
@@ -437,7 +437,7 @@ void AssignIterators(PhraseQueryProcessor2<VarintIterator> &pqp,
                      std::vector<VarintBuffer *> buffers, 
                      std::vector<int> sizes) {
   std::vector<VarintIterator> &iterators = *pqp.Iterators();
-  for (int i = 0; i < buffers.size(); i++) {
+  for (std::size_t i = 0; i < buffers.size(); i++) {
     iterators[i] =  VarintIterator(*buffers[i], sizes[i]);
   }
   pqp.SetNumTerms(buffers.size());

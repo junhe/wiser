@@ -37,6 +37,27 @@
 #define FLAG_SNIPPETS_CACHE_ON_FLASH false
 #define SNIPPETS_CACHE_ON_FLASH_FILE "/mnt/ssd/snippets_store.cache"
 
+
+#define COMPRESSED_DOC_MAGIC 0x33
+
+#define SKIP_LIST_FIRST_BYTE 0xA3
+#define BLOOM_SKIP_LIST_FIRST_BYTE 0xA4
+#define POSTING_LIST_FIRST_BYTE 0xF4
+#define PACK_FIRST_BYTE 0xD6
+#define VINTS_FIRST_BYTE 0x9B
+#define BLOOM_BOX_FIRST_BYTE 0xF5
+#define VACUUM_FIRST_BYTE 0x88
+#define BLOOM_META_FIRST_BYTE 0x89
+#define BLOOM_CASES_FIRST_BYTE 0x90
+
+
+#define BLOOM_NEVER_USE 0
+
+const int BLM_NOT_PRESENT = 0;
+const int BLM_MAY_PRESENT = 1;
+const int BLM_NOT_INITIALIZED = -1;
+
+
 const off_t KB = 1024;
 const off_t MB = 1048576;
 const off_t GB = 1073741824L;
@@ -75,11 +96,29 @@ typedef std::vector<TermWithOffset> TermWithOffsetList;
 class DocInfo {
  public:
   DocInfo() {}
+
   DocInfo(const std::string &body, const std::string &tokens, 
       const std::string &token_offsets, const std::string &token_positions, 
       const std::string &format) 
     :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
      token_positions_(token_positions), format_(format) {}
+
+  DocInfo(const std::string &body, const std::string &tokens, 
+      const std::string &token_offsets, const std::string &token_positions, 
+      const std::string &phrase_ends, const std::string &format) 
+    :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
+     token_positions_(token_positions), phrase_ends_(phrase_ends), 
+     format_(format) {}
+
+  DocInfo(const std::string &body, const std::string &tokens, 
+      const std::string &token_offsets, const std::string &token_positions, 
+      const std::string &phrase_begins, const std::string &phrase_ends, 
+      const std::string &format) 
+    :body_(body), tokens_(tokens), token_offsets_(token_offsets), 
+     token_positions_(token_positions), phrase_begins_(phrase_begins),
+     phrase_ends_(phrase_ends), 
+     format_(format) {}
+
 
   TermList GetTokens() const;
 
@@ -91,6 +130,11 @@ class DocInfo {
   // Each row is for a term
   std::vector<Positions> GetPositions() const;
 
+  std::vector<Term> ParsePhraseElems(const std::string &s) const;
+  std::vector<Term> GetPhraseBegins() const;
+
+  std::vector<Term> GetPhraseEnds() const;
+
   const std::string &Body() const {return body_;}
 
   const std::string &Tokens() const {return tokens_;}
@@ -98,6 +142,10 @@ class DocInfo {
   const std::string &TokenOffsets() const {return token_offsets_;}
 
   const std::string &TokenPositions() const {return token_positions_;}
+
+  const std::string &PhraseBegins() const {return phrase_begins_;}
+
+  const std::string &PhraseEnds() const {return phrase_ends_;}
   
   const std::string &Format() const {return format_;}
 
@@ -148,6 +196,8 @@ class DocInfo {
   std::string tokens_;
   std::string token_offsets_;
   std::string token_positions_;
+  std::string phrase_begins_;
+  std::string phrase_ends_;
   std::string format_;
 };
 
@@ -247,9 +297,10 @@ struct SearchResultEntry {
   }
 };
 
+
 struct SearchResult {
   std::vector<SearchResultEntry> entries;
-
+  std::vector<int> doc_freqs; // doc freq of terms queried
 
   const SearchResultEntry &operator [](int i) const {
     return entries[i];
@@ -261,7 +312,7 @@ struct SearchResult {
       return false;
     }
 
-    for (int i = 0; i < a.Size(); i++) {
+    for (std::size_t i = 0; i < a.Size(); i++) {
       if (a[i] != b[i])  {
         std::cout << "entry not equal: " << i << std::endl;
         return false;
@@ -293,6 +344,8 @@ struct SearchResult {
     }
   }
 };
+
+
 
 
 // Basic types for precomputation

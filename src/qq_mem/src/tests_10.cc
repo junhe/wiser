@@ -16,7 +16,7 @@ VarintBuffer CreateVarintBuffer(std::vector<int> vec) {
 PostingBagBlobIndexes CreatePostingPackIndexes(
     std::vector<int> block_indexes, std::vector<int> in_block_indexes) {
   PostingBagBlobIndexes indexes;
-  for (int i = 0; i < block_indexes.size(); i++) {
+  for (std::size_t i = 0; i < block_indexes.size(); i++) {
     indexes.AddRow(block_indexes[i], in_block_indexes[i]);
   }
 
@@ -149,7 +149,8 @@ TEST_CASE( "General term entry", "[qqflash]" ) {
       size_t file_length;
       utils::MapFile("/tmp/tmp.pos.dumper", &addr, &fd, &file_length);
 
-      PackedIntsReader reader((uint8_t *)addr + file_offs.PackOffs()[0]);
+      LittlePackedIntsReader reader((uint8_t *)addr + file_offs.PackOffs()[0]);
+      reader.DecodeToCache();
       for (int i = 0; i < PackedIntsWriter::PACK_SIZE; i++) {
         REQUIRE(reader.Get(i) == deltas[i]);
       }
@@ -377,54 +378,63 @@ TEST_CASE( "Term Index works", "[qqflash]" ) {
 
   {
   auto it = index.Find("hello");
-  REQUIRE(it != index.CEnd());
-  REQUIRE(it->first == "hello");
-  REQUIRE(it->second == 0);
+  REQUIRE(it.IsEmpty() == false);
+  REQUIRE(it.Key() == "hello");
+  REQUIRE(it.GetPostingListOffset() == 0);
+  REQUIRE(it.GetNumPagesInPrefetchZone() == 0);
   }
 
   {
   auto it = index.Find("wisc");
-  REQUIRE(it != index.CEnd());
-  REQUIRE(it->first == "wisc");
-  REQUIRE(it->second == 10032);
+  REQUIRE(it.IsEmpty() == false);
+  REQUIRE(it.Key() == "wisc");
+  REQUIRE(it.GetPostingListOffset() == 10032);
+  REQUIRE(it.GetNumPagesInPrefetchZone() == 0);
   }
 
   {
   auto it = index.Find("notexist");
-  REQUIRE(it == index.CEnd());
+  REQUIRE(it.IsEmpty() == true);
   }
 }
 
+TEST_CASE( "Term Trie Index works", "[qqflash]" ) {
+  std::string path = "/tmp/my.tip";
 
-TEST_CASE( "QQFlash Compressed Doc Store", "[qqflash]" ) {
-  SECTION("Index Then Search") {
-    // index
-    FlashDocStoreDumper store;
-    int doc_id = 0;
-    std::string doc = "it is a doc";
-    store.Add(doc_id, doc);
-    REQUIRE(store.Get(doc_id) == doc);
+  // Dump
+  TermIndexDumper dumper(path);
 
-    store.Add(1, "doc1");
-    REQUIRE(store.Size() == 2);
-    REQUIRE(store.Has(doc_id) == true);
+  dumper.DumpEntry("hello", 0);
+  dumper.DumpEntry("wisc", 10032);
 
-    store.Dump("/tmp/my.fdx", "/tmp/my.fdt");
-    store.Clear();
+  dumper.Close();
 
-    // search
-    FlashDocStore search_store;
-    search_store.Load("/tmp/my.fdx", "/tmp/my.fdt");
+  //Read
+  TermTrieIndex index;
+  index.Load(path);
 
-    REQUIRE(search_store.Size() == 2);
-    REQUIRE(search_store.Has(0));
-    REQUIRE(search_store.Has(1));
-    REQUIRE(search_store.Has(2) == false);
+  {
+  auto it = index.Find("hello");
+  REQUIRE(it.IsEmpty() == false);
+  REQUIRE(it.Key() == "hello");
+  REQUIRE(it.GetPostingListOffset() == 0);
+  REQUIRE(it.GetNumPagesInPrefetchZone() == 0);
+  }
 
-    REQUIRE(search_store.Get(0) == doc);
-    REQUIRE(search_store.Get(1) == "doc1");
+  {
+  auto it = index.Find("wisc");
+  REQUIRE(it.IsEmpty() == false);
+  REQUIRE(it.Key() == "wisc");
+  REQUIRE(it.GetPostingListOffset() == 10032);
+  REQUIRE(it.GetNumPagesInPrefetchZone() == 0);
+  }
+
+  {
+  auto it = index.Find("notexist");
+  REQUIRE(it.IsEmpty() == true);
   }
 }
+
 
 
 TEST_CASE( "General file dumper", "[qqflash]" ) {

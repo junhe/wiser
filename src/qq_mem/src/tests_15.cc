@@ -19,7 +19,7 @@ TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
 
   engine_dumper.Dump();
 
-  VacuumEngine engine(dir_path);
+  VacuumEngine<ChunkedDocStoreReader> engine(dir_path);
   engine.Load();
 
   // Sanity check
@@ -33,7 +33,7 @@ TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
     SearchResult result = engine.Search(SearchQuery({"a"}, true));
     REQUIRE(result.Size() == 3);
 
-    for (int i = 0; i < result.Size(); i++) {
+    for (std::size_t i = 0; i < result.Size(); i++) {
       if (result[i].doc_id == 0) {
         REQUIRE(result[i].snippet == ""); //TODO: this should be fixed
       } else if (result[i].doc_id == 1) {
@@ -46,7 +46,7 @@ TEST_CASE( "Initializing 3-word vacuum engine", "[qqflash][vengine]" ) {
     result = engine.Search(SearchQuery({"b"}, true));
     REQUIRE(result.Size() == 2);
 
-    for (int i = 0; i < result.Size(); i++) {
+    for (std::size_t i = 0; i < result.Size(); i++) {
       if (result[i].doc_id == 1) {
         // REQUIRE(result[i].snippet == "a <b>b <\\b>\n"); //Failed. TODO
       } else if (result[i].doc_id == 2) {
@@ -82,7 +82,7 @@ TEST_CASE( "tests two intersection ngine", "[qqflash][two]" ) {
 
   engine_dumper.Dump();
 
-  VacuumEngine engine(dir_path);
+  VacuumEngine<ChunkedDocStoreReader> engine(dir_path);
   engine.Load();
 
   SECTION("Two-term non-phrase query") {
@@ -126,7 +126,7 @@ TEST_CASE( "Testing 5 long docs", "[qqflash][dump5]" ) {
 
   engine_dumper.Dump();
 
-  VacuumEngine engine(dir_path);
+  VacuumEngine<ChunkedDocStoreReader> engine(dir_path);
   engine.Load();
 
   SECTION("one-term query") {
@@ -166,7 +166,7 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
   REQUIRE(engine_dumper.TermCount() > 100);
   engine_dumper.Dump();
 
-  VacuumEngine vacuum_engine(dir_path);
+  VacuumEngine<ChunkedDocStoreReader> vacuum_engine(dir_path);
   vacuum_engine.Load();
 
 
@@ -210,17 +210,6 @@ TEST_CASE( "Testing 5 long docs (comparing QQMem and Vacuum", "[qqflash][qqvacuu
 }
 
 
-// TEST_CASE( "Load qq mem dump and dump to vacuum format", "[vac]" ) {
-  // VacuumEngine engine("/mnt/ssd/vacuum_engine_dump");
-  // engine.Load();
-  // REQUIRE(engine.TermCount() == 10000);
-
-  // SearchQuery query({"mesolih"}, true);
-  // auto result = engine.Search(query);
-
-// }
-
-
 TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
   std::string dir_path = "/tmp/large-file";
   utils::PrepareDir(dir_path);
@@ -231,10 +220,14 @@ TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
   REQUIRE(engine_dumper.TermCount() == 3);
 
   // Dump the engine_dumper
-  engine_dumper.SeekInvertedIndexDumper(5*GB - 10);
+  // Do a regular dump so the header check won't fail
   engine_dumper.Dump();
 
-  VacuumEngine engine(dir_path);
+  off_t fake_content_off = 5*GB - 10;
+  engine_dumper.SeekInvertedIndexDumper(fake_content_off);
+  engine_dumper.Dump();
+
+  VacuumEngine<ChunkedDocStoreReader> engine(dir_path);
   engine.Load();
 
   // Sanity check
@@ -245,7 +238,7 @@ TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
     SearchResult result = engine.Search(SearchQuery({"a"}, true));
     REQUIRE(result.Size() == 3);
 
-    for (int i = 0; i < result.Size(); i++) {
+    for (std::size_t i = 0; i < result.Size(); i++) {
       if (result[i].doc_id == 0) {
         REQUIRE(result[i].snippet == ""); //TODO: this should be fixed
       } else if (result[i].doc_id == 1) {
@@ -258,7 +251,7 @@ TEST_CASE( "Dumping to large file", "[qqflash][large]" ) {
     result = engine.Search(SearchQuery({"b"}, true));
     REQUIRE(result.Size() == 2);
 
-    for (int i = 0; i < result.Size(); i++) {
+    for (std::size_t i = 0; i < result.Size(); i++) {
       if (result[i].doc_id == 1) {
         // REQUIRE(result[i].snippet == "a <b>b <\\b>\n"); //Failed. TODO
       } else if (result[i].doc_id == 2) {
@@ -303,17 +296,6 @@ TEST_CASE( "Test fake file dumper", "[fake]" ) {
   REQUIRE(real.End() == fake.End());
 
 }
-
-//// vacuum dump files may not exist on this machine
-// TEST_CASE( "Full wiki", "[qqflash][full]" ) {
-  // VacuumEngine engine("/mnt/ssd/vacuum_engine_dump-04-19");
-
-  // auto a = utils::now();
-  // auto result = engine.Search(SearchQuery({"from"}, true));
-  // auto b = utils::now();
-
-  // auto duration = utils::duration(a, b);
-// }
 
 
 TEST_CASE( "URL parsing", "[parse]" ) {

@@ -1,3 +1,5 @@
+set +e
+
 sudo apt-get install -y curl
 
 # install dev tools
@@ -43,6 +45,23 @@ make
 sudo make install
 
 
+# get elasticsearch
+cd $HOME
+git clone git@github.com:junhe/elasticsearch-5.6.3.git
+
+# install java
+cd $HOME/flashsearch/scripts/
+./install-java.sh
+
+
+# install vmtouch
+cd $HOME
+git clone https://github.com/hoytech/vmtouch.git
+cd vmtouch
+make
+sudo make install
+
+
 # boost
 sudo apt-get install -y libboost-all-dev
 
@@ -57,9 +76,26 @@ sudo apt-get install -y google-perftools libgoogle-perftools-dev
 sudo ldconfig
 
 # ccache
-sudo apt-get install ccache
+sudo apt-get install -y ccache
 
+# cgroup
+sudo apt-get install -y cgroup-bin
+
+sudo apt-get install -y sysstat
+
+sudo apt-get install -y blktrace
+
+# For elastic search
+# https://www.elastic.co/guide/en/elasticsearch/reference/current/vm-max-map-count.html
+sudo sysctl -w vm.max_map_count=262144
+
+
+
+echo "*            hard   memlock           unlimited" | sudo tee -a /etc/security/limits.conf
+echo "*            soft    memlock           unlimited" | sudo tee -a /etc/security/limits.conf
+echo "WARNING: The commands above may not be executed"
 
 echo "Now, run"
 echo "source ~/.bashrc"
 
+echo "If you are on client, build and copy libbloom to /usr/lib"

@@ -36,7 +36,6 @@ using qq::QQEngine;
 using std::chrono::system_clock;
 
 
-DEFINE_bool(use_profiler, false, "Use profiler");
 DEFINE_string(engine, "missing", 
     "[qq_mem_compressed / vacuum:vacuum_dump:/mnt/ssd/vacuum_engine_dump_magic");
 DEFINE_string(addr, "localhost", "GRPC listening address.");
@@ -45,6 +44,7 @@ DEFINE_int32(n_secs, 0, "Server running time (seconds).");
 DEFINE_int32(n_threads, 1, "Number of async GRPC threads (it has no effect in SYNC mode.");
 DEFINE_int32(n_docs, 1000, "Number of documents to load");
 DEFINE_string(sync_type, "ASYNC", "Type of GPRC sync [ASYNC/SYNC]");
+DEFINE_int32(bloom_factor, 10, "bloom enable factor");
 
 
 
@@ -52,7 +52,7 @@ static bool got_sigint = false;
 
 
 static void sigint_handler(int x) { 
-  std::cout << "Caught SIGINT" << std::endl;
+  std::cout << "Caught SIGINT <<<<<<<<<<" << std::endl;
   got_sigint = true; 
 }
 
@@ -105,6 +105,8 @@ int main(int argc, char** argv) {
   // config.SetString("line_doc_path", 
       // "/mnt/ssd/downloads/enwiki-abstract_tokenized.linedoc");
 
+  config.SetInt("bloom_factor", FLAGS_bloom_factor);
+
   if (config.GetString("sync_type") == "ASYNC") {
     config.SetInt("n_server_threads", n_threads);
     config.SetInt("server_duration", n_secs);
@@ -115,25 +117,16 @@ int main(int argc, char** argv) {
 
   auto server = CreateServer(config);
 
-  if (FLAGS_use_profiler == true) {
-    std::cout << "Using profiler..." << std::endl;
-    ProfilerStart("qq_server.profile");
-  }
- 
   if (n_secs == 0) {
     while (!got_sigint) {
       gpr_sleep_until(gpr_time_add(gpr_now(GPR_CLOCK_REALTIME),
                                    gpr_time_from_seconds(5, GPR_TIMESPAN)));
     }
+    server->Shutdown();
   } else {
     server->Wait();
   }
 
-  if (FLAGS_use_profiler == true) {
-    std::cout << "Stopping profiler..............................................." << std::endl;
-    ProfilerStop();
-  }
-
-  std::cout << "Server about to be destruct" << std::endl;
+  std::cout << "--------------Server about to be destruct--------------" << std::endl;
   return 0;
 }

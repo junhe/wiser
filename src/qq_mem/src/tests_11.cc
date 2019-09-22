@@ -218,7 +218,7 @@ TEST_CASE( "TermFreqIterator", "[qqflash][tf_iter]" ) {
 TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
   SECTION("Simple") {
     std::vector<uint32_t> doc_ids;
-    int num_docids = 200;
+    uint32_t num_docids = 200;
     for (uint32_t i = 0; i < num_docids; i++) {
       doc_ids.push_back(i);
     }
@@ -308,7 +308,7 @@ TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
 
   SECTION("Exact one pack") {
     std::vector<uint32_t> doc_ids;
-    int num_docids = 128;
+    uint32_t num_docids = 128;
     for (uint32_t i = 0; i < num_docids; i++) {
       doc_ids.push_back(i);
     }
@@ -379,7 +379,7 @@ TEST_CASE( "Doc id iterator", "[qqflash][docid]" ) {
 
   SECTION("Large number of sequntial numbers") {
     std::vector<uint32_t> doc_ids;
-    int num_docids = PACK_SIZE * 10 + 20;
+    uint32_t num_docids = PACK_SIZE * 10 + 20;
     for (uint32_t i = 0; i < num_docids; i++) {
       doc_ids.push_back(i);
     }

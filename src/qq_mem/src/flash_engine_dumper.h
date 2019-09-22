@@ -12,23 +12,9 @@
 #include "qq_mem_engine.h"
 #include "packed_value.h"
 #include "compression.h"
-
-
-#define SKIP_LIST_FIRST_BYTE 0xA3
-#define POSTING_LIST_FIRST_BYTE 0xF4
-
-constexpr int SKIP_INTERVAL = PackedIntsWriter::PACK_SIZE;
-constexpr int PACK_SIZE = PackedIntsWriter::PACK_SIZE;
-
-
-
-struct PostingBagBlobIndex {
-  PostingBagBlobIndex(int block_idx, int offset_idx)
-    : blob_index(block_idx), in_blob_idx(offset_idx) {}
-
-  int blob_index;
-  int in_blob_idx;
-};
+#include "flash_containers.h"
+#include "file_dumper.h"
+#include "bloom_filter.h"
 
 
 inline std::vector<uint32_t> ExtractPositions(PopIteratorService *pos_it) {
@@ -51,70 +37,16 @@ inline std::vector<uint32_t> ExtractOffsets(OffsetPairsIteratorService *iterator
   return offsets;
 }
 
-inline std::vector<uint32_t> GetSkipPostingPreDocIds(const std::vector<uint32_t> &doc_ids) {
-  std::vector<uint32_t> skip_pre_doc_ids{0}; // the first is always 0
-  for (int skip_posting_i = SKIP_INTERVAL; 
-      skip_posting_i < doc_ids.size(); 
-      skip_posting_i += SKIP_INTERVAL) 
-  {
-    skip_pre_doc_ids.push_back(doc_ids[skip_posting_i - 1]); 
-  }
-  return skip_pre_doc_ids;
+
+// n_pages_of_zone     posting_list_start 
+// |..................|......................................|
+//    16 bits             48bits
+inline off_t EncodePrefetchZoneAndOffset(
+    const uint32_t n_pages_of_zone, const off_t posting_list_start) {
+  DLOG_IF(FATAL, (((uint64_t) n_pages_of_zone) << 48) >> 48 != n_pages_of_zone)
+    << "n_pages_of_zone is too large to be encoded.";
+  return (((uint64_t) n_pages_of_zone) << 48) | posting_list_start;
 }
-
-
-inline std::vector<uint32_t> EncodeDelta(const std::vector<uint32_t> &values) {
-  uint32_t prev = 0;
-  std::vector<uint32_t> vals;
-
-  for (auto &v : values) {
-    vals.push_back(v - prev);
-    prev = v;
-  }
-
-  return vals;
-}
-
-
-
-class PostingBagBlobIndexes {
- public:
-  void AddRow(int block_idx, int offset) {
-    locations_.emplace_back(block_idx, offset);
-  }
-
-  int NumRows() const {
-    return locations_.size();
-  }
-
-  const PostingBagBlobIndex & operator[] (int i) const {
-    return locations_[i];
-  }
-
- private:
-  std::vector<PostingBagBlobIndex> locations_;
-};
-
-
-class CozyBoxWriter {
- public:
-  CozyBoxWriter(std::vector<PackedIntsWriter> writers, 
-                     VIntsWriter vints)
-    :pack_writers_(writers), vints_(vints) {}
-
-  const std::vector<PackedIntsWriter> &PackWriters() const {
-    return pack_writers_;
-  }
-
-  const VIntsWriter &VInts() const {
-    return vints_;
-  }
-
- private:
-  std::vector<PackedIntsWriter> pack_writers_;
-  VIntsWriter vints_;
-};
-
 
 class GeneralTermEntry {
  public:
@@ -132,8 +64,7 @@ class GeneralTermEntry {
     PostingBagBlobIndexes table;
     
     for (auto &size : posting_bag_sizes_) {
-      table.AddRow(val_index / PackedIntsWriter::PACK_SIZE, 
-          val_index % PackedIntsWriter::PACK_SIZE);
+      table.AddRow(val_index / PACK_ITEM_CNT, val_index % PACK_ITEM_CNT);
       val_index += size;
     }
 
@@ -145,16 +76,15 @@ class GeneralTermEntry {
   }
 
   CozyBoxWriter GetCozyBoxWriter(bool do_delta) const {
-    const int pack_size = PackedIntsWriter::PACK_SIZE;
+    const int pack_size = PACK_ITEM_CNT;
     const int n_packs = values_.size() / pack_size;
-    const int n_remains = values_.size() % pack_size;
 
-    std::vector<PackedIntsWriter> pack_writers(n_packs);
+    std::vector<LittlePackedIntsWriter> pack_writers(n_packs);
     VIntsWriter vints;
 
     std::vector<uint32_t> vals;
     if (do_delta) {
-      vals = EncodeDelta(values_);
+      vals = utils::EncodeDelta<uint32_t>(values_);
     } else {
       vals = values_;
     }
@@ -166,7 +96,7 @@ class GeneralTermEntry {
       }
     }
     
-    for (int i = n_packs * pack_size; i < vals.size(); i++) {
+    for (std::size_t i = n_packs * pack_size; i < vals.size(); i++) {
       vints.Append(vals[i]);
     }
 
@@ -189,668 +119,138 @@ class GeneralTermEntry {
 };
 
 
-class FileOffsetsOfBlobs {
- public:
-  FileOffsetsOfBlobs(std::vector<off_t> pack_offs, std::vector<off_t> vint_offs)
-      : pack_offs_(pack_offs), vint_offs_(vint_offs) {
-  }
 
-  int PackOffSize() const {
-    return pack_offs_.size();
-  }
 
-  int VIntsSize() const {
-    return vint_offs_.size();
-  }
 
-  const std::vector<off_t> &PackOffs() const {
-    return pack_offs_;
-  }
-
-  const std::vector<off_t> &VIntsOffs() const {
-    return vint_offs_;
-  }
-
-  const std::vector<off_t> BlobOffsets() const {
-    std::vector<off_t> offsets;
-    for (auto &off : pack_offs_) {
-      offsets.push_back(off);
-    }
-
-    for (auto &off : vint_offs_) {
-      offsets.push_back(off);
-    }
-
-    return offsets;
-  }
-
-  off_t FileOffset(int blob_index) const {
-    const int n_packs = pack_offs_.size();
-    if (blob_index < n_packs) {
-      return pack_offs_[blob_index];
-    } else if (blob_index == n_packs) {
-      if (vint_offs_.size() == 0)
-        LOG(FATAL) << "vint_offs_.size() should not be 0.";
-      return vint_offs_[0];
-    } else {
-      LOG(FATAL) << "blob_index is too large.";
-      return -1; // suppress warning
-    }
-  }
-
-  friend bool operator == (
-      const FileOffsetsOfBlobs &a, const FileOffsetsOfBlobs &b) {
-    if (a.pack_offs_.size() != b.pack_offs_.size())
-      return false;
-
-    for (int i = 0; i < a.pack_offs_.size(); i++) {
-      if (a.pack_offs_[i] != b.pack_offs_[i]) {
-        return false;
-      }
-    }
-
-    if (a.vint_offs_.size() != b.vint_offs_.size())
-      return false;
-
-    for (int i = 0; i < a.vint_offs_.size(); i++) {
-      if (a.vint_offs_[i] != b.vint_offs_[i]) {
-        return false;
-      }
-    }
-    return true;
-  }
-
-  friend bool operator != (
-      const FileOffsetsOfBlobs &a, const FileOffsetsOfBlobs &b) {
-    return !(a == b);
-  }
-
- private:
-  std::vector<off_t> pack_offs_;
-  std::vector<off_t> vint_offs_;
-};
-
-
-class GeneralFileDumper {
- public:
-  GeneralFileDumper(const std::string path) {
-    fd_ = open(path.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0666); 
-    if (fd_ == -1) 
-      LOG(FATAL) << "Cannot open file: " << path;
-  }
-
-  virtual off_t CurrentOffset() const {
-    off_t off = lseek(fd_, 0, SEEK_CUR);
-    if (off == -1)
-      LOG(FATAL) << "Failed to get the current offset.";
-
-    return off;
-  }
-
-  virtual off_t Seek(off_t pos) {
-    off_t off = lseek(fd_, pos, SEEK_SET);
-    if (off == -1)
-      LOG(FATAL) << "Failed to get the current offset.";
-
-    return off;
-  }
-
-  virtual off_t SeekToEnd() {
-    off_t off = lseek(fd_, 0, SEEK_END);
-    if (off == -1)
-      LOG(FATAL) << "Failed to get the current offset.";
-
-    return off;
-  }
-
-  virtual off_t End() {
-    off_t old = CurrentOffset();
-
-    off_t end_off = lseek(fd_, 0, SEEK_END);
-    if (end_off == -1)
-      LOG(FATAL) << "Failed to get the ending offset.";
-
-    Seek(old);
-
-    return end_off;
-  }
-
-  virtual off_t Dump(const std::string &data) {
-    off_t start_byte = CurrentOffset();
-    utils::Write(fd_, data.data(), data.size());
-    return start_byte;
-  }
-
-  virtual void Flush() const {
-    fsync(fd_);
-  }
-
-  virtual void Close() const {
-    close(fd_);
-  }
-
- protected:
-  int fd_;
-};
-
-
-class TermIndexDumper : public GeneralFileDumper {
- public:
-  TermIndexDumper(const std::string &path) : GeneralFileDumper(path) {}
-
-  // length of term, term, offset of entry in .tim
-  void DumpEntry(Term term, off_t offset) {
-    DumpUint32(term.size());
-    Dump(term);
-    DumpLong(offset);
-  }
-  
- private:
-  void DumpLong(off_t val) {
-    std::string data((char *)&val, sizeof(val));
-    Dump(data);
-  }
-
-  void DumpUint32(uint32_t val) {
-    std::string data((char *)&val, sizeof(val));
-    Dump(data);
-  }
-};
-
-
-class FileDumper : public GeneralFileDumper {
- public:
-  FileDumper(const std::string path) : GeneralFileDumper(path) {}
-
-  virtual FileOffsetsOfBlobs Dump(const CozyBoxWriter &writer) {
-    std::vector<off_t> pack_offs = DumpPackedBlocks(writer.PackWriters());
-    std::vector<off_t> vint_offs = DumpVInts(writer.VInts());
-
-    return FileOffsetsOfBlobs(pack_offs, vint_offs);
-  }
-
-  virtual off_t Dump(const std::string &data) {
-    return GeneralFileDumper::Dump(data);
-  }
-
- protected:
-  virtual std::vector<off_t> DumpVInts(const VIntsWriter &varint_buf) {
-    if (varint_buf.IntsSize() == 0) {
-      return std::vector<off_t>{};
-    } else {
-      off_t start_byte = CurrentOffset();
-      std::string data_buf = varint_buf.Serialize();
-
-      utils::Write(fd_, data_buf.data(), data_buf.size());
-      return std::vector<off_t>{start_byte};
-    }
-  }
-
-  virtual std::vector<off_t> DumpPackedBlocks(
-      const std::vector<PackedIntsWriter> &pack_writers) {
-    std::vector<off_t> offs;
-
-    for (auto &writer : pack_writers) {
-      offs.push_back(DumpPackedBlock(writer));
-    }
-
-    return offs;
-  }
-
-  virtual off_t DumpPackedBlock(const PackedIntsWriter &writer) {
-    off_t start_byte = CurrentOffset();
-    std::string data = writer.Serialize();      
-
-    utils::Write(fd_, data.data(), data.size());
-    return start_byte;
-  }
-};
-
-class FakeFileDumper : public FileDumper {
- public:
-  FakeFileDumper(const std::string path) : FileDumper(path) {}
-
-  FileOffsetsOfBlobs Dump(const CozyBoxWriter &writer) {
-    std::vector<off_t> pack_offs = DumpPackedBlocks(writer.PackWriters());
-    std::vector<off_t> vint_offs = DumpVInts(writer.VInts());
-
-    return FileOffsetsOfBlobs(pack_offs, vint_offs);
-  }
-
-  off_t CurrentOffset() const {
-    return cur_off_;
-  }
-
-  off_t Seek(off_t pos) {
-    cur_off_ = pos;
-    return pos;
-  }
-
-  off_t SeekToEnd() {
-    cur_off_ = end_off_;
-    return cur_off_;
-  }
-
-  off_t End() {
-    return end_off_;
-  }
-
-  off_t Dump(const std::string &data) {
-    off_t start_byte = CurrentOffset();
-
-    Write(data.size());
-
-    return start_byte;
-  }
-
-  void Flush() const {
-  }
-
-  void Close() const {
-  }
-
- protected:
-  void Write(int data_size) {
-    cur_off_ += data_size;
-    if (cur_off_ > end_off_)
-      end_off_ = cur_off_;
-  }
-
-  std::vector<off_t> DumpVInts(const VIntsWriter &varint_buf) {
-    if (varint_buf.IntsSize() == 0) {
-      return std::vector<off_t>{};
-    } else {
-      off_t start_byte = CurrentOffset();
-      std::string data_buf = varint_buf.Serialize();
-
-      Write(data_buf.size());
-      return std::vector<off_t>{start_byte};
-    }
-  }
-
-  std::vector<off_t> DumpPackedBlocks(
-      const std::vector<PackedIntsWriter> &pack_writers) {
-    std::vector<off_t> offs;
-
-    for (auto &writer : pack_writers) {
-      offs.push_back(DumpPackedBlock(writer));
-    }
-
-    return offs;
-  }
-
-  off_t DumpPackedBlock(const PackedIntsWriter &writer) {
-    off_t start_byte = CurrentOffset();
-    std::string data = writer.Serialize();      
-
-    Write(data.size());
-    return start_byte;
-  }
-
-  off_t cur_off_ = 0;
-  off_t end_off_ = 0;
-};
-
-
-
-
-class TermDictFileDumper : public GeneralFileDumper {
- public:
-  TermDictFileDumper(const std::string path) :GeneralFileDumper(path) {}
-
-  off_t DumpSkipList(const uint32_t doc_freq, const std::string &skip_list) {
-    return DumpEntry(0, doc_freq, skip_list);
-  }
-
-  off_t DumpFullPostingList(const uint32_t doc_freq, const std::string &posting_list) {
-    return DumpEntry(1, doc_freq, posting_list);
-  }
-
- private:
-  off_t DumpEntry(const uint32_t format, const uint32_t doc_freq, 
-      const std::string &data) 
-  {
-    off_t start_off = CurrentOffset();
-
-    VarintBuffer buf;
-    buf.Append(format); // format indicator: 0 with skip list, 1: with posting list data
-    buf.Append(doc_freq);
-    buf.Append(data.size());
-
-    Dump(buf.Data());
-    Dump(data);
-
-    return start_off;
-  }
-};
-
-
-struct FileOffsetOfSkipPostingBag {
-  FileOffsetOfSkipPostingBag(off_t offset, int index)
-    : file_offset_of_blob(offset), in_blob_index(index) {}
-
-  off_t file_offset_of_blob;
-  int in_blob_index;
-};
-
-
-// Absolute file offsets for posting 0, 128, 128*2, ..'s data
-class FileOffsetOfSkipPostingBags {
- public:
-  FileOffsetOfSkipPostingBags(const PostingBagBlobIndexes &table, 
-      const FileOffsetsOfBlobs &file_offs) {
-    for (int posting_index = 0; 
-        posting_index < table.NumRows(); 
-        posting_index += SKIP_INTERVAL) 
-    {
-      const int pack_id = table[posting_index].blob_index;
-      const int in_blob_idx = table[posting_index].in_blob_idx;
-      if (file_offs.FileOffset(pack_id) < 0) {
-        LOG(FATAL) << "File offset of pack " << pack_id << " is < 0";
-      }
-      locations_.emplace_back(file_offs.FileOffset(pack_id), in_blob_idx);
-    }
-  }
-
-  int Size() const {
-    return locations_.size();
-  }
-
-  const FileOffsetOfSkipPostingBag &operator [](int i) const {
-    return locations_[i];
-  }
-
- private:
-  std::vector<FileOffsetOfSkipPostingBag> locations_;
-};
-
-
-class SkipListWriter {
- public:
-  SkipListWriter(const FileOffsetOfSkipPostingBags docid_file_offs,
-           const FileOffsetOfSkipPostingBags tf_file_offs,
-           const FileOffsetOfSkipPostingBags pos_file_offs,
-           const FileOffsetOfSkipPostingBags off_file_offs,
-           const std::vector<uint32_t> doc_ids) 
-    :docid_offs_(docid_file_offs),
-     tf_offs_(tf_file_offs),
-     pos_offs_(pos_file_offs),
-     off_offs_(off_file_offs),
-     doc_ids_(doc_ids)
+struct ResultOfDumpingTermEntrySet {
+  ResultOfDumpingTermEntrySet(SkipListWriter writer, off_t offset)
+    :skip_list_writer(writer), tf_end_offset(offset)
   {}
 
-  std::string Serialize() const {
-    VarintBuffer buf;
-    auto skip_pre_doc_ids = GetSkipPostingPreDocIds(doc_ids_);
-
-    if ( !(docid_offs_.Size() == tf_offs_.Size() && 
-           tf_offs_.Size() == pos_offs_.Size() &&
-           pos_offs_.Size() == off_offs_.Size() &&
-           ( off_offs_.Size() == skip_pre_doc_ids.size() || 
-             off_offs_.Size() + 1 == skip_pre_doc_ids.size())
-           ) ) 
-    {
-      LOG(INFO)
-        <<    docid_offs_.Size() << ", " 
-        <<    tf_offs_.Size() << ", "
-        <<    pos_offs_.Size() << ", "
-        <<    off_offs_.Size() << ", "
-        <<    skip_pre_doc_ids.size() << std::endl;
-      LOG(FATAL) << "Skip data is not uniform";
-    }
-
-    int n_rows = docid_offs_.Size();
-    buf.Append(utils::MakeString(SKIP_LIST_FIRST_BYTE));
-    buf.Append(n_rows);
-    for (int i = 0; i < n_rows; i++) {
-      AddRow(&buf, i, skip_pre_doc_ids);
-    }
-
-    return buf.Data();
-  }
-
- private:
-  void AddRow(VarintBuffer *buf, int i, 
-      const std::vector<uint32_t> skip_pre_doc_ids) const {
-    buf->Append(skip_pre_doc_ids[i]);
-    buf->Append(docid_offs_[i].file_offset_of_blob);
-    buf->Append(tf_offs_[i].file_offset_of_blob);
-    buf->Append(pos_offs_[i].file_offset_of_blob);
-    buf->Append(pos_offs_[i].in_blob_index);
-    buf->Append(off_offs_[i].file_offset_of_blob);
-    buf->Append(off_offs_[i].in_blob_index);
-  }
-
-  const FileOffsetOfSkipPostingBags docid_offs_;
-  const FileOffsetOfSkipPostingBags tf_offs_;
-  const FileOffsetOfSkipPostingBags pos_offs_;
-  const FileOffsetOfSkipPostingBags off_offs_;
-  const std::vector<uint32_t> doc_ids_;
+  SkipListWriter skip_list_writer;
+  off_t tf_end_offset;
 };
 
 
-// All locations are for posting bags
-struct SkipEntry {
-  SkipEntry(const uint32_t doc_skip_in,   
-            const off_t doc_file_offset_in,
-            const off_t tf_file_offset_in,
-            const off_t pos_file_offset_in,
-            const int pos_in_block_index_in,
-            const off_t off_file_offset_in,
-            const int offset_in_block_index_in)
-    : previous_doc_id(doc_skip_in),
-      file_offset_of_docid_bag(doc_file_offset_in),
-      file_offset_of_tf_bag(tf_file_offset_in),
-      file_offset_of_pos_blob(pos_file_offset_in),
-      in_blob_index_of_pos_bag(pos_in_block_index_in),
-      file_offset_of_offset_blob(off_file_offset_in),
-      in_blob_index_of_offset_bag(offset_in_block_index_in)
+struct ResultOfDumpingTermEntrySetWithBloom {
+  ResultOfDumpingTermEntrySetWithBloom(SkipListWriter writer, off_t offset, 
+      off_t bloom_off1, off_t bloom_off2)
+    :skip_list_writer(writer), tf_end_offset(offset),
+     bloom_begin_section_offset(bloom_off1),
+     bloom_end_section_offset(bloom_off2)
   {}
- 
-  uint32_t previous_doc_id;
-  off_t file_offset_of_docid_bag;
-  off_t file_offset_of_tf_bag;
-  off_t file_offset_of_pos_blob;
-  int in_blob_index_of_pos_bag;
-  off_t file_offset_of_offset_blob;
-  int in_blob_index_of_offset_bag;
 
-  std::string ToStr() const {
-    std::string ret;
+  SkipListWriter skip_list_writer;
+  off_t tf_end_offset;
+  off_t bloom_begin_section_offset;
+  off_t bloom_end_section_offset;
+};
 
-    ret += std::to_string(previous_doc_id) + "\t";
-    ret += std::to_string(file_offset_of_docid_bag) + "\t";
-    ret += std::to_string(file_offset_of_tf_bag) + "\t";
-    ret += std::to_string(file_offset_of_pos_blob) + "\t";
-    ret += std::to_string(in_blob_index_of_pos_bag) + "\t";
-    ret += std::to_string(file_offset_of_offset_blob) + "\t";
-    ret += std::to_string(in_blob_index_of_offset_bag) + "\t";
+
+
+class BloomFilterColumnWriter {
+ public:
+  BloomFilterColumnWriter(std::size_t array_bytes)
+    : array_bytes_(array_bytes) {}
+
+  void AddPostingBag(const std::string &bit_array) {
+    bit_arrays_.push_back(bit_array);
+  }
+
+  std::vector<off_t> Dump(FileDumper *file_dumper) const {
+    std::vector<BloomBoxWriter> writers = GetWriters();
+    std::vector<off_t> ret;
+
+    for (auto &writer : writers) {
+      ret.push_back(file_dumper->CurrentOffset());
+      std::string data = writer.Serialize();
+      file_dumper->Dump(data);  
+    }
 
     return ret;
   }
-};
 
-class SkipList {
- public:
-  void Load(const uint8_t *buf) {
-    // byte 0 is the magic number
-    DLOG_IF(FATAL, (buf[0] & 0xFF) != SKIP_LIST_FIRST_BYTE)
-      << "Skip list has the wrong magic number: " << std::hex << buf[0];
+  std::vector<BloomBoxWriter> GetWriters() const {
+    const std::size_t n = bit_arrays_.size();
+    std::size_t index = 0;
+    std::vector<BloomBoxWriter> ret;
 
-    // varint at byte 1 is the number of entries
-    uint32_t num_entries;
-    int len = utils::varint_decode_uint32((char *)buf, 1, &num_entries);
+    while (index < n) {
+      const int rem = n - index;
+      const int box_size = rem < PACK_ITEM_CNT? rem : PACK_ITEM_CNT;
 
-    // byte 1 + len is the start of skip list entries
-    VarintIterator it((const char *)buf, 1 + len, num_entries);
+      BloomBoxWriter box_writer(array_bytes_);
+      for (int i = 0; i < box_size; i++) {
+        box_writer.Add(bit_arrays_[index + i]); 
+      }
+      ret.push_back(box_writer);
 
-    for (int entry_i = 0; entry_i < num_entries; entry_i++) {
-      uint32_t previous_doc_id = it.Pop();
-      off_t file_offset_of_docid_bag = it.Pop();
-      off_t file_offset_of_tf_bag = it.Pop();
-      off_t file_offset_of_pos_blob = it.Pop();
-      int in_blob_index_of_pos_bag = it.Pop();
-      off_t file_offset_of_offset_blob = it.Pop();
-      int in_blob_index_of_offset_bag = it.Pop();
-      AddEntry(previous_doc_id, 
-               file_offset_of_docid_bag, 
-               file_offset_of_tf_bag, 
-               file_offset_of_pos_blob, 
-               in_blob_index_of_pos_bag, 
-               file_offset_of_offset_blob,
-               in_blob_index_of_offset_bag);
-    }
-  }
-
-  int NumEntries() const {
-    return skip_table_.size();
-  }
-
-  int StartPostingIndex(int skip_interval) const {
-    return skip_interval * PACK_SIZE;
-  }
-
-  const SkipEntry &operator [](int interval_idx) const {
-    DLOG_IF(FATAL, interval_idx >= skip_table_.size())
-      << "Trying to access skip entry out of bound!";
-
-    return skip_table_[interval_idx];
-  }
-
-  // Made public for easier testing
-  void AddEntry(const uint32_t previous_doc_id,   
-                const off_t file_offset_of_docid_bag,
-                const off_t file_offset_of_tf_bag,
-                const off_t file_offset_of_pos_blob,
-                const int in_blob_index_of_pos_bag,
-                const off_t file_offset_of_offset_blob,
-                const int in_blob_index_of_offset_bag) 
-  {
-    if (file_offset_of_docid_bag < 0) {
-      LOG(FATAL) << "file_offset_of_docid_bag < 0 in posting list!";
-    }
-    if (file_offset_of_tf_bag < 0) {
-      LOG(FATAL) << "file_offset_of_tf_bag < 0 in posting list!";
-    }
-    if (file_offset_of_pos_blob < 0) {
-      LOG(FATAL) << "file_offset_of_pos_blob < 0 in posting list!";
-    }
-    if (in_blob_index_of_pos_bag < 0) {
-      LOG(FATAL) << "in_blob_index_of_pos_bag < 0 in posting list!";
-    }
-    if (file_offset_of_offset_blob < 0) {
-      LOG(FATAL) << "file_offset_of_offset_blob < 0 in posting list!";
-    }
-    if (in_blob_index_of_offset_bag < 0) {
-      LOG(FATAL) << "in_blob_index_of_offset_bag < 0 in posting list!";
-    }
-
-    skip_table_.emplace_back( previous_doc_id,   
-                              file_offset_of_docid_bag,
-                              file_offset_of_tf_bag,
-                              file_offset_of_pos_blob,
-                              in_blob_index_of_pos_bag,
-                              file_offset_of_offset_blob,
-                              in_blob_index_of_offset_bag);
-  }
-
-  std::string ToStr() const {
-    std::string ret;
-
-    ret = "~~~~~~~~ skip list ~~~~~~~~\n";
-    ret += "prev_doc_id; off_docid_bag; off_tf_bag; off_pos_blob; index_pos_bag; off_off_blob; index_offset_bag;\n";
-    for (auto &row : skip_table_) {
-      ret += row.ToStr() + "\n";
+      index += box_size;
     }
 
     return ret;
   }
 
  private:
-  std::vector<SkipEntry> skip_table_;
+  std::size_t array_bytes_;
+  std::vector<std::string> bit_arrays_;
 };
 
 
-class PostingListMetadata {
- public:
-  PostingListMetadata(int doc_freq, const uint8_t *skip_list_buf) 
-    :doc_freq_(doc_freq)
-  {
-    skip_list_.Load(skip_list_buf);
+inline std::vector<off_t> GetSerializedOffsets(
+    const BloomFilterColumnWriter &col_writer)
+{
+  std::vector<off_t> ret;
+  off_t cur_off = 0;
+
+  std::vector<BloomBoxWriter> writers = col_writer.GetWriters();
+  for (auto &writer : writers) {
+    ret.push_back(cur_off);
+    cur_off += writer.Serialize().size();
   }
 
-  int NumPostings() const {
-    return doc_freq_;
+  return ret;
+}
+
+
+inline std::size_t GetBloomSkipListSize(std::vector<off_t> box_offs) {
+  BloomSkipListWriter writer(box_offs);
+  return writer.Serialize().size();
+}
+
+inline std::size_t EstimateBloomSkipListSize(
+    const off_t start_off,
+    const std::vector<off_t> &box_offs) 
+{
+  std::vector<off_t> offs = box_offs;   
+  for (auto &off : offs) {
+    off += start_off;
   }
 
- private:
-  SkipList skip_list_;
-  int doc_freq_;
-};
+  return GetBloomSkipListSize(offs);
+}
 
 
-class TermDictEntry {
- public:
-  void Load(const char *buf) {
-    int len;
-    uint32_t data_size;
-
-    len = utils::varint_decode_uint32(buf, 0, &format_);
-    buf += len;
-
-    len = utils::varint_decode_uint32(buf, 0, &doc_freq_);
-    buf += len;
-
-    len = utils::varint_decode_uint32(buf, 0, &data_size);
-    buf += len;
-
-    if (format_ == 0) {
-      skip_list_.Load((uint8_t *)buf);
-    } else {
-      LOG(FATAL) << "Format not supported.";
-    }
+inline std::vector<off_t> GetRelativeOffsets(const off_t posting_list_start,
+    const std::vector<off_t> &offs) 
+{
+  std::vector<off_t> ret = offs;
+  for (auto &off : ret) {
+    off -= posting_list_start;
   }
 
-  const int DocFreq() const {
-    return doc_freq_;
-  }
-
-  const SkipList &GetSkipList() const {
-    return skip_list_;
-  }
-
- private:
-  uint32_t format_;
-  uint32_t doc_freq_;
-  SkipList skip_list_;
-};
+  return ret;
+}
 
 
-class InvertedIndexDumperBase : public InvertedIndexQqMemDelta {
- public:
-  void Dump() {
-    int cnt = 0; 
-    for (auto it = index_.cbegin(); it != index_.cend(); it++) {
-      // LOG(INFO) << "At '" << it->first << "'" << std::endl;
-      DumpPostingList(it->first, it->second);
-      cnt++;
-      if (cnt % 10000 == 0) {
-        std::cout << "Posting list dumpped: " << cnt << std::endl;
-      }
-    }
-  }
-  virtual void DumpPostingList(
-      const Term &term, const PostingListDelta &posting_list) = 0;
-
-};
-
-
+// The contents of a posting list
 struct TermEntrySet {
     GeneralTermEntry docid;
     GeneralTermEntry termfreq;
     GeneralTermEntry position;
     GeneralTermEntry offset;
 };
+
 
 inline FileOffsetOfSkipPostingBags DumpTermEntry(
     const GeneralTermEntry &term_entry, FileDumper *dumper, bool do_delta) {
@@ -860,13 +260,59 @@ inline FileOffsetOfSkipPostingBags DumpTermEntry(
 }
 
 
-class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
+class VacuumInvertedIndexDumper : public InvertedIndexQqMemDelta {
  public:
   VacuumInvertedIndexDumper(const std::string dump_dir_path)
     :index_dumper_(dump_dir_path + "/my.vacuum"),
      fake_index_dumper_(dump_dir_path + "/fake.vacuum"),
-     term_index_dumper_(dump_dir_path + "/my.tip")
-  {
+     term_index_dumper_(dump_dir_path + "/my.tip"),
+     bloom_reader_begin_(nullptr),
+     bloom_reader_end_(nullptr)
+  {}
+
+  void Dump() {
+    DumpHeader();
+
+    int cnt = 0; 
+    for (auto it = index_.cbegin(); it != index_.cend(); it++) {
+      // LOG(INFO) << "At '" << it->first << "'" << std::endl;
+      DumpPostingList(it->first, it->second);
+      cnt++;
+      if (cnt % 10000 == 0) {
+        std::cout << "Posting list dumpped: " << utils::FormatThousands(cnt) 
+          << std::endl;
+      }
+    }
+  }
+
+  void DumpHeader() {
+    index_dumper_.Dump(utils::MakeString(VACUUM_FIRST_BYTE));
+
+    if (bloom_reader_begin_ == nullptr) {
+      DumpVarint(0);
+      DumpVarint(0);
+      DumpVarint(0);
+      index_dumper_.Dump(utils::SerializeFloat(0));
+    } else {
+      DumpVarint(1); // use bloom filter
+      DumpVarint(bloom_reader_begin_->BitArrayBytes());
+      DumpVarint(bloom_reader_begin_->ExpectedEntries());
+      index_dumper_.Dump(utils::SerializeFloat(bloom_reader_begin_->Ratio()));
+    }
+
+    if (bloom_reader_end_ == nullptr) {
+      DumpVarint(0);
+      DumpVarint(0);
+      DumpVarint(0);
+      index_dumper_.Dump(utils::SerializeFloat(0));
+    } else {
+      DumpVarint(1); // use bloom filter
+      DumpVarint(bloom_reader_end_->BitArrayBytes());
+      DumpVarint(bloom_reader_end_->ExpectedEntries());
+      index_dumper_.Dump(utils::SerializeFloat(bloom_reader_end_->Ratio()));
+    }
+
+    index_dumper_.Seek(100);
   }
 
   // Only for testing at this time
@@ -875,8 +321,23 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     fake_index_dumper_.Seek(pos);
   }
 
+  void SetBloomStore(
+      BloomFilterReader *bloom_reader_begin, BloomFilterReader *bloom_reader_end) 
+  {
+    bloom_reader_begin_ = bloom_reader_begin;
+    bloom_reader_end_ = bloom_reader_end;
+  }
+
   void DumpPostingList(const Term &term, 
-      const PostingListDelta &posting_list) override {
+      const PostingListDelta &posting_list) {
+    if (bloom_reader_begin_ == nullptr && bloom_reader_end_ == nullptr) 
+      DumpPostingListNoBloom(term, posting_list);
+    else
+      DumpPostingListWithBloom(term, posting_list);
+  }
+
+  void DumpPostingListNoBloom(const Term &term, 
+      const PostingListDelta &posting_list) {
     PostingListDeltaIterator posting_it = posting_list.Begin2();
     LOG(INFO) << "Dumping Posting List of " << term << std::endl;
     LOG(INFO) << "Number of postings: " << posting_it.Size() << std::endl;
@@ -895,11 +356,11 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 
       // Position
       entry_set.position.AddPostingBag(
-          EncodeDelta(ExtractPositions(posting_it.PositionBegin().get())));
+          utils::EncodeDelta<uint32_t>(ExtractPositions(posting_it.PositionBegin().get())));
 
       // Offset
       entry_set.offset.AddPostingBag(
-          EncodeDelta(ExtractOffsets(posting_it.OffsetPairsBegin().get())));
+          utils::EncodeDelta<uint32_t>(ExtractOffsets(posting_it.OffsetPairsBegin().get())));
 
       posting_it.Advance();
     }
@@ -912,21 +373,26 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     // Dump doc freq
     DumpVarint(posting_list.Size());
 
+    // Bloom skip list
+    off_t bloom_pointer_location = index_dumper_.CurrentOffset();
+    DumpVarint(0); 
+    DumpVarint(0); 
+    index_dumper_.Seek(bloom_pointer_location + 8);
+
     // Dump skip list
     off_t skip_list_start = index_dumper_.CurrentOffset();
-    int skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
+    std::size_t skip_list_est_size = EstimateSkipListBytes(skip_list_start, entry_set);
 
     // Dump doc id, term freq, ...
-    SkipListWriter real_skiplist_writer = DumpTermEntrySet( 
+    ResultOfDumpingTermEntrySet real_result = DumpTermEntrySet( 
         &index_dumper_, 
         skip_list_start + skip_list_est_size,
         entry_set,
         entry_set.docid.Values());
 
+    std::string skip_list_data = real_result.skip_list_writer.Serialize();
 
-    std::string skip_list_data = real_skiplist_writer.Serialize();
-
-    DLOG_IF(FATAL, skip_list_data.size() > skip_list_est_size)  
+    LOG_IF(FATAL, skip_list_data.size() > skip_list_est_size)  
         << "DATA CORRUPTION!!! Gap for skip list is too small. skip list real size: " 
         << skip_list_data.size() 
         << " skip est size: " << skip_list_est_size;
@@ -936,22 +402,159 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
     index_dumper_.SeekToEnd();
 
     // Dump to .tip
-    term_index_dumper_.DumpEntry(term, posting_list_start);
+    // Calculate the prefetch zone size!
+    uint32_t n_pages_of_prefetch_zone = 
+      (real_result.tf_end_offset - posting_list_start) / 4096;
+
+    term_index_dumper_.DumpEntry(term, 
+        EncodePrefetchZoneAndOffset(n_pages_of_prefetch_zone, posting_list_start));
+  }
+
+  void DumpPostingListWithBloom(const Term &term, 
+      const PostingListDelta &posting_list) {
+    PostingListDeltaIterator posting_it = posting_list.Begin2();
+    LOG(INFO) << "Dumping Posting List of " << term << std::endl;
+    LOG(INFO) << "Number of postings: " << posting_it.Size() << std::endl;
+
+    const BloomFilterCases &bloom_begin_cases = bloom_reader_begin_->Lookup(term);
+    auto bloom_begin_iter = bloom_begin_cases.Begin();
+
+    BloomFilterColumnWriter bloom_begin_writer(bloom_reader_begin_->BitArrayBytes());
+
+
+    const BloomFilterCases &bloom_end_cases = bloom_reader_end_->Lookup(term);
+    auto bloom_end_iter = bloom_end_cases.Begin();
+
+    BloomFilterColumnWriter bloom_end_writer(bloom_reader_end_->BitArrayBytes());
+
+    LOG_IF(FATAL, bloom_begin_cases.Size() != bloom_end_cases.Size())
+      << "Currently, you must have both begin and end bloom!";
+
+    TermEntrySet entry_set;
+
+    while (posting_it.IsEnd() == false) {
+      LOG(INFO) << "DocId: " << posting_it.DocId() << std::endl;
+
+      LOG_IF(FATAL, posting_it.DocId() != bloom_end_iter->doc_id)
+        << "doc IDs do not match";
+      LOG_IF(FATAL, posting_it.DocId() != bloom_begin_iter->doc_id)
+        << "doc IDs do not match";
+
+      //doc id
+      entry_set.docid.AddPostingBag(
+          std::vector<uint32_t>{(uint32_t)posting_it.DocId()});
+
+      //Term Freq
+      entry_set.termfreq.AddPostingBag(
+          std::vector<uint32_t>{(uint32_t)posting_it.TermFreq()});
+
+      //Bloom filters
+      bloom_begin_writer.AddPostingBag(bloom_begin_iter->blm.BitArray());
+      bloom_end_writer.AddPostingBag(bloom_end_iter->blm.BitArray());
+
+      // Position
+      entry_set.position.AddPostingBag(
+          utils::EncodeDelta<uint32_t>(ExtractPositions(posting_it.PositionBegin().get())));
+
+      // Offset
+      entry_set.offset.AddPostingBag(
+          utils::EncodeDelta<uint32_t>(ExtractOffsets(posting_it.OffsetPairsBegin().get())));
+
+      posting_it.Advance();
+      bloom_begin_iter++;
+      bloom_end_iter++;
+    }
+    LOG_IF(FATAL, bloom_begin_iter != bloom_begin_cases.End())
+      << "bloom begin iter is not at the end";
+
+    LOG_IF(FATAL, bloom_end_iter != bloom_end_cases.End())
+      << "bloom iter is not at the end";
+
+    off_t posting_list_start = index_dumper_.CurrentOffset();
+
+    // Dump magic number
+    index_dumper_.Dump(utils::MakeString(POSTING_LIST_FIRST_BYTE));
+    
+    // Dump doc freq
+    DumpVarint(posting_list.Size());
+
+    // Reserve space for the location of bloom skip list
+    off_t bloom_pointer_location = index_dumper_.CurrentOffset();
+    index_dumper_.Seek(bloom_pointer_location + 8);
+
+    // Estimate skip list size
+    off_t skip_list_start = index_dumper_.CurrentOffset();
+    std::size_t skip_list_est_size = EstimateSkipListBytesWithBloom(
+        posting_list_start,
+        entry_set,
+        bloom_begin_writer,
+        bloom_end_writer);
+
+    // Dump doc id, term freq, ...
+    ResultOfDumpingTermEntrySetWithBloom real_result = DumpTermEntrySetWithBloom( 
+        posting_list_start,
+        &index_dumper_, 
+        skip_list_start + skip_list_est_size,
+        entry_set,
+        bloom_begin_writer,
+        bloom_end_writer);
+
+    std::string skip_list_data = real_result.skip_list_writer.Serialize();
+
+    LOG_IF(FATAL, skip_list_data.size() > skip_list_est_size)  
+        << "DATA CORRUPTION!!! Gap for skip list is too small. skip list real size: " 
+        << skip_list_data.size() 
+        << " skip est size: " << skip_list_est_size;
+
+    index_dumper_.Seek(skip_list_start);
+    index_dumper_.Dump(skip_list_data); 
+
+    index_dumper_.Seek(bloom_pointer_location);
+    DumpVarint(real_result.bloom_begin_section_offset - posting_list_start);
+    DumpVarint(real_result.bloom_end_section_offset - posting_list_start);
+
+    index_dumper_.SeekToEnd();
+
+    // Dump to .tip
+    // Calculate the prefetch zone size!
+    uint32_t n_pages_of_prefetch_zone = 
+      (real_result.tf_end_offset - posting_list_start) / 4096;
+
+    term_index_dumper_.DumpEntry(term, 
+        EncodePrefetchZoneAndOffset(n_pages_of_prefetch_zone, posting_list_start));
   }
 
  private:
   int EstimateSkipListBytes(off_t skip_list_start, const TermEntrySet &entry_set) {
     LOG(INFO) << "Dumping fake skiplist...........................\n";
-    SkipListWriter fake_skiplist_writer = DumpTermEntrySet( 
+    ResultOfDumpingTermEntrySet fake_result = DumpTermEntrySet( 
         &fake_index_dumper_, 
-        skip_list_start + 1024*1024,
+        skip_list_start + 512*1024,
         entry_set,
         entry_set.docid.Values());
 
-    return fake_skiplist_writer.Serialize().size();
+    return fake_result.skip_list_writer.Serialize().size();
   }
 
-  SkipListWriter DumpTermEntrySet(
+  int EstimateSkipListBytesWithBloom(
+      off_t posting_list_start, 
+      const TermEntrySet &entry_set,
+      const BloomFilterColumnWriter &bloom_begin_writer,
+      const BloomFilterColumnWriter &bloom_end_writer)
+  {
+    LOG(INFO) << "Dumping fake skiplist...........................\n";
+    ResultOfDumpingTermEntrySetWithBloom fake_result = DumpTermEntrySetWithBloom( 
+        posting_list_start,
+        &fake_index_dumper_, 
+        posting_list_start + 512*1024,
+        entry_set,
+        bloom_begin_writer,
+        bloom_end_writer);
+
+    return fake_result.skip_list_writer.Serialize().size();
+  }
+
+  ResultOfDumpingTermEntrySet DumpTermEntrySet(
     FileDumper *file_dumper,
     off_t file_offset,
     const TermEntrySet &entry_set,
@@ -963,15 +566,88 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
       DumpTermEntry(entry_set.docid, file_dumper, true);
     FileOffsetOfSkipPostingBags tf_skip_offs = 
       DumpTermEntry(entry_set.termfreq, file_dumper, false);
+
+    off_t tf_end_offset = file_dumper->CurrentOffset();
+
     FileOffsetOfSkipPostingBags pos_skip_offs = 
       DumpTermEntry(entry_set.position, file_dumper, false);
     FileOffsetOfSkipPostingBags off_skip_offs = 
       DumpTermEntry(entry_set.offset, file_dumper, false);
 
-    return SkipListWriter(docid_skip_offs, tf_skip_offs, 
-        pos_skip_offs, off_skip_offs, entry_set.docid.Values());
+    return ResultOfDumpingTermEntrySet(
+        SkipListWriter(docid_skip_offs, tf_skip_offs, 
+                       pos_skip_offs,   off_skip_offs, 
+                       entry_set.docid.Values()),
+        tf_end_offset);
   }
 
+  ResultOfDumpingTermEntrySetWithBloom DumpTermEntrySetWithBloom(
+    off_t posting_list_start,
+    FileDumper *file_dumper,
+    off_t file_offset,
+    const TermEntrySet &entry_set,
+    const BloomFilterColumnWriter &bloom_begin_writer,
+    const BloomFilterColumnWriter &bloom_end_writer)
+  {
+    file_dumper->Seek(file_offset);
+
+    FileOffsetOfSkipPostingBags docid_skip_offs = 
+      DumpTermEntry(entry_set.docid, file_dumper, true);
+    FileOffsetOfSkipPostingBags tf_skip_offs = 
+      DumpTermEntry(entry_set.termfreq, file_dumper, false);
+
+    off_t tf_end_offset = file_dumper->CurrentOffset();
+
+    off_t bloom_begin_start_offset = file_dumper->CurrentOffset();
+    DumpBloomSection(posting_list_start, file_dumper, bloom_begin_writer);
+
+    off_t bloom_end_start_offset = file_dumper->CurrentOffset();
+    DumpBloomSection(posting_list_start, file_dumper, bloom_end_writer);
+
+    FileOffsetOfSkipPostingBags pos_skip_offs = 
+      DumpTermEntry(entry_set.position, file_dumper, false);
+    FileOffsetOfSkipPostingBags off_skip_offs = 
+      DumpTermEntry(entry_set.offset, file_dumper, false);
+
+    return ResultOfDumpingTermEntrySetWithBloom(
+        SkipListWriter(docid_skip_offs, tf_skip_offs, 
+                       pos_skip_offs,   off_skip_offs, 
+                       entry_set.docid.Values()),
+        tf_end_offset, 
+        bloom_begin_start_offset,
+        bloom_end_start_offset
+        );
+  }
+
+  void DumpBloomSection(off_t posting_list_start, FileDumper *file_dumper, 
+      const BloomFilterColumnWriter &writer) 
+  {
+    off_t start_off = file_dumper->CurrentOffset();
+
+    std::size_t est_skip_list_sz = EstimateBloomSkipListSize(
+        start_off + 512 * 1024 - posting_list_start,
+        GetSerializedOffsets(writer));
+
+    // Dump bloom boxes
+    file_dumper->Seek(start_off + est_skip_list_sz); 
+    std::vector<off_t> real_box_offs = GetRelativeOffsets(
+        posting_list_start,
+        writer.Dump(file_dumper));
+
+    off_t bloom_end_off = file_dumper->CurrentOffset();
+
+    // Dump the real skip list
+    BloomSkipListWriter skip_writer(real_box_offs);
+    file_dumper->Seek(start_off);
+    std::string data = skip_writer.Serialize();
+    LOG_IF(FATAL, data.size() > est_skip_list_sz)
+      << "Data corruption! Bloom skip list overwrites other stuff";
+    LOG_IF(FATAL, est_skip_list_sz - data.size() > 4)
+      << "Wasting too much space for bloom skip list";
+    file_dumper->Dump(data);
+
+    file_dumper->Seek(bloom_end_off);
+  }
 
   void DumpVarint(uint32_t val) {
     VarintBuffer buf;
@@ -983,6 +659,8 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
   FakeFileDumper fake_index_dumper_;
 
   TermIndexDumper term_index_dumper_;
+  BloomFilterReader *bloom_reader_begin_;
+  BloomFilterReader *bloom_reader_end_;
 };
 
 
@@ -995,15 +673,19 @@ class VacuumInvertedIndexDumper : public InvertedIndexDumperBase {
 // Better design: decouple setting dump path and construction
 class FlashEngineDumper {
  public:
-  FlashEngineDumper(const std::string dump_dir_path)
-    :inverted_index_(dump_dir_path),
-     dump_dir_path_(dump_dir_path)
+  FlashEngineDumper(const std::string dump_dir_path, 
+      const bool use_bloom_filters = false, const bool align_doc_store = true)
+    :doc_store_(align_doc_store),
+     inverted_index_(dump_dir_path),
+     dump_dir_path_(dump_dir_path),
+     use_bloom_filters_begin_(use_bloom_filters),
+     use_bloom_filters_end_(use_bloom_filters)
   {}
 
   // colum 2 should be tokens
   int LoadLocalDocuments(const std::string &line_doc_path, 
       int n_rows, const std::string format) {
-    int ret;
+    int ret = 0;
     std::unique_ptr<LineDocParserService> parser;
 
     if (format == "TOKEN_ONLY") {
@@ -1062,6 +744,16 @@ class FlashEngineDumper {
  }
 
   void DumpInvertedIndex() {
+    BloomFilterReader *p_begin = 
+      use_bloom_filters_begin_? &bloom_reader_begin_ : nullptr;
+    BloomFilterReader *p_end = 
+      use_bloom_filters_end_? &bloom_reader_end_ : nullptr;
+
+    LOG_IF(FATAL, (p_begin == nullptr) != (p_end == nullptr))
+      << "Currently, you must either not use bloom filter or "
+      << "use bloom begine+end.";
+
+    inverted_index_.SetBloomStore(p_begin, p_end);
     inverted_index_.Dump();
   }
 
@@ -1072,10 +764,8 @@ class FlashEngineDumper {
 
   void DeserializeMeta(std::string path) {
     int fd;
-    int len;
     char *addr;
     size_t file_length;
-    uint32_t var;
 
     utils::MapFile(path, &addr, &fd, &file_length);
 
@@ -1099,17 +789,38 @@ class FlashEngineDumper {
 
     std::cout << "Reset similarity...\n";
     similarity_.Reset(doc_lengths_.GetAvgLength()); //good
+
+    if (use_bloom_filters_begin_ == true) {
+      std::cout << "Loading bloom filter..." << std::endl;
+      bloom_reader_begin_.Load(
+          dir_path + "/bloom_begin.meta",
+          dir_path + "/bloom_begin.index",
+          dir_path + "/bloom_begin.store");
+    }
+
+    if (use_bloom_filters_end_ == true) {
+      std::cout << "Loading bloom filter..." << std::endl;
+      bloom_reader_end_.Load(
+          dir_path + "/bloom_end.meta",
+          dir_path + "/bloom_end.index",
+          dir_path + "/bloom_end.store");
+    }
   }
 
  private:
-  int next_doc_id_ = 0;
-  std::string dump_dir_path_;
-
-  FlashDocStoreDumper doc_store_;
+  ChunkedDocStoreDumper doc_store_;
   VacuumInvertedIndexDumper inverted_index_;
   DocLengthCharStore doc_lengths_;
   SimpleHighlighter highlighter_;
   Bm25Similarity similarity_;
+
+  BloomFilterReader bloom_reader_begin_;
+  BloomFilterReader bloom_reader_end_;
+
+  int next_doc_id_ = 0;
+  std::string dump_dir_path_;
+  bool use_bloom_filters_begin_;
+  bool use_bloom_filters_end_;
 
   int NextDocId() {
     return next_doc_id_++;

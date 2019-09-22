@@ -3,6 +3,10 @@ the Chinese restaraunt near CS department of UW-Madison...
 Alternatively, QQ stands for Quick Query.
 
 
+## Generate index
+
+See `tools/indexer.py`
+
 ## Build
 
 To build, you need to run the following command to install

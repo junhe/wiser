@@ -1,15 +1,24 @@
 #ifndef PACKED_VALUE_H
 #define PACKED_VALUE_H
 
+#include "types.h"
 #include "compression.h"
 #include "utils.h"
 
-#define PACK_FIRST_BYTE 0xD5
-#define VINTS_FIRST_BYTE 0x9B
+extern "C" {
+#include "bitpacking.h"
+}
+
+
+#define PACK_ITEM_CNT 128
 
 
 inline int NumBitsInByte(int next_empty_bit) {
   return 8 - (next_empty_bit % 8);
+}
+
+inline int NumDataBytesInPack(int bits_per_value) {
+  return (bits_per_value * PACK_ITEM_CNT + 7) / 8;
 }
 
 // Append the rightmost n_bits of val to next_empty_bit in buf
@@ -74,6 +83,51 @@ inline long ExtractBits(const uint8_t *buf, const int bit_start, const int n_bit
 }
 
 
+// Using the little int packer lib to pack bits
+class LittlePackedIntsWriter {
+ public:
+  static constexpr int HEADER_BYTES = 2;
+  static constexpr int BUF_SIZE = HEADER_BYTES + PACK_ITEM_CNT * sizeof(uint32_t);
+
+  // although value is `long`, we only support uint32_t
+  void Add(long value) {
+    values_[add_to_index_++] = value;
+
+    int n_bits = utils::NumOfBits(value);
+    n_bits = n_bits == 0? 1 : n_bits;
+    if (n_bits > max_bits_per_value_)
+      max_bits_per_value_ = n_bits;
+  }
+
+  int MaxBitsPerValue() const {
+    return max_bits_per_value_;
+  }
+
+  std::string Serialize() const {
+    LOG_IF(FATAL, add_to_index_ != PACK_ITEM_CNT) 
+      << "Number of values is not " << PACK_ITEM_CNT;
+
+    uint8_t buf[BUF_SIZE];
+    SetHeader(buf);
+
+    turbopack32(values_, PACK_ITEM_CNT, max_bits_per_value_, buf + HEADER_BYTES);
+    return std::string(
+        (char *)buf, HEADER_BYTES + NumDataBytesInPack(max_bits_per_value_));
+  }
+
+ private:
+  void SetHeader(uint8_t *buf) const {
+    // set bit 00__ ____ to distinguish from VINTS
+    buf[0] = PACK_FIRST_BYTE;
+    buf[1] = max_bits_per_value_;
+  }
+
+  uint32_t values_[PACK_ITEM_CNT];
+  int max_bits_per_value_ = 0;
+  int add_to_index_ = 0;
+};
+
+
 class PackedIntsWriter {
  public:
   static const int PACK_SIZE = 128;
@@ -120,6 +174,66 @@ class PackedIntsWriter {
   std::vector<long> values_;
   int max_bits_per_value_ = 0;
 };
+
+
+// Usage:
+//
+// Reset(buf);
+// DecodeToCache()
+// Get(i)
+class LittlePackedIntsReader {
+ public:
+  LittlePackedIntsReader(const uint8_t *buf) {
+    Reset(buf);
+  }
+
+  LittlePackedIntsReader(){}
+
+  void Reset(const uint8_t *buf) {
+    buf_ = buf; 
+
+    DLOG_IF(FATAL, buf_[0] != PACK_FIRST_BYTE) 
+      << "Magic number for pack is wrong: " << buf_[0];
+
+    DLOG_IF(FATAL, buf_[1] > 64) 
+      << "n_bits_per_value_ is larger than 64, which is wrong.";
+
+    n_bits_per_value_ = buf[1];
+    is_cache_filled_ = false;
+  }
+
+  void DecodeToCache() {
+    turbounpack32(buf_ + LittlePackedIntsWriter::HEADER_BYTES, PACK_ITEM_CNT, 
+        n_bits_per_value_, cache_);
+    is_cache_filled_ = true;
+  }
+
+  uint32_t Get(const std::size_t index) const {
+    DLOG_IF(FATAL, is_cache_filled_ == false)
+      << "Cache is not filled yet!";
+
+    DLOG_IF(FATAL, index > PACK_ITEM_CNT) << "index out of bound";
+
+    return cache_[index]; 
+  }
+  
+  int NumBits() const {
+    return n_bits_per_value_;
+  }
+
+  int SerializationSize() const {
+    return LittlePackedIntsWriter::HEADER_BYTES + 
+             NumDataBytesInPack(n_bits_per_value_); 
+  }
+
+ private:
+  const uint8_t *buf_ = nullptr;
+  int n_bits_per_value_ = 0;
+
+  uint32_t cache_[PACK_ITEM_CNT];
+  bool is_cache_filled_ = false;
+};
+
 
 
 class PackedIntsReader {
@@ -170,6 +284,7 @@ class PackedIntsIterator {
   void Reset(const uint8_t *buf) {
     index_ = 0;
     reader_.Reset(buf);
+    reader_.DecodeToCache();
   }
 
   int SerializationSize() const {
@@ -185,7 +300,7 @@ class PackedIntsIterator {
   }
 
   bool IsEnd() const {
-    return index_ == PackedIntsWriter::PACK_SIZE;
+    return index_ == PACK_ITEM_CNT;
   }
 
   long Value() const {
@@ -198,7 +313,7 @@ class PackedIntsIterator {
 
  private:
   int index_;
-  PackedIntsReader reader_;
+  LittlePackedIntsReader reader_;
 };
 
 
@@ -214,6 +329,7 @@ class DeltaEncodedPackedIntsIterator {
     index_ = 0;
     prev_value_ = pre_pack_int;
     reader_.Reset(buf);
+    reader_.DecodeToCache();
   }
 
   void Advance() {
@@ -227,7 +343,7 @@ class DeltaEncodedPackedIntsIterator {
     }
   }
 
-  void SkipForward(uint64_t val) {
+  void SkipForward(long val) {
     while (IsEnd() == false && Value() < val) {
       Advance();
     }
@@ -235,7 +351,7 @@ class DeltaEncodedPackedIntsIterator {
 
   // If IsEnd() is true, Value() is UNreadable
   bool IsEnd() const {
-    return index_ == PackedIntsWriter::PACK_SIZE;
+    return index_ == PACK_ITEM_CNT;
   }
 
   long Value() const {
@@ -249,7 +365,7 @@ class DeltaEncodedPackedIntsIterator {
  private:
   int index_;
   long prev_value_;
-  PackedIntsReader reader_;
+  LittlePackedIntsReader reader_;
 };
 
 
@@ -337,9 +453,9 @@ class VIntsIterator {
   }
 
  private:
-  int next_index_;
-  uint32_t magic_; 
-  uint32_t varint_bytes_;
+  int next_index_ = -1;
+  uint32_t magic_ = 0; 
+  uint32_t varint_bytes_ = 0;
   VarintIteratorEndBound varint_iter_;
 };
 
