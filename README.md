@@ -2,20 +2,20 @@ This repository contains code for Vacuum, a clean-slate search engine designed t
 
 # Directory structure
 
-The main C++ code of Vaccuum is in src/qq_mem/. We also have lots of experimental code that we would like to keep in the repository, at least for now. 
+The main C++ code of Vaccuum is in `src/qq_mem/`. We also have lots of experimental code in the repository, at least for now. 
 
-- data/ Data for benchmarking and some scripts to manipulate the data.
-- scripts/ A bunch of Python and Shell scripts for our experiments and setup.
-- src/
-    - lucene/ a copy of lucene code. We played with it.
-    - pysrc/ some Python code
-        - benchmarks/ scripts for benchmarking redisearch, elasticsearch, ...
-        - in_mem/ we developed a minimal python in-memory engine here.
-    - qq_mem/ this is the main direcotry for Vaccuum. We have the name "qq_mem" because things evolve and we are too lazy to change directory names.
-        - src/ Vacuum source code (C++)
-        - tools/ A bunch of helper scripts
-        - README.md Instruction on how to run Vacuum
-    - tutorials/ this has some Lucene examples that we played with.
+- `data/` Data for benchmarking and some scripts to manipulate the data.
+- `scripts/` A bunch of Python and Shell scripts for our experiments and setup.
+- `src/`
+    - `lucene/` a copy of lucene code. We played with it.
+    - `pysrc/` some Python code
+        - `benchmarks/` scripts for benchmarking redisearch, elasticsearch, ...
+        - `in_mem/` we developed a minimal python in-memory engine here.
+    - `qq_mem/` this is the main direcotry for Vaccuum. We have the name "qq_mem" because things evolve and we are too lazy to change directory names.
+        - `src/` Vacuum source code (C++)
+        - `tools/` A bunch of helper scripts
+        - `README.md Instruction on how to run Vacuum
+    - `tutorials/` this has some Lucene examples that we played with.
 
 # Build and run Vacuum
 
