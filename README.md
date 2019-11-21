@@ -20,3 +20,6 @@ The main C++ code of Vaccuum is in src/qq_mem/. We also have lots of experimenta
 # Build and run Vacuum
 
 Please see src/qq_mem/README.md
+
+
+Please contact Jun He (jhe@cs.wisc.edu) if you have any questions.
