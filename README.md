@@ -22,4 +22,4 @@ The main C++ code of Vaccuum is in `src/qq_mem/`. We also have lots of experimen
 Please see [src/qq_mem/](./src/qq_mem/).
 
 
-Please contact Jun He (jhe@cs.wisc.edu) if you have any questions.
+Please contact Jun He (jhe@cs.wisc.edu) and Kan Wu (kanwu@cs.wisc.edu) if you have any questions.
