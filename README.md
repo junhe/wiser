@@ -1,6 +1,6 @@
 This repository contains code for Vacuum, a clean-slate search engine designed to exploit modern Flash-based SSDs. Vacuum utilizes many techniques to exploit flash bandwidth, including an optimized data layout, a novel two-way cost-aware Bloom filter, adaptive prefetching, and various space-time trade-offs. In experiments, we find that Vacuum increases query throughput by up to 2.7x and reduces latency by 16x when compared to the state-of-the-art Elasticsearch. For some workloads, Vacuum, with very limited memory and ample SSD bandwidth, performs better than Elasticsearch with memory that accommodates the entire working set.
 
-(Jan 12, 2020: Update: We will improve this repos to make it easy to run)
+(Jan 12, 2020: Update: We will improve this repos to make it easy to run. Vaccum is well tuned and runs pretty fast.)
 
 # Directory structure
 
