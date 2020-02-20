@@ -4,7 +4,7 @@ WiSER was called Vacuum. Because of this, you will see the name 'vacuum' a lot i
 
 The paper about WiSEr was published at FAST'20. The title is "Read as Needed: Building WiSER, a Flash-Optimized Search Engine". http://pages.cs.wisc.edu/~jhe/fast20-wiser.pdf
 
-(Feb 19, 2020: it would be great if someone could help us to improve this repository. I (Jun) am not a grad student anymore...Otherwise, I'll try to find some spare time.)
+(Feb 19, 2020: I (Jun) am not a grad student anymore. It would be great if someone could help us to improve this repository. Otherwise, I'll try to find some spare time...)
 
 (Jan 12, 2020: Update: We will improve this repos to make it easy to run. Vaccum is well tuned and runs pretty fast.)
 
