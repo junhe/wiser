@@ -12,6 +12,9 @@ Please contact Jun He (jhe@cs.wisc.edu) if you have any questions.
 To build, you need to run the following command to install
 grpc, protobuf.
 
+NOTE: In newer OS versions, grpc and protobuf might show compilation warning errors if the following flags are turned on. 
+In the grpc Makefile (~/grpc/Makefile), add the following to CFLAGS:  -Wno-unused-function -Wno-deprecated-declarations -Wno-conversion.
+
 ```
 ./setup.sh
 ```
