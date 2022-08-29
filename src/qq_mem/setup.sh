@@ -12,14 +12,14 @@ git clone -b v1.7.x https://github.com/grpc/grpc
 cd grpc
 git submodule update --init
 
-make
+make -j$(proc)
 sudo make install
 
 # install protobuf
 cd third_party/protobuf
 ./autogen.sh
 ./configure
-make
+make -j$(proc)
 sudo make install
 
 # This is required to run performance benchmarks
@@ -41,7 +41,7 @@ wget https://github.com/google/glog/archive/v0.3.5.tar.gz
 tar xf v0.3.5.tar.gz
 cd glog-0.3.5
 ./configure
-make
+make -j$(proc)
 sudo make install
 
 
